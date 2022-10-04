@@ -25,6 +25,8 @@ import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { defaultConfidenceThreshold } from "./constants";
 
+const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
+
 type CumTokens = {
   [tokenAddress: string]: {
     amount: BigNumber;
@@ -211,6 +213,7 @@ export const aggregateData = async (
     console.log(errString);
   }
 
+  let nullPriceCount = 0;
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from } = tx;
@@ -243,7 +246,9 @@ export const aggregateData = async (
           });
         }
       }
-      // count how many don't have price; log at end and above threshold insert into errors db
+      if (!usdValue) {
+        nullPriceCount += 1;
+      }
       if (is_deposit) {
         totalDepositTxs += 1;
         totalDepositedUsd += usdValue ?? 0;
@@ -274,6 +279,16 @@ export const aggregateData = async (
     })
   );
   await txsPromises;
+  if (nullPriceCount > nullPriceCountThreshold) {
+    const errString = `There are ${nullPriceCount} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
+    await insertErrorRow({
+      ts: getCurrentUnixTimestamp(),
+      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+      keyword: "data",
+      error: errString,
+    });
+    console.error(errString);
+  }
   Object.entries(cumTokensDeposited)
     .sort((a, b) => {
       return (b[1].usdValue ?? 0) - (a[1].usdValue ?? 0);
