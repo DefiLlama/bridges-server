@@ -120,6 +120,8 @@ Couldn't figure out how to insert unknown usd values as null into composite sql 
 and didn't spend time to fix it, so unknown usd values are 0 instead.
 
 Large value transactions are only logged when aggregating daily stats.
+
+Aggregates daily data for the day previous to timestamp's current day.
 */
 export const aggregateData = async (
   timestamp: number,
@@ -151,8 +153,9 @@ export const aggregateData = async (
       return;
     }
   } else {
-    startTimestamp = getTimestampAtStartOfDay(timestamp);
-    endTimestamp = startTimestamp + secondsInDay;
+    const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp)
+    startTimestamp = timestampAtStartOfDay - secondsInDay;
+    endTimestamp = timestampAtStartOfDay;
     const existingEntry = await queryAggregatedDailyDataAtTimestamp(
       startTimestamp,
       chain,
@@ -221,7 +224,9 @@ export const aggregateData = async (
         const { price, decimals } = priceData;
         const bnAmount = BigNumber(amount).dividedBy(10 ** decimals);
         usdValue = bnAmount.multipliedBy(price).toNumber();
-        // insert large values to errors db
+        // check for any largish value and insert to errors db
+
+        // insert to errors db
         if (usdValue > 10 ** 10) {
           console.error(
             `USD value of tx id ${id} is over 10 billion, skipping.`
@@ -236,6 +241,7 @@ export const aggregateData = async (
           });
         }
       }
+      // count how many don't have price; log at end and above threshold insert into errors db
       if (is_deposit) {
         totalDepositTxs += 1;
         totalDepositedUsd += usdValue ?? 0;
@@ -318,7 +324,7 @@ export const aggregateData = async (
   // insert to errors db
   if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
     console.error(
-      `WARNING: Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalAddressWithdrawn} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
+      `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalAddressWithdrawn} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
     );
   }
 

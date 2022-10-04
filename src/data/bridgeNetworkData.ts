@@ -12,6 +12,7 @@ export default [
       polygon: "ethereum"
     }
   },
+  /*
   {
     id: 2,
     displayName: "Arbitrum Bridge",
@@ -23,7 +24,6 @@ export default [
       arbitrum: "ethereum"
     }
   },
-  /*
   {
     id: 3,
     displayName: "Synapse",

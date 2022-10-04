@@ -24,12 +24,15 @@ export const runAllAdaptersToCurrentBlock = async (
   allowNullTxValues: boolean = false,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  const recordedBlocks = (await retry(
-    async (_bail: any) =>
-      await axios.get(
-        "https://llama-bridges-data.s3.eu-central-1.amazonaws.com/recordedBlocks.json"
-      )
-  )).data as RecordedBlocks;
+  const recordedBlocks = (
+    await retry(
+      async (_bail: any) =>
+        await axios.get(
+          "https://llama-bridges-data.s3.eu-central-1.amazonaws.com/recordedBlocks.json"
+        )
+    )
+  ).data as RecordedBlocks;
+  // insert to errors db
   if (!recordedBlocks) {
     throw new Error(`Unable to retrieve recordedBlocks from s3.`);
   }
@@ -38,6 +41,7 @@ export const runAllAdaptersToCurrentBlock = async (
     bridgeNetworks.map(async (bridgeNetwork) => {
       const { id, bridgeDbName } = bridgeNetwork;
       const adapter = adapters[bridgeDbName];
+      // insert to errors db
       if (!adapter) {
         throw new Error(
           `Adapter for ${bridgeDbName} not found, check it is exported correctly.`
@@ -46,10 +50,15 @@ export const runAllAdaptersToCurrentBlock = async (
       await insertConfigEntriesForAdapter(adapter, bridgeDbName);
       const adapterPromises = Promise.all(
         Object.keys(adapter).map(async (chain) => {
-          const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
+          const chainContractsAreOn = bridgeNetwork.chainMapping?.[
+            chain as Chain
+          ]
             ? bridgeNetwork.chainMapping?.[chain as Chain]
             : chain;
-          const { number, timestamp } = await getLatestBlock(chainContractsAreOn); // probably need timeout here
+          const { number, timestamp } = await getLatestBlock(
+            chainContractsAreOn
+          ); // probably need timeout here
+          // insert to errors db
           if (!(number && timestamp)) {
             console.error(
               `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`
@@ -65,17 +74,15 @@ export const runAllAdaptersToCurrentBlock = async (
             const defaultStartBlock = number - maxBlocksToQuery;
             lastRecordedEndBlock = defaultStartBlock;
             console.log(
-              `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${defaultStartBlock}.`
+              `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${
+                lastRecordedEndBlock + 1
+              }.`
             );
           }
-          const endBlock = Math.min(
-            number,
-            lastRecordedEndBlock + maxBlocksToQuery
-          );
           try {
             await runAdapterHistorical(
               lastRecordedEndBlock + 1,
-              endBlock,
+              number,
               id,
               chain as Chain,
               allowNullTxValues,
@@ -86,9 +93,10 @@ export const runAllAdaptersToCurrentBlock = async (
               recordedBlocks[`${bridgeDbName}-${chain}`] || {};
             recordedBlocks[`${bridgeDbName}-${chain}`].startBlock =
               recordedBlocks[`${bridgeDbName}-${chain}`]?.startBlock ??
-              number - maxBlocksToQuery;
-            recordedBlocks[`${bridgeDbName}-${chain}`].endBlock = endBlock;
+              lastRecordedEndBlock + 1;
+            recordedBlocks[`${bridgeDbName}-${chain}`].endBlock = number;
           } catch (e) {
+            // insert to errors db
             console.error(
               `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`
             );
@@ -101,7 +109,7 @@ export const runAllAdaptersToCurrentBlock = async (
   await bridgeNetworkPromises;
   // need better error catching
   await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
-  console.log("runAdapterHourlyHistorical successfully ran.");
+  console.log("runAllAdaptersToCurrentBlock successfully ran.");
 };
 
 export const runAdapterHistorical = async (
@@ -116,12 +124,14 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks[bridgeNetworkId - 1];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
+  // insert to errors db
   if (!adapter) {
     throw new Error(
       `Adapter for ${bridgeDbName} not found, check it is exported correctly.`
     );
   }
   const adapterChainEventsFn = adapter[chain];
+  // insert to errors db
   if (!adapterChainEventsFn) {
     throw new Error(`Chain ${chain} not found on adapter ${bridgeDbName}.`);
   }
@@ -129,6 +139,7 @@ export const runAdapterHistorical = async (
     ? bridgeNetwork.chainMapping?.[chain as Chain]
     : chain;
   const provider = getProvider(chainContractsAreOn as Chain) as any;
+  // insert to errors db
   if (!provider) {
     throw new Error(`Could not get provider for chain ${chainContractsAreOn}.`);
   }
@@ -142,11 +153,21 @@ export const runAdapterHistorical = async (
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
   let block = endBlock;
+  console.log(`Searching for transactions for ${bridgeID} from ${block} to ${endBlock}.`)
   while (block > startBlock) {
     const startBlockForQuery = Math.max(startBlock, block - maxBlocksToQuery);
     try {
       const eventLogs = await adapterChainEventsFn(startBlockForQuery, block);
-      console.log(eventLogs);
+      // console.log(eventLogs);
+      if (eventLogs.length === 0) {
+        console.log(
+          `No transactions found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
+        );
+        return;
+      }
+      console.log(
+        `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
+      );
       await sql.begin(async (sql) => {
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
@@ -177,7 +198,9 @@ export const runAdapterHistorical = async (
         );
         await eventLogPromises;
       });
+      console.log("finished inserting transactions")
     } catch (e) {
+      // insert to errors db
       if (throwOnFailedInsert) {
         throw new Error(
           `Adapter for ${bridgeDbName} failed to get and insert logs for chain ${chain} for blocks ${startBlockForQuery}-${block}.`
@@ -189,13 +212,14 @@ export const runAdapterHistorical = async (
     }
     block = startBlockForQuery - 1;
   }
+  console.log("finished inserting all transactions")
 };
 
 export const insertConfigEntriesForAdapter = async (
   adapter: BridgeAdapter,
   bridgeDbName: string
 ) => {
-  Object.keys(adapter).map(async (chain) => {
+  await Object.keys(adapter).map(async (chain) => {
     const existingEntry = await getBridgeID(bridgeDbName, chain);
     if (existingEntry) {
       console.log(
