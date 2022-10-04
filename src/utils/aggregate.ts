@@ -174,6 +174,33 @@ export const aggregateData = async (
       error: errString,
     });
     console.log(errString);
+	// If it is daily, insert an entry into db anyway
+	if (!hourly) {
+		try {
+			await sql.begin(async (sql) => {
+			  await insertDailyAggregatedRow(sql, true, {
+				bridge_id: bridgeID,
+				ts: startTimestamp * 1000,
+				total_tokens_deposited: null,
+				total_tokens_withdrawn: null,
+				total_deposited_usd: 0,
+				total_withdrawn_usd: 0,
+				total_deposit_txs: 0,
+				total_withdrawal_txs: 0,
+				total_address_deposited: null,
+				total_address_withdrawn: null,
+			  });
+			});
+		  } catch (e) {
+			const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+			await insertErrorRow({
+			  ts: getCurrentUnixTimestamp(),
+			  target_table: "daily_aggregated",
+			  keyword: "data",
+			  error: errString,
+			});
+		  }
+	}
     return;
   }
   let totalTokensDeposited = [] as string[];
