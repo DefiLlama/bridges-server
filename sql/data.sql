@@ -101,3 +101,16 @@ CREATE TABLE IF NOT EXISTS bridges.daily_aggregated (
 );
 
 CREATE INDEX IF NOT EXISTS daily_aggregated_ts ON bridges.daily_aggregated (ts);
+
+--'target table' can be one of "transactions", "config", "hourly_aggregated", "daily_aggregated", "large_transactions", "none"
+--'keyword' can be one of "critical", "data" (missing), 
+CREATE TABLE IF NOT EXISTS bridges.errors (
+    id INT GENERATED ALWAYS AS IDENTITY,
+    ts TIMESTAMPZ NOT NULL,
+    target_table varchar,
+    keyword varchar,
+    error varchar,
+    UNIQUE (ts, error)
+);
+
+CREATE INDEX IF NOT EXISTS errors_ts ON bridges.errors (ts);

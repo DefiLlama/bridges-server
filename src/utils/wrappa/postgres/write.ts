@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { sql } from "../../db";
 
 const txTypes = {
   bridge_id: "string",
@@ -30,7 +31,7 @@ export const insertTransactionRow = async (
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-    // This definitely seems wrong but I can't find the the correct way to insert template strings into SQL commands
+  // FIX should use dynamicly built strings here, I just didn't finish it
   let sqlCommand = sql`
   insert into bridges.transactions ${sql(params)}
 `;
@@ -40,7 +41,7 @@ export const insertTransactionRow = async (
       ON CONFLICT DO NOTHING
     `;
   } else if (onConflict === "upsert") {
-    // FINISH
+    // FIX finish
   }
 
   Object.entries(params).map(([key, val]) => {
@@ -157,7 +158,6 @@ export const insertHourlyAggregatedRow = async (
       }
     }
   });
-
   for (let i = 0; i < 5; i++) {
     try {
       await sql`
@@ -207,7 +207,6 @@ export const insertDailyAggregatedRow = async (
       }
     }
   });
-
   for (let i = 0; i < 5; i++) {
     try {
       await sql`
@@ -248,6 +247,33 @@ export const insertLargeTransactionRow = async (
         );
       } else {
         console.error(params.tx_pk, e);
+        continue;
+      }
+    }
+  }
+};
+
+export const insertErrorRow = async (
+  params: {
+    ts: number | null;
+    target_table: string;
+    keyword: string | null;
+    error: string | null;
+  }
+) => {
+  for (let i = 0; i < 5; i++) {
+    try {
+      await sql`
+          insert into bridges.errors ${sql(params)}
+        `;
+      return;
+    } catch (e) {
+      if (i >= 4) {
+        throw new Error(
+          `Could not insert error row at timestamp ${params.ts} with error ${params.error}.`
+        );
+      } else {
+        console.error(params.error, e);
         continue;
       }
     }
