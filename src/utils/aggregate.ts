@@ -121,7 +121,7 @@ and didn't spend time to fix it, so unknown usd values are 0 instead.
 
 Large value transactions are only logged when aggregating daily stats.
 
-Aggregates daily data for the day previous to timestamp's current day.
+Aggregates hourly data for the hour previous to timestamp's current hour, and daily data for the day previous to timestamp's current day.
 */
 export const aggregateData = async (
   timestamp: number,
@@ -139,8 +139,9 @@ export const aggregateData = async (
   let startTimestamp = 0;
   let endTimestamp = 0;
   if (hourly) {
-    startTimestamp = getTimestampAtStartOfHour(timestamp);
-    endTimestamp = startTimestamp + secondsInHour;
+    const currentHourTimestamp = getTimestampAtStartOfHour(timestamp)
+    startTimestamp = currentHourTimestamp - secondsInHour;
+    endTimestamp = currentHourTimestamp;
     const existingEntry = await queryAggregatedHourlyDataAtTimestamp(
       startTimestamp,
       chain,
