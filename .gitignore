@@ -1,0 +1,4 @@
+node_modules
+.nvim
+.webpack
+.serverless

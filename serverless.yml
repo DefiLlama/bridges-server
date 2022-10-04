@@ -1,0 +1,114 @@
+service: llama-bridges
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  memorySize: 128
+  timeout: 10
+  region: eu-central-1
+  endpointType: REGIONAL # Set to regional because the api gateway will be behind a cloudfront distribution
+  stage: prod # Default to dev if no stage is specified
+  tracing: # Enable X-Ray tracing (debugging)
+    apiGateway: true
+    lambda: true
+  iamRoleStatements:
+    - Effect: Allow # X-Ray permissions
+      Action:
+        - xray:PutTraceSegments
+        - xray:PutTelemetryRecords
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - rds-data:ExecuteStatement
+        - rds-data:BatchExecuteStatement
+      Resource:
+        - "Fn::Join":
+            - ":"
+            - - "arn:aws:rds-db"
+              - Ref: "AWS::Region"
+              - Ref: "AWS::AccountId"
+              - "db:indexer-instance-1-eu-central-1c"
+    - Effect: Allow # Lambda logs on cloudwatch
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource:
+        - "Fn::Join":
+            - ":"
+            - - "arn:aws:logs"
+              - Ref: "AWS::Region"
+              - Ref: "AWS::AccountId"
+              - "log-group:/aws/lambda/*:*:*"
+    # For warm-up functions
+    - Effect: "Allow"
+      Action:
+        - "lambda:InvokeFunction"
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+        - "s3:*Object*"
+      Resource: "*"
+  environment:
+    PSQL_URL: ${env:PSQL_URL}
+    PSQL_USERNAME: ${env:PSQL_USERNAME}
+    PSQL_PW: ${env:PSQL_PW}
+    MODE: lambda
+
+functions:
+  bridgeDayStats:
+    handler: src/handlers/getBridgeStatsOnDay.default
+    timeout: 30
+    memorySize: 3000
+    events:
+      - http:
+          path: bridgedaystats/{timestamp}/{chain}
+          method: get
+  bridgeVolume:
+    # need to ensure query strings work once caching is set up
+    handler: src/handlers/getBridgeVolume.default
+    timeout: 30
+    memorySize: 3000
+    events:
+      - http:
+          path: bridgevolume/{chain}
+          method: get
+  bridges:
+    handler: src/handlers/getBridges.default
+    timeout: 30
+    memorySize: 3000
+    events:
+      - http:
+          path: bridges
+          method: get
+  runAllAdapters:
+    handler: src/handlers/runAllAdapters.default
+    timeout: 60
+    memorySize: 3000
+    events:
+      - schedule: cron(25 * * * ? *)
+
+resources:
+  # CORS for api gateway errors
+  - ${file(resources/api-gateway-errors.yml)}
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+    packager: "npm"
+    excludeFiles: src/**/*.test.ts
+  prune:
+    automatic: true
+    number: 5 # Number of versions to keep
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-prune-plugin
