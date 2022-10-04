@@ -1,5 +1,4 @@
 import { sql } from "./db";
-import { Chain } from "@defillama/sdk/build/general";
 import BigNumber from "bignumber.js";
 import { queryAllTxsWithinTimestampRange } from "./wrappa/postgres/query";
 import {
@@ -13,7 +12,7 @@ import {
   getBridgeID,
   queryAggregatedHourlyDataAtTimestamp,
   queryAggregatedDailyDataAtTimestamp,
-  queryLargeTransaction
+  queryLargeTransaction,
 } from "./wrappa/postgres/query";
 import {
   insertHourlyAggregatedRow,
@@ -22,7 +21,7 @@ import {
 } from "./wrappa/postgres/write";
 import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
-import {defaultConfidenceThreshold} from "./constants"
+import { defaultConfidenceThreshold } from "./constants";
 
 type CumTokens = {
   [tokenAddress: string]: {
@@ -41,11 +40,11 @@ type CumAddressUsdValues = {
 export const runAggregateDataHistorical = async (
   startTimestamp: number,
   endTimestamp: number,
-  bridgeNetworkID: number,
+  bridgeNetworkId: number,
   hourly: boolean = false,
   chainToRestrictTo?: string
 ) => {
-  const bridgeNetwork = bridgeNetworks[bridgeNetworkID - 1];
+  const bridgeNetwork = bridgeNetworks[bridgeNetworkId - 1];
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
@@ -60,7 +59,13 @@ export const runAggregateDataHistorical = async (
       chains.map(async (chain) => {
         if (chainToRestrictTo && chain !== chainToRestrictTo) return;
         try {
-          await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
+          await aggregateData(
+            timestamp,
+            bridgeDbName,
+            chain,
+            hourly,
+            largeTxThreshold
+          );
         } catch (e) {
           console.error(
             `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`
@@ -88,8 +93,15 @@ export const runAggregateDataAllAdapters = async (
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {
-            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
+            await aggregateData(
+              timestamp,
+              bridgeDbName,
+              chain,
+              hourly,
+              largeTxThreshold
+            );
           } catch (e) {
+            // insert to errors db
             console.error(
               `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`
             );
@@ -116,12 +128,12 @@ export const aggregateData = async (
   hourly?: boolean,
   largeTxThreshold?: number
 ) => {
-    const bridgeID = (await getBridgeID(bridgeName, chain))?.id;
-    if (!bridgeID) {
-      throw new Error(
-        `Could not find ID for ${bridgeName} on chain ${chain}, make sure it is added to config db.`
-      );
-    }
+  const bridgeID = (await getBridgeID(bridgeName, chain))?.id;
+  if (!bridgeID) {
+    throw new Error(
+      `Could not find ID for ${bridgeName} on chain ${chain}, make sure it is added to config db.`
+    );
+  }
   let startTimestamp = 0;
   let endTimestamp = 0;
   if (hourly) {
@@ -158,7 +170,7 @@ export const aggregateData = async (
     endTimestamp,
     bridgeID
   );
-  console.log(txs);
+  // console.log(txs);
   if (txs.length === 0) {
     console.log(
       `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
@@ -178,18 +190,25 @@ export const aggregateData = async (
   let totalDepositTxs = 0 as number;
   let totalWithdrawalTxs = 0 as number;
   let largeTxs = [] as any[];
-  let uniqueTokens = {} as {[token:string]:boolean}
+  let uniqueTokens = {} as { [token: string]: boolean };
   let tokensForPricing = [] as any;
 
-  const pricePromises = Promise.all(
+  const uniqueTokenPromises = Promise.all(
     txs.map(async (tx) => {
-        const { token, chain } = tx;
-        const tokenKey = `${chain}:${token}`;
-        uniqueTokens[tokenKey] = true
-    }))
-    await pricePromises
-    tokensForPricing = Object.keys(uniqueTokens)
-    const llamaPrices = await getLlamaPrices(tokensForPricing, startTimestamp); // this prices tokens all at the same timestamp, can revise how this is done later
+      const { token, chain } = tx;
+      const tokenKey = `${chain}:${token}`;
+      uniqueTokens[tokenKey] = true;
+    })
+  );
+  await uniqueTokenPromises;
+  tokensForPricing = Object.keys(uniqueTokens);
+  const llamaPrices = await getLlamaPrices(tokensForPricing, startTimestamp); // this prices tokens all at the same timestamp, can revise how this is done later
+  // insert to errors db
+  if (Object.keys(llamaPrices).length === 0) {
+    console.log(
+      `No prices for any tokens were found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
+    );
+  }
 
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
@@ -197,11 +216,12 @@ export const aggregateData = async (
       const tokenKey = `${chain}:${token}`;
       const bnAmount = BigNumber(amount);
       let usdValue = null;
-      const priceData = llamaPrices?.[tokenKey]
+      const priceData = llamaPrices?.[tokenKey];
       if (priceData && priceData.confidence > defaultConfidenceThreshold) {
         const { price, decimals } = priceData;
         const bnAmount = BigNumber(amount).dividedBy(10 ** decimals);
         usdValue = bnAmount.multipliedBy(price).toNumber();
+        // insert large values to errors db
         if (usdValue > 10 ** 10) {
           console.error(
             `USD value of tx id ${id} is over 10 billion, skipping.`
@@ -295,10 +315,12 @@ export const aggregateData = async (
       );
     });
 
-    // should deal with this better, and also deal with no priceData returned separately
-    if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
-        console.error(`WARNING: Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalAddressWithdrawn} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`)
-    }
+  // insert to errors db
+  if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
+    console.error(
+      `WARNING: Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalAddressWithdrawn} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
+    );
+  }
 
   /*
   console.log(totalTokensDeposited);
@@ -342,19 +364,16 @@ export const aggregateData = async (
       });
     });
     largeTxs.map(async (largeTx) => {
-        const txPK = largeTx.id
-        const timestamp = largeTx.ts
-        const usdValue = largeTx.usdValue
-        const existingEntry = await queryLargeTransaction(
-            txPK,
-            timestamp
-          );
-          if (existingEntry) {
-            console.log(
-              `Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`
-            );
-            return;
-          }
+      const txPK = largeTx.id;
+      const timestamp = largeTx.ts;
+      const usdValue = largeTx.usdValue;
+      const existingEntry = await queryLargeTransaction(txPK, timestamp);
+      if (existingEntry) {
+        console.log(
+          `Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`
+        );
+        return;
+      }
       try {
         await sql.begin(async (sql) => {
           await insertLargeTransactionRow(sql, {
@@ -364,6 +383,7 @@ export const aggregateData = async (
           });
         });
       } catch (e) {
+        // insert to errors db
         console.log(`Failed to insert large transaction row.`);
       }
     });
