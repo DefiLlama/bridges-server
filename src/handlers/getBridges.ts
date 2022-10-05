@@ -1,13 +1,6 @@
-import {
-  IResponse,
-  successResponse,
-} from "../utils/lambda-response";
+import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import {
-  secondsInDay,
-  secondsInWeek,
-  convertToUnixTimestamp,
-} from "../utils/date";
+import { secondsInDay, secondsInWeek, convertToUnixTimestamp, getCurrentUnixTimestamp } from "../utils/date";
 import {
   queryAggregatedHourlyTimestampRange,
   queryAggregatedDailyTimestampRange,
@@ -22,7 +15,7 @@ const getBridges = async () => {
         const { id, bridgeDbName, displayName, chains } = bridgeNetwork;
         // can use chains to give current chain breakdown, but not needed at this time
 
-        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const currentTimestamp = getCurrentUnixTimestamp();
         const startTimestamp = currentTimestamp - 7 * secondsInDay;
         const lastWeekDailyData = await queryAggregatedDailyTimestampRange(
           startTimestamp,
@@ -66,30 +59,27 @@ const getBridges = async () => {
         }
         */
 
-        const dayBeforeLastVolumeRecord =
-          await getAggregatedDataClosestToTimestamp(
-            lastTS - secondsInDay,
-            secondsInDay,
-            false,
-            undefined,
-            id
-          );
-        const lastWeeklyVolumeRecord =
-          await getAggregatedDataClosestToTimestamp(
-            lastTS - secondsInWeek,
-            secondsInDay,
-            false,
-            undefined,
-            id
-          );
-        const lastMonthlyVolumeRecord =
-          await getAggregatedDataClosestToTimestamp(
-            lastTS - secondsInDay * 30,
-            secondsInDay,
-            false,
-            undefined,
-            id
-          );
+        const dayBeforeLastVolumeRecord = await getAggregatedDataClosestToTimestamp(
+          lastTS - secondsInDay,
+          secondsInDay,
+          false,
+          undefined,
+          id
+        );
+        const lastWeeklyVolumeRecord = await getAggregatedDataClosestToTimestamp(
+          lastTS - secondsInWeek,
+          secondsInDay,
+          false,
+          undefined,
+          id
+        );
+        const lastMonthlyVolumeRecord = await getAggregatedDataClosestToTimestamp(
+          lastTS - secondsInDay * 30,
+          secondsInDay,
+          false,
+          undefined,
+          id
+        );
 
         const dataToReturn = {
           id: id,

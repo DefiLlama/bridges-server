@@ -126,14 +126,14 @@ Aggregates hourly data for the hour previous to timestamp's current hour, and da
 */
 export const aggregateData = async (
   timestamp: number,
-  bridgeName: string,
+  bridgeDbName: string,
   chain: string,
   hourly?: boolean,
   largeTxThreshold?: number
 ) => {
-  const bridgeID = (await getBridgeID(bridgeName, chain))?.id;
+  const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
-    const errString = `Could not find ID for ${bridgeName} on chain ${chain}, make sure it is added to config db.`;
+    const errString = `Could not find ID for ${bridgeDbName} on chain ${chain}, make sure it is added to config db.`;
     await insertErrorRow({
       ts: getCurrentUnixTimestamp(),
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -148,7 +148,7 @@ export const aggregateData = async (
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
     startTimestamp = currentHourTimestamp - secondsInHour;
     endTimestamp = currentHourTimestamp;
-    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeName);
+    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
       console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
       return;
@@ -157,7 +157,7 @@ export const aggregateData = async (
     const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay;
     endTimestamp = timestampAtStartOfDay;
-    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeName);
+    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
       console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
       return;
