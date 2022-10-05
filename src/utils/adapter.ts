@@ -34,7 +34,7 @@ export const runAllAdaptersToCurrentBlock = async (
   if (!recordedBlocks) {
     const errString = `Unable to retrieve recordedBlocks from s3.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -49,7 +49,7 @@ export const runAllAdaptersToCurrentBlock = async (
       if (!adapter) {
         const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
         await insertErrorRow({
-          ts: getCurrentUnixTimestamp(),
+          ts: getCurrentUnixTimestamp() * 1000,
           target_table: "transactions",
           keyword: "critical",
           error: errString,
@@ -66,7 +66,7 @@ export const runAllAdaptersToCurrentBlock = async (
           if (!(number && timestamp)) {
             const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
             await insertErrorRow({
-              ts: getCurrentUnixTimestamp(),
+              ts: getCurrentUnixTimestamp() * 1000,
               target_table: "transactions",
               keyword: "data",
               error: errString,
@@ -104,7 +104,7 @@ export const runAllAdaptersToCurrentBlock = async (
           } catch (e) {
             const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
             await insertErrorRow({
-              ts: getCurrentUnixTimestamp(),
+              ts: getCurrentUnixTimestamp() * 1000,
               target_table: "transactions",
               keyword: "data",
               error: errString,
@@ -137,7 +137,7 @@ export const runAdapterHistorical = async (
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -148,7 +148,7 @@ export const runAdapterHistorical = async (
   if (!adapterChainEventsFn) {
     const errString = `Chain ${chain} not found on adapter ${bridgeDbName}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -162,7 +162,7 @@ export const runAdapterHistorical = async (
   if (!provider) {
     const errString = `Could not get provider for chain ${chainContractsAreOn}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -173,7 +173,7 @@ export const runAdapterHistorical = async (
   if (!bridgeID) {
     const errString = `${bridgeDbName} on chain ${chain} is missing in config table.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -228,7 +228,7 @@ export const runAdapterHistorical = async (
     } catch (e) {
       const errString = `Adapter for ${bridgeDbName} failed to get and insert logs for chain ${chain} for blocks ${startBlockForQuery}-${block}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp(),
+        ts: getCurrentUnixTimestamp() * 1000,
         target_table: "transactions",
         keyword: "data",
         error: errString,

@@ -54,7 +54,7 @@ export const runAggregateDataHistorical = async (
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "critical",
       error: errString,
@@ -72,7 +72,7 @@ export const runAggregateDataHistorical = async (
         } catch (e) {
           const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
           await insertErrorRow({
-            ts: getCurrentUnixTimestamp(),
+            ts: getCurrentUnixTimestamp() * 1000,
             target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
             keyword: "data",
             error: errString,
@@ -100,7 +100,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
           } catch (e) {
             const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
             await insertErrorRow({
-              ts: getCurrentUnixTimestamp(),
+              ts: getCurrentUnixTimestamp() * 1000,
               target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
               keyword: "data",
               error: errString,
@@ -135,7 +135,7 @@ export const aggregateData = async (
   if (!bridgeID) {
     const errString = `Could not find ID for ${bridgeDbName} on chain ${chain}, make sure it is added to config db.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "critical",
       error: errString,
@@ -168,39 +168,39 @@ export const aggregateData = async (
   if (txs.length === 0) {
     const errString = `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
     });
     console.log(errString);
-	// If it is daily, insert an entry into db anyway
-	if (!hourly) {
-		try {
-			await sql.begin(async (sql) => {
-			  await insertDailyAggregatedRow(sql, true, {
-				bridge_id: bridgeID,
-				ts: startTimestamp * 1000,
-				total_tokens_deposited: null,
-				total_tokens_withdrawn: null,
-				total_deposited_usd: 0,
-				total_withdrawn_usd: 0,
-				total_deposit_txs: 0,
-				total_withdrawal_txs: 0,
-				total_address_deposited: null,
-				total_address_withdrawn: null,
-			  });
-			});
-		  } catch (e) {
-			const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
-			await insertErrorRow({
-			  ts: getCurrentUnixTimestamp(),
-			  target_table: "daily_aggregated",
-			  keyword: "data",
-			  error: errString,
-			});
-		  }
-	}
+    // If it is daily, insert an entry into db anyway
+    if (!hourly) {
+      try {
+        await sql.begin(async (sql) => {
+          await insertDailyAggregatedRow(sql, true, {
+            bridge_id: bridgeID,
+            ts: startTimestamp * 1000,
+            total_tokens_deposited: null,
+            total_tokens_withdrawn: null,
+            total_deposited_usd: 0,
+            total_withdrawn_usd: 0,
+            total_deposit_txs: 0,
+            total_withdrawal_txs: 0,
+            total_address_deposited: null,
+            total_address_withdrawn: null,
+          });
+        });
+      } catch (e) {
+        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+        await insertErrorRow({
+          ts: getCurrentUnixTimestamp() * 1000,
+          target_table: "daily_aggregated",
+          keyword: "data",
+          error: errString,
+        });
+      }
+    }
     return;
   }
   let totalTokensDeposited = [] as string[];
@@ -232,7 +232,7 @@ export const aggregateData = async (
   if (Object.keys(llamaPrices).length === 0) {
     const errString = `No prices for any tokens were found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -240,7 +240,7 @@ export const aggregateData = async (
     console.log(errString);
   }
 
-  let nullPriceCount = 0;
+  let tokensWithNullPrices = [] as string[]
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from } = tx;
@@ -255,7 +255,7 @@ export const aggregateData = async (
         if (usdValue > 10 ** 9) {
           const errString = `USD value of tx id ${id} is ${usdValue}.`;
           await insertErrorRow({
-            ts: getCurrentUnixTimestamp(),
+            ts: getCurrentUnixTimestamp() * 1000,
             target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
             keyword: "data",
             error: errString,
@@ -274,7 +274,9 @@ export const aggregateData = async (
         }
       }
       if (!usdValue) {
-        nullPriceCount += 1;
+        if (!tokensWithNullPrices.includes(tokenKey)) {
+			tokensWithNullPrices.push(tokenKey);
+		}
       }
       if (is_deposit) {
         totalDepositTxs += 1;
@@ -306,10 +308,10 @@ export const aggregateData = async (
     })
   );
   await txsPromises;
-  if (nullPriceCount > nullPriceCountThreshold) {
-    const errString = `There are ${nullPriceCount} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
+  if (tokensWithNullPrices.length > nullPriceCountThreshold) {
+    const errString = `There are ${tokensWithNullPrices.length} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -346,9 +348,9 @@ export const aggregateData = async (
     });
 
   if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
-    const errString = `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalAddressWithdrawn} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
+    const errString = `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp(),
+      ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -386,7 +388,7 @@ export const aggregateData = async (
     } catch (e) {
       const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp(),
+        ts: getCurrentUnixTimestamp() * 1000,
         target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
         keyword: "data",
         error: errString,
@@ -411,7 +413,7 @@ export const aggregateData = async (
     } catch (e) {
       const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp(),
+        ts: getCurrentUnixTimestamp() * 1000,
         target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
         keyword: "data",
         error: errString,
@@ -437,7 +439,7 @@ export const aggregateData = async (
       } catch (e) {
         const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
         await insertErrorRow({
-          ts: getCurrentUnixTimestamp(),
+          ts: getCurrentUnixTimestamp() * 1000,
           target_table: "large_transactions",
           keyword: "data",
           error: errString,
