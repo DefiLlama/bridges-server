@@ -12,7 +12,6 @@ export default [
       polygon: "ethereum"
     }
   },
-  /*
   {
     id: 2,
     displayName: "Arbitrum Bridge",
@@ -26,11 +25,23 @@ export default [
   },
   {
     id: 3,
+    displayName: "Avalanche Bridge",
+    bridgeDbName: "avalanche",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["avalanche"],
+    chainMapping: {
+      avax: "ethereum"
+    }
+  },
+  /*
+  {
+    id: 4,
     displayName: "Synapse",
     bridgeDbName: "synapse",
   },
   {
-    id: 4,
+    id: 5,
     displayName: "Hop",
     bridgeDbName: "hop",
   },
