@@ -45,14 +45,25 @@ export default [
       fantom: "ethereum",
     },
   },
-  /*
   {
     id: 5,
+    displayName: "Optimism Gateway",
+    bridgeDbName: "optimism",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["optimism"],
+    chainMapping: {
+      optimism: "ethereum",
+    },
+  },
+  /*
+  {
+    id: 6,
     displayName: "Synapse",
     bridgeDbName: "synapse",
   },
   {
-    id: 6,
+    id: 7,
     displayName: "Hop",
     bridgeDbName: "hop",
   },
