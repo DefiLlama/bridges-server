@@ -9,8 +9,8 @@ export default [
     url: "",
     chains: ["polygon"],
     chainMapping: {
-      polygon: "ethereum"
-    }
+      polygon: "ethereum",
+    },
   },
   {
     id: 2,
@@ -20,8 +20,8 @@ export default [
     url: "",
     chains: ["arbitrum"],
     chainMapping: {
-      arbitrum: "ethereum"
-    }
+      arbitrum: "ethereum",
+    },
   },
   {
     id: 3,
@@ -31,17 +31,28 @@ export default [
     url: "",
     chains: ["avalanche"],
     chainMapping: {
-      avax: "ethereum"
-    }
+      avax: "ethereum",
+    },
+  },
+  {
+    id: 4,
+    displayName: "Multichain: Fantom Bridge",
+    bridgeDbName: "fantom",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["fantom"],
+    chainMapping: {
+      fantom: "ethereum",
+    },
   },
   /*
   {
-    id: 4,
+    id: 5,
     displayName: "Synapse",
     bridgeDbName: "synapse",
   },
   {
-    id: 5,
+    id: 6,
     displayName: "Hop",
     bridgeDbName: "hop",
   },
