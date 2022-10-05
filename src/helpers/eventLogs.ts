@@ -1,10 +1,7 @@
 import { getLogs } from "@defillama/sdk/build/util";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
-import {
-  ContractEventParams,
-  PartialContractEventParams,
-} from "../helpers/bridgeAdapter.type";
+import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 
@@ -31,21 +28,12 @@ const setTransferEventParams = (isDeposit: boolean, target: string) => {
     to: "to",
     amount: "value",
   };
-  const abi = [
-    "event Transfer(address indexed from, address indexed to, uint256 value)",
-  ];
+  const abi = ["event Transfer(address indexed from, address indexed to, uint256 value)"];
   let topics = [];
   if (isDeposit) {
-    topics = [
-      ethers.utils.id("Transfer(address,address,uint256)"),
-      null,
-      ethers.utils.hexZeroPad(target, 32),
-    ];
+    topics = [ethers.utils.id("Transfer(address,address,uint256)"), null, ethers.utils.hexZeroPad(target, 32)];
   } else {
-    topics = [
-      ethers.utils.id("Transfer(address,address,uint256)"),
-      ethers.utils.hexZeroPad(target, 32),
-    ];
+    topics = [ethers.utils.id("Transfer(address,address,uint256)"), ethers.utils.hexZeroPad(target, 32)];
   }
   target = null as any;
   return { topic, logKeys, argKeys, abi, topics, target };
@@ -71,8 +59,7 @@ export const getEVMEventLogs = async (
         }
         // can make following function include a chain parameter if needed
         let topic, logKeys, argKeys, abi, topics, target;
-        ({ topic, logKeys, argKeys, abi, topics, target } =
-          setTransferEventParams(params.isDeposit, params.target));
+        ({ topic, logKeys, argKeys, abi, topics, target } = setTransferEventParams(params.isDeposit, params.target));
         params = {
           ...params,
           topic,
@@ -118,7 +105,7 @@ export const getEVMEventLogs = async (
               chain: overriddenChain,
             })
           ).output;
-
+          // console.log(logs)
           if (logs.length === 0) {
             console.info(
               `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topics ${params.topics}.`
@@ -154,12 +141,11 @@ export const getEVMEventLogs = async (
             topics: txLog.topics,
             data: txLog.data,
           });
+          // console.log(parsedLog)
           if (params.argKeys) {
             const args = parsedLog?.args;
             if (args === undefined || args.length === 0) {
-              throw new Error(
-                `Unable to get log args for ${adapterName} with arg keys ${params.argKeys}.`
-              );
+              throw new Error(`Unable to get log args for ${adapterName} with arg keys ${params.argKeys}.`);
             }
             Object.entries(params.argKeys).map(([eventKey, argKey]) => {
               const value = args[argKey];
@@ -185,44 +171,48 @@ export const getEVMEventLogs = async (
               if (toFilter) dataKeysToFilter.push(i);
             }
           }
+          if (params.txKeys) {
+            const provider = getProvider(overriddenChain) as any;
+            const tx = await provider.getTransaction(txLog.transactionHash);
+            Object.entries(params.txKeys).map(([eventKey, logKey]) => {
+              const value = tx[logKey];
+              if (typeof value !== EventKeyTypes[eventKey]) {
+                throw new Error(
+                  `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
+                    EventKeyTypes[eventKey]
+                  }.`
+                );
+              }
+              data[i][eventKey] = value;
+            });
+          }
           if (params.inputDataExtraction) {
             const provider = getProvider(overriddenChain) as any;
             const tx = await provider.getTransaction(txLog.transactionHash);
-            const iface = new ethers.utils.Interface(
-              params.inputDataExtraction.inputDataABI
-            );
+            const iface = new ethers.utils.Interface(params.inputDataExtraction.inputDataABI);
             try {
-              const inputData = iface.decodeFunctionData(
-                params.inputDataExtraction.inputDataFnName,
-                tx.data
-              );
-              Object.entries(params.inputDataExtraction.inputDataKeys).map(
-                ([eventKey, inputDataKey]) => {
-                  const value = inputData[inputDataKey];
-                  if (typeof value !== EventKeyTypes[eventKey]) {
-                    throw new Error(
-                      `Type of ${eventKey} retrieved using ${inputDataKey} with inputDataExtraction is ${typeof value} when it must be ${
-                        EventKeyTypes[eventKey]
-                      }.`
-                    );
-                  }
-                  data[i][eventKey] = value;
+              const inputData = iface.decodeFunctionData(params.inputDataExtraction.inputDataFnName, tx.data);
+              Object.entries(params.inputDataExtraction.inputDataKeys).map(([eventKey, inputDataKey]) => {
+                const value = inputData[inputDataKey];
+                if (typeof value !== EventKeyTypes[eventKey]) {
+                  throw new Error(
+                    `Type of ${eventKey} retrieved using ${inputDataKey} with inputDataExtraction is ${typeof value} when it must be ${
+                      EventKeyTypes[eventKey]
+                    }.`
+                  );
                 }
-              );
+                data[i][eventKey] = value;
+              });
             } catch (e) {
-              console.error(
-                `Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`
-              );
-              dataKeysToFilter.push(i)
+              console.error(`Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`);
+              dataKeysToFilter.push(i);
             }
           }
           if (params.fixedEventData) {
             Object.entries(params.fixedEventData).map(([eventKey, value]) => {
               if (typeof value !== EventKeyTypes[eventKey]) {
                 throw new Error(
-                  `Type of ${eventKey} in fixedEventData is ${typeof value} when it must be ${
-                    EventKeyTypes[eventKey]
-                  }.`
+                  `Type of ${eventKey} in fixedEventData is ${typeof value} when it must be ${EventKeyTypes[eventKey]}.`
                 );
               }
               data[i][eventKey] = value;

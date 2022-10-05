@@ -19,7 +19,7 @@ export type EventLogFilter = {
   includeArg?: { [key: string]: string }[];
 };
 
-export type InputDataExtraction = {
+type InputDataExtraction = {
   inputDataABI: string[];
   inputDataFnName: string;
   inputDataKeys: EventKeyMapping;
@@ -29,8 +29,9 @@ export type ContractEventParams = {
   target: string | null;
   topic: string;
   abi: string[];
-  logKeys?: EventKeyMapping;
-  argKeys?: EventKeyMapping;
+  logKeys?: EventKeyMapping;  // retrive data from event log
+  argKeys?: EventKeyMapping;  // retrive data from parsed event log
+  txKeys?: EventKeyMapping;   // retrive data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
   chain?: Chain; // can be used to override chain given as parameter in getEVMEventLogs
@@ -46,6 +47,7 @@ export type PartialContractEventParams = {
   abi?: string[];
   logKeys?: EventKeyMapping;
   argKeys?: EventKeyMapping;
+  txKeys?: EventKeyMapping;
   topics?: (string | null)[];
   isDeposit: boolean;
   chain?: Chain;
