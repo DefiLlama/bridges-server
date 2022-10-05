@@ -41,7 +41,8 @@ const setTransferEventParams = (isDeposit: boolean, target: string) => {
 
 export const getEVMEventLogs = async (
   adapterName: string,
-  contractChain: Chain,
+  chainContractsAreOn: Chain,
+  destinationChain: Chain,
   fromBlock: number,
   toBlock: number,
   paramsArray: (ContractEventParams | PartialContractEventParams)[]
@@ -50,7 +51,7 @@ export const getEVMEventLogs = async (
   const getLogsPromises = Promise.all(
     paramsArray.map(async (params) => {
       // if this is ever used, need to also overwrite fromBlock and toBlock
-      const overriddenChain = params.chain ? params.chain : contractChain;
+      const overriddenChain = params.chain ? params.chain : chainContractsAreOn;
       if (params.isTransfer) {
         if (!params.target) {
           throw new Error(
@@ -108,7 +109,7 @@ export const getEVMEventLogs = async (
           // console.log(logs)
           if (logs.length === 0) {
             console.info(
-              `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topics ${params.topics}.`
+              `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${params.topic}.`
             );
           }
           break;
@@ -163,8 +164,8 @@ export const getEVMEventLogs = async (
               const includeArgArray = params.filter.includeArg;
               includeArgArray.map((argMappingToInclude) => {
                 const argKeyToInclude = Object.keys(argMappingToInclude)[0];
-                const argValueToInlcude = Object.values(argMappingToInclude)[0];
-                if (args[argKeyToInclude] === argValueToInlcude) {
+                const argValueToInclude = Object.values(argMappingToInclude)[0];
+                if (args[argKeyToInclude] === argValueToInclude) {
                   toFilter = false;
                 }
               });
@@ -218,6 +219,7 @@ export const getEVMEventLogs = async (
               data[i][eventKey] = value;
             });
           }
+          data[i].chain = destinationChain;
         })
       );
 

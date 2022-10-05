@@ -109,7 +109,7 @@ export const runAllAdaptersToCurrentBlock = async (
               keyword: "data",
               error: errString,
             });
-            console.error(errString);
+            console.error(errString, e);
           }
         })
       );
@@ -236,7 +236,7 @@ export const runAdapterHistorical = async (
       if (throwOnFailedInsert) {
         throw new Error(errString);
       }
-      console.error(errString);
+      console.error(errString, e);
     }
     block = startBlockForQuery - 1;
   }

@@ -77,7 +77,7 @@ export const runAggregateDataHistorical = async (
             keyword: "data",
             error: errString,
           });
-          console.error(errString);
+          console.error(errString, e);
         }
       })
     );
@@ -105,7 +105,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
               keyword: "data",
               error: errString,
             });
-            console.error(errString);
+            console.error(errString, e);
           }
         })
       );
@@ -199,6 +199,7 @@ export const aggregateData = async (
           keyword: "data",
           error: errString,
         });
+		console.error(errString, e)
       }
     }
     return;
@@ -240,7 +241,7 @@ export const aggregateData = async (
     console.log(errString);
   }
 
-  let tokensWithNullPrices = [] as string[]
+  let tokensWithNullPrices = new Set();
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from } = tx;
@@ -274,9 +275,7 @@ export const aggregateData = async (
         }
       }
       if (!usdValue) {
-        if (!tokensWithNullPrices.includes(tokenKey)) {
-			tokensWithNullPrices.push(tokenKey);
-		}
+        tokensWithNullPrices.add(tokenKey);
       }
       if (is_deposit) {
         totalDepositTxs += 1;
@@ -308,8 +307,8 @@ export const aggregateData = async (
     })
   );
   await txsPromises;
-  if (tokensWithNullPrices.length > nullPriceCountThreshold) {
-    const errString = `There are ${tokensWithNullPrices.length} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
+  if (tokensWithNullPrices.size > nullPriceCountThreshold) {
+    const errString = `There are ${tokensWithNullPrices.size} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
     await insertErrorRow({
       ts: getCurrentUnixTimestamp() * 1000,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -393,6 +392,7 @@ export const aggregateData = async (
         keyword: "data",
         error: errString,
       });
+	  console.error(errString, e)
     }
   } else {
     try {
@@ -418,6 +418,7 @@ export const aggregateData = async (
         keyword: "data",
         error: errString,
       });
+	  console.error(errString, e)
     }
     largeTxs.map(async (largeTx) => {
       const txPK = largeTx.id;
@@ -444,7 +445,7 @@ export const aggregateData = async (
           keyword: "data",
           error: errString,
         });
-        console.log(errString);
+        console.log(errString, e);
       }
     });
   }
