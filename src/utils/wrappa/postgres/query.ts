@@ -92,7 +92,7 @@ const queryAllTxsWithinTimestampRange = async (
     bridges.transactions
   WHERE 
     ts >= to_timestamp(${startTimestamp}) AND 
-    ts < to_timestamp(${endTimestamp}) AND
+    ts <= to_timestamp(${endTimestamp}) AND
     bridge_id = ${bridgeID}
   `;
 };
@@ -122,7 +122,7 @@ const queryAggregatedDailyTimestampRange = async (
     bridges.daily_aggregated
   WHERE
   ts >= to_timestamp(${startTimestamp}) AND 
-  ts < to_timestamp(${endTimestamp}) AND 
+  ts <= to_timestamp(${endTimestamp}) AND 
     bridge_id IN (
       SELECT id FROM
         bridges.config
@@ -157,7 +157,7 @@ const queryAggregatedHourlyTimestampRange = async (
     bridges.hourly_aggregated
     WHERE
     ts >= to_timestamp(${startTimestamp}) AND 
-    ts < to_timestamp(${endTimestamp}) AND
+    ts <= to_timestamp(${endTimestamp}) AND
     bridge_id IN (
       SELECT id FROM
         bridges.config
