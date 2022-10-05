@@ -2,3 +2,4 @@ node_modules
 .nvim
 .webpack
 .serverless
+src/adapters/adapterchecklist.txt
