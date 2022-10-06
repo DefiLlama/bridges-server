@@ -36,17 +36,6 @@ export default [
   },
   {
     id: 4,
-    displayName: "Multichain: Fantom Bridge",
-    bridgeDbName: "fantom",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: ["fantom"],
-    chainMapping: {
-      fantom: "ethereum",
-    },
-  },
-  {
-    id: 5,
     displayName: "Optimism Gateway",
     bridgeDbName: "optimism",
     largeTxThreshold: 10000,
@@ -56,16 +45,14 @@ export default [
       optimism: "ethereum",
     },
   },
-  /*
   {
-    id: 6,
-    displayName: "Synapse",
-    bridgeDbName: "synapse",
+    id: 5,
+    displayName: "Multichain",
+    bridgeDbName: "multichain",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["ethereum"],
+    chainMapping: {
+    },
   },
-  {
-    id: 7,
-    displayName: "Hop",
-    bridgeDbName: "hop",
-  },
-  */
 ] as BridgeNetwork[];

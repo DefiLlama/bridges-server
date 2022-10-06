@@ -4,8 +4,8 @@ import synapse from "./synapse";
 import hop from "./hop";
 import arbitrum from "./arbitrum";
 import avalanche from "./avalanche";
-import fantom from "./fantom";
-import optimism from "./optimism"
+import optimism from "./optimism";
+import multichain from "./multichain";
 
 export default {
   polygon,
@@ -13,8 +13,8 @@ export default {
   hop,
   arbitrum,
   avalanche,
-  fantom,
-  optimism
+  optimism,
+  multichain
 } as {
   [bridge: string]: BridgeAdapter;
 };

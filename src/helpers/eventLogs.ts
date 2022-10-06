@@ -42,7 +42,6 @@ const setTransferEventParams = (isDeposit: boolean, target: string) => {
 export const getEVMEventLogs = async (
   adapterName: string,
   chainContractsAreOn: Chain,
-  destinationChain: Chain,
   fromBlock: number,
   toBlock: number,
   paramsArray: (ContractEventParams | PartialContractEventParams)[]
@@ -219,7 +218,6 @@ export const getEVMEventLogs = async (
               data[i][eventKey] = value;
             });
           }
-          data[i].chain = destinationChain;
         })
       );
 
