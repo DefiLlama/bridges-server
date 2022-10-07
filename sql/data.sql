@@ -1,11 +1,11 @@
 CREATE SCHEMA IF NOT EXISTS bridges;
 
---chain is the 'destination chain' for mint/burn bridges, and is the origin chain for pool-based bridges  
+--'chain' is chain the txs are on; for mint/burn bridges with 1 destination, can use 'destination chain' to have its flows counted on that chain but inverted
 CREATE TABLE IF NOT EXISTS bridges.config (
     id uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid (),
     bridge_name varchar NOT NULL,
     chain varchar NOT NULL,
-    destination_chain varchar,
+    destination_chain varchar,  --only non-NULL when there is single destination chain for mint/burn bridge, and the destination chain is not tracked by adapters
     UNIQUE (bridge_name, chain)
 );
 

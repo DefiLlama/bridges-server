@@ -243,7 +243,7 @@ export const runAdapterHistorical = async (
   console.log("finished inserting all transactions");
 };
 
-export const insertConfigEntriesForAdapter = async (adapter: BridgeAdapter, bridgeDbName: string) => {
+export const insertConfigEntriesForAdapter = async (adapter: BridgeAdapter, bridgeDbName: string, destinationChain?: string) => {
   await Object.keys(adapter).map(async (chain) => {
     const existingEntry = await getBridgeID(bridgeDbName, chain);
     if (existingEntry) {
@@ -251,7 +251,7 @@ export const insertConfigEntriesForAdapter = async (adapter: BridgeAdapter, brid
       return;
     }
     await sql.begin(async (sql) => {
-      await insertConfigRow(sql, { bridge_name: bridgeDbName, chain: chain });
+      await insertConfigRow(sql, { bridge_name: bridgeDbName, chain: chain, destination_chain: destinationChain });
     });
   });
 };

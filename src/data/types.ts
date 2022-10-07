@@ -9,5 +9,5 @@ export type BridgeNetwork = {
   chains: string[];
   chainMapping?: {
     [chain: string]: Chain;
-  }; // used when overwriting adapter key (adapter key is always db name and chain volume counts for, can be overwritten to query blocks/contracts on a different chain)
+  }; // used when overwriting adapter key (adapter key is always the chain volume counts for, can be overwritten to query blocks/contracts on a different chain)
 };

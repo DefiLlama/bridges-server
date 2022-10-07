@@ -47,20 +47,14 @@ export const insertTransactionRow = async (
   Object.entries(params).map(([key, val]) => {
     if (val == null) {
       if (allowNullTxValues) {
-        console.info(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       } else {
-        throw new Error(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       }
     } else {
       if (typeof val !== txTypes[key])
         throw new Error(
-          `Transaction for bridgeID ${
-            params.bridge_id
-          } has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
+          `Transaction for bridgeID ${params.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
         );
     }
   });
@@ -70,9 +64,7 @@ export const insertTransactionRow = async (
       return;
     } catch (e) {
       if (i >= 4) {
-        throw new Error(
-          `Could not insert transaction row for bridge ${params.bridge_id}.`
-        );
+        throw new Error(`Could not insert transaction row for bridge ${params.bridge_id}.`);
       } else {
         console.error(`id: ${params.bridge_id}, txHash: ${params.tx_hash}`, e);
         continue;
@@ -87,43 +79,42 @@ export const insertConfigRow = async (
     id?: string;
     bridge_name: string;
     chain: string;
+    destination_chain?: string;
   }
 ) => {
   Object.entries(params).map(([key, val]) => {
     if (key !== "id") {
       if (typeof val !== "string") {
-        throw new Error(
-          `Config for bridge ${params.bridge_name} has a null value or wrong type for ${key}.`
-        );
+        throw new Error(`Config for bridge ${params.bridge_name} has a null value or wrong type for ${key}.`);
       }
     }
   });
-  let sqlStatement;
+  let paramsToAvoidTsError = { bridge_name: params.bridge_name, chain: params.chain } as any;
   if (params.id) {
-    const paramsToAvoidTsError = {
+    paramsToAvoidTsError = {
+      ...paramsToAvoidTsError,
       id: params.id,
-      ...params,
     };
-    sqlStatement = `
-    insert into bridges.config ${sql(paramsToAvoidTsError)}
-  `;
-  } else {
-    sqlStatement = sql`
-    insert into bridges.config ${sql(params, "bridge_name", "chain")}
-  `;
-    for (let i = 0; i < 5; i++) {
-      try {
-        await sqlStatement;
-        return;
-      } catch (e) {
-        if (i >= 4) {
-          throw new Error(
-            `Could not insert config row for ${params.bridge_name} on ${params.chain}`
-          );
-        } else {
-          console.error(params.bridge_name, e);
-          continue;
-        }
+  }
+  if (params.destination_chain) {
+    paramsToAvoidTsError = {
+      ...paramsToAvoidTsError,
+      destination_chain: params.destination_chain,
+    };
+  }
+  const sqlStatement = `
+      insert into bridges.config ${sql(paramsToAvoidTsError)}
+    `;
+  for (let i = 0; i < 5; i++) {
+    try {
+      await sqlStatement;
+      return;
+    } catch (e) {
+      if (i >= 4) {
+        throw new Error(`Could not insert config row for ${params.bridge_name} on ${params.chain}`);
+      } else {
+        console.error(params.bridge_name, e);
+        continue;
       }
     }
   }
@@ -148,13 +139,9 @@ export const insertHourlyAggregatedRow = async (
   Object.entries(params).map(([key, val]) => {
     if (val == null) {
       if (allowNullTxValues) {
-        console.info(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       } else {
-        throw new Error(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       }
     }
   });
@@ -197,13 +184,9 @@ export const insertDailyAggregatedRow = async (
   Object.entries(params).map(([key, val]) => {
     if (val == null) {
       if (allowNullTxValues) {
-        console.info(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       } else {
-        throw new Error(
-          `Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`
-        );
+        throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       }
     }
   });
@@ -253,14 +236,12 @@ export const insertLargeTransactionRow = async (
   }
 };
 
-export const insertErrorRow = async (
-  params: {
-    ts: number | null;
-    target_table: string;
-    keyword: string | null;
-    error: string | null;
-  }
-) => {
+export const insertErrorRow = async (params: {
+  ts: number | null;
+  target_table: string;
+  keyword: string | null;
+  error: string | null;
+}) => {
   for (let i = 0; i < 5; i++) {
     try {
       await sql`
@@ -269,9 +250,7 @@ export const insertErrorRow = async (
       return;
     } catch (e) {
       if (i >= 4) {
-        throw new Error(
-          `Could not insert error row at timestamp ${params.ts} with error ${params.error}.`
-        );
+        throw new Error(`Could not insert error row at timestamp ${params.ts} with error ${params.error}.`);
       } else {
         console.error(params.error, e);
         continue;

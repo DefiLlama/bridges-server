@@ -7,10 +7,7 @@ export default [
     bridgeDbName: "polygon",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["polygon"],
-    chainMapping: {
-      polygon: "ethereum",
-    },
+    chains: ["ethereum", "polygon"],
   },
   {
     id: 2,
@@ -18,10 +15,7 @@ export default [
     bridgeDbName: "arbitrum",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["arbitrum"],
-    chainMapping: {
-      arbitrum: "ethereum",
-    },
+    chains: ["ethereum", "arbitrum"],
   },
   {
     id: 3,
@@ -29,10 +23,7 @@ export default [
     bridgeDbName: "avalanche",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["avalanche"],
-    chainMapping: {
-      avax: "ethereum",
-    },
+    chains: ["ethereum", "avax"],
   },
   {
     id: 4,
@@ -40,10 +31,7 @@ export default [
     bridgeDbName: "optimism",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["optimism"],
-    chainMapping: {
-      optimism: "ethereum",
-    },
+    chains: ["ethereum", "optimism"],
   },
   {
     id: 5,
@@ -51,8 +39,6 @@ export default [
     bridgeDbName: "multichain",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum"],
-    chainMapping: {
-    },
+    chains: ["ethereum", "polygon", "fantom"],
   },
 ] as BridgeNetwork[];
