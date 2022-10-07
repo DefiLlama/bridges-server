@@ -180,7 +180,7 @@ export const aggregateData = async (
         await sql.begin(async (sql) => {
           await insertDailyAggregatedRow(sql, true, {
             bridge_id: bridgeID,
-            ts: startTimestamp * 1000,
+            ts: endTimestamp * 1000,
             total_tokens_deposited: null,
             total_tokens_withdrawn: null,
             total_deposited_usd: 0,
@@ -373,7 +373,7 @@ export const aggregateData = async (
       await sql.begin(async (sql) => {
         await insertHourlyAggregatedRow(sql, true, {
           bridge_id: bridgeID,
-          ts: startTimestamp * 1000,
+          ts: endTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
           total_deposited_usd: totalDepositedUsd,
@@ -399,7 +399,7 @@ export const aggregateData = async (
       await sql.begin(async (sql) => {
         await insertDailyAggregatedRow(sql, true, {
           bridge_id: bridgeID,
-          ts: startTimestamp * 1000,
+          ts: endTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
           total_deposited_usd: totalDepositedUsd,
