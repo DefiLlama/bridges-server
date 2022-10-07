@@ -148,18 +148,18 @@ export const aggregateData = async (
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
     startTimestamp = currentHourTimestamp - secondsInHour;
     endTimestamp = currentHourTimestamp;
-    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
-      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${endTimestamp} already exists, skipping.`);
       return;
     }
   } else {
     const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay;
     endTimestamp = timestampAtStartOfDay;
-    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    const existingEntry = await queryAggregatedDailyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
-      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${endTimestamp} already exists, skipping.`);
       return;
     }
   }
