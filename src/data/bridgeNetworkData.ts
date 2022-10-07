@@ -39,6 +39,6 @@ export default [
     bridgeDbName: "multichain",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "polygon", "fantom"],
+    chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
   },
 ] as BridgeNetwork[];

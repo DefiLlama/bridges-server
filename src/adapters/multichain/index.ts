@@ -13,7 +13,6 @@ where the transferred token is actually the vulnerable address
 see https://medium.com/multichainorg/action-required-critical-vulnerability-for-six-tokens-6b3cbd22bfc0
 0x765277EebeCA2e31912C9946eAe1021199B39C61 is Multichain: Router V4 2
 
-
 no way to get the actual token address from tx logs, only the anyERC version
 need to map all of them, here are some of them:
 ethereum:0x0615Dbba33Fe61a31c7eD131BDA6655Ed76748B1 to WETH
@@ -22,15 +21,64 @@ ethereum:0x7EA2be2df7BA6E54B1A9C70676f668455E329d29 to USDC
 
 ***Polygon***
 0x4f3Aff3A747fCADe12598081e80c6605A8be192F is Multichain: Router V4
+0x2eF4A574b72E1f555185AfA8A09c6d1A8AC4025C is Anyswap: Router V6
+0xAFAace7138ab3c2BCb2DB4264F8312e1Bbb80653 is Anyswap: Router V3
 
 maps:
 polygon:0xbD83010eB60F12112908774998F65761cf9f6f9a to WETH
 polygon:0xE3eeDa11f06a656FcAee19de663E84C7e61d3Cac to USDT
 polygon:0xd69b31c3225728CC57ddaf9be532a4ee1620Be51 to USDC
+polygon:0x21804205C744dd98fbc87898704564d5094bB167 to WMATIC
 
 ***Fantom***
-0x1ccca1ce62c62f7be95d4a67722a8fdbed6eecb4 is Multichain: Router V4
+0x1ccca1ce62c62f7be95d4a67722a8fdbed6eecb4 is Anyswap: Router V4
+0x0B23341fA1Da0171f52aA8Ef85f3946b44d35ac0 is Anyswap: Router V6
+0xf3Ce95Ec61114a4b1bFC615C16E6726015913CCC is Anyswap: Router V3
 
+maps:
+fantom:0xBDC8fd437C489Ca3c6DA3B5a336D11532a532303 to WETH
+fantom:0x2823D10DA533d9Ee873FEd7B16f4A962B2B7f181 to USDT
+fantom:0x95bf7E307BC1ab0BA38ae10fc27084bC36FcD605 to USDC
+fantom:0x6362496bef53458b20548a35a2101214ee2be3e0 to WFTM
+
+***Avalanche***
+0x833F307aC507D47309fD8CDD1F835BeF8D702a93 is Multichain: Router V6
+0x05f024C6F5a94990d32191D6f36211E3Ee33504e is Anyswap: Router V6
+0xB0731d50C681C45856BFc3f7539D5f61d4bE81D8 is Anyswap: Router V4
+0x9b17bAADf0f21F03e35249e0e59723F34994F806 is Anyswap: Router V3
+
+maps:
+avax:0x7D09a42045359Aa85488bC07D0ADa83E22d50017 to WETH
+avax:0xeaF8190fD5042EC3144184241fd405bB1dEC59e8 to USDT
+avax:0xA2f9A3323e3664B9684Fbc9fb64861DC493085df to USDC
+avax:0xe2D27f06F63d98b8e11b38b5b08A75D0c8dD62B9 to WAVAX
+
+***BSC***
+0xe1d592c3322f1F714Ca11f05B6bC0eFEf1907859 is Anyswap: Router V6
+0xf9736ec3926703e85C843FC972BD89A7f8E827C0 is Multichain: Router V3
+0xABd380327Fe66724FFDa91A87c772FB8D00bE488 is Anyswap: Router V4
+
+maps:
+bsc:0x58340A102534080b9D3175F868aeA9f6aF986dD9 to USDC
+bsc:0x6F817a0cE8F7640Add3bC0c1C2298635043c2423 to USDT ?
+bsc:0x6F817a0cE8F7640Add3bC0c1C2298635043c2423 to WETH ?
+
+***Arbitrum***
+0x650Af55D5877F289837c30b94af91538a7504b76 is Multichain: Router V6
+0x0caE51e1032e8461f4806e26332c030E34De3aDb is Anyswap: Router V3
+0xC931f61B1534EB21D8c11B24f3f5Ab2471d4aB50 is Multichain: Router V4
+
+maps:
+arbitrum:0x3405A1bd46B85c5C029483FbECf2F3E611026e45 to USDC
+arbitrum:0x05e481B19129B560E921E487AdB281E70Bdba463 to USDT
+
+***Optimism***
+0xDC42728B0eA910349ed3c6e1c9Dc06b5FB591f98 is Anyswap: Router V6
+
+maps:
+optimism:0x86B3F23B6e90F5bbfac59b5b2661134Ef8Ffd255 to USDT
+optimism:0xf390830DF829cf22c53c8840554B98eafC5dCBc2 to USDC
+optimism:0x965f84D915a9eFa2dD81b653e3AE736555d945f4 to WETH
 */
 
 const contractAddresses = {
@@ -41,8 +89,7 @@ const contractAddresses = {
       "0x765277EebeCA2e31912C9946eAe1021199B39C61",
       "0xe95fD76CF16008c12FF3b3a937CB16Cd9Cc20284",
     ],
-    /* these will be counted in their own adapters
-    eoas: [
+    EOAs: [
       "0xFc7cc7C7e7985316d23104B9689C511134f59bc8", // astar
       "0x13B432914A996b0A48695dF9B2d701edA45FF264", // bnb
       "0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE", // fantom
@@ -59,10 +106,47 @@ const contractAddresses = {
       "0x57ed6BD35a6CE815079855CD0b21331d1D5D0A0e", // telos
       "0xCDd83050f045ab31B884f0Dc49581BC7b3e0B84C", // velas
     ],
-    */
   },
   polygon: {
-    routers: ["0x4f3Aff3A747fCADe12598081e80c6605A8be192F"],
+    routers: [
+      "0x4f3Aff3A747fCADe12598081e80c6605A8be192F",
+      "0x2eF4A574b72E1f555185AfA8A09c6d1A8AC4025C",
+      "0xAFAace7138ab3c2BCb2DB4264F8312e1Bbb80653",
+    ],
+  },
+  fantom: {
+    routers: [
+      "0x1ccca1ce62c62f7be95d4a67722a8fdbed6eecb4",
+      "0x0B23341fA1Da0171f52aA8Ef85f3946b44d35ac0",
+      "0xf3Ce95Ec61114a4b1bFC615C16E6726015913CCC",
+    ],
+  },
+  avax: {
+    routers: [
+      "0x833F307aC507D47309fD8CDD1F835BeF8D702a93",
+      "0x05f024C6F5a94990d32191D6f36211E3Ee33504e",
+      "0xB0731d50C681C45856BFc3f7539D5f61d4bE81D8",
+      "0x9b17bAADf0f21F03e35249e0e59723F34994F806"
+    ],
+  },
+  bsc: {
+    routers: [
+      "0xe1d592c3322f1F714Ca11f05B6bC0eFEf1907859",
+      "0xf9736ec3926703e85C843FC972BD89A7f8E827C0",
+      "0xABd380327Fe66724FFDa91A87c772FB8D00bE488",
+    ],
+  },
+  arbitrum: {
+    routers: [
+      "0x650Af55D5877F289837c30b94af91538a7504b76",
+      "0x0caE51e1032e8461f4806e26332c030E34De3aDb",
+      "0xC931f61B1534EB21D8c11B24f3f5Ab2471d4aB50",
+    ],
+  },
+  optimism: {
+    routers: [
+      "0xDC42728B0eA910349ed3c6e1c9Dc06b5FB591f98",
+    ],
   },
 } as { [chain: string]: any }; // fix
 
@@ -130,8 +214,8 @@ const constructParams = (chain: string) => {
       eventParams.push(finalRouterWithdrawalParams, finalRouterDepositParams);
     });
   }
-  if (chainAddresses.eoas) {
-    chainAddresses.eoas.map((address: string) => {
+  if (chainAddresses.EOAs) {
+    chainAddresses.EOAs.map((address: string) => {
       const transferWithdrawalParams = constructTransferParams(address, false);
       const transferDepositParams = constructTransferParams(address, true);
       eventParams.push(transferWithdrawalParams, transferDepositParams);
@@ -143,7 +227,12 @@ const constructParams = (chain: string) => {
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  //polygon: constructParams("polygon"),
+  polygon: constructParams("polygon"),
+  fantom: constructParams("fantom"),
+  avax: constructParams("avax"),
+  bsc: constructParams("bsc"),
+  arbitrum: constructParams("arbitrum"),
+  optimism: constructParams("optimism")
 };
 
 export default adapter;
