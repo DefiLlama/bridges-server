@@ -83,7 +83,7 @@ export const insertConfigRow = async (
   }
 ) => {
   Object.entries(params).map(([key, val]) => {
-    if (key !== "id") {
+    if (key !== "id" && key !== "destination_chain") {
       if (typeof val !== "string") {
         throw new Error(`Config for bridge ${params.bridge_name} has a null value or wrong type for ${key}.`);
       }

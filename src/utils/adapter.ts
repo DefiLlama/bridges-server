@@ -184,7 +184,7 @@ export const runAdapterHistorical = async (
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
   let block = endBlock;
-  // console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`)
+  console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
   while (block > startBlock) {
     const startBlockForQuery = Math.max(startBlock, block - maxBlocksToQuery);
     try {
@@ -194,12 +194,28 @@ export const runAdapterHistorical = async (
         console.log(`No transactions found for ${bridgeID} from ${startBlockForQuery} to ${block}.`);
         return;
       }
-      // console.log(`${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`)
+      console.log(
+        `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
+      );
       await sql.begin(async (sql) => {
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
             // add timeout?
-            const block = await provider.getBlock(log.blockNumber);
+            let block = {} as { timestamp: number; number: number };
+            for (let i = 0; i < 5; i++) {
+              try {
+                block = await provider.getBlock(log.blockNumber);
+                if (block.timestamp) {
+                  break;
+                }
+              } catch (e) {
+                if (i >= 4) {
+                  throw new Error(
+                    `Failed to get block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
+                  );
+                }
+              }
+            }
             const timestamp = block.timestamp * 1000;
             const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
             const amountString = amount.toString();
@@ -234,7 +250,7 @@ export const runAdapterHistorical = async (
         error: errString,
       });
       if (throwOnFailedInsert) {
-        throw new Error(errString);
+        throw new Error(errString + e);
       }
       console.error(errString, e);
     }
@@ -243,7 +259,11 @@ export const runAdapterHistorical = async (
   console.log("finished inserting all transactions");
 };
 
-export const insertConfigEntriesForAdapter = async (adapter: BridgeAdapter, bridgeDbName: string, destinationChain?: string) => {
+export const insertConfigEntriesForAdapter = async (
+  adapter: BridgeAdapter,
+  bridgeDbName: string,
+  destinationChain?: string
+) => {
   await Object.keys(adapter).map(async (chain) => {
     const existingEntry = await getBridgeID(bridgeDbName, chain);
     if (existingEntry) {
