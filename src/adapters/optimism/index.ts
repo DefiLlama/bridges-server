@@ -111,7 +111,7 @@ const constructParams = () => {
 };
 
 const adapter: BridgeAdapter = {
-  optimism: constructParams(),
+  ethereum: constructParams(),
 };
 
 export default adapter;

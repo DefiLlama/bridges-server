@@ -152,7 +152,7 @@ const constructParams = () => {
 };
 
 const adapter: BridgeAdapter = {
-  arbitrum: constructParams(),
+  ethereum: constructParams(),
 };
 
 export default adapter;

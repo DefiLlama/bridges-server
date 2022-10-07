@@ -29,7 +29,7 @@ const constructParams = () => {
 };
 
 const adapter: BridgeAdapter = {
-  avax: constructParams(),
+  ethereum: constructParams(),
 };
 
 export default adapter;

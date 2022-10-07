@@ -75,7 +75,7 @@ const constructParams = () => {
 };
 
 const adapter: BridgeAdapter = {
-  polygon: constructParams(),
+  ethereum: constructParams(),
 };
 
 export default adapter;
