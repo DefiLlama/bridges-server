@@ -6,6 +6,7 @@ import arbitrum from "./arbitrum";
 import avalanche from "./avalanche";
 import optimism from "./optimism";
 import multichain from "./multichain";
+import celer from "./celer";
 
 export default {
   polygon,
@@ -14,7 +15,8 @@ export default {
   arbitrum,
   avalanche,
   optimism,
-  multichain
+  multichain,
+  celer
 } as {
   [bridge: string]: BridgeAdapter;
 };

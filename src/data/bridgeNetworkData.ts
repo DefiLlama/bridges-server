@@ -41,4 +41,12 @@ export default [
     url: "",
     chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
   },
+  {
+    id: 6,
+    displayName: "Celer",
+    bridgeDbName: "celer",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
+  },
 ] as BridgeNetwork[];
