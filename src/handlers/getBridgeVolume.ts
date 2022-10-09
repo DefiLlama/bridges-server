@@ -1,20 +1,18 @@
-import {
-  IResponse,
-  successResponse,
-  errorResponse,
-} from "../utils/lambda-response";
+import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolume } from "../utils/bridgeVolume";
-import bridgeNetworkData from "../data/bridgeNetworkData";
+import bridgeNetworks from "../data/bridgeNetworkData";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   const queryChain = chain === "all" ? undefined : chain;
-  const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined
+  const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {
-      const bridgeNetwork = bridgeNetworkData[queryId - 1];
+      const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === queryId)[0];
       if (!bridgeNetwork) {
-        throw new Error("No bridge network found.");
+        if (!bridgeNetwork) {
+          throw new Error("No bridge network found.");
+        }
       }
     } catch (e) {
       return errorResponse({
@@ -27,9 +25,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   return response;
 };
 
-const handler = async (
-  event: AWSLambda.APIGatewayEvent
-): Promise<IResponse> => {
+const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const chain = event.pathParameters?.chain?.toLowerCase();
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeVolume(chain, bridgeNetworkId);

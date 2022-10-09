@@ -48,7 +48,7 @@ export const runAggregateDataHistorical = async (
   hourly: boolean = false,
   chainToRestrictTo?: string
 ) => {
-  const bridgeNetwork = bridgeNetworks[bridgeNetworkId - 1];
+  const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
@@ -146,7 +146,7 @@ export const aggregateData = async (
   let endTimestamp = 0;
   if (hourly) {
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
-    startTimestamp = currentHourTimestamp - secondsInHour;
+    startTimestamp = currentHourTimestamp - secondsInHour + 1;
     endTimestamp = currentHourTimestamp;
     const existingEntry = await queryAggregatedHourlyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
@@ -155,7 +155,7 @@ export const aggregateData = async (
     }
   } else {
     const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp);
-    startTimestamp = timestampAtStartOfDay - secondsInDay;
+    startTimestamp = timestampAtStartOfDay - secondsInDay + 1;
     endTimestamp = timestampAtStartOfDay;
     const existingEntry = await queryAggregatedDailyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
