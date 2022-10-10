@@ -223,7 +223,29 @@ const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: st
   `;
 };
 
-export const queryLargeTransaction = async (txPK: number, timestamp: number) => {
+const queryLargeTransactionsTimestampRange = async (
+  chain: string | null,
+  startTimestamp: number,
+  endTimestamp: number
+) => {
+  let chainEqual = sql``;
+  if (chain) {
+    chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`
+  }
+  return await sql<ITransaction[]>`
+  SELECT *
+  FROM   bridges.transactions
+  WHERE  id IN (SELECT tx_pk
+                FROM   bridges.large_transactions
+                WHERE  ts >= To_timestamp(${startTimestamp})
+                       AND ts <= To_timestamp(${endTimestamp}))
+         AND bridge_id IN (SELECT id
+                           FROM   bridges.config
+                           ${chainEqual})
+  ORDER  BY ts DESC `;
+};
+
+const getLargeTransaction = async (txPK: number, timestamp: number) => {
   return (
     await sql<ITransaction[]>`
   SELECT * FROM 
@@ -237,6 +259,8 @@ export const queryLargeTransaction = async (txPK: number, timestamp: number) => 
 
 export {
   getBridgeID,
+  getLargeTransaction,
+  queryLargeTransactionsTimestampRange,
   queryConfig,
   queryAllTxsWithinTimestampRange,
   queryAggregatedHourlyDataAtTimestamp,

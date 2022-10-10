@@ -13,7 +13,7 @@ import {
   getBridgeID,
   queryAggregatedHourlyDataAtTimestamp,
   queryAggregatedDailyDataAtTimestamp,
-  queryLargeTransaction,
+  getLargeTransaction,
 } from "./wrappa/postgres/query";
 import {
   insertHourlyAggregatedRow,
@@ -286,9 +286,10 @@ export const aggregateData = async (
           : bnAmount;
         cumTokensDeposited[tokenKey].usdValue = (cumTokensDeposited[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
         if (tx_from) {
-          cumAddressDeposited[tx_from] = cumAddressDeposited[tx_from] || {};
-          cumAddressDeposited[tx_from].numberTxs = (cumAddressDeposited[tx_from].numberTxs ?? 0) + 1;
-          cumAddressDeposited[tx_from].usdValue = cumAddressDeposited[tx_from].usdValue ?? 0 + (usdValue ?? 0);
+          const addressKey = `${chain}:${tx_from}`
+          cumAddressDeposited[addressKey] = cumAddressDeposited[addressKey] || {};
+          cumAddressDeposited[addressKey].numberTxs = (cumAddressDeposited[addressKey].numberTxs ?? 0) + 1;
+          cumAddressDeposited[addressKey].usdValue = cumAddressDeposited[addressKey].usdValue ?? 0 + (usdValue ?? 0);
         }
       } else {
         totalWithdrawalTxs += 1;
@@ -299,9 +300,10 @@ export const aggregateData = async (
           : bnAmount;
         cumTokensWithdrawn[tokenKey].usdValue = (cumTokensWithdrawn[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
         if (tx_to) {
-          cumAddressWithdrawn[tx_to] = cumAddressWithdrawn[tx_to] || {};
-          cumAddressWithdrawn[tx_to].numberTxs = (cumAddressWithdrawn[tx_to].numberTxs ?? 0) + 1;
-          cumAddressWithdrawn[tx_to].usdValue = cumAddressWithdrawn[tx_to].usdValue ?? 0 + (usdValue ?? 0);
+          const addressKey = `${chain}:${tx_to}`
+          cumAddressWithdrawn[addressKey] = cumAddressWithdrawn[addressKey] || {};
+          cumAddressWithdrawn[addressKey].numberTxs = (cumAddressWithdrawn[addressKey].numberTxs ?? 0) + 1;
+          cumAddressWithdrawn[addressKey].usdValue = cumAddressWithdrawn[addressKey].usdValue ?? 0 + (usdValue ?? 0);
         }
       }
     })
@@ -424,7 +426,7 @@ export const aggregateData = async (
       const txPK = largeTx.id;
       const timestamp = largeTx.ts;
       const usdValue = largeTx.usdValue;
-      const existingEntry = await queryLargeTransaction(txPK, timestamp);
+      const existingEntry = await getLargeTransaction(txPK, timestamp);
       if (existingEntry) {
         console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
         return;
