@@ -1,10 +1,12 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getTimestampAtStartOfDay } from "../utils/date";
-import { queryAggregatedDailyDataAtTimestamp } from "../utils/wrappa/postgres/query";
+import { queryAggregatedDailyDataAtTimestamp, queryConfig } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import BigNumber from "bignumber.js";
+
+const numberOfTokensToReturn = 30 // also determines # of addresses returned
 
 // the following 2 types should probably be combined
 type TokenRecord = {
@@ -29,11 +31,24 @@ type AddressRecord = {
   };
 };
 
+interface IAggregatedData {
+  bridge_id: string;
+  ts: Date;
+  total_tokens_deposited: string[];
+  total_tokens_withdrawn: string[];
+  total_deposited_usd: string;
+  total_withdrawn_usd: string;
+  total_deposit_txs: number;
+  total_withdrawal_txs: number;
+  total_address_deposited: string[];
+  total_address_withdrawn: string[];
+}
+
 const sumTokenTxs = async (
   tokenTotals: string[],
   dailyTokensRecord: TokenRecord,
-  dailyTokensRecordBn: TokenRecordBn
 ) => {
+  let dailyTokensRecordBn = {} as TokenRecordBn;
   const tokenSet = new Set<string>();
   tokenTotals.map((tokenString) => {
     const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
@@ -70,69 +85,106 @@ const sumAddressTxs = (addressTotals: string[], dailyAddresssRecord: AddressReco
   });
 };
 
-// for bridges with dest. chain, always call 'all' from frontend and invert the flows;
+// for bridges with dest. chain, always call with chain = dest. chain from frontend;
 // for other bridges, have to select chain and call with a selected chain
 // can also return total deposit/withdraw USD, deposit/withdraw #txs here if needed
-const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string = "all", bridgeId?: string) => {
-  let bridgeDbName;
+// don't let chain be 'all'
+const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridgeId?: string) => {
+  let bridgeDbName = undefined as any;
   if (!bridgeId) {
-    return errorResponse({
-      message: "Must include bridge id in query string.",
-    });
-  }
-  try {
-    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === parseInt(bridgeId))[0];
-    if (!bridgeNetwork) {
-      throw new Error("No bridge network found.");
+    bridgeDbName = undefined;
+  } else {
+    try {
+      const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === parseInt(bridgeId))[0];
+      if (!bridgeNetwork) {
+        throw new Error("No bridge network found.");
+      }
+      ({ bridgeDbName } = bridgeNetwork);
+    } catch (e) {
+      return errorResponse({
+        message: "Invalid bridgeId entered.",
+      });
     }
-    ({ bridgeDbName } = bridgeNetwork);
-  } catch (e) {
-    return errorResponse({
-      message: "Invalid bridgeId entered.",
-    });
   }
+
+  const sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
+    if (bridgeId) {
+      return config.bridge_name === bridgeDbName;
+    }
+    return true;
+  });
 
   const queryTimestamp = getTimestampAtStartOfDay(parseInt(timestamp));
-  const queryChain = chain === "all" ? undefined : chain;
 
-  const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, queryChain, bridgeDbName);
+  let sourceChainsDailyData = [] as IAggregatedData[];
+  await Promise.all(
+    sourceChainConfigs.map(async (config) => {
+      const sourceChainData = await queryAggregatedDailyDataAtTimestamp(
+        queryTimestamp,
+        config.chain,
+        config.bridge_name
+      );
+      sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
+    })
+  );
 
+  const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, chain, bridgeDbName);
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
-  let dailyTokensDepositedBn = {} as TokenRecordBn;
-  let dailyTokensWithdrawnBn = {} as TokenRecordBn;
   let dailyAddressesDeposited = {} as AddressRecord;
   let dailyAddressesWithdrawn = {} as AddressRecord;
-
   const dailyDataPromises = Promise.all(
     dailyData.map(async (dayData) => {
       const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
         dayData;
-      await sumTokenTxs(total_tokens_deposited, dailyTokensDeposited, dailyTokensDepositedBn);
-      await sumTokenTxs(total_tokens_withdrawn, dailyTokensWithdrawn, dailyTokensWithdrawnBn);
+      await sumTokenTxs(total_tokens_deposited, dailyTokensDeposited);
+      await sumTokenTxs(total_tokens_withdrawn, dailyTokensWithdrawn);
       await sumAddressTxs(total_address_deposited, dailyAddressesDeposited);
       await sumAddressTxs(total_address_withdrawn, dailyAddressesWithdrawn);
     })
   );
-
   await dailyDataPromises;
+
+  // deposits and withdrawals are swapped here
+  const sourceChainsPromises = Promise.all(
+    sourceChainsDailyData.map(async (dayData) => {
+      const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
+        dayData;
+      await sumTokenTxs(total_tokens_deposited, dailyTokensWithdrawn);
+      await sumTokenTxs(total_tokens_withdrawn, dailyTokensDeposited);
+      await sumAddressTxs(total_address_deposited, dailyAddressesWithdrawn);
+      await sumAddressTxs(total_address_withdrawn, dailyAddressesDeposited);
+    })
+  );
+  await sourceChainsPromises;
+
+  const sortedDailyTokensDeposited = Object.fromEntries(Object.entries(dailyTokensDeposited).sort((a, b) => {
+    return (b[1].usdValue - a[1].usdValue)
+  }).slice(0, numberOfTokensToReturn))
+  const sortedDailyTokensWithdrawn = Object.fromEntries(Object.entries(dailyTokensWithdrawn).sort((a, b) => {
+    return (b[1].usdValue - a[1].usdValue)
+  }).slice(0, numberOfTokensToReturn))
+  const sortedDailyAddressesDeposited = Object.fromEntries(Object.entries(dailyAddressesDeposited).sort((a, b) => {
+    return (b[1].usdValue - a[1].usdValue)
+  }).slice(0, numberOfTokensToReturn))
+  const sortedDailyAddressesWithdrawn = Object.fromEntries(Object.entries(dailyAddressesWithdrawn).sort((a, b) => {
+    return (b[1].usdValue - a[1].usdValue)
+  }).slice(0, numberOfTokensToReturn))
 
   const response = {
     date: queryTimestamp,
-    totalTokensDeposited: dailyTokensDeposited,
-    totalTokensWithdrawn: dailyTokensWithdrawn,
-    totalAddressDeposited: dailyAddressesDeposited,
-    totalAddressWithdrawn: dailyAddressesWithdrawn,
+    totalTokensDeposited: sortedDailyTokensDeposited,
+    totalTokensWithdrawn: sortedDailyTokensWithdrawn,
+    totalAddressDeposited: sortedDailyAddressesDeposited,
+    totalAddressWithdrawn: sortedDailyAddressesWithdrawn,
   };
 
   return response;
 };
 
-const handler = async (
-  event: AWSLambda.APIGatewayEvent
-): Promise<IResponse> => {
+const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const timestamp = event.pathParameters?.timestamp;
-  const chain = event.pathParameters?.chain?.toLowerCase();
+  const chain = event.pathParameters?.chain?.toLowerCase() ?? "";
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeStatsOnDay(timestamp, chain, bridgeNetworkId);
   return successResponse(response, 10 * 60); // 10 mins cache
