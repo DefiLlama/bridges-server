@@ -17,13 +17,14 @@ interface ITransaction {
   bridge_id: string;
   chain: string;
   tx_hash?: string;
-  ts: number;
+  ts: Date;
   tx_block?: number;
   tx_from?: string;
   tx_to?: string;
   token: string;
   amount: string;
   is_deposit: boolean;
+  usd_value?: number;
 }
 
 interface IAggregatedData {
@@ -230,19 +231,24 @@ const queryLargeTransactionsTimestampRange = async (
 ) => {
   let chainEqual = sql``;
   if (chain) {
-    chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`
+    chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`;
   }
   return await sql<ITransaction[]>`
-  SELECT *
-  FROM   bridges.transactions
-  WHERE  id IN (SELECT tx_pk
-                FROM   bridges.large_transactions
-                WHERE  ts >= To_timestamp(${startTimestamp})
-                       AND ts <= To_timestamp(${endTimestamp}))
-         AND bridge_id IN (SELECT id
-                           FROM   bridges.config
-                           ${chainEqual})
-  ORDER  BY ts DESC `;
+  SELECT transactions.id, transactions.bridge_id, transactions.ts, transactions.tx_block, transactions.tx_from, transactions.tx_to, transactions.token, transactions.amount, transactions.is_deposit, transactions.chain, large_transactions.usd_value
+  FROM       bridges.transactions
+  INNER JOIN bridges.large_transactions
+  ON         transactions.id = large_transactions.tx_pk
+  WHERE      transactions.id IN
+             (
+                    SELECT tx_pk
+                    FROM   bridges.large_transactions
+                    WHERE  ts >= to_timestamp(${startTimestamp})
+                    AND    ts <= to_timestamp(${endTimestamp}))
+  AND        bridge_id IN
+             (
+                    SELECT id
+                    FROM   bridges.config ${chainEqual})
+  ORDER BY   ts DESC`;
 };
 
 const getLargeTransaction = async (txPK: number, timestamp: number) => {
