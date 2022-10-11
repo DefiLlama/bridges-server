@@ -52,6 +52,17 @@ const getBridgeID = async (bridgNetworkName: string, chain: string) => {
   )[0];
 };
 
+const getConfigsWithDestChain = async () => {
+  return await sql<IConfig[]>`
+    SELECT
+      *
+    FROM
+      bridges.config
+    WHERE
+      destination_chain IS NOT NULL
+  `;
+};
+
 const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinationChain?: string) => {
   // this isn't written propery; can either query by bridgeNetworkName, or a combination of chain/destChain.
   let bridgeNetworkNameEqual = sql``;
@@ -265,6 +276,7 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
 
 export {
   getBridgeID,
+  getConfigsWithDestChain,
   getLargeTransaction,
   queryLargeTransactionsTimestampRange,
   queryConfig,
