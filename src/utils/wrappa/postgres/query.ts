@@ -245,7 +245,7 @@ const queryLargeTransactionsTimestampRange = async (
     chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`;
   }
   return await sql<ITransaction[]>`
-  SELECT transactions.id, transactions.bridge_id, transactions.ts, transactions.tx_block, transactions.tx_from, transactions.tx_to, transactions.token, transactions.amount, transactions.is_deposit, transactions.chain, large_transactions.usd_value
+  SELECT transactions.id, transactions.bridge_id, transactions.ts, transactions.tx_block, transactions.tx_hash, transactions.tx_from, transactions.tx_to, transactions.token, transactions.amount, transactions.is_deposit, transactions.chain, large_transactions.usd_value
   FROM       bridges.transactions
   INNER JOIN bridges.large_transactions
   ON         transactions.id = large_transactions.tx_pk

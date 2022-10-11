@@ -21,12 +21,13 @@ const getLargeTransactions = async (
   const response = largeTransactions.map((tx) => {
     return {
       date: convertToUnixTimestamp(tx.ts),
-      block: tx.tx_block,
+      txHash: tx.tx_hash,
       from: tx.tx_from,
       to: tx.tx_to,
       token: `${tx.chain}:${tx.token}`,
       amount: tx.amount,
       isDeposit: tx.is_deposit,
+      chain: tx.chain,
       usdValue: tx.usd_value,
     };
   });
