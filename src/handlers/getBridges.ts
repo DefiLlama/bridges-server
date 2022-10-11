@@ -1,6 +1,7 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolume } from "../utils/bridgeVolume";
+import { craftBridgeChainsResponse } from "./getBridgeChains";
 import { secondsInDay, secondsInWeek, getCurrentUnixTimestamp } from "../utils/date";
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import bridgeNetworks from "../data/bridgeNetworkData";
@@ -80,7 +81,8 @@ const getBridges = async () => {
         // can include transaction count if needed
         const dataToReturn = {
           id: id,
-          name: displayName,
+          name: bridgeDbName,
+          displayName: displayName,
           url: url,
           volumePrevDay: lastDailyVolume ?? 0,
           volumePrev2Day: dayBeforeLastVolume ?? 0,
@@ -99,8 +101,15 @@ const getBridges = async () => {
   return response;
 };
 
-const handler = async (): Promise<IResponse> => {
-  const response = await getBridges();
+const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
+  const bridges = await getBridges();
+  let response: any = {
+    bridges: bridges,
+  };
+  if (event.queryStringParameters?.includeChains === "true") {
+    const chainData = await craftBridgeChainsResponse();
+    response.chains = chainData;
+  }
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
