@@ -42,7 +42,7 @@ export const getDailyBridgeVolume = async (
     ({ bridgeDbName } = bridgeNetwork);
   }
 
-  const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id)
+  const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
 
   const currentTimestamp = getCurrentUnixTimestamp();
   const dailyStartTimestamp = startTimestamp ? startTimestamp : 0;
@@ -101,7 +101,8 @@ export const getDailyBridgeVolume = async (
 
   let historicalDailySums = {} as { [timestamp: string]: any };
   historicalDailyData.map((dailyData) => {
-    const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = dailyData;
+    const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
+      dailyData;
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
     historicalDailySums[timestamp].depositUSD =
@@ -112,17 +113,18 @@ export const getDailyBridgeVolume = async (
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
 
-      // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
-      if (chainIdsWithSingleEntry.includes(bridge_id)) {
-        historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
-        historicalDailySums[timestamp].depositUSD =
-          (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
-        historicalDailySums[timestamp].withdrawUSD =
-          (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
-        historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
-        historicalDailySums[timestamp].withdrawTxs =
-          (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
-      }
+    // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
+    if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
+      historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
+      historicalDailySums[timestamp].depositUSD =
+        (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      historicalDailySums[timestamp].withdrawUSD =
+        (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+      historicalDailySums[timestamp].depositTxs =
+        (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
+      historicalDailySums[timestamp].withdrawTxs =
+        (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
+    }
   });
   // the deposits and withdrawals are swapped here
   sourceChainsHistoricalDailyData.map((dailyData) => {
@@ -141,7 +143,8 @@ export const getDailyBridgeVolume = async (
     const nextDailyTimestamp = timestampAtStartOfDay + secondsInDay;
     historicalDailySums[nextDailyTimestamp] = historicalDailySums[nextDailyTimestamp] || {};
     currentDayHourlyData.map((hourlyData) => {
-      const { total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = hourlyData;
+      const { bridge_id, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
+        hourlyData;
       historicalDailySums[nextDailyTimestamp].depositUSD =
         (historicalDailySums[nextDailyTimestamp].depositUSD ?? 0) + parseFloat(total_deposited_usd);
       historicalDailySums[nextDailyTimestamp].withdrawUSD =
@@ -150,6 +153,18 @@ export const getDailyBridgeVolume = async (
         (historicalDailySums[nextDailyTimestamp].depositTxs ?? 0) + total_deposit_txs;
       historicalDailySums[nextDailyTimestamp].withdrawTxs =
         (historicalDailySums[nextDailyTimestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
+
+      // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
+      if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
+        historicalDailySums[nextDailyTimestamp].depositUSD =
+          (historicalDailySums[nextDailyTimestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+        historicalDailySums[nextDailyTimestamp].withdrawUSD =
+          (historicalDailySums[nextDailyTimestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+        historicalDailySums[nextDailyTimestamp].depositTxs =
+          (historicalDailySums[nextDailyTimestamp].depositTxs ?? 0) + total_withdrawal_txs;
+        historicalDailySums[nextDailyTimestamp].withdrawTxs =
+          (historicalDailySums[nextDailyTimestamp].withdrawTxs ?? 0) + total_deposit_txs;
+      }
     });
 
     // the deposits and withdrawals are swapped here
@@ -173,6 +188,8 @@ export const getDailyBridgeVolume = async (
     };
   });
 
+  // Think this is not correct.
+  /*
   if (bridgeNetworkId && !chain) {
     const configs = await queryConfig(bridgeDbName);
     // testing to see if there is destination_chain for any config returned
@@ -190,6 +207,7 @@ export const getDailyBridgeVolume = async (
       });
     }
   }
+  */
 
   return dailyBridgeVolume;
 };
@@ -208,6 +226,8 @@ export const getHourlyBridgeVolume = async (
     }
     ({ bridgeDbName } = bridgeNetwork);
   }
+
+  const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
 
   const sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
     if (bridgeNetworkId) {
@@ -238,7 +258,8 @@ export const getHourlyBridgeVolume = async (
 
   let historicalHourlySums = {} as { [timestamp: string]: any };
   historicalHourlyData.map((hourlyData) => {
-    const { ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = hourlyData;
+    const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
+      hourlyData;
     const timestamp = convertToUnixTimestamp(ts);
     historicalHourlySums[timestamp] = historicalHourlySums[timestamp] || {};
     historicalHourlySums[timestamp].depositUSD =
@@ -248,6 +269,19 @@ export const getHourlyBridgeVolume = async (
     historicalHourlySums[timestamp].depositTxs = (historicalHourlySums[timestamp].depositTxs ?? 0) + total_deposit_txs;
     historicalHourlySums[timestamp].withdrawTxs =
       (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
+
+    // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
+    if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
+      historicalHourlySums[timestamp] = historicalHourlySums[timestamp] || {};
+      historicalHourlySums[timestamp].depositUSD =
+        (historicalHourlySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      historicalHourlySums[timestamp].withdrawUSD =
+        (historicalHourlySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+      historicalHourlySums[timestamp].depositTxs =
+        (historicalHourlySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
+      historicalHourlySums[timestamp].withdrawTxs =
+        (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
+    }
   });
   // the deposits and withdrawals are swapped here
   sourceChainsHourlyData.map((hourlyData) => {
@@ -258,7 +292,8 @@ export const getHourlyBridgeVolume = async (
       (historicalHourlySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
     historicalHourlySums[timestamp].withdrawUSD =
       (historicalHourlySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
-    historicalHourlySums[timestamp].depositTxs = (historicalHourlySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
+    historicalHourlySums[timestamp].depositTxs =
+      (historicalHourlySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
     historicalHourlySums[timestamp].withdrawTxs =
       (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
   });
@@ -270,6 +305,7 @@ export const getHourlyBridgeVolume = async (
     };
   });
 
+  /*
   if (bridgeNetworkId && !chain) {
     const configs = await queryConfig(bridgeDbName);
     // testing to see if there is destination_chain for any config returned
@@ -287,6 +323,7 @@ export const getHourlyBridgeVolume = async (
       });
     }
   }
+  */
 
   return hourlyBridgeVolume;
 };
