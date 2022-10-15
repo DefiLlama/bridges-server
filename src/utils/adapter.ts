@@ -131,7 +131,7 @@ export const runAdapterHistorical = async (
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  const bridgeNetwork = bridgeNetworks[bridgeNetworkId - 1];
+  const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
