@@ -149,18 +149,18 @@ export const aggregateData = async (
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
     startTimestamp = currentHourTimestamp - secondsInHour + 1;
     endTimestamp = currentHourTimestamp;
-    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
+    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
-      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${endTimestamp} already exists, skipping.`);
+      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
       return;
     }
   } else {
     const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay + 1;
     endTimestamp = timestampAtStartOfDay;
-    const existingEntry = await queryAggregatedDailyDataAtTimestamp(endTimestamp, chain, bridgeDbName);
+    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
     if (existingEntry.length) {
-      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${endTimestamp} already exists, skipping.`);
+      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
       return;
     }
   }
@@ -181,7 +181,7 @@ export const aggregateData = async (
         await sql.begin(async (sql) => {
           await insertDailyAggregatedRow(sql, true, {
             bridge_id: bridgeID,
-            ts: endTimestamp * 1000,
+            ts: startTimestamp * 1000,
             total_tokens_deposited: null,
             total_tokens_withdrawn: null,
             total_deposited_usd: 0,
@@ -200,7 +200,7 @@ export const aggregateData = async (
           keyword: "data",
           error: errString,
         });
-		console.error(errString, e)
+        console.error(errString, e);
       }
     }
     return;
@@ -287,7 +287,7 @@ export const aggregateData = async (
           : bnAmount;
         cumTokensDeposited[tokenKey].usdValue = (cumTokensDeposited[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
         if (tx_from) {
-          const addressKey = `${chain}:${tx_from}`
+          const addressKey = `${chain}:${tx_from}`;
           cumAddressDeposited[addressKey] = cumAddressDeposited[addressKey] || {};
           cumAddressDeposited[addressKey].numberTxs = (cumAddressDeposited[addressKey].numberTxs ?? 0) + 1;
           cumAddressDeposited[addressKey].usdValue = cumAddressDeposited[addressKey].usdValue ?? 0 + (usdValue ?? 0);
@@ -301,7 +301,7 @@ export const aggregateData = async (
           : bnAmount;
         cumTokensWithdrawn[tokenKey].usdValue = (cumTokensWithdrawn[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
         if (tx_to) {
-          const addressKey = `${chain}:${tx_to}`
+          const addressKey = `${chain}:${tx_to}`;
           cumAddressWithdrawn[addressKey] = cumAddressWithdrawn[addressKey] || {};
           cumAddressWithdrawn[addressKey].numberTxs = (cumAddressWithdrawn[addressKey].numberTxs ?? 0) + 1;
           cumAddressWithdrawn[addressKey].usdValue = cumAddressWithdrawn[addressKey].usdValue ?? 0 + (usdValue ?? 0);
@@ -319,6 +319,9 @@ export const aggregateData = async (
       error: errString,
     });
     console.error(errString);
+  }
+  if (tokensWithNullPrices.size > 0) {
+    console.log(`These tokens do not have prices: ${Array.from(tokensWithNullPrices)}.`);
   }
   Object.entries(cumTokensDeposited)
     .sort((a, b) => {
@@ -376,7 +379,7 @@ export const aggregateData = async (
       await sql.begin(async (sql) => {
         await insertHourlyAggregatedRow(sql, true, {
           bridge_id: bridgeID,
-          ts: endTimestamp * 1000,
+          ts: startTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
           total_deposited_usd: totalDepositedUsd,
@@ -395,14 +398,14 @@ export const aggregateData = async (
         keyword: "data",
         error: errString,
       });
-	  console.error(errString, e)
+      console.error(errString, e);
     }
   } else {
     try {
       await sql.begin(async (sql) => {
         await insertDailyAggregatedRow(sql, true, {
           bridge_id: bridgeID,
-          ts: endTimestamp * 1000,
+          ts: startTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
           total_deposited_usd: totalDepositedUsd,
@@ -421,7 +424,7 @@ export const aggregateData = async (
         keyword: "data",
         error: errString,
       });
-	  console.error(errString, e)
+      console.error(errString, e);
     }
     largeTxs.map(async (largeTx) => {
       const txPK = largeTx.id;
