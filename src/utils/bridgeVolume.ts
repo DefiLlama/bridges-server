@@ -74,7 +74,9 @@ export const getDailyBridgeVolume = async (
     bridgeDbName
   );
 
-  const timestampAtStartOfDay = getTimestampAtStartOfDay(currentTimestamp);
+  const timestampAtStartOfDay = getTimestampAtStartOfDay(currentTimestamp)
+  // this 'currentDay' idea doesn't work great, can re-think and re-write
+  /*
   let currentDayHourlyData = [] as IAggregatedData[];
   let sourceChainsCurrentDayHourlyData = [] as IAggregatedData[];
   if (!(endTimestamp && endTimestamp < timestampAtStartOfDay)) {
@@ -86,6 +88,7 @@ export const getDailyBridgeVolume = async (
       chain,
       bridgeDbName
     );
+
     await Promise.all(
       sourceChainConfigs.map(async (config) => {
         const sourceChainCurrentDayData = await queryAggregatedHourlyTimestampRange(
@@ -98,6 +101,7 @@ export const getDailyBridgeVolume = async (
       })
     );
   }
+  */
 
   let historicalDailySums = {} as { [timestamp: string]: any };
   historicalDailyData.map((dailyData) => {
@@ -139,6 +143,7 @@ export const getDailyBridgeVolume = async (
     historicalDailySums[timestamp].withdrawTxs = (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
   });
 
+  /*
   if (currentDayHourlyData.length || sourceChainsCurrentDayHourlyData.length) {
     const nextDailyTimestamp = timestampAtStartOfDay + secondsInDay;
     historicalDailySums[nextDailyTimestamp] = historicalDailySums[nextDailyTimestamp] || {};
@@ -180,6 +185,7 @@ export const getDailyBridgeVolume = async (
         (historicalDailySums[nextDailyTimestamp].withdrawTxs ?? 0) + total_deposit_txs;
     });
   }
+  */
 
   let dailyBridgeVolume = Object.entries(historicalDailySums).map(([timestamp, data]) => {
     return {
