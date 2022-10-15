@@ -2,6 +2,7 @@ import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { queryLargeTransactionsTimestampRange } from "../utils/wrappa/postgres/query";
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
+import { getLlamaPrices } from "../utils/prices";
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -18,13 +19,19 @@ const getLargeTransactions = async (
     queryEndTimestamp
   );
 
+  const tokenSet = new Set<string>();
+  largeTransactions.map((tx) => {
+    tokenSet.add(`${tx.chain}:${tx.token}`);
+  })
+  const prices = await getLlamaPrices(Array.from(tokenSet));
   const response = largeTransactions.map((tx) => {
     return {
       date: convertToUnixTimestamp(tx.ts),
-      txHash: tx.tx_hash,
+      txHash: `${tx.chain}:${tx.tx_hash}`,
       from: tx.tx_from,
       to: tx.tx_to,
       token: `${tx.chain}:${tx.token}`,
+      symbol: prices?.[`${tx.chain}:${tx.token}`]?.symbol ?? "unknown",
       amount: tx.amount,
       isDeposit: tx.is_deposit,
       chain: tx.chain,
