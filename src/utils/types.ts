@@ -15,3 +15,10 @@ export type EventData = {
 export type EventKeyMapping = {
     [key in EventKeys]?: string;
   };
+
+export type RecordedBlocks = {
+  [adapterDbNameChain: string]: {
+    startBlock: number;
+    endBlock: number;
+  };
+};

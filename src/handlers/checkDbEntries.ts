@@ -1,4 +1,5 @@
 import { wrapScheduledLambda } from "../utils/wrap";
+import { getLatestBlock } from "@defillama/sdk/build/util";
 import {
   queryAggregatedHourlyTimestampRange,
   queryAggregatedDailyTimestampRange,
@@ -7,6 +8,10 @@ import { insertErrorRow } from "../utils/wrappa/postgres/write";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDay, secondsInDay } from "../utils/date";
+import { maxBlocksToQueryByChain } from "../utils/constants";
+import type { RecordedBlocks } from "../utils/types";
+const axios = require("axios");
+const retry = require("async-retry");
 
 export default wrapScheduledLambda(async (_event) => {
   const timestampAtStartOfDay = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
@@ -55,4 +60,39 @@ export default wrapScheduledLambda(async (_event) => {
       );
     })
   );
+
+  const recordedBlocks = (
+    await retry(
+      async (_bail: any) =>
+        await axios.get("https://llama-bridges-data.s3.eu-central-1.amazonaws.com/recordedBlocks.json")
+    )
+  ).data as RecordedBlocks;
+  let adaptersBehind = [] as string[];
+  let latestChainBlocks = {} as any;
+  const getBlocksPromises = Promise.all(
+    Object.keys(recordedBlocks).map(async (adapter) => {
+      const chain = adapter.split(":")[1];
+      if (!latestChainBlocks[chain]) {
+        latestChainBlocks[chain] = (await getLatestBlock(chain)).number;
+      }
+    })
+  );
+  await getBlocksPromises;
+  Object.entries(recordedBlocks).map(([adapter, recordedBlocks]) => {
+    const chain = adapter.split(":")[1];
+    const maxBlocksToBeBehindBy = maxBlocksToQueryByChain[chain]
+      ? maxBlocksToQueryByChain[chain]
+      : maxBlocksToQueryByChain.default;
+    if (Math.abs(recordedBlocks.endBlock - latestChainBlocks[chain]) > maxBlocksToBeBehindBy) {
+      adaptersBehind.push(adapter);
+    }
+  });
+  if (adaptersBehind.length > 0) {
+    await insertErrorRow({
+      ts: getCurrentUnixTimestamp() * 1000,
+      target_table: "transactions",
+      keyword: "data",
+      error: `These adapters are currently running behind: ${adaptersBehind}.`,
+    });
+  }
 });

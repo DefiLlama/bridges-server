@@ -9,15 +9,10 @@ import { maxBlocksToQueryByChain } from "./constants";
 import { store } from "./s3";
 import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
+import type { RecordedBlocks } from "./types";
 const axios = require("axios");
 const retry = require("async-retry");
 
-type RecordedBlocks = {
-  [adapterDbNameChain: string]: {
-    startBlock: number;
-    endBlock: number;
-  };
-};
 
 // FIX timeout problems throughout functions here
 
@@ -77,7 +72,7 @@ export const runAllAdaptersToCurrentBlock = async (
           const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
             ? maxBlocksToQueryByChain[chainContractsAreOn]
             : maxBlocksToQueryByChain.default;
-          let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}-${chain}`]?.endBlock;
+          let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
           if (!lastRecordedEndBlock) {
             const defaultStartBlock = number - maxBlocksToQuery;
             lastRecordedEndBlock = defaultStartBlock;
@@ -97,10 +92,10 @@ export const runAllAdaptersToCurrentBlock = async (
               true,
               onConflict
             );
-            recordedBlocks[`${bridgeDbName}-${chain}`] = recordedBlocks[`${bridgeDbName}-${chain}`] || {};
-            recordedBlocks[`${bridgeDbName}-${chain}`].startBlock =
-              recordedBlocks[`${bridgeDbName}-${chain}`]?.startBlock ?? lastRecordedEndBlock + 1;
-            recordedBlocks[`${bridgeDbName}-${chain}`].endBlock = number;
+            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? lastRecordedEndBlock + 1;
+            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = number;
           } catch (e) {
             const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
             await insertErrorRow({
@@ -246,7 +241,7 @@ export const runAdapterHistorical = async (
       await insertErrorRow({
         ts: getCurrentUnixTimestamp() * 1000,
         target_table: "transactions",
-        keyword: "data",
+        keyword: "missingBlocks",
         error: errString,
       });
       if (throwOnFailedInsert) {
