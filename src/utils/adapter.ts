@@ -187,7 +187,8 @@ export const runAdapterHistorical = async (
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
         console.log(`No transactions found for ${bridgeID} from ${startBlockForQuery} to ${block}.`);
-        return;
+        block = startBlockForQuery - 1;
+        continue;
       }
       console.log(
         `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
