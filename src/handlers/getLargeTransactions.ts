@@ -3,6 +3,7 @@ import wrap from "../utils/wrap";
 import { queryLargeTransactionsTimestampRange } from "../utils/wrappa/postgres/query";
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
 import { getLlamaPrices } from "../utils/prices";
+import { transformTokens } from "../helpers/tokenMappings";
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -21,17 +22,24 @@ const getLargeTransactions = async (
 
   const tokenSet = new Set<string>();
   largeTransactions.map((tx) => {
-    tokenSet.add(`${tx.chain}:${tx.token}`);
-  })
+    const symbol = transformTokens[tx.chain]?.[tx.token]
+      ? transformTokens[tx.chain]?.[tx.token]
+      : `${tx.chain}:${tx.token}`;
+    tokenSet.add(symbol);
+  });
   const prices = await getLlamaPrices(Array.from(tokenSet));
   const response = largeTransactions.map((tx) => {
+    const transformedToken = transformTokens[tx.chain]?.[tx.token]
+      ? transformTokens[tx.chain]?.[tx.token]
+      : `${tx.chain}:${tx.token}`;
+    const symbol = prices?.[transformedToken]?.symbol ?? "unknown";
     return {
       date: convertToUnixTimestamp(tx.ts),
       txHash: `${tx.chain}:${tx.tx_hash}`,
       from: tx.tx_from,
       to: tx.tx_to,
       token: `${tx.chain}:${tx.token}`,
-      symbol: prices?.[`${tx.chain}:${tx.token}`]?.symbol ?? "unknown",
+      symbol: symbol,
       amount: tx.amount,
       isDeposit: tx.is_deposit,
       chain: tx.chain,
