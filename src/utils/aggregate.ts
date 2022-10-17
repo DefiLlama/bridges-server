@@ -3,10 +3,10 @@ import BigNumber from "bignumber.js";
 import { queryAllTxsWithinTimestampRange } from "./wrappa/postgres/query";
 import {
   getTimestampAtStartOfHour,
-  getTimestampAtStartOfDay,
   secondsInHour,
   secondsInDay,
   getCurrentUnixTimestamp,
+  getTimestampAtStartOfDayUTC,
 } from "./date";
 import { getLlamaPrices } from "./prices";
 import {
@@ -155,7 +155,7 @@ export const aggregateData = async (
       return;
     }
   } else {
-    const timestampAtStartOfDay = getTimestampAtStartOfDay(timestamp);
+    const timestampAtStartOfDay = getTimestampAtStartOfDayUTC(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay;
     endTimestamp = timestampAtStartOfDay - 1;
     const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);

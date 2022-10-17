@@ -239,7 +239,7 @@ export const insertLargeTransactionRow = async (
 export const insertErrorRow = async (params: {
   ts: number | null;
   target_table: string;
-  keyword: string | null; // 'data', 'critical', missingBlocks
+  keyword: string | null; // 'data', 'critical', 'missingBlocks'
   error: string | null;
 }) => {
   for (let i = 0; i < 5; i++) {

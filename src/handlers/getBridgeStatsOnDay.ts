@@ -85,8 +85,6 @@ const sumAddressTxs = (addressTotals: string[], dailyAddresssRecord: AddressReco
   });
 };
 
-// for bridges with dest. chain, always call with chain = dest. chain from frontend;
-// for other bridges, have to select chain and call with a selected chain
 // can also return total deposit/withdraw USD, deposit/withdraw #txs here if needed
 // don't let chain be 'all'
 const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridgeId?: string) => {
