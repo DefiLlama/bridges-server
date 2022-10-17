@@ -60,10 +60,8 @@ const teleportrDepositParams: PartialContractEventParams = {
     txHash: "transactionHash",
   },
   argKeys: {
+    from: "emitter",
     amount: "amount",
-  },
-  txKeys: {
-    from: "from",
   },
   fixedEventData: {
     to: "0x52ec2F3d7C5977A8E558C8D9C6000B615098E8fC",
@@ -154,7 +152,6 @@ const constructParams = () => {
     daiWithdrawalEventParams,
     snxWithdrawalEventParams,
     lidoWithdrawalEventParams,
-    
   ];
   return async (fromBlock: number, toBlock: number) =>
     getEVMEventLogs("optimism", "ethereum", fromBlock, toBlock, eventParams);
