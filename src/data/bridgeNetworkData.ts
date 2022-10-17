@@ -1,5 +1,6 @@
 import type { BridgeNetwork } from "./types";
 
+// FIX need to control chain naming here
 export default [
   {
     id: 1,
@@ -7,7 +8,8 @@ export default [
     bridgeDbName: "polygon",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "polygon"],
+    chains: ["Ethereum", "Polygon"],
+    destinationChain: "Polygon",
   },
   {
     id: 2,
@@ -15,7 +17,8 @@ export default [
     bridgeDbName: "arbitrum",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "arbitrum"],
+    chains: ["Ethereum", "Arbitrum"],
+    destinationChain: "Arbitrum",
   },
   {
     id: 3,
@@ -23,7 +26,8 @@ export default [
     bridgeDbName: "avalanche",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "avax"],
+    chains: ["Ethereum", "Avalanche"],
+    destinationChain: "Avalanche",
   },
   {
     id: 4,
@@ -31,16 +35,19 @@ export default [
     bridgeDbName: "optimism",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "optimism"],
+    chains: ["Ethereum", "Optimism"],
   },
+ /*
   {
     id: 5,
     displayName: "Multichain",
     bridgeDbName: "multichain",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum"],
   },
+  */
+  /*
   {
     id: 6,
     displayName: "Celer",
@@ -49,4 +56,5 @@ export default [
     url: "",
     chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
   },
+  */
 ] as BridgeNetwork[];
