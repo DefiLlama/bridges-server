@@ -122,6 +122,7 @@ export const getEVMEventLogs = async (
       }
 
       let dataKeysToFilter = [] as number[];
+      const provider = getProvider(overriddenChain) as any;
       const logPromises = Promise.all(
         logs.map(async (txLog: any, i) => {
           data[i] = data[i] || {};
@@ -172,19 +173,23 @@ export const getEVMEventLogs = async (
             }
           }
           if (params.txKeys) {
-            const provider = getProvider(overriddenChain) as any;
             const tx = await provider.getTransaction(txLog.transactionHash);
-            Object.entries(params.txKeys).map(([eventKey, logKey]) => {
-              const value = tx[logKey];
-              if (typeof value !== EventKeyTypes[eventKey]) {
-                throw new Error(
-                  `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
-                    EventKeyTypes[eventKey]
-                  }.`
-                );
-              }
-              data[i][eventKey] = value;
-            });
+            if (!tx) {
+              console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+              dataKeysToFilter.push(i);
+            } else {
+              Object.entries(params.txKeys).map(([eventKey, logKey]) => {
+                const value = tx[logKey];
+                if (typeof value !== EventKeyTypes[eventKey]) {
+                  throw new Error(
+                    `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
+                      EventKeyTypes[eventKey]
+                    }.`
+                  );
+                }
+                data[i][eventKey] = value;
+              });
+            }
           }
           if (params.inputDataExtraction) {
             const provider = getProvider(overriddenChain) as any;
@@ -220,7 +225,6 @@ export const getEVMEventLogs = async (
           }
         })
       );
-
       await logPromises;
 
       dataKeysToFilter.map((key) => {
