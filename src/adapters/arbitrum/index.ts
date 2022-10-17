@@ -126,6 +126,7 @@ const ethWithdrawalEventParams: PartialContractEventParams = {
     to: "to",
   },
   fixedEventData: {
+    from: "0x8315177aB297bA92A06054cE80a67Ed4DBd7ed3a",
     token: WETH,
   },
   isDeposit: false,
