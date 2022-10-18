@@ -54,7 +54,18 @@ export default [
     bridgeDbName: "polynetwork",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chainMapping: {
+      "avalanche":"avax"
+    }
+  },
+  {
+    id: 7,
+    displayName: "Orbit Bridge",
+    bridgeDbName: "orbitbridge",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
     chainMapping: {
       "avalanche":"avax"
     }
@@ -62,14 +73,6 @@ export default [
   /*
   {
     id: 9,
-    displayName: "Celer",
-    bridgeDbName: "celer",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: ["ethereum", "polygon", "fantom", "avax", "bsc", "arbitrum"],
-  },
-  {
-    id: 10,
     displayName: "Portal by Wormhole",
     bridgeDbName: "portal",
     largeTxThreshold: 10000,
@@ -77,4 +80,12 @@ export default [
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
   },
   */
+  {
+    id: 10,
+    displayName: "Celer",
+    bridgeDbName: "celer",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+  }, 
 ] as BridgeNetwork[];
