@@ -111,6 +111,9 @@ const constructParams = (chain: string) => {
     fixedEventData: {
       from: chainAddress,
     },
+    mapTokens: {
+      "0x0000000000000000000000000000000000000000": nativeToken,
+    },
   };
   eventParams.push(finalErcDepositParams, finalErcWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
