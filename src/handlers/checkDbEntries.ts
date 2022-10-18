@@ -15,8 +15,8 @@ const retry = require("async-retry");
 
 export default wrapScheduledLambda(async (_event) => {
   const timestampAtStartOfDay = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
-  const startTimestamp = timestampAtStartOfDay - secondsInDay + 1;
-  const endTimestamp = timestampAtStartOfDay;
+  const startTimestamp = timestampAtStartOfDay - secondsInDay;
+  const endTimestamp = timestampAtStartOfDay - 1;
   await Promise.all(
     bridgeNetworks.map(async (bridgeNetwork) => {
       const { bridgeDbName } = bridgeNetwork;
