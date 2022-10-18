@@ -15,6 +15,7 @@ see https://medium.com/multichainorg/action-required-critical-vulnerability-for-
 
 no way to get the actual token address from tx logs, only the anyERC version
 need to map all of them, here are some of them:
+maps:
 ethereum:0x0615Dbba33Fe61a31c7eD131BDA6655Ed76748B1 to WETH
 ethereum:0x22648C12acD87912EA1710357B1302c6a4154Ebc to USDT
 ethereum:0x7EA2be2df7BA6E54B1A9C70676f668455E329d29 to USDC
@@ -60,7 +61,6 @@ avax:0xe2D27f06F63d98b8e11b38b5b08A75D0c8dD62B9 to WAVAX
 
 maps:
 bsc:0x58340A102534080b9D3175F868aeA9f6aF986dD9 to USDC
-bsc:0x6F817a0cE8F7640Add3bC0c1C2298635043c2423 to USDT ?
 bsc:0x6F817a0cE8F7640Add3bC0c1C2298635043c2423 to WETH ?
 
 ***Arbitrum***
@@ -229,7 +229,7 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
-  avax: constructParams("avax"),
+  avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism")
