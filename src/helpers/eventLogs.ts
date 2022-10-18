@@ -142,7 +142,7 @@ export const getEVMEventLogs = async (
             topics: txLog.topics,
             data: txLog.data,
           });
-          // console.log(parsedLog)
+          //console.log(parsedLog)
           if (params.argKeys) {
             const args = parsedLog?.args;
             if (args === undefined || args.length === 0) {
@@ -150,7 +150,7 @@ export const getEVMEventLogs = async (
             }
             Object.entries(params.argKeys).map(([eventKey, argKey]) => {
               const value = args[argKey];
-              if (typeof value !== EventKeyTypes[eventKey]) {
+              if (typeof value !== EventKeyTypes[eventKey] && (!Array.isArray(value))) {
                 throw new Error(
                   `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
                     EventKeyTypes[eventKey]
@@ -192,7 +192,6 @@ export const getEVMEventLogs = async (
             }
           }
           if (params.inputDataExtraction) {
-            const provider = getProvider(overriddenChain) as any;
             const tx = await provider.getTransaction(txLog.transactionHash);
             const iface = new ethers.utils.Interface(params.inputDataExtraction.inputDataABI);
             try {
@@ -212,6 +211,17 @@ export const getEVMEventLogs = async (
               console.error(`Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`);
               dataKeysToFilter.push(i);
             }
+          }
+          if (params.selectIndexesFromArrays) {
+            Object.entries(params.selectIndexesFromArrays).map(([eventKey, value]) => {
+              if (!(Array.isArray(data[i][eventKey]))) {
+                throw new Error(
+                  `${eventKey} is not an array, but it has been specified as being one in 'selectIndexesFromArrays' in adapter.`
+                );
+              }
+              const extractedValue = data[i][eventKey][parseInt(value)]
+              data[i][eventKey] = extractedValue
+            })
           }
           if (params.mapTokens) {
             const map = params.mapTokens;

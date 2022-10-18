@@ -31,10 +31,11 @@ export type ContractEventParams = {
   txKeys?: EventKeyMapping; // retrive data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
-  chain?: Chain; // can be used to override chain given as parameter in getEVMEventLogs
+  chain?: Chain; // override chain given as parameter in getEVMEventLogs
   isTransfer?: boolean;
-  fixedEventData?: EventKeyMapping; // use to hard-code final values
-  inputDataExtraction?: InputDataExtraction;
+  fixedEventData?: EventKeyMapping; // hard-code any final values
+  inputDataExtraction?: InputDataExtraction; // retrive data from event log's input data field
+  selectIndexesFromArrays?: EventKeyMapping; // extract data returned as an array by specifying the index of element
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
 };
@@ -52,6 +53,7 @@ export type PartialContractEventParams = {
   isTransfer?: boolean;
   fixedEventData?: EventKeyMapping;
   inputDataExtraction?: InputDataExtraction;
+  selectIndexesFromArrays?: EventKeyMapping;
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string };
 };
