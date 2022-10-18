@@ -9,7 +9,7 @@ export const maxBlocksToQueryByChain = {
   polygon: 2000,
   fantom: 5000,
   arbitrum: 25000,
-  avax: 3000,
+  avalanche: 3000,
   bsc: 2000,
   optimism: 12000,
 } as { [chain: string]: number };

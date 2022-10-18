@@ -213,6 +213,13 @@ export const getEVMEventLogs = async (
               dataKeysToFilter.push(i);
             }
           }
+          if (params.mapTokens) {
+            const map = params.mapTokens;
+            const token = data[i].token;
+            if (token && map[token]) {
+              data[i].token = map[token];
+            }
+          }
           if (params.fixedEventData) {
             Object.entries(params.fixedEventData).map(([eventKey, value]) => {
               if (typeof value !== EventKeyTypes[eventKey]) {

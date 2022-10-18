@@ -3,10 +3,7 @@ import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
 export type BridgeAdapter = {
-  [chain in Chain]?: (
-    fromBlock: number,
-    toBlock: number
-  ) => Promise<EventData[]>;
+  [chain: string]: (fromBlock: number, toBlock: number) => Promise<EventData[]>;
 };
 
 export type EventLogFilter = {
@@ -29,16 +26,17 @@ export type ContractEventParams = {
   target: string | null;
   topic: string;
   abi: string[];
-  logKeys?: EventKeyMapping;  // retrive data from event log
-  argKeys?: EventKeyMapping;  // retrive data from parsed event log
-  txKeys?: EventKeyMapping;   // retrive data from transaction referenced in event log
+  logKeys?: EventKeyMapping; // retrive data from event log
+  argKeys?: EventKeyMapping; // retrive data from parsed event log
+  txKeys?: EventKeyMapping; // retrive data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
   chain?: Chain; // can be used to override chain given as parameter in getEVMEventLogs
   isTransfer?: boolean;
   fixedEventData?: EventKeyMapping; // use to hard-code final values
-  filter?: EventLogFilter;
   inputDataExtraction?: InputDataExtraction;
+  filter?: EventLogFilter;
+  mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
 };
 
 export type PartialContractEventParams = {
@@ -53,6 +51,7 @@ export type PartialContractEventParams = {
   chain?: Chain;
   isTransfer?: boolean;
   fixedEventData?: EventKeyMapping;
-  filter?: EventLogFilter;
   inputDataExtraction?: InputDataExtraction;
+  filter?: EventLogFilter;
+  mapTokens?: { [token: string]: string };
 };

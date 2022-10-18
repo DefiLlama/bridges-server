@@ -6,10 +6,11 @@ export type BridgeNetwork = {
   bridgeDbName: string;
   largeTxThreshold: number;
   url: string;
-  token: string;
-  chains: Chain[];
+  token?: string;
+  symbol?: string;
+  chains: string[];
   chainMapping?: {
-    [chain: string]: Chain;
+    [chain: string]: string;
   }; // used when overwriting adapter key (adapter key is always the chain volume counts for, can be overwritten to query blocks/contracts on a different chain)
-  destinationChain: Chain; // used to specify the destination chain when contracts on only 1 chain are tracked
+  destinationChain?: string; // used to specify the destination chain when contracts on only 1 chain are tracked
 };
