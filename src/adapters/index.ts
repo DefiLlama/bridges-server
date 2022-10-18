@@ -7,6 +7,7 @@ import avalanche from "./avalanche";
 import optimism from "./optimism";
 import multichain from "./multichain";
 import celer from "./celer";
+import polynetwork from "./polynetwork";
 
 export default {
   polygon,
@@ -16,7 +17,8 @@ export default {
   avalanche,
   optimism,
   multichain,
-  celer
+  celer,
+  polynetwork
 } as {
   [bridge: string]: BridgeAdapter;
 };
