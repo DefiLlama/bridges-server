@@ -105,7 +105,7 @@ export const getEVMEventLogs = async (
               chain: overriddenChain,
             })
           ).output;
-          // console.log(logs)
+          //console.log(logs)
           if (logs.length === 0) {
             console.info(
               `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${params.topic}.`
@@ -150,7 +150,7 @@ export const getEVMEventLogs = async (
             }
             Object.entries(params.argKeys).map(([eventKey, argKey]) => {
               const value = args[argKey];
-              if (typeof value !== EventKeyTypes[eventKey] && (!Array.isArray(value))) {
+              if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                 throw new Error(
                   `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
                     EventKeyTypes[eventKey]
@@ -193,11 +193,24 @@ export const getEVMEventLogs = async (
           }
           if (params.inputDataExtraction) {
             const tx = await provider.getTransaction(txLog.transactionHash);
-            const iface = new ethers.utils.Interface(params.inputDataExtraction.inputDataABI);
             try {
-              const inputData = iface.decodeFunctionData(params.inputDataExtraction.inputDataFnName, tx.data);
+              let inputData = [] as any;
+              if (params.inputDataExtraction.useDefaultAbiEncoder) {
+                inputData = ethers.utils.defaultAbiCoder.decode(
+                  params.inputDataExtraction.inputDataABI,
+                  ethers.utils.hexDataSlice(tx.data, 4)
+                );
+              } else {
+                const iface = new ethers.utils.Interface(params.inputDataExtraction.inputDataABI);
+                inputData = iface.decodeFunctionData(params.inputDataExtraction.inputDataFnName || "", tx.data);
+              }
               Object.entries(params.inputDataExtraction.inputDataKeys).map(([eventKey, inputDataKey]) => {
-                const value = inputData[inputDataKey];
+                let value = "" as any;
+                if (params.inputDataExtraction?.useDefaultAbiEncoder) {
+                  value = inputData[parseInt(inputDataKey)];
+                } else {
+                  value = inputData[inputDataKey];
+                }
                 if (typeof value !== EventKeyTypes[eventKey]) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${inputDataKey} with inputDataExtraction is ${typeof value} when it must be ${
@@ -214,14 +227,14 @@ export const getEVMEventLogs = async (
           }
           if (params.selectIndexesFromArrays) {
             Object.entries(params.selectIndexesFromArrays).map(([eventKey, value]) => {
-              if (!(Array.isArray(data[i][eventKey]))) {
+              if (!Array.isArray(data[i][eventKey])) {
                 throw new Error(
                   `${eventKey} is not an array, but it has been specified as being one in 'selectIndexesFromArrays' in adapter.`
                 );
               }
-              const extractedValue = data[i][eventKey][parseInt(value)]
-              data[i][eventKey] = extractedValue
-            })
+              const extractedValue = data[i][eventKey][parseInt(value)];
+              data[i][eventKey] = extractedValue;
+            });
           }
           if (params.mapTokens) {
             const map = params.mapTokens;

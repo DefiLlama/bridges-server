@@ -18,8 +18,9 @@ export type EventLogFilter = {
 
 type InputDataExtraction = {
   inputDataABI: string[];
-  inputDataFnName: string;
+  inputDataFnName?: string;
   inputDataKeys: EventKeyMapping;
+  useDefaultAbiEncoder?: boolean;
 };
 
 export type ContractEventParams = {
