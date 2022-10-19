@@ -7,14 +7,14 @@ import {
 import { insertErrorRow } from "../utils/wrappa/postgres/write";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
-import { getCurrentUnixTimestamp, getTimestampAtStartOfDay, secondsInDay } from "../utils/date";
+import { getCurrentUnixTimestamp, getTimestampAtStartOfDayUTC, secondsInDay } from "../utils/date";
 import { maxBlocksToQueryByChain } from "../utils/constants";
 import type { RecordedBlocks } from "../utils/types";
 const axios = require("axios");
 const retry = require("async-retry");
 
 export default wrapScheduledLambda(async (_event) => {
-  const timestampAtStartOfDay = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
+  const timestampAtStartOfDay = getTimestampAtStartOfDayUTC(getCurrentUnixTimestamp());
   const startTimestamp = timestampAtStartOfDay - secondsInDay;
   const endTimestamp = timestampAtStartOfDay - 1;
   await Promise.all(
@@ -53,7 +53,7 @@ export default wrapScheduledLambda(async (_event) => {
               ts: getCurrentUnixTimestamp() * 1000,
               target_table: "daily_aggregated",
               keyword: "data",
-              error: `Bridge ${bridgeDbName} on chain ${chain} has NO daily entry for ${endTimestamp}.`,
+              error: `Bridge ${bridgeDbName} on chain ${chain} has NO daily entry for ${startTimestamp}.`,
             });
           }
         })
