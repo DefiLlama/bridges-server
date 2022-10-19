@@ -70,6 +70,17 @@ export default [
       "avalanche":"avax"
     }
   },
+  {
+    id: 8,
+    displayName: "ChainPort",
+    bridgeDbName: "chainport",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chainMapping: {
+      "avalanche":"avax"
+    }
+  },
   /*
   {
     id: 9,

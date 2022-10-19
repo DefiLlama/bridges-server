@@ -128,7 +128,7 @@ const constructParams = (chain: string) => {
   const ercWithdrawalParams = constructTransferParams(chainAddress, false);
   eventParams.push(finalEthDepositParams, finalEthWithdrawalParams, ercDepositParams, ercWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("multichain", chain as Chain, fromBlock, toBlock, eventParams);
+    getEVMEventLogs("orbitbridge", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

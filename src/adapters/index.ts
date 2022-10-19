@@ -8,7 +8,8 @@ import optimism from "./optimism";
 import multichain from "./multichain";
 import celer from "./celer";
 import polynetwork from "./polynetwork";
-import orbitbridge from "./orbitbridge"
+import orbitbridge from "./orbitbridge";
+import chainport from "./chainport";
 
 export default {
   polygon,
@@ -20,7 +21,8 @@ export default {
   multichain,
   celer,
   polynetwork,
-  orbitbridge
+  orbitbridge,
+  chainport
 } as {
   [bridge: string]: BridgeAdapter;
 };
