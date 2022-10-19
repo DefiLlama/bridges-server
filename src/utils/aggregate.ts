@@ -290,7 +290,7 @@ export const aggregateData = async (
           const addressKey = `${chain}:${tx_from}`;
           cumAddressDeposited[addressKey] = cumAddressDeposited[addressKey] || {};
           cumAddressDeposited[addressKey].numberTxs = (cumAddressDeposited[addressKey].numberTxs ?? 0) + 1;
-          cumAddressDeposited[addressKey].usdValue = cumAddressDeposited[addressKey].usdValue ?? 0 + (usdValue ?? 0);
+          cumAddressDeposited[addressKey].usdValue = (cumAddressDeposited[addressKey].usdValue ?? 0) + (usdValue ?? 0);
         }
       } else {
         totalWithdrawalTxs += 1;
@@ -304,7 +304,7 @@ export const aggregateData = async (
           const addressKey = `${chain}:${tx_to}`;
           cumAddressWithdrawn[addressKey] = cumAddressWithdrawn[addressKey] || {};
           cumAddressWithdrawn[addressKey].numberTxs = (cumAddressWithdrawn[addressKey].numberTxs ?? 0) + 1;
-          cumAddressWithdrawn[addressKey].usdValue = cumAddressWithdrawn[addressKey].usdValue ?? 0 + (usdValue ?? 0);
+          cumAddressWithdrawn[addressKey].usdValue = (cumAddressWithdrawn[addressKey].usdValue ?? 0) + (usdValue ?? 0);
         }
       }
     })
