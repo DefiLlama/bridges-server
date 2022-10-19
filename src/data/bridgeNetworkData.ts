@@ -101,5 +101,16 @@ export default [
     chainMapping: {
       "avalanche":"avax"
     }
+  },
+  {
+    id: 11,
+    displayName: "Synapse",
+    bridgeDbName: "synapse",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chainMapping: {
+      "avalanche":"avax"
+    }
   }, 
 ] as BridgeNetwork[];

@@ -75,7 +75,7 @@ const testAdapter = async () => {
     console.log(
       `Over the past ${numberOfBlocks} blocks, ${tokensForPricing.length} unique tokens were transferred and ${
         Object.keys(llamaPrices).length
-      } prices for them were found.`
+      } prices for them were found on ${chain}.`
     );
     for (const token of tokensForPricing) {
       if (!llamaPrices?.[token]) {
