@@ -59,6 +59,7 @@ export default [
       "avalanche":"avax"
     }
   },
+  /*
   {
     id: 7,
     displayName: "Orbit Bridge",
@@ -70,6 +71,7 @@ export default [
       "avalanche":"avax"
     }
   },
+  */
   {
     id: 8,
     displayName: "ChainPort",
@@ -112,5 +114,18 @@ export default [
     chainMapping: {
       "avalanche":"avax"
     }
-  }, 
+  },
+  /*
+  {
+    id: 12,
+    displayName: "Stargate",
+    bridgeDbName: "stargate",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chainMapping: {
+      "avalanche":"avax"  // this is needed temporarily, need to fix and remove
+    }
+  },
+  */
 ] as BridgeNetwork[];

@@ -4,7 +4,15 @@ import { getEVMEventLogs } from "../../helpers/eventLogs";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 /*
+Minter functions:
+Swap(string fromChain, bytes fromAddr, bytes toAddr, address tokenAddress, bytes32[] bytes32s, uint[] uints, bytes data);
+SwapRequest(string toChain, address fromAddr, bytes toAddr, bytes token, address tokenAddress, uint8 decimal, uint amount, uint depositId, bytes data);
 
+Can see docs here: https://bridge-docs.orbitchain.io/
+
+Adapter is finished for chains with a vault: Ethereum, BSC, (also on Klaytn).
+Issue is that other chains have minter contracts, and there appears to be multiple (at least on Polygon).
+It's difficult to find them all. On Avax and Fantom, have not found any addresses yet.
 */
 
 const contractAddresses = {
@@ -25,8 +33,8 @@ const contractAddresses = {
     nativeToken: "", // WAVAX
   },
   bsc: {
-    contract: "",
-    nativeToken: "", // WBNB
+    contract: "0x89c527764f03BCb7dC469707B23b79C1D7Beb780",
+    nativeToken: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
   },
 } as {
   [chain: string]: {
@@ -35,8 +43,8 @@ const contractAddresses = {
   };
 };
 
-// using this only to filter for ETH txs, because it is unusable for everything else:
-// emits repeated events with differing amounts, atomic txs do not emit events, some token addresses withdrawn are not actual token sent (e.g. DAI).
+// Using this only to filter for ETH txs, because it is has some problems for everything else:
+// Atomic txs do not emit events, and some token addresses withdrawn are not actual token sent (e.g. DAI).
 const ethDepositParams: PartialContractEventParams = {
   target: "",
   topic: "Deposit(string,address,bytes,address,uint8,uint256,uint256,bytes)",
@@ -111,7 +119,6 @@ const constructParams = (chain: string) => {
       includeToken: [nativeToken],
     },
   };
-  const ercDepositParams = constructTransferParams(chainAddress, true);
   const finalEthWithdrawalParams = {
     ...ethWithdrawalParams,
     target: chainAddress,
@@ -125,6 +132,7 @@ const constructParams = (chain: string) => {
       includeToken: [nativeToken],
     },
   };
+  const ercDepositParams = constructTransferParams(chainAddress, true);
   const ercWithdrawalParams = constructTransferParams(chainAddress, false);
   eventParams.push(finalEthDepositParams, finalEthWithdrawalParams, ercDepositParams, ercWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
@@ -132,13 +140,11 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
-  ethereum: constructParams("ethereum"),
-  /*
-  polygon: constructParams("polygon"),
-  fantom: constructParams("fantom"),
-  avalanche: constructParams("avax"),
-  bsc: constructParams("bsc"),
-  */
+  //ethereum: constructParams("ethereum"),
+  //polygon: constructParams("polygon"),
+  //fantom: constructParams("fantom"),
+  //avalanche: constructParams("avax"),
+  //bsc: constructParams("bsc"),
 };
 
 export default adapter;

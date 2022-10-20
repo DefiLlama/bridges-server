@@ -10,6 +10,7 @@ import celer from "./celer";
 import polynetwork from "./polynetwork";
 import orbitbridge from "./orbitbridge";
 import chainport from "./chainport";
+import stargate from "./stargate";
 
 export default {
   polygon,
@@ -22,7 +23,8 @@ export default {
   celer,
   polynetwork,
   orbitbridge,
-  chainport
+  chainport,
+  stargate
 } as {
   [bridge: string]: BridgeAdapter;
 };
