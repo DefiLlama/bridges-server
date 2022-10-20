@@ -97,7 +97,7 @@ const constructParams = (chain: string) => {
     });
   }
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("multichain", chain as Chain, fromBlock, toBlock, eventParams);
+    getEVMEventLogs("portal", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
