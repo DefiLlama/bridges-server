@@ -4,6 +4,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
+import BigNumber from "bignumber.js";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -39,7 +40,7 @@ const setTransferEventParams = (isDeposit: boolean, target: string) => {
   return { topic, logKeys, argKeys, abi, topics, target };
 };
 
-export const getEVMEventLogs = async (
+export const getTxDataFromEVMEventLogs = async (
   adapterName: string,
   chainContractsAreOn: Chain,
   fromBlock: number,
@@ -282,4 +283,41 @@ export const getEVMEventLogs = async (
   );
   await getLogsPromises;
   return accEventData;
+};
+
+export const getTxDataFromHashAndToken = async (
+  adapterName: string,
+  chain: Chain,
+  hashData: { hash: string; token: string; isDeposit: boolean }[]
+) => {
+  const provider = getProvider(chain) as any;
+    const transactions = (await Promise.all(hashData.map(async (data) => {
+      const { hash, token, isDeposit } = data;
+      // TODO: add timeout
+      const tx = await provider.getTransaction(hash);
+      const logs = (await provider.getTransactionReceipt(hash)).logs;
+      if (!tx || !logs) {
+        console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+        return
+      }
+      const { blockNumber, from, to } = tx;
+      let totalAmount = ethers.BigNumber.from(0);
+      logs
+        .filter((log: any) => log.address === token)
+        .map((log: any) => {
+          const { data } = log;
+          totalAmount = totalAmount.add(data);
+        });
+        const ethersBnAmount = totalAmount as unknown
+      return {
+        blockNumber: blockNumber,
+        txHash: hash,
+        from: from,
+        to: to,
+        token: token,
+        amount: ethersBnAmount as BigNumber,
+        isDeposit: isDeposit,
+      } as EventData;
+    }))).filter((tx) => tx) as EventData[]
+    return transactions
 };

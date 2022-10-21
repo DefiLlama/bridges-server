@@ -3,7 +3,7 @@ import {
   ContractEventParams,
   PartialContractEventParams,
 } from "../../helpers/bridgeAdapter.type";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 // 0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf is Polygon (Matic): ERC20 Bridge
@@ -71,7 +71,7 @@ const constructParams = () => {
     etherWithdrawalEventParams
   ];
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("polygon", "ethereum", fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("polygon", "ethereum", fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

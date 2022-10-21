@@ -32,7 +32,7 @@ export type ContractEventParams = {
   txKeys?: EventKeyMapping; // retrive data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
-  chain?: Chain; // override chain given as parameter in getEVMEventLogs
+  chain?: Chain; // override chain given as parameter in getTxDataFromEVMEventLogs
   isTransfer?: boolean;
   fixedEventData?: EventKeyMapping; // hard-code any final values
   inputDataExtraction?: InputDataExtraction; // retrive data from event log's input data field

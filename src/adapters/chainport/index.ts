@@ -1,6 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 // Appears that native tokens cannot be bridged.
@@ -87,7 +87,7 @@ const constructParams = (chain: string) => {
   }
   eventParams.push(finalDepositParams, finalWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("chainport", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("chainport", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

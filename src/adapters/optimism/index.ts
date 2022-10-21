@@ -1,5 +1,5 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 // 0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1 is Optimism: Gateway
@@ -154,7 +154,7 @@ const constructParams = () => {
     lidoWithdrawalEventParams,
   ];
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("optimism", "ethereum", fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("optimism", "ethereum", fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

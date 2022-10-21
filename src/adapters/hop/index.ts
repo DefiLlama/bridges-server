@@ -4,7 +4,7 @@ import {
   ContractEventParams,
   PartialContractEventParams,
 } from "../../helpers/bridgeAdapter.type";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 /*
 ***Ethereum***
@@ -92,7 +92,7 @@ const constructParams = (chain: Chain) => {
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   });
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("hop", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("hop", chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

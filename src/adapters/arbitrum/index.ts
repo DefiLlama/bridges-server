@@ -1,5 +1,5 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 /*
@@ -149,7 +149,7 @@ const constructParams = () => {
     ethWithdrawalEventParams,
   ];
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("arbitrum", "ethereum", fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("arbitrum", "ethereum", fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

@@ -2,7 +2,7 @@ import {
   BridgeAdapter,
   PartialContractEventParams,
 } from "../../helpers/bridgeAdapter.type";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 // 0x8EB8a3b98659Cce290402893d0123abb75E3ab28 is Avalanche: Bridge (EOA)
@@ -25,7 +25,7 @@ const constructParams = () => {
     withdrawalEventParams
   ];
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("avalanche", "ethereum", fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("avalanche", "ethereum", fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

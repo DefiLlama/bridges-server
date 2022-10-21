@@ -1,6 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 /* 
 Contract addresses are here: https://github.com/polynetwork/docs/blob/master/config/README.md
@@ -117,7 +117,7 @@ const constructParams = (chain: string) => {
   };
   eventParams.push(finalErcDepositParams, finalErcWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("polynetwork", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("polynetwork", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {

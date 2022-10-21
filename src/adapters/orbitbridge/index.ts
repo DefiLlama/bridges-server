@@ -1,6 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getEVMEventLogs } from "../../helpers/eventLogs";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 /*
@@ -136,7 +136,7 @@ const constructParams = (chain: string) => {
   const ercWithdrawalParams = constructTransferParams(chainAddress, false);
   eventParams.push(finalEthDepositParams, finalEthWithdrawalParams, ercDepositParams, ercWithdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
-    getEVMEventLogs("orbitbridge", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("orbitbridge", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
