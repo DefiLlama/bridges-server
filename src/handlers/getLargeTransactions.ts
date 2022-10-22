@@ -1,9 +1,10 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import { queryLargeTransactionsTimestampRange } from "../utils/wrappa/postgres/query";
+import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
+import bridgeNetworks from "../data/bridgeNetworkData"
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -13,6 +14,18 @@ const getLargeTransactions = async (
   const queryStartTimestamp = parseInt(startTimestamp);
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
   const queryChain = chain === "all" ? null : chain;
+  
+  const configs = await queryConfig()
+  let configMapping = {} as any
+  configs.map((config) => {
+    const id = config.id
+    const name = config.bridge_name
+    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.bridgeDbName === name)[0];
+    if (bridgeNetwork) {
+    const {displayName} = bridgeNetwork 
+    configMapping[id] = displayName
+    }
+  })
 
   const largeTransactions = await queryLargeTransactionsTimestampRange(
     queryChain,
@@ -29,6 +42,8 @@ const getLargeTransactions = async (
   });
   const prices = await getLlamaPrices(Array.from(tokenSet));
   const response = largeTransactions.map((tx) => {
+    const bridgeID = tx.bridge_id;
+    const bridgeName = configMapping[bridgeID] ?? "unknown"
     const transformedToken = transformTokens[tx.chain]?.[tx.token]
       ? transformTokens[tx.chain]?.[tx.token]
       : `${tx.chain}:${tx.token}`;
@@ -42,6 +57,7 @@ const getLargeTransactions = async (
       symbol: symbol,
       amount: tx.amount,
       isDeposit: tx.is_deposit,
+      bridge: bridgeName,
       chain: tx.chain,
       usdValue: tx.usd_value,
     };
