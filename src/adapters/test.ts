@@ -3,6 +3,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import adapters from "./";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { getLlamaPrices } from "../utils/prices";
+import { transformTokens } from "../helpers/tokenMappings";
 
 const logTypes = {
   txHash: "string",
@@ -64,7 +65,7 @@ const testAdapter = async () => {
             );
           }
         });
-        const tokenKey = `${contractsChain}:${log.token}`;
+        const tokenKey = transformTokens[contractsChain]?.[log.token] ? transformTokens[contractsChain]?.[log.token] : `${contractsChain}:${log.token}`;
         uniqueTokens[tokenKey] = true;
       })
     );
