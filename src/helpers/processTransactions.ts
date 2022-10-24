@@ -346,7 +346,6 @@ export const getNativeTokenTransfersFromHash = async (
         const { blockNumber, from, to, data, value } = tx;
         if (matchFunctionSignatures?.length) {
           const signature = data.slice(0, 8)
-          console.log(signature)
           if (!matchFunctionSignatures.includes(signature)) {
           console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
           return;

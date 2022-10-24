@@ -43,19 +43,3 @@ export const getTransactionsBlockRange = async (
   }
   return null;
 };
-
-const test = async () => {
-  const txs = await getTransactionsBlockRange("bsc", "0x4b3B4120d4D7975455d8C2894228789c91a247F8", 22459463, 22461753);
-  const hashes = txs.map((tx: any) => tx.hash);
-
-  const transactions = await getNativeTokenTransfersFromHash(
-    "multichain",
-    "bsc",
-    hashes,
-    "0x4b3B4120d4D7975455d8C2894228789c91a247F8",
-    "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
-    ["0x535741", "0x"]
-  );
-};
-
-test();
