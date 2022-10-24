@@ -69,9 +69,7 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
   if (!(chain || destinationChain)) {
     if (bridgeNetworkName) {
       bridgeNetworkNameEqual = sql`WHERE bridge_name = ${bridgeNetworkName}`;
-    } else {
-      return [];
-    }
+    } 
   }
   let chainEqual = sql``;
   let destinationChainEqual = sql``;
