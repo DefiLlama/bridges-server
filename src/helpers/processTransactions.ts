@@ -291,33 +291,83 @@ export const getTxDataFromHashAndToken = async (
   hashData: { hash: string; token: string; isDeposit: boolean }[]
 ) => {
   const provider = getProvider(chain) as any;
-    const transactions = (await Promise.all(hashData.map(async (data) => {
-      const { hash, token, isDeposit } = data;
-      // TODO: add timeout
-      const tx = await provider.getTransaction(hash);
-      const logs = (await provider.getTransactionReceipt(hash)).logs;
-      if (!tx || !logs) {
-        console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
-        return
-      }
-      const { blockNumber, from, to } = tx;
-      let totalAmount = ethers.BigNumber.from(0);
-      logs
-        .filter((log: any) => log.address === token)
-        .map((log: any) => {
-          const { data } = log;
-          totalAmount = totalAmount.add(data);
-        });
-        const ethersBnAmount = totalAmount as unknown
-      return {
-        blockNumber: blockNumber,
-        txHash: hash,
-        from: from,
-        to: to,
-        token: token,
-        amount: ethersBnAmount as BigNumber,
-        isDeposit: isDeposit,
-      } as EventData;
-    }))).filter((tx) => tx) as EventData[]
-    return transactions
+  const transactions = (
+    await Promise.all(
+      hashData.map(async (data) => {
+        const { hash, token, isDeposit } = data;
+        // TODO: add timeout
+        const tx = await provider.getTransaction(hash);
+        const logs = (await provider.getTransactionReceipt(hash)).logs;
+        if (!tx || !logs) {
+          console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+          return;
+        }
+        const { blockNumber, from, to } = tx;
+        let totalAmount = ethers.BigNumber.from(0);
+        logs
+          .filter((log: any) => log.address === token)
+          .map((log: any) => {
+            const { data } = log;
+            totalAmount = totalAmount.add(data);
+          });
+        const ethersBnAmount = totalAmount as unknown;
+        return {
+          blockNumber: blockNumber,
+          txHash: hash,
+          from: from,
+          to: to,
+          token: token,
+          amount: ethersBnAmount as BigNumber,
+          isDeposit: isDeposit,
+        } as EventData;
+      })
+    )
+  ).filter((tx) => tx) as EventData[];
+  return transactions;
+};
+
+export const getNativeTokenTransfersFromHash = async (
+  adapterName: string,
+  chain: Chain,
+  hashes: string[],
+  address: string,
+  nativeToken: string,
+  matchFunctionSignatures?: string[]
+) => {const provider = getProvider(chain) as any
+  const transactions = (
+    await Promise.all(
+      hashes.map(async (hash) => {
+        // TODO: add timeout
+        const tx = await provider.getTransaction(hash);
+        if (!tx) {
+          console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+          return;
+        }
+        const { blockNumber, from, to, data, value } = tx;
+        if (matchFunctionSignatures?.length) {
+          const signature = data.slice(0, 8)
+          console.log(signature)
+          if (!matchFunctionSignatures.includes(signature)) {
+          console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
+          return;
+          }
+        }
+        if (!(address === from || address === to)) {
+          console.error(`WARNING: Address given for native transfer for ${adapterName} not present in tx, SKIPPING tx.`);
+          return;
+        }
+        const isDeposit = address === to
+        return {
+          blockNumber: blockNumber,
+          txHash: hash,
+          from: from,
+          to: to,
+          token: nativeToken,
+          amount: value,
+          isDeposit: isDeposit,
+        } as EventData;
+      })
+    )
+  ).filter((tx) => tx) as EventData[];
+  return transactions;
 };
