@@ -327,12 +327,10 @@ export const getTxDataFromHashAndToken = async (
 };
 
 export const getNativeTokenTransfersFromHash = async (
-  adapterName: string,
   chain: Chain,
   hashes: string[],
   address: string,
   nativeToken: string,
-  matchFunctionSignatures?: string[]
 ) => {const provider = getProvider(chain) as any
   const transactions = (
     await Promise.all(
@@ -340,19 +338,12 @@ export const getNativeTokenTransfersFromHash = async (
         // TODO: add timeout
         const tx = await provider.getTransaction(hash);
         if (!tx) {
-          console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
           return;
         }
-        const { blockNumber, from, to, data, value } = tx;
-        if (matchFunctionSignatures?.length) {
-          const signature = data.slice(0, 8)
-          if (!matchFunctionSignatures.includes(signature)) {
-          console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
-          return;
-          }
-        }
+        const { blockNumber, from, to, value } = tx;
         if (!(address === from || address === to)) {
-          console.error(`WARNING: Address given for native transfer for ${adapterName} not present in tx, SKIPPING tx.`);
+          console.error(`WARNING: Address given for native transfer on chain ${chain} not present in tx, SKIPPING tx.`);
           return;
         }
         const isDeposit = address === to
