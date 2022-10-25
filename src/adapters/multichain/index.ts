@@ -90,7 +90,7 @@ const contractAddresses = {
       "0x55F089d5f6aeDfdACBD5E3aCB0e8F31FBAb44088",
       "0x7F923dB3d90047D75D078e29b1f8Eac03e30F761",
     ],
-    nativetoken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    nativeToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   },
   polygon: {
     routers: [
