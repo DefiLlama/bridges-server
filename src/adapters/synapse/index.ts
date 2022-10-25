@@ -2,6 +2,7 @@ import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { Chain } from "@defillama/sdk/build/general";
+import { ethers } from "ethers";
 
 /*
 ***Ethereum***
@@ -9,7 +10,7 @@ import { Chain } from "@defillama/sdk/build/general";
 -deposits of: 
   -USDC, USDT, DAI (swapped for nUSD); nUSD (ignore)
   -SYN (burned) 
-  -WETH and all other tokens are forwarded to Synapse: Bridge
+  -WETH and all other tokens are forwarded to Synapse: Bridge (WETH deposits can be recorded there)
 
 0x2796317b0fF8538F253012862c06787Adfb8cEb6 Synapse: Bridge
 -withdrawals of: 
@@ -77,12 +78,38 @@ const ethereumDepositParams: PartialContractEventParams = constructTransferParam
   {
     excludeToken: [
       "0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F", // nUSD
-      "0x0f2D719407FdBeFF09D87557AbB7232601FD9F29", // SYN
     ],
   }
 );
 
-const ethereumETHWithdrawalParams: ContractEventParams = {
+const ethereumEthDepositParams: ContractEventParams = {
+  target: null,
+  topic: "Transfer(address,address,uint256)",
+  topics: [
+    ethers.utils.id("Transfer(address,address,uint256)"),
+    null,
+    ethers.utils.hexZeroPad("0x2796317b0fF8538F253012862c06787Adfb8cEb6", 32),
+  ],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+    token: "address",
+  },
+  argKeys: {
+    to: "to",
+    amount: "value",
+  },
+  txKeys: {
+    from: "from",
+  },
+  isDeposit: true,
+  filter: {
+    includeToken: ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], // WETH
+  },
+};
+
+const ethereumEthWithdrawalParams: ContractEventParams = {
   target: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
   topic: "TokenWithdraw(address,address,uint256,uint256,bytes32)",
   abi: ["event TokenWithdraw(address indexed to, address token, uint256 amount, uint256 fee, bytes32 indexed kappa)"],
@@ -101,30 +128,17 @@ const ethereumWithdrawalParams: PartialContractEventParams = constructTransferPa
   "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
   false,
   { excludeToken: ["0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F"] } // nUSD
-
 );
-/*
-const depositParams: PartialContractEventParams = constructTransferParams(
-  "", // Bridge Zap
-  true,
-  {
-    excludeToken: [
-      "", // nUSD
-    ],
-  }
-);
-
-const withdrawalParams: PartialContractEventParams = constructTransferParams(
-  "", // Synapse Bridge
-  false,
-  { excludeToken: [""] } // nUSD
-);
-*/
 
 const constructParams = (chain: Chain) => {
   let eventParams = [] as any;
   if (chain === "ethereum") {
-    eventParams.push(ethereumDepositParams, ethereumETHWithdrawalParams, ethereumWithdrawalParams);
+    eventParams.push(
+      ethereumDepositParams,
+      ethereumEthDepositParams,
+      ethereumWithdrawalParams,
+      ethereumEthWithdrawalParams
+    );
   } else {
     const bridgeZapAddress = contractAddresses[chain].bridgeZap;
     const synapseBridgeAddress = contractAddresses[chain].synapseBridge;
@@ -133,7 +147,7 @@ const constructParams = (chain: Chain) => {
       excludeToken: [nusdAddress],
     });
     const withdrawalParams = constructTransferParams(synapseBridgeAddress, false, { excludeToken: [nusdAddress] });
-    eventParams.push(depositParams, withdrawalParams)
+    eventParams.push(depositParams, withdrawalParams);
   }
 
   return async (fromBlock: number, toBlock: number) =>
