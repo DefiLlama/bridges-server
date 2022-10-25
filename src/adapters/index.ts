@@ -11,6 +11,7 @@ import polynetwork from "./polynetwork";
 import orbitbridge from "./orbitbridge";
 import chainport from "./chainport";
 import stargate from "./stargate";
+import portal from "./portal";
 
 export default {
   polygon,
@@ -24,7 +25,8 @@ export default {
   polynetwork,
   orbitbridge,
   chainport,
-  stargate
+  stargate,
+  portal
 } as {
   [bridge: string]: BridgeAdapter;
 };

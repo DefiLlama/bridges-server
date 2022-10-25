@@ -137,13 +137,11 @@ const contractAddresses = {
     nativeToken: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
   },
   bsc: {
-    /*
     routers: [
       "0xe1d592c3322f1F714Ca11f05B6bC0eFEf1907859",
       "0xf9736ec3926703e85C843FC972BD89A7f8E827C0",
       "0xABd380327Fe66724FFDa91A87c772FB8D00bE488",
     ],
-    */
     EOAs: [
       "0xb1CB88B1a1992deB4189Ea4f566b594c13392Ada", // avax
       "0x4b3B4120d4D7975455d8C2894228789c91a247F8", // fantom
@@ -311,13 +309,13 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
-  //ethereum: constructParams("ethereum"),
-  //polygon: constructParams("polygon"),
-  //fantom: constructParams("fantom"),
-  //avalanche: constructParams("avax"),
+  ethereum: constructParams("ethereum"),
+  polygon: constructParams("polygon"),
+  fantom: constructParams("fantom"),
+  avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
-  //arbitrum: constructParams("arbitrum"),
-  //optimism: constructParams("optimism"),
+  arbitrum: constructParams("arbitrum"),
+  optimism: constructParams("optimism"),
 };
 
 export default adapter;
