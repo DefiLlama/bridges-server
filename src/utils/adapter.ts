@@ -121,7 +121,7 @@ export const runAdapterHistorical = async (
   startBlock: number,
   endBlock: number,
   bridgeNetworkId: number,
-  chain: Chain, // needed because different chains query over different block ranges
+  chain: string, // needed because different chains query over different block ranges
   allowNullTxValues: boolean = false,
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error"
