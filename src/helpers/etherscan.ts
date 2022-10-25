@@ -1,5 +1,4 @@
 const axios = require("axios");
-const retry = require("async-retry");
 
 const endpoints = {
   ethereum: "https://api.etherscan.io",
@@ -31,12 +30,9 @@ export const getTxsBlockRangeEtherscan = async (
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
   const res = (
-    await retry(
-      async (_bail: any) =>
         await axios.get(
           `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
         )
-    )
   ).data as any;
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
@@ -56,26 +52,13 @@ export const getTxsBlockRangeEtherscan = async (
     console.info(`No Etherscan txs found for address ${address}.`);
     return []
   }
+  console.log(res)
   console.error(`WARNING: Etherscan did not return valid response for address ${address}.`);
   return [];
 };
 
-const locks = [] as ((value: unknown) => void)[];
-export function getEtherscanLock() {
-  return new Promise((resolve) => {
-    locks.push(resolve);
+export const wait = (time: number) => new Promise((resolve, _reject) => {
+    setTimeout(() => {
+        resolve("");
+    }, time)
   });
-}
-export function releaseEtherscanLock() {
-  const firstLock = locks.shift();
-  if (firstLock !== undefined) {
-    firstLock(null);
-  }
-}
-// Rate limit is 5 calls/second for etherscan's API
-export function setTimer(timeBetweenTicks: number = 400) {
-  const timer = setInterval(() => {
-    releaseEtherscanLock();
-  }, timeBetweenTicks);
-  return timer;
-}

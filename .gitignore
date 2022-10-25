@@ -3,3 +3,9 @@ node_modules
 .webpack
 .serverless
 src/adapters/adapterchecklist.txt
+src/adapters/multichain/anyswapaddresses.json
+src/adapters/multichain/chainid.ts
+src/adapters/multichain/process.ts
+src/adapters/multichain/response.json
+src/adapters/multichain/test.ts
+src/adapters/portal/junk.ts

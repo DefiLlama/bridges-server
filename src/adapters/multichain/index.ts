@@ -2,7 +2,7 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs, getNativeTokenTransfersFromHash } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
-import { getTxsBlockRangeEtherscan, getEtherscanLock, setTimer } from "../../helpers/etherscan";
+import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 
 /*
@@ -284,10 +284,11 @@ const constructParams = (chain: string) => {
       throw new Error(`Chain ${chain} is missing native token address.`);
     }
     if (EOAs) {
-      setTimer()
+      let num = 0
       await Promise.all(
-        EOAs.map(async (address) => {
-          await getEtherscanLock()
+        EOAs.map(async (address, i) => {
+          await wait(i*1600)
+          console.log(i)
           const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, signatures);
           if (txs.length) {
             const hashes = txs.map((tx: any) => tx.hash);
