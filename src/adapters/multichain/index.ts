@@ -284,11 +284,9 @@ const constructParams = (chain: string) => {
       throw new Error(`Chain ${chain} is missing native token address.`);
     }
     if (EOAs) {
-      let num = 0
       await Promise.all(
         EOAs.map(async (address, i) => {
           await wait(i*1600)
-          console.log(i)
           const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, signatures);
           if (txs.length) {
             const hashes = txs.map((tx: any) => tx.hash);
