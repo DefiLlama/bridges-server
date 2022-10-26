@@ -48,6 +48,7 @@ const sumTokenTxs = async (
   tokenTotals: string[],
   dailyTokensRecord: TokenRecord,
 ) => {
+  if (!tokenTotals) return
   let dailyTokensRecordBn = {} as TokenRecordBn;
   const tokenSet = new Set<string>();
   tokenTotals.map((tokenString) => {
@@ -74,6 +75,7 @@ const sumTokenTxs = async (
 };
 
 const sumAddressTxs = (addressTotals: string[], dailyAddresssRecord: AddressRecord) => {
+  if (!addressTotals) return
   addressTotals.map((addressString) => {
     const addressData = addressString.replace(/[('") ]/g, "").split(",");
     const address = addressData[0];
@@ -125,7 +127,6 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
       sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
     })
   );
-
   const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, chain, bridgeDbName);
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
