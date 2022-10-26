@@ -54,7 +54,7 @@ export default [
     bridgeDbName: "polynetwork",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
       "avalanche":"avax"
     }
@@ -83,7 +83,6 @@ export default [
       "avalanche":"avax"
     }
   },
-  /*
   {
     id: 9,
     displayName: "Portal by Wormhole",
@@ -91,8 +90,10 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chainMapping: {
+      "avalanche":"avax"  // this is needed temporarily, need to fix and remove
+    }
   },
-  */
   {
     id: 10,
     displayName: "Celer",
