@@ -72,6 +72,7 @@ export default [
     }
   },
   */
+ /*
   {
     id: 8,
     displayName: "ChainPort",
@@ -83,6 +84,7 @@ export default [
       "avalanche":"avax"
     }
   },
+  */
   {
     id: 9,
     displayName: "Portal by Wormhole",
@@ -96,7 +98,7 @@ export default [
   },
   {
     id: 10,
-    displayName: "Celer",
+    displayName: "Celer cBridge",
     bridgeDbName: "celer",
     largeTxThreshold: 10000,
     url: "",
@@ -129,4 +131,12 @@ export default [
     }
   },
   */
+  {
+    id: 13,
+    displayName: "Hop",
+    bridgeDbName: "hop",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+  },
 ] as BridgeNetwork[];
