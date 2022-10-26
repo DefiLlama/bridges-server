@@ -286,7 +286,6 @@ export const getTxDataFromEVMEventLogs = async (
 };
 
 export const getTxDataFromHashAndToken = async (
-  adapterName: string,
   chain: Chain,
   hashData: { hash: string; token: string; isDeposit: boolean }[]
 ) => {
@@ -299,7 +298,7 @@ export const getTxDataFromHashAndToken = async (
         const tx = await provider.getTransaction(hash);
         const logs = (await provider.getTransactionReceipt(hash)).logs;
         if (!tx || !logs) {
-          console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
           return;
         }
         const { blockNumber, from, to } = tx;
