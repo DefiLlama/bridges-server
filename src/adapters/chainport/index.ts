@@ -1,16 +1,14 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getTxDataFromEVMEventLogs, getTxDataFromHashAndToken } from "../../helpers/processTransactions";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
-import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
-import { EventData } from "../../utils/types";
 
 // Appears that native tokens cannot be bridged.
 // Can use transfer events for Ethereum.
 // For other chains, need to look at burnTokens, mintTokens, and TokensTransferred events.
-// Polygon appears to use a different contract with an extra function: 0x8a733e4c,
-// can't find this function called in any other contracts. Using Etherscan's API to get those txs.
 // Can only find a verified contract on BSC to reference.
+// Polygon appears to use a different contract with an extra function: 0x8a733e4c, can't find
+// this function called in any other contracts. It's only called by 'Gameverse', ignoring these txs.
 
 const contractAddresses = {
   ethereum: "0x763A0CA93AF05adE98A52dc1E5B936b89bF8b89a",
@@ -118,32 +116,13 @@ const constructParams = (chain: string) => {
     };
     eventParams.push(finalBurnDepositParams, finalTransferDepositParams, finalWithdrawalParams);
   }
-  return async (fromBlock: number, toBlock: number) => {
-    const eventLogData = await getTxDataFromEVMEventLogs("chainport", chain as Chain, fromBlock, toBlock, eventParams);
-
-    let extraBurnTxsData = [] as EventData[];
-    if (chain === "polygon") {
-      // for function 0x8a733e4c, which I can't find the events for.
-      const signature = ["0x8a733e"];
-      await wait(1000);
-      const txs = await getTxsBlockRangeEtherscan(chain, chainAddress, fromBlock, toBlock, signature);
-
-      if (txs.length) {
-        const hashData = txs.map((tx: any) => {
-          return { hash: tx.hash, token: tx.token, isDeposit: true };
-        });
-        // this doesn't work because I don't have the token, need to decode input data to get it
-        const extraBurnTxs = await getTxDataFromHashAndToken(chain, hashData);
-        extraBurnTxsData = [...extraBurnTxs, ...extraBurnTxsData];
-      }
-    }
-    return [...eventLogData, ...extraBurnTxsData];
-  };
+  return async (fromBlock: number, toBlock: number) =>
+    getTxDataFromEVMEventLogs("chainport", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  //polygon: constructParams("polygon"),
+  polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
