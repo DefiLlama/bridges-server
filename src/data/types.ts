@@ -4,6 +4,7 @@ export type BridgeNetwork = {
   id: number;
   displayName: string;
   bridgeDbName: string;
+  iconLink: string;
   largeTxThreshold: number;
   url: string;
   token?: string;

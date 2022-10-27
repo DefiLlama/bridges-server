@@ -10,7 +10,7 @@ const getBridges = async () => {
   const response = (
     await Promise.all(
       bridgeNetworks.map(async (bridgeNetwork) => {
-        const { id, bridgeDbName, url, displayName, chains, destinationChain } = bridgeNetwork;
+        const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain } = bridgeNetwork;
         // can use chains to give current chain breakdown, but not needed at this time
 
         const currentTimestamp = getCurrentUnixTimestamp();
@@ -84,6 +84,7 @@ const getBridges = async () => {
           name: bridgeDbName,
           displayName: displayName,
           url: url,
+          icon: iconLink,
           volumePrevDay: lastDailyVolume ?? 0,
           volumePrev2Day: dayBeforeLastVolume ?? 0,
           volumePrevWeek: lastWeeklyVolume ?? 0,
