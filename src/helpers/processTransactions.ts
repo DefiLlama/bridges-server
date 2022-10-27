@@ -139,10 +139,16 @@ export const getTxDataFromEVMEventLogs = async (
             }
             data[i][eventKey] = value;
           });
-          const parsedLog = iface.parseLog({
+          let parsedLog = {} as any
+          try {
+          parsedLog = iface.parseLog({
             topics: txLog.topics,
             data: txLog.data,
           });
+         } catch (e) {
+          console.error(`WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash}`)
+          return
+         }
           //console.log(parsedLog)
           if (params.argKeys) {
             const args = parsedLog?.args;
@@ -329,8 +335,9 @@ export const getNativeTokenTransfersFromHash = async (
   chain: Chain,
   hashes: string[],
   address: string,
-  nativeToken: string,
-) => {const provider = getProvider(chain) as any
+  nativeToken: string
+) => {
+  const provider = getProvider(chain) as any;
   const transactions = (
     await Promise.all(
       hashes.map(async (hash) => {
@@ -345,7 +352,7 @@ export const getNativeTokenTransfersFromHash = async (
           console.error(`WARNING: Address given for native transfer on chain ${chain} not present in tx, SKIPPING tx.`);
           return;
         }
-        const isDeposit = address === to
+        const isDeposit = address === to;
         return {
           blockNumber: blockNumber,
           txHash: hash,
