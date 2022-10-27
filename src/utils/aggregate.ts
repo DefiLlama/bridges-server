@@ -1,6 +1,6 @@
 import { sql } from "./db";
 import BigNumber from "bignumber.js";
-import { queryAllTxsWithinTimestampRange } from "./wrappa/postgres/query";
+import { queryTransactionsTimestampRangeByBridge } from "./wrappa/postgres/query";
 import {
   getTimestampAtStartOfHour,
   secondsInHour,
@@ -164,7 +164,7 @@ export const aggregateData = async (
       return;
     }
   }
-  const txs = await queryAllTxsWithinTimestampRange(startTimestamp, endTimestamp, bridgeID);
+  const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
   if (txs.length === 0) {
     const errString = `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;

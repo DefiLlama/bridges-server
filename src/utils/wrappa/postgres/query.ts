@@ -69,7 +69,7 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
   if (!(chain || destinationChain)) {
     if (bridgeNetworkName) {
       bridgeNetworkNameEqual = sql`WHERE bridge_name = ${bridgeNetworkName}`;
-    } 
+    }
   }
   let chainEqual = sql``;
   let destinationChainEqual = sql``;
@@ -92,7 +92,7 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
 };
 
 // need to FIX 'to_timestamp' throughout so I can pass already formatted timestamps**********************
-const queryAllTxsWithinTimestampRange = async (startTimestamp: number, endTimestamp: number, bridgeID: string) => {
+const queryTransactionsTimestampRangeByBridge = async (startTimestamp: number, endTimestamp: number, bridgeID: string) => {
   return await sql<ITransaction[]>`
   SELECT * FROM 
     bridges.transactions
@@ -202,20 +202,20 @@ const queryAggregatedHourlyDataAtTimestamp = async (timestamp: number, chain?: s
   `;
 };
 
-const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: string, bridgNetworkName?: string) => {
+const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: string, bridgeNetworkName?: string) => {
   let bridgNetworkNameEqual = sql``;
   let chainEqual = sql``;
   let bridgeIdIn = sql``;
-  if (bridgNetworkName && chain) {
+  if (bridgeNetworkName && chain) {
     bridgNetworkNameEqual = sql`
-    WHERE bridge_name = ${bridgNetworkName} AND
+    WHERE bridge_name = ${bridgeNetworkName} AND
     chain = ${chain}
     `;
   } else {
-    bridgNetworkNameEqual = bridgNetworkName ? sql`WHERE bridge_name = ${bridgNetworkName}` : sql``;
+    bridgNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
     chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
   }
-  if (bridgNetworkName || chain) {
+  if (bridgeNetworkName || chain) {
     bridgeIdIn = sql`AND
     bridge_id IN (
       SELECT id FROM
@@ -257,7 +257,37 @@ const queryLargeTransactionsTimestampRange = async (
              (
                     SELECT id
                     FROM   bridges.config ${chainEqual})
-  ORDER BY   ts DESC`;
+  ORDER BY   ts DESC
+  `;
+};
+
+const queryTransactionsTimestampRangeByBridgeNetwork = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeNetworkName?: string
+) => {
+  let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
+  return await sql<ITransaction[]>`
+  SELECT transactions.bridge_id,
+       transactions.tx_hash,
+       transactions.ts,
+       transactions.tx_block,
+       transactions.tx_from,
+       transactions.tx_to,
+       transactions.token,
+       transactions.amount,
+       transactions.is_deposit,
+       transactions.chain,
+       config.bridge_name
+FROM   bridges.transactions
+       INNER JOIN bridges.config
+               ON transactions.bridge_id = config.id
+WHERE  config.id IN (SELECT id
+                     FROM   bridges.config
+                     ${bridgeNetworkEqual})
+       AND transactions.ts >= to_timestamp(${startTimestamp})
+       AND transactions.ts <= to_timestamp(${endTimestamp})
+       `;
 };
 
 const getLargeTransaction = async (txPK: number, timestamp: number) => {
@@ -278,7 +308,8 @@ export {
   getLargeTransaction,
   queryLargeTransactionsTimestampRange,
   queryConfig,
-  queryAllTxsWithinTimestampRange,
+  queryTransactionsTimestampRangeByBridge,
+  queryTransactionsTimestampRangeByBridgeNetwork,
   queryAggregatedHourlyDataAtTimestamp,
   queryAggregatedDailyDataAtTimestamp,
   queryAggregatedDailyTimestampRange,

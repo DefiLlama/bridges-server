@@ -86,6 +86,14 @@ functions:
       - http:
           path: bridges
           method: get
+  transactions:
+    handler: src/handlers/getTransactions.default
+    timeout: 30
+    memorySize: 3000
+    events:
+      - http:
+          path: transactions
+          method: get
   largeTransactions:
     handler: src/handlers/getLargeTransactions.default
     timeout: 30

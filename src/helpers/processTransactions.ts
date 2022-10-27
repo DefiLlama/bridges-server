@@ -231,6 +231,7 @@ export const getTxDataFromEVMEventLogs = async (
             } catch (e) {
               console.error(`Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`);
               dataKeysToFilter.push(i);
+              return
             }
           }
           if (params.selectIndexesFromArrays) {
