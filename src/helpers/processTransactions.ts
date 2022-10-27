@@ -147,6 +147,7 @@ export const getTxDataFromEVMEventLogs = async (
           });
          } catch (e) {
           console.error(`WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash}`)
+          dataKeysToFilter.push(i);
           return
          }
           //console.log(parsedLog)
