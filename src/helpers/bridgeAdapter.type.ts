@@ -37,6 +37,7 @@ export type ContractEventParams = {
   fixedEventData?: EventKeyMapping; // hard-code any final values
   inputDataExtraction?: InputDataExtraction; // retrive data from event log's input data field
   selectIndexesFromArrays?: EventKeyMapping; // extract data returned as an array by specifying the index of element
+  matchFunctionSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
 };
@@ -55,6 +56,7 @@ export type PartialContractEventParams = {
   fixedEventData?: EventKeyMapping;
   inputDataExtraction?: InputDataExtraction;
   selectIndexesFromArrays?: EventKeyMapping;
+  matchFunctionSignatures?: string[];
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string };
 };

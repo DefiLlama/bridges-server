@@ -139,17 +139,19 @@ export const getTxDataFromEVMEventLogs = async (
             }
             data[i][eventKey] = value;
           });
-          let parsedLog = {} as any
+          let parsedLog = {} as any;
           try {
-          parsedLog = iface.parseLog({
-            topics: txLog.topics,
-            data: txLog.data,
-          });
-         } catch (e) {
-          console.error(`WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash}`)
-          dataKeysToFilter.push(i);
-          return
-         }
+            parsedLog = iface.parseLog({
+              topics: txLog.topics,
+              data: txLog.data,
+            });
+          } catch (e) {
+            console.error(
+              `WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash}`
+            );
+            dataKeysToFilter.push(i);
+            return;
+          }
           //console.log(parsedLog)
           if (params.argKeys) {
             const args = parsedLog?.args;
@@ -231,7 +233,7 @@ export const getTxDataFromEVMEventLogs = async (
             } catch (e) {
               console.error(`Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`);
               dataKeysToFilter.push(i);
-              return
+              return;
             }
           }
           if (params.selectIndexesFromArrays) {
@@ -244,6 +246,21 @@ export const getTxDataFromEVMEventLogs = async (
               const extractedValue = data[i][eventKey][parseInt(value)];
               data[i][eventKey] = extractedValue;
             });
+          }
+          if (params.matchFunctionSignatures) {
+            const tx = await provider.getTransaction(txLog.transactionHash);
+            if (!tx) {
+              console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+              dataKeysToFilter.push(i);
+              return;
+            } else {
+              const signature = tx.data.slice(0, 8);
+              if (!params.matchFunctionSignatures.includes(signature)) {
+                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
+                dataKeysToFilter.push(i);
+                return;
+              }
+            }
           }
           if (params.mapTokens) {
             const map = params.mapTokens;
