@@ -29,14 +29,14 @@ export default wrapScheduledLambda(async (_event) => {
           const hourlyEntries = await queryAggregatedHourlyTimestampRange(
             startTimestamp,
             endTimestamp,
-            bridgeDbName,
-            chain
+            chain,
+            bridgeDbName
           );
           const dailyEntries = await queryAggregatedDailyTimestampRange(
             startTimestamp,
             endTimestamp,
-            bridgeDbName,
-            chain
+            chain,
+            bridgeDbName
           );
           console.info(bridgeDbName, hourlyEntries.length);
           console.info(bridgeDbName, dailyEntries.length);
