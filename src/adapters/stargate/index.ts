@@ -1,13 +1,13 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { ethers } from "ethers";
 
 /*
 It appears that Stargate: Router does not emit swap events.
 Other contracts involved may not help much.
-May be easiest to track the transfers to each individual SG token contract.
+May be easiest to track the transfers to each individual SG token contract,
+but need to track events from those contracts as there are also liquidity adding/removal txs.
 
 Factories are here, should update adapter to get erc lists from them:
 Ethereum: 0x06D538690AF257Da524f25D0CD52fD85b1c2173E
@@ -16,6 +16,30 @@ BSC: 0x4a364f8c717cAAD9A442737Eb7b8A55cc6cf18D8
 Avax: 0x808d7c71ad2ba3FA531b068a2417C63106BC0949
 Fantom: 0x9d1B1669c73b033DFe47ae5a0164Ab96df25B944
 Optimism: 0xE3B53AF74a4BF62Ae5511055290838050bf764Df
+
+Mappings:
+***Polygon***
+0x1205f31718499dBf1fCa446663B532Ef87481fe1 to polygon:0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c to polygon:0xc2132D05D31c914a87C6611C10748AEb04B58e8F
+
+***Fantom***
+0x12edeA9cd262006cC3C4E77c90d2CD2DD4b1eb97 to fantom:0x04068DA6C83AFCFA0e13ba15A6696662335D5B75
+
+***Avax***
+0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c to avax:0xc7198437980c041c805A1EDcbA50c1Ce5db95118
+0x1205f31718499dBf1fCa446663B532Ef87481fe1 to avax:0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
+
+***BSC***
+0x98a5737749490856b401DB5Dc27F522fC314A4e1 to bsc:0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56
+0x9aA83081AA06AF7208Dcc7A4cB72C94d057D2cda to bsc:0x55d398326f99059fF775485246999027B3197955
+0x4e145a589e4c03cBe3d28520e4BF3089834289Df to bsc:0xd17479997F34dd9156Deef8F95A52D81D265be9c
+
+***Arbitrum***
+0x892785f33CdeE22A30AEF750F285E18c18040c3e to arbitrum:0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8
+0xB6CfcF89a7B22988bfC96632aC2A9D6daB60d641 to arbitrum:0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9
+
+***Optimism***
+0xDecC0c09c3B5f6e92EF4184125D5648a66E35298 to optimism:0x7F5c764cBc14f9669B88837ca1490cCa17c31607
 */
 
 const nullAddress = "0x0000000000000000000000000000000000000000";
@@ -176,7 +200,6 @@ const stgDepositParams: PartialContractEventParams = {
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
-    token: "address",
   },
   argKeys: {
     from: "from",
@@ -196,7 +219,6 @@ const stgWithdrawalParams: PartialContractEventParams = {
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
-    token: "address",
   },
   argKeys: {
     to: "to",
@@ -208,6 +230,47 @@ const stgWithdrawalParams: PartialContractEventParams = {
   },
   isDeposit: false,
 };
+
+const ercDepositParams: PartialContractEventParams = {
+  target: "",
+  topic: "Swap(uint16,uint256,address,uint256,uint256,uint256,uint256,uint256)",
+  abi: ["event Swap(uint16 chainId, uint256 dstPoolId, address from, uint256 amountSD, uint256 eqReward, uint256 eqFee, uint256 protocolFee, uint256 lpFee)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    from: "from",
+    amount: "amountSD",
+  },
+  fixedEventData: {
+    token: "",
+    to: ""
+  },
+  isDeposit: true,
+};
+
+const ercWithdrawalParams: PartialContractEventParams = {
+  target: "",
+  topic: "SwapRemote(address,uint256,uint256,uint256)",
+  abi: ["event SwapRemote(address to, uint256 amountSD, uint256 protocolFee, uint256 dstFee)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+    token: "address",
+  },
+  argKeys: {
+    to: "to",
+    amount: "amountSD",
+  },
+  fixedEventData: {
+    token: "",
+    from: "",
+  },
+  isDeposit: false,
+};
+
+
 
 /*
 These are no longer needed.
@@ -303,9 +366,23 @@ const constructParams = (chain: string) => {
   }
 
   for (let address of ercs) {
-    const depositEventParams: PartialContractEventParams = constructTransferParams(address, true);
-    const withdrawalEventParams: PartialContractEventParams = constructTransferParams(address, false);
-    eventParams.push(depositEventParams, withdrawalEventParams);
+    const finalErcDepositParams = {
+      ...ercDepositParams,
+      target: address,
+      fixedEventData: {
+        token: address,
+        to: address,
+      },
+    };
+    const finalErcWithdrawalParams = {
+      ...ercWithdrawalParams,
+      target: address,
+      fixedEventData: {
+        token: address,
+        from: address,
+      },
+    };
+    eventParams.push(finalErcDepositParams, finalErcWithdrawalParams);
   }
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("stargate", chain as Chain, fromBlock, toBlock, eventParams);
