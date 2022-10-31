@@ -41,7 +41,6 @@ export default [
     url: "",
     chains: ["Ethereum", "Optimism"],
   },
-  /*
   {
     id: 5,
     displayName: "Multichain",
@@ -51,10 +50,9 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
-      "avalanche":"avax"  // this is needed temporarily, need to fix and remove
-    }
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
   },
-  */
   {
     id: 6,
     displayName: "Poly Network",
@@ -64,10 +62,9 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
-      "avalanche":"avax"
-    }
+      avalanche: "avax",
+    },
   },
-  /*
   {
     id: 7,
     displayName: "Orbit Bridge",
@@ -76,10 +73,9 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
     chainMapping: {
-      "avalanche":"avax"
-    }
+      avalanche: "avax",
+    },
   },
-  */
   {
     id: 8,
     displayName: "ChainPort",
@@ -89,8 +85,8 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
     chainMapping: {
-      "avalanche":"avax"
-    }
+      avalanche: "avax",
+    },
   },
   {
     id: 9,
@@ -101,8 +97,8 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
     chainMapping: {
-      "avalanche":"avax"  // this is needed temporarily, need to fix and remove
-    }
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
   },
   {
     id: 10,
@@ -113,8 +109,8 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
-      "avalanche":"avax"
-    }
+      avalanche: "avax",
+    },
   },
   {
     id: 11,
@@ -125,10 +121,9 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
-      "avalanche":"avax"
-    }
+      avalanche: "avax",
+    },
   },
-  /*
   {
     id: 12,
     displayName: "Stargate",
@@ -137,10 +132,9 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
     chainMapping: {
-      "avalanche":"avax"  // this is needed temporarily, need to fix and remove
-    }
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
   },
-  */
   {
     id: 13,
     displayName: "Hop",
@@ -149,5 +143,30 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+  },
+  /*
+  {
+    id: 14,
+    displayName: "Binance Issued",
+    bridgeDbName: "bsc",
+    iconLink: "",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "BSC"],
+    destinationChain: "Ethereum",
+  },
+  */
+  {
+    id: 16,
+    displayName: "xDai Bridge/OmniBridge",
+    bridgeDbName: "xdai",
+    iconLink: "chain:xdai",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Gnosis"],
+    destinationChain: "Gnosis",
+    chainMapping: {
+      gnosis: "xdai", // this is needed temporarily, need to fix and remove
+    },
   },
 ] as BridgeNetwork[];

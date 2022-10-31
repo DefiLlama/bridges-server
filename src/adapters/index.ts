@@ -12,6 +12,8 @@ import orbitbridge from "./orbitbridge";
 import chainport from "./chainport";
 import stargate from "./stargate";
 import portal from "./portal";
+import bsc from "./bsc";
+import xdai from "./xdai";
 
 export default {
   polygon,
@@ -26,7 +28,9 @@ export default {
   orbitbridge,
   chainport,
   stargate,
-  portal
+  portal,
+  bsc,
+  xdai,
 } as {
   [bridge: string]: BridgeAdapter;
 };

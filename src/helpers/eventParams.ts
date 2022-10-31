@@ -8,6 +8,7 @@ export const constructTransferParams = (
   target: string,
   isDeposit: boolean,
   filter?: EventLogFilter,
+  matchFunctionSignatures?: string[],
   chain?: Chain,
 ) => {
   return Object.fromEntries(
@@ -17,6 +18,7 @@ export const constructTransferParams = (
       isDeposit: isDeposit,
       isTransfer: true,
       filter: filter,
+      matchFunctionSignatures: matchFunctionSignatures,
     }).filter(([_k, v]) => v != null)
   ) as PartialContractEventParams;
 };
