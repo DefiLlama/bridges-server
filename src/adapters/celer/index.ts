@@ -48,6 +48,10 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0x9D39Fc627A6d9d9F8C831c16995b209548cc3401 is Celer Network: cBridge (pool-based)
 0xbCfeF6Bb4597e724D720735d32A9249E0640aA11 is OriginalTokenVault
 0x61f85fF2a2f4289Be4bb9B72Fc7010B3142B5f41 is PeggedTokenBridge
+
+***Gnosis***
+0x3795C36e7D12A8c252A20C5a7B455f7c57b60283 is Celer Network: cBridge 2.0 (pool-based)
+0xd4c058380D268d85bC7c758072f561e8f2dB5975 is PeggedTokenBridge
 */
 
 const contractAddresses = {
@@ -95,6 +99,10 @@ const contractAddresses = {
     poolV1: ["0x9D39Fc627A6d9d9F8C831c16995b209548cc3401"],
     vaultV1: ["0xbCfeF6Bb4597e724D720735d32A9249E0640aA11"],
     peggedV1: ["0x61f85fF2a2f4289Be4bb9B72Fc7010B3142B5f41"],
+  },
+  xdai: {
+    poolV2: ["0x3795C36e7D12A8c252A20C5a7B455f7c57b60283"],
+    peggedV1: ["0xd4c058380D268d85bC7c758072f561e8f2dB5975"],
   },
 } as {
   [chain: string]: {
@@ -424,6 +432,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  gnosis: constructParams("xdai"),
 };
 
 export default adapter;

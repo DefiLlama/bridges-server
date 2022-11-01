@@ -59,6 +59,7 @@ export default [
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
+      gnosis: "xdai"
     },
   },
   {
@@ -79,13 +80,14 @@ export default [
     ],
     chainMapping: {
       avalanche: "avax",
+      gnosis: "xdai"
     },
   },
-  /*
   {
     id: 7,
     displayName: "Orbit Bridge",
     bridgeDbName: "orbitbridge",
+    iconLink: "icons:orbit-bridge",
     largeTxThreshold: 10000,
     url: "",
     chains: [
@@ -97,9 +99,9 @@ export default [
     ],
     chainMapping: {
       avalanche: "avax",
+      gnosis: "xdai"
     },
   },
-  */
   {
     id: 8,
     displayName: "ChainPort",
@@ -154,6 +156,7 @@ export default [
     ],
     chainMapping: {
       avalanche: "avax",
+      gnosis: "xdai"
     },
   },
   {
@@ -176,11 +179,11 @@ export default [
       avalanche: "avax",
     },
   },
-  /*
   {
     id: 12,
     displayName: "Stargate",
     bridgeDbName: "stargate",
+    iconLink: "icons:stargate",
     largeTxThreshold: 10000,
     url: "",
     chains: [
@@ -196,7 +199,6 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
-  */
   {
     id: 13,
     displayName: "Hop",
@@ -205,6 +207,9 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+    chainMapping: {
+      gnosis: "xdai", // this is needed temporarily, need to fix and remove
+    },
   },
   /*
   {
@@ -218,7 +223,6 @@ export default [
     destinationChain: "Ethereum",
   },
   */
- /*
   {
     id: 15,
     displayName: "Core Bitcoin Bridge",
@@ -232,11 +236,9 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
-  */
-  /*
   {
     id: 16,
-    displayName: "xDai Bridge/OmniBridge",
+    displayName: "xDai Bridge",
     bridgeDbName: "xdai",
     iconLink: "chain:xdai",
     largeTxThreshold: 10000,
@@ -247,5 +249,4 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
-  */
 ] as BridgeNetwork[];

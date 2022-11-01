@@ -17,6 +17,7 @@ For all tokens, via 'l2Bridge' contracts:
   -withdrawals from l2 via WithdrawalBonded
 */
 
+// 'l2Bridge' contracts
 const contractAddresses = {
   ethereum: {
     ETH: "0xb8901acB165ed027E32754E0FFe830802919727f",
@@ -56,8 +57,18 @@ const contractAddresses = {
     SNX: "0x16284c7323c35F4960540583998C98B1CfC581a7",
     SUSD: "0x33Fe5bB8DA466dA55a8A32D6ADE2BB104E2C5201", // seems like it's not used
   },
+  xdai: {
+    ETH: "0xD8926c12C0B2E5Cd40cFdA49eCaFf40252Af491B",
+    DAI: "0x0460352b91D7CF42B0E1C1c30f06B602D9ef2238",
+    USDC: "0x25D8039bB044dC227f741a9e381CA4cEAE2E6aE8",
+    USDT: "0xFD5a186A7e8453Eb867A360526c5d987A00ACaC2",
+    MATIC: "0x7ac71c29fEdF94BAc5A5C9aB76E1Dd12Ea885CCC",
+    WBTC: "0x07C592684Ee9f71D58853F9387579332d471b6Ca",
+    HOP: "0x6F03052743CD99ce1b29265E377e320CD24Eb632",
+  },
 } as any;
 
+// 'l2CanonicalToken contracts'
 const tokenAddresses = {
   ethereum: {
     ETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
@@ -96,6 +107,15 @@ const tokenAddresses = {
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     SNX: "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4",
     SUSD: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+  },
+  xdai: {
+    ETH: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1",
+    DAI: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d",
+    USDC: "0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83",
+    USDT: "0x4ECaBa5870353805a9F068101A40E0f32ed605C6",
+    MATIC: "0x7122d7661c4564b7C6Cd4878B06766489a6028A2",
+    WBTC: "0x8e5bBbb09Ed1ebdE8674Cda39A0c169401db4252",
+    HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
   },
 } as any;
 
@@ -260,6 +280,7 @@ const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  gnosis: constructParams("xdai")
 };
 
 export default adapter;

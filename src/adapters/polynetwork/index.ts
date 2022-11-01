@@ -36,6 +36,10 @@ const contractAddresses = {
     contract: "0xd3b90E2603D265Bf46dBC788059AC12D52B6AC57",
     nativeToken: "0x4200000000000000000000000000000000000006", // WETH
   },
+  xdai: {
+    contract: "0x77F3A156e8E597C64d4a12d62f20a0d2ff839dD5",
+    nativeToken: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d", // WDAI
+  },
 } as {
   [chain: string]: {
     contract: string;
@@ -127,7 +131,8 @@ const adapter: BridgeAdapter = {
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
-  optimism: constructParams("optimism")
+  optimism: constructParams("optimism"),
+  gnosis: constructParams("xdai")
 };
 
 export default adapter;
