@@ -157,6 +157,20 @@ export default [
   },
   */
   {
+    id: 15,
+    displayName: "Core Bitcoin Bridge",
+    bridgeDbName: "avalanche-btc",
+    iconLink: "chain:avalanche",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Avalanche"],
+    destinationChain: "-", // not sure the effect this will have, need to double-check everything works
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
+  /*
+  {
     id: 16,
     displayName: "xDai Bridge/OmniBridge",
     bridgeDbName: "xdai",
@@ -169,4 +183,5 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
+  */
 ] as BridgeNetwork[];

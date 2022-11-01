@@ -14,6 +14,7 @@ import stargate from "./stargate";
 import portal from "./portal";
 import bsc from "./bsc";
 import xdai from "./xdai";
+import avalanchebtc from "./avalanche-btc";
 
 export default {
   polygon,
@@ -31,6 +32,7 @@ export default {
   portal,
   bsc,
   xdai,
+  "avalanche-btc": avalanchebtc,
 } as {
   [bridge: string]: BridgeAdapter;
 };
