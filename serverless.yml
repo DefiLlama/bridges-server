@@ -119,7 +119,7 @@ functions:
     timeout: 600
     memorySize: 2000
     events:
-      - schedule: cron(30 0 * * ? *)
+      - schedule: cron(30 1 * * ? *)
 
 resources:
   # CORS for api gateway errors
