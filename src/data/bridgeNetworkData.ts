@@ -48,7 +48,15 @@ export default [
     iconLink: "icons:multichain",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -60,22 +68,38 @@ export default [
     iconLink: "icons:poly-network",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
   },
+  /*
   {
     id: 7,
     displayName: "Orbit Bridge",
     bridgeDbName: "orbitbridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
   },
+  */
   {
     id: 8,
     displayName: "ChainPort",
@@ -83,7 +107,13 @@ export default [
     iconLink: "icons:chainport",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
@@ -95,7 +125,13 @@ export default [
     iconLink: "icons:portal",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -107,7 +143,15 @@ export default [
     iconLink: "icons:cbridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
@@ -119,22 +163,40 @@ export default [
     iconLink: "icons:synapse",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
   },
+  /*
   {
     id: 12,
     displayName: "Stargate",
     bridgeDbName: "stargate",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "BSC", "Arbitrum", "Optimism"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      // "BSC"
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  */
   {
     id: 13,
     displayName: "Hop",
@@ -156,6 +218,7 @@ export default [
     destinationChain: "Ethereum",
   },
   */
+ /*
   {
     id: 15,
     displayName: "Core Bitcoin Bridge",
@@ -169,6 +232,7 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  */
   /*
   {
     id: 16,
