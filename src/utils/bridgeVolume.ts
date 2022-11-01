@@ -7,7 +7,7 @@ import {
 } from "./wrappa/postgres/query";
 import bridgeNetworks from "../data/bridgeNetworkData";
 
-const startTimestampToRestrictTo = 1661990400 // Sept. 01, 2022: timestamp data is backfilled to
+const startTimestampToRestrictTo = 1661990400; // Sept. 01, 2022: timestamp data is backfilled to
 
 interface IAggregatedData {
   bridge_id: string;
@@ -20,6 +20,13 @@ interface IAggregatedData {
   total_withdrawal_txs: number;
   total_address_deposited: string[];
   total_address_withdrawn: string[];
+}
+
+interface IConfig {
+  id: string;
+  bridge_name: string;
+  chain: string;
+  destination_chain: number;
 }
 
 /*
@@ -44,19 +51,22 @@ export const getDailyBridgeVolume = async (
     ({ bridgeDbName } = bridgeNetwork);
   }
 
-  // not needed?
-  // const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
+  const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
 
   const currentTimestamp = getCurrentUnixTimestamp();
   const dailyStartTimestamp = startTimestamp ? startTimestamp : startTimestampToRestrictTo;
   const dailyEndTimestamp = endTimestamp ? endTimestamp : currentTimestamp;
 
-  const sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
-    if (bridgeNetworkId) {
-      return config.bridge_name === bridgeDbName;
-    }
-    return true;
-  });
+  let sourceChainConfigs = [] as IConfig[];
+  if (chain) {
+    sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
+      if (bridgeNetworkId) {
+        return config.bridge_name === bridgeDbName;
+      }
+      return true;
+    });
+  }
+
   let sourceChainsHistoricalDailyData = [] as IAggregatedData[];
   await Promise.all(
     sourceChainConfigs.map(async (config) => {
@@ -119,10 +129,6 @@ export const getDailyBridgeVolume = async (
     historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_deposit_txs;
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
-    
-    
-    /*
-    // This doubles volumes in error, I'm not sure any more for which case it was originally needed.
 
     // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
     if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
@@ -136,7 +142,6 @@ export const getDailyBridgeVolume = async (
       historicalDailySums[timestamp].withdrawTxs =
         (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
     }
-    */
   });
   // the deposits and withdrawals are swapped here
   sourceChainsHistoricalDailyData.map((dailyData) => {
@@ -269,7 +274,7 @@ export const getHourlyBridgeVolume = async (
     chain,
     bridgeDbName
   );
-
+  
   let historicalHourlySums = {} as { [timestamp: string]: any };
   historicalHourlyData.map((hourlyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
