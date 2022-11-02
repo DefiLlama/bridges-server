@@ -70,7 +70,6 @@ functions:
           path: bridgedaystats/{timestamp}/{chain}
           method: get
   bridgeVolume:
-    # need to ensure query strings work once caching is set up
     handler: src/handlers/getBridgeVolume.default
     timeout: 30
     memorySize: 3000
@@ -92,7 +91,7 @@ functions:
     memorySize: 3000
     events:
       - http:
-          path: transactions
+          path: transactions/{id}
           method: get
   largeTransactions:
     handler: src/handlers/getLargeTransactions.default
