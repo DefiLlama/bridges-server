@@ -28,19 +28,20 @@ export type ContractEventParams = {
   target: string | null;
   topic: string;
   abi: string[];
-  logKeys?: EventKeyMapping; // retrive data from event log
-  argKeys?: EventKeyMapping; // retrive data from parsed event log
-  txKeys?: EventKeyMapping; // retrive data from transaction referenced in event log
+  logKeys?: EventKeyMapping; // retrieve data from event log
+  argKeys?: EventKeyMapping; // retrieve data from parsed event log
+  txKeys?: EventKeyMapping; // retrieve data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
   chain?: Chain; // override chain given as parameter in getTxDataFromEVMEventLogs
   isTransfer?: boolean;
   fixedEventData?: EventKeyMapping; // hard-code any final values
-  inputDataExtraction?: InputDataExtraction; // retrive data from event log's input data field
+  inputDataExtraction?: InputDataExtraction; // retrieve data from event log's input data field
   selectIndexesFromArrays?: EventKeyMapping; // extract data returned as an array by specifying the index of element
   matchFunctionSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
+  getTokenFromReceipt?: boolean; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
 };
 
 export type PartialContractEventParams = {
@@ -60,4 +61,5 @@ export type PartialContractEventParams = {
   matchFunctionSignatures?: string[];
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string };
+  getTokenFromReceipt?: boolean;
 };

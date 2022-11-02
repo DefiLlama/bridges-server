@@ -219,6 +219,39 @@ export const getTxDataFromEVMEventLogs = async (
               if (toFilter) dataKeysToFilter.push(i);
             }
           }
+          if (params.getTokenFromReceipt) {
+            const txReceipt = await provider.getTransactionReceipt(txLog.transactionHash);
+            if (!txReceipt) {
+              console.error(`WARNING: Unable to get transaction receipt for ${adapterName}, SKIPPING tx.`);
+              dataKeysToFilter.push(i);
+            } else {
+              const logs = txReceipt.logs;
+              const filteredLogs = logs.filter((log: any) => {
+                const topics = log.topics;
+                let isTransfer = false;
+                topics.map((topic: string) => {
+                  if (topic.slice(0, 8) === "0xddf252") {
+                    isTransfer = true;
+                  }
+                });
+                return isTransfer;
+              });
+              if (filteredLogs.length === 0) {
+                console.error(
+                  `Warning: Transaction receipt for ${adapterName} contained no token transfers, SKIPPING tx.`
+                );
+                dataKeysToFilter.push(i);
+              } else {
+                const address = filteredLogs[0].address;
+                data[i].token = address;
+              }
+              if (filteredLogs.length > 1) {
+                console.error(
+                  `Warning: Transaction receipt for ${adapterName} contained multiple token transfers, retrieving first token only.`
+                );
+              }
+            }
+          }
           if (params.inputDataExtraction) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             try {
