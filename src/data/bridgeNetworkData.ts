@@ -274,4 +274,13 @@ export default [
     chains: ["Ethereum", "Aurora"],
     destinationChain: "Aurora",
   },
+  {
+    id: 19,
+    displayName: "Across",
+    bridgeDbName: "across",
+    iconLink: "icons:across",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+  },
 ] as BridgeNetwork[];

@@ -17,6 +17,7 @@ import xdai from "./xdai";
 import avalanchebtc from "./avalanche-btc";
 import axelar from "./axelar";
 import rainbowbridge from "./rainbowbridge";
+import across from "./across";
 
 export default {
   polygon,
@@ -36,7 +37,8 @@ export default {
   xdai,
   "avalanche-btc": avalanchebtc,
   axelar,
-  rainbowbridge
+  rainbowbridge,
+  across,
 } as {
   [bridge: string]: BridgeAdapter;
 };
