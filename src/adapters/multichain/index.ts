@@ -48,7 +48,7 @@ need to map all of them (using tokenTransform)
 0xDC42728B0eA910349ed3c6e1c9Dc06b5FB591f98 is Anyswap: Router V6
 
 ***Xdai***
-
+0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D is Anyswap: Router V3 (?)
 */
 
 const contractAddresses = {
@@ -179,9 +179,9 @@ const contractAddresses = {
   },
   xdai: {
     routers: [
-      "",
+      "0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D",
     ],
-    nativeToken: "",
+    nativeToken: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d",
   },
 } as {
   [chain: string]: {
@@ -323,7 +323,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  // gnosis: constructParams("xdai")
+  gnosis: constructParams("xdai")
 };
 
 export default adapter;
