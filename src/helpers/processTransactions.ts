@@ -201,6 +201,24 @@ export const getTxDataFromEVMEventLogs = async (
               });
             }
           }
+          if (params.filter?.includeTxData) {
+            const tx = await provider.getTransaction(txLog.transactionHash);
+            if (!tx) {
+              console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+              dataKeysToFilter.push(i);
+            } else {
+              let toFilter = true;
+              const includeTxDataArray = params.filter.includeTxData;
+              includeTxDataArray.map((txMappingToInclude) => {
+                const txKeyToInclude = Object.keys(txMappingToInclude)[0];
+                const txValueToInclude = Object.values(txMappingToInclude)[0];
+                if (tx[txKeyToInclude] === txValueToInclude || tx[txKeyToInclude].toLowerCase() === txValueToInclude) {
+                  toFilter = false;
+                }
+              });
+              if (toFilter) dataKeysToFilter.push(i);
+            }
+          }
           if (params.inputDataExtraction) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             try {
