@@ -15,6 +15,8 @@ import portal from "./portal";
 import bsc from "./bsc";
 import xdai from "./xdai";
 import avalanchebtc from "./avalanche-btc";
+import axelar from "./axelar";
+import rainbowbridge from "./rainbowbridge";
 
 export default {
   polygon,
@@ -33,6 +35,8 @@ export default {
   bsc,
   xdai,
   "avalanche-btc": avalanchebtc,
+  axelar,
+  rainbowbridge
 } as {
   [bridge: string]: BridgeAdapter;
 };

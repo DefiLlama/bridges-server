@@ -459,6 +459,8 @@ export const transformTokens = {
     "0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c": "polygon:0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
     // hop
     "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC": "ethereum:0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
+    // axelar
+    "0xCeED2671d8634e3ee65000EDbbEe66139b132fBf": "polygon:0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
   },
   fantom: {
     // anyswap

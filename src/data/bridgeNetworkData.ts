@@ -264,4 +264,14 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  {
+    id: 18,
+    displayName: "Rainbow Bridge",
+    bridgeDbName: "rainbowbridge",
+    iconLink: "chain:aurora",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Aurora"],
+    destinationChain: "Aurora",
+  },
 ] as BridgeNetwork[];
