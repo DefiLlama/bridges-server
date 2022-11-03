@@ -4,7 +4,7 @@ import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrap
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
-import bridgeNetworks from "../data/bridgeNetworkData"
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -20,7 +20,7 @@ const getLargeTransactions = async (
   configs.map((config) => {
     const id = config.id
     const name = config.bridge_name
-    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.bridgeDbName === name)[0];
+    const bridgeNetwork = importBridgeNetwork(name);
     if (bridgeNetwork) {
     const {displayName} = bridgeNetwork 
     configMapping[id] = displayName

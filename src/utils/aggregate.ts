@@ -23,6 +23,7 @@ import {
 } from "./wrappa/postgres/write";
 import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
 import { transformTokens } from "../helpers/tokenMappings";
 
@@ -49,8 +50,8 @@ export const runAggregateDataHistorical = async (
   hourly: boolean = false,
   chainToRestrictTo?: string
 ) => {
-  const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
-  const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
+  const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
+  const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;

@@ -1,7 +1,7 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { queryTransactionsTimestampRangeByBridgeNetwork } from "../utils/wrappa/postgres/query";
-import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 
 const getTransactions = async (startTimestamp?: string, endTimestamp?: string, bridgeNetworkId?: string) => {
   if (!startTimestamp || !endTimestamp) {
@@ -13,8 +13,8 @@ const getTransactions = async (startTimestamp?: string, endTimestamp?: string, b
   const queryEndTimestamp = parseInt(endTimestamp);
   let queryName = undefined;
   if (bridgeNetworkId) {
-    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === parseInt(bridgeNetworkId))[0];
-    const { bridgeDbName } = bridgeNetwork;
+    const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
+    const { bridgeDbName } = bridgeNetwork!;
     queryName = bridgeDbName;
   }
 

@@ -1,14 +1,14 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolume } from "../utils/bridgeVolume";
-import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   const queryChain = chain === "all" ? undefined : chain;
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {
-      const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === queryId)[0];
+      const bridgeNetwork = importBridgeNetwork(undefined, queryId);
       if (!bridgeNetwork) {
         if (!bridgeNetwork) {
           throw new Error("No bridge network found.");
