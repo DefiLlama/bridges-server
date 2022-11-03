@@ -9,3 +9,4 @@ src/adapters/multichain/process.ts
 src/adapters/multichain/response.json
 src/adapters/multichain/test.ts
 src/adapters/portal/junk.ts
+src/adapters/newchainchecklist.txt
