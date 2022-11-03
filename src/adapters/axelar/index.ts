@@ -210,6 +210,16 @@ const contractAddresses = {
       "0x6313874dE49737f22911c89A528282Fd8672BdAC",
     ],
   },
+  aurora: {
+    gateway: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
+    tokens: [
+      '0x4268B8F0B87b6Eae5d897996E6b845ddbD99Adf3',
+      '0x4818B684a810fC023C32bB6292da8D508Bd906EF',
+      '0xF02eaeEa1350DAD8fc7A66d6BddB25876243ed1F',
+      '0x3FF4cb8EC5EC5eBBfD3424401D962F0627a67Cac',
+      '0x651fcA96C77f5f988E2Ca449B6e3a445399e2492'
+    ],
+  },
 } as {
   [chain: string]: {
     gateway: string;
@@ -310,6 +320,7 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
+  aurora: constructParams("aurora")
 };
 
 export default adapter;

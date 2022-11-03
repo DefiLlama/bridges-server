@@ -52,6 +52,12 @@ import { constructTransferParams } from "../../helpers/eventParams";
 ***Gnosis***
 0x3795C36e7D12A8c252A20C5a7B455f7c57b60283 is Celer Network: cBridge 2.0 (pool-based)
 0xd4c058380D268d85bC7c758072f561e8f2dB5975 is PeggedTokenBridge
+
+***Aurora***
+0x841ce48F9446C8E281D3F1444cB859b4A6D0738C is Celer Network: cBridge 2.0 (pool-based)
+0xbCfeF6Bb4597e724D720735d32A9249E0640aA11 is OriginalTokenVaultV2
+0x4384d5a9D7354C65cE3aee411337bd40493Ad1bC is PeggedTokenBridge
+0xbdd2739AE69A054895Be33A22b2D2ed71a1DE778 is PeggedTokenBridgeV2
 */
 
 const contractAddresses = {
@@ -103,6 +109,12 @@ const contractAddresses = {
   xdai: {
     poolV2: ["0x3795C36e7D12A8c252A20C5a7B455f7c57b60283"],
     peggedV1: ["0xd4c058380D268d85bC7c758072f561e8f2dB5975"],
+  },
+  aurora: {
+    poolV2: ["0x841ce48F9446C8E281D3F1444cB859b4A6D0738C"],
+    vaultV2: ["0xbCfeF6Bb4597e724D720735d32A9249E0640aA11"],
+    peggedV1: ["0x4384d5a9D7354C65cE3aee411337bd40493Ad1bC"],
+    peggedV2: ["0xbdd2739AE69A054895Be33A22b2D2ed71a1DE778"],
   },
 } as {
   [chain: string]: {
@@ -425,6 +437,7 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
+  /*
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
@@ -433,6 +446,8 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   gnosis: constructParams("xdai"),
+  */
+  aurora: constructParams("aurora")
 };
 
 export default adapter;

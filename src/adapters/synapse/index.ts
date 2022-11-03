@@ -64,6 +64,11 @@ const contractAddresses = {
     synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
     nusd: "0x67C10C397dD0Ba417329543c1a40eb48AAa7cd00",
   },
+  aurora: {
+    bridgeZap: "0x2D8Ee8d6951cB4Eecfe4a79eb9C2F973C02596Ed",
+    synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
+    nusd: "0x07379565cD8B0CaE7c60Dc78e7f601b34AF2A21c",
+  },
 } as {
   [chain: string]: {
     bridgeZap: string;
@@ -162,6 +167,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  aurora: constructParams("aurora")
 };
 
 export default adapter;
