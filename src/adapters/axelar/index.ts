@@ -1,6 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { getTxDataFromEVMEventLogs, makeTxHashesUnique } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
 import { constructTransferParams } from "../../helpers/eventParams";
 
@@ -297,8 +297,11 @@ const constructParams = (chain: string) => {
   const underlyingWithdrawalParams = constructTransferParams(gateway, false);
   eventParams.push(underlyingDepositParams, underlyingWithdrawalParams);
 
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("axelar", chain as Chain, fromBlock, toBlock, eventParams);
+  return async (fromBlock: number, toBlock: number) => {
+    const eventData = await getTxDataFromEVMEventLogs("axelar", chain as Chain, fromBlock, toBlock, eventParams);
+    const uniqueHashesEventData = makeTxHashesUnique(eventData)
+    return uniqueHashesEventData
+  }
 };
 
 const adapter: BridgeAdapter = {
