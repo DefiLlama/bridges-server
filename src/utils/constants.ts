@@ -13,4 +13,21 @@ export const maxBlocksToQueryByChain = {
   avax: 3000,
   bsc: 2000,
   optimism: 12000,
+  gnosis: 400,
+  aurora: 5400
 } as { [chain: string]: number };
+
+/*
+// for multichain
+export const maxBlocksToQueryByChain = {
+  default: 1600,
+  ethereum: 1600,
+  polygon: 8000,
+  fantom: 20000,
+  arbitrum: 40000,
+  avalanche: 12000,
+  avax: 12000,
+  bsc: 8000,
+  optimism: 40000,
+} as { [chain: string]: number };
+*/
