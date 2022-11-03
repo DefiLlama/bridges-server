@@ -3,12 +3,14 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 
-// Appears that native tokens cannot be bridged.
-// Can use transfer events for Ethereum.
-// For other chains, need to look at burnTokens, mintTokens, and TokensTransferred events.
-// Can only find a verified contract on BSC to reference.
-// Polygon appears to use a different contract with an extra function: 0x8a733e4c, can't find
-// this function called in any other contracts. It's only called by 'Gameverse', ignoring these txs.
+/*
+Appears that native tokens cannot be bridged.
+Can use transfer events for Ethereum.
+For other chains, need to look at burnTokens, mintTokens, and TokensTransferred events.
+Can only find a verified contract on BSC to reference.
+Polygon appears to use a different contract with an extra function: 0x8a733e4c, can't find
+this function called in any other contracts. It's only called by 'Gameverse', ignoring these txs.
+*/
 
 const contractAddresses = {
   ethereum: "0x763A0CA93AF05adE98A52dc1E5B936b89bF8b89a",
@@ -16,6 +18,7 @@ const contractAddresses = {
   fantom: "0x241663B6Ae912f2A5dFFDCb7a3550Bf60c0A5df5",
   avax: "0x241663B6Ae912f2A5dFFDCb7a3550Bf60c0A5df5",
   bsc: "0x5C80AE9c3396CA4394F9D8E6786Ed9aa74489afE",
+  aurora: "0xFB19ADD1db30A140915Da55222Ab5f968b32B900"
 } as { [chain: string]: any };
 
 const burnDepositParams: PartialContractEventParams = {
@@ -126,6 +129,7 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
+  aurora: constructParams("aurora")
 };
 
 export default adapter;

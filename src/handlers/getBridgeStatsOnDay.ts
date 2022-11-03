@@ -3,7 +3,7 @@ import wrap from "../utils/wrap";
 import { getTimestampAtStartOfDay } from "../utils/date";
 import { queryAggregatedDailyDataAtTimestamp, queryConfig } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
-import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
 
 const numberOfTokensToReturn = 30 // also determines # of addresses returned
@@ -95,7 +95,7 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
     bridgeDbName = undefined;
   } else {
     try {
-      const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === parseInt(bridgeId))[0];
+      const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeId))
       if (!bridgeNetwork) {
         throw new Error("No bridge network found.");
       }

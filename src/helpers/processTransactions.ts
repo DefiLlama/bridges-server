@@ -212,7 +212,7 @@ export const getTxDataFromEVMEventLogs = async (
               includeTxDataArray.map((txMappingToInclude) => {
                 const txKeyToInclude = Object.keys(txMappingToInclude)[0];
                 const txValueToInclude = Object.values(txMappingToInclude)[0];
-                if (tx[txKeyToInclude] === txValueToInclude || tx[txKeyToInclude].toLowerCase() === txValueToInclude) {
+                if (tx[txKeyToInclude] === txValueToInclude || tx[txKeyToInclude]?.toLowerCase() === txValueToInclude) {
                   toFilter = false;
                 }
               });
@@ -436,4 +436,19 @@ export const getNativeTokenTransfersFromHash = async (
     )
   ).filter((tx) => tx) as EventData[];
   return transactions;
+};
+
+export const makeTxHashesUnique = (eventData: EventData[]) => {
+  let hashCounts = {} as { [hash: string]: number };
+  return eventData.map((event) => {
+    const hash = event.txHash;
+    const hashCount = hashCounts[hash] ?? 0;
+    if (hashCount > 0) {
+      hashCounts[hash] = (hashCounts[hash] ?? 0) + 1;
+      const newHash = `${hash}#duplicate${hashCount}`;
+      return { ...event, txHash: newHash };
+    }
+    hashCounts[hash] = (hashCounts[hash] ?? 0) + 1;
+    return event;
+  });
 };

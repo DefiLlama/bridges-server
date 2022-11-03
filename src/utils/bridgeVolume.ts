@@ -1,11 +1,11 @@
-import { getTimestampAtStartOfDay, secondsInDay, convertToUnixTimestamp, getCurrentUnixTimestamp } from "./date";
+import { convertToUnixTimestamp, getCurrentUnixTimestamp } from "./date";
 import {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   queryConfig,
   getConfigsWithDestChain,
 } from "./wrappa/postgres/query";
-import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 
 const startTimestampToRestrictTo = 1661990400; // Sept. 01, 2022: timestamp data is backfilled to
 
@@ -44,7 +44,7 @@ export const getDailyBridgeVolume = async (
 ) => {
   let bridgeDbName = undefined as any;
   if (bridgeNetworkId) {
-    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
+    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
     if (!bridgeNetwork) {
       throw new Error("Invalid bridgeNetworkId entered for getting daily bridge volume.");
     }
@@ -239,7 +239,7 @@ export const getHourlyBridgeVolume = async (
 ) => {
   let bridgeDbName = undefined as any;
   if (bridgeNetworkId) {
-    const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
+    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
     if (!bridgeNetwork) {
       throw new Error("Invalid bridgeNetworkId entered for getting daily bridge volume.");
     }

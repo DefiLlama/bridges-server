@@ -8,6 +8,7 @@ const endpoints = {
   fantom: "https://api.ftmscan.com",
   arbitrum: "https://api.arbiscan.io",
   optimism: "https://api-optimistic.etherscan.io",
+  aurora: "https://api.aurorascan.dev"
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -18,6 +19,7 @@ const apiKeys = {
   fantom: "QWYPA9TEQKJVX4MKXVBT9A2SVA1B4F6X44",
   arbitrum: "WH4E9QCMQTMQ9ZT2YEW1FJ3RQ3YUIAK5MA",
   optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
+  aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN"
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (
@@ -34,6 +36,8 @@ export const getTxsBlockRangeEtherscan = async (
           `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
         )
   ).data as any;
+  console.log(`/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`)
+  console.log(res)
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (matchFunctionSignatures) {

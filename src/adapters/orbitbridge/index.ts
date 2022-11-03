@@ -40,6 +40,8 @@ mappings:
 0x6F6a94eb4C6095885f271dc14cA1E4240Cf4dD95 to ethereum:0x6f259637dcd74c767781e37bc6133cd6a68aa161
 0xCc2a9051E904916047c26C90f41c000D4f273456 to ethereum:0x39fBBABf11738317a448031930706cd3e612e1B9
 0x12c9FFE6538f20A982FD4D17912f0ca00fA82D30 to ethereum:0x662b67d00a13faf93254714dd601f5ed49ef2f51
+
+MISSING GNOSIS (there have been no transactions in like over 2 months, so I skipped adding it)
 */
 
 const contractAddresses = {

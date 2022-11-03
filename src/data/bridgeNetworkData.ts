@@ -55,12 +55,12 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      "Gnosis"
+      "Gnosis",
       // "BSC"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
-      gnosis: "xdai"
+      gnosis: "xdai",
     },
   },
   {
@@ -77,12 +77,12 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      "Gnosis"
+      "Gnosis",
       // "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
-      gnosis: "xdai"
+      gnosis: "xdai",
     },
   },
   {
@@ -97,11 +97,12 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
+      "Aurora",
       // "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
-      gnosis: "xdai"
+      gnosis: "xdai",
     },
   },
   {
@@ -116,6 +117,7 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
+      "Aurora",
       // "BSC"
     ],
     chainMapping: {
@@ -134,6 +136,7 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
+      "Aurora",
       // "BSC"
     ],
     chainMapping: {
@@ -154,12 +157,13 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      "Gnosis"
+      "Gnosis",
+      "Aurora",
       // "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
-      gnosis: "xdai"
+      gnosis: "xdai",
     },
   },
   {
@@ -176,6 +180,7 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
+      "Aurora",
       // "BSC"
     ],
     chainMapping: {
@@ -259,7 +264,7 @@ export default [
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom"],
+    chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Aurora"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
