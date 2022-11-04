@@ -460,7 +460,9 @@ export const transformTokens = {
     // hop
     "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC": "ethereum:0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     // axelar
-    "0xCeED2671d8634e3ee65000EDbbEe66139b132fBf": "polygon:0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+    "0xCeED2671d8634e3ee65000EDbbEe66139b132fBf": "polygon:0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+    // across
+    "0x3066818837c5e6eD6601bd5a91B0762877A6B731": "ethereum:0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
   },
   fantom: {
     // anyswap
@@ -986,6 +988,8 @@ export const transformTokens = {
     // stargate
     "0x892785f33CdeE22A30AEF750F285E18c18040c3e": "arbitrum:0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
     "0xB6CfcF89a7B22988bfC96632aC2A9D6daB60d641": "arbitrum:0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    // across
+    "0xd693Ec944A85eeca4247eC1c3b130DCa9B0C3b22": "ethereum:0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
   },
   shiden: {
     // anyswap
