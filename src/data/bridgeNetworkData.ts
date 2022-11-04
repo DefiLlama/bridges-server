@@ -97,7 +97,6 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
-      "Aurora",
       // "BSC"
     ],
     chainMapping: {
@@ -279,6 +278,7 @@ export default [
     chains: ["Ethereum", "Aurora"],
     destinationChain: "Aurora",
   },
+  /*
   {
     id: 19,
     displayName: "Across",
@@ -288,4 +288,5 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
   },
+  */
 ] as BridgeNetwork[];

@@ -2,6 +2,7 @@ export const PRICES_API = 'https://coins.llama.fi/prices'
 
 export const defaultConfidenceThreshold = 0.5 // for querying defillama prices
 
+
 // each chain should have number of blocks per approx. 1.5 or 2 hours. default is 400.
 export const maxBlocksToQueryByChain = {
   default: 400,
@@ -17,6 +18,7 @@ export const maxBlocksToQueryByChain = {
   aurora: 5400
 } as { [chain: string]: number };
 
+
 /*
 // for multichain
 export const maxBlocksToQueryByChain = {
@@ -29,5 +31,7 @@ export const maxBlocksToQueryByChain = {
   avax: 12000,
   bsc: 8000,
   optimism: 40000,
+  gnosis: 1200,
+  aurora: 10000,
 } as { [chain: string]: number };
 */
