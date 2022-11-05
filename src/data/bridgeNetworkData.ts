@@ -256,6 +256,7 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
+  /*
   {
     id: 17,
     displayName: "Axelar",
@@ -263,11 +264,19 @@ export default [
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Aurora"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Avalanche", 
+      //"BSC",
+      "Fantom",
+      "Aurora",
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  */
   {
     id: 18,
     displayName: "Rainbow Bridge",
@@ -278,7 +287,6 @@ export default [
     chains: ["Ethereum", "Aurora"],
     destinationChain: "Aurora",
   },
-  /*
   {
     id: 19,
     displayName: "Across",
@@ -288,5 +296,22 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
   },
-  */
+  {
+    id: 20,
+    displayName: "deBridge",
+    bridgeDbName: "debridge",
+    iconLink: "icons:debridge",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Arbitrum",
+      "Avalanche",
+      //BSC
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
 ] as BridgeNetwork[];

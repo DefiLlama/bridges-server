@@ -18,6 +18,7 @@ import avalanchebtc from "./avalanche-btc";
 import axelar from "./axelar";
 import rainbowbridge from "./rainbowbridge";
 import across from "./across";
+import debridge from "./debridge";
 
 export default {
   polygon,
@@ -39,6 +40,7 @@ export default {
   axelar,
   rainbowbridge,
   across,
+  debridge
 } as {
   [bridge: string]: BridgeAdapter;
 };

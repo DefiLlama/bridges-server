@@ -36,8 +36,6 @@ export const getTxsBlockRangeEtherscan = async (
           `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
         )
   ).data as any;
-  console.log(`/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`)
-  console.log(res)
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (matchFunctionSignatures) {
