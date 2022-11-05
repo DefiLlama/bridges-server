@@ -252,6 +252,21 @@ export const getTxDataFromEVMEventLogs = async (
               }
             }
           }
+          if (params.matchFunctionSignatures) {
+            const tx = await provider.getTransaction(txLog.transactionHash);
+            if (!tx) {
+              console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+              dataKeysToFilter.push(i);
+              return;
+            } else {
+              const signature = tx.data.slice(0, 8);
+              if (!params.matchFunctionSignatures.includes(signature)) {
+                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
+                dataKeysToFilter.push(i);
+                return;
+              }
+            }
+          }
           if (params.inputDataExtraction) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             try {
@@ -297,21 +312,6 @@ export const getTxDataFromEVMEventLogs = async (
               const extractedValue = data[i][eventKey][parseInt(value)];
               data[i][eventKey] = extractedValue;
             });
-          }
-          if (params.matchFunctionSignatures) {
-            const tx = await provider.getTransaction(txLog.transactionHash);
-            if (!tx) {
-              console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
-              dataKeysToFilter.push(i);
-              return;
-            } else {
-              const signature = tx.data.slice(0, 8);
-              if (!params.matchFunctionSignatures.includes(signature)) {
-                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
-                dataKeysToFilter.push(i);
-                return;
-              }
-            }
           }
           if (params.mapTokens) {
             const map = params.mapTokens;
