@@ -14,6 +14,7 @@ export type EventLogFilter = {
   excludeFrom?: string[];
   excludeTo?: string[];
   includeArg?: { [key: string]: string }[];
+  excludeArg?: { [key: string]: string }[];
   includeTxData?: { [key: string]: string }[];
 };
 

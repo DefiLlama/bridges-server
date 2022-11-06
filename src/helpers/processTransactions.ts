@@ -181,6 +181,18 @@ export const getTxDataFromEVMEventLogs = async (
               });
               if (toFilter) dataKeysToFilter.push(i);
             }
+            if (params.filter?.excludeArg) {
+              let toFilter = false;
+              const excludeArgArray = params.filter.excludeArg;
+              excludeArgArray.map((argMappingToExclude) => {
+                const argKeyToExclude = Object.keys(argMappingToExclude)[0];
+                const argValueToExclude = Object.values(argMappingToExclude)[0];
+                if (args[argKeyToExclude] === argValueToExclude) {
+                  toFilter = true;
+                }
+              });
+              if (toFilter) dataKeysToFilter.push(i);
+            }
           }
           if (params.txKeys) {
             const tx = await provider.getTransaction(txLog.transactionHash);
