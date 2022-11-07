@@ -13,7 +13,6 @@ import type { RecordedBlocks } from "./types";
 const axios = require("axios");
 const retry = require("async-retry");
 
-
 // FIX timeout problems throughout functions here
 
 export const runAllAdaptersToCurrentBlock = async (
@@ -194,6 +193,7 @@ export const runAdapterHistorical = async (
         `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
       );
       await sql.begin(async (sql) => {
+        let lastSuccessfulTimestamp = 0;
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
             // add timeout?
@@ -202,17 +202,21 @@ export const runAdapterHistorical = async (
               try {
                 block = await provider.getBlock(log.blockNumber);
                 if (block.timestamp) {
+                  lastSuccessfulTimestamp = block.timestamp;
                   break;
                 }
               } catch (e) {
-                if (i >= 4) {
+                console.error(
+                  `Failed to get block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
+                );
+                if (i >= 4 && !lastSuccessfulTimestamp) {
                   throw new Error(
-                    `Failed to get block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
+                    `Failed to get initial block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
                   );
                 }
               }
             }
-            const timestamp = block.timestamp * 1000;
+            const timestamp = Object.keys(block).length ? block.timestamp * 1000 : lastSuccessfulTimestamp * 1000;
             const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
             const amountString = amount.toString();
             await insertTransactionRow(
