@@ -1,6 +1,5 @@
 import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { Chain } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 
@@ -83,13 +82,6 @@ const nativeDepositParams: PartialContractEventParams = {
     to: "",
     token: "",
   },
-  filter: {
-    includeArg: [
-      {
-        from: "",
-      },
-    ],
-  },
   isDeposit: true,
 };
 
@@ -111,9 +103,6 @@ const depositParams: ContractEventParams = {
   fixedEventData: {
     to: "",
   },
-  filter: {
-    excludeArg: [{ from: "" }],
-  },
   isDeposit: true,
 };
 
@@ -134,9 +123,6 @@ const withdrawalParams: ContractEventParams = {
   getTokenFromReceipt: {
     token: true,
     amount: true,
-  },
-  filter: {
-    includeTxData: [{from: ""}]
   },
   isDeposit: false,
 };
