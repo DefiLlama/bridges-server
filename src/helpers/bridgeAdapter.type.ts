@@ -42,7 +42,10 @@ export type ContractEventParams = {
   matchFunctionSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
-  getTokenFromReceipt?: boolean; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
+  getTokenFromReceipt?: {
+    token: boolean,
+    amount?: boolean
+  }; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
 };
 
 export type PartialContractEventParams = {
@@ -62,5 +65,8 @@ export type PartialContractEventParams = {
   matchFunctionSignatures?: string[];
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string };
-  getTokenFromReceipt?: boolean;
+  getTokenFromReceipt?: {
+    token: boolean,
+    amount?: boolean
+  }
 };

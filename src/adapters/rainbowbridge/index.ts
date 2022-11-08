@@ -44,7 +44,9 @@ const withdrawalEventParams: ContractEventParams = {
   fixedEventData: {
     from: "0x23Ddd3e3692d1861Ed57EDE224608875809e127f",
   },
-  getTokenFromReceipt: true,
+  getTokenFromReceipt: {
+    token: true,
+  },
   isDeposit: false,
 };
 

@@ -231,7 +231,7 @@ export const getTxDataFromEVMEventLogs = async (
               if (toFilter) dataKeysToFilter.push(i);
             }
           }
-          if (params.getTokenFromReceipt) {
+          if (params.getTokenFromReceipt && params.getTokenFromReceipt.token) {
             const txReceipt = await provider.getTransactionReceipt(txLog.transactionHash);
             if (!txReceipt) {
               console.error(`WARNING: Unable to get transaction receipt for ${adapterName}, SKIPPING tx.`);
@@ -254,8 +254,14 @@ export const getTxDataFromEVMEventLogs = async (
                 );
                 dataKeysToFilter.push(i);
               } else {
-                const address = filteredLogs[0].address;
+                const firstLog = filteredLogs[0];
+                const address = firstLog.address;
                 data[i].token = address;
+                if (params.getTokenFromReceipt.amount) {
+                  const amountData = firstLog.data;
+                  const bnAmount = ethers.BigNumber.from(amountData);
+                  data[i].amount = bnAmount;
+                }
               }
               if (filteredLogs.length > 1) {
                 console.error(
