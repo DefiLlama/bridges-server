@@ -45,7 +45,6 @@ const contractAddresses = {
       ercBridge: "0x1548cf5cf7dBd93f4dA11f45fCce315573d21B60",
       withdrawals: "0xfde0a96468ae91B4E13794E1B8e5B222E7Db6a23",
     },
-    nativeToken: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   },
 } as {
   [chain: string]: {
@@ -59,7 +58,7 @@ const contractAddresses = {
       withdrawals: string;
       nativeHelper?: string;
     };
-    nativeToken: string;
+    nativeToken?: string;
   };
 };
 

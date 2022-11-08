@@ -21,8 +21,11 @@ import { EventData } from "../../utils/types";
 ***Avalanche***
 0x0e082F06FF657D94310cB8cE8B0D9a04541d8052 is Wormhole: Portal Token Bridge
 
-**Aurora***
+***Aurora***
 0x51b5123a7b0F9b2bA265f9c4C8de7D78D52f510F is Wormhole: Portal Token Bridge
+
+***Celo***
+0x796Dff6D74F3E27060B71255Fe517BFb23C93eed is Wormhole: Portal Token Bridge
 */
 
 const contractAddresses = {
@@ -49,6 +52,10 @@ const contractAddresses = {
   aurora: {
     tokenBridge: "0x51b5123a7b0F9b2bA265f9c4C8de7D78D52f510F",
     nativeToken: "0xC9BdeEd33CD01541e1eeD10f90519d2C06Fe3feB",
+  },
+  celo: {
+    tokenBridge: "0x796Dff6D74F3E27060B71255Fe517BFb23C93eed",
+    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438"
   }
 } as {
   [chain: string]: {
@@ -106,7 +113,8 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
-  aurora: constructParams("aurora")
+  aurora: constructParams("aurora"),
+  celo: constructParams("celo"),
 };
 
 export default adapter;

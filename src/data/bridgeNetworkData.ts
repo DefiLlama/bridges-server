@@ -56,6 +56,7 @@ export default [
       "Arbitrum",
       "Optimism",
       "Gnosis",
+      "Celo"
       // "BSC"
     ],
     chainMapping: {
@@ -78,6 +79,7 @@ export default [
       "Arbitrum",
       "Optimism",
       "Gnosis",
+      "Celo"
       // "BSC"
     ],
     chainMapping: {
@@ -97,7 +99,9 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
-      // "BSC"
+      // "BSC",
+      // "Celo" (disabled)
+
     ],
     chainMapping: {
       avalanche: "avax",
@@ -136,6 +140,7 @@ export default [
       "Fantom",
       "Avalanche",
       "Aurora",
+      "Celo"
       // "BSC"
     ],
     chainMapping: {
@@ -158,6 +163,7 @@ export default [
       "Optimism",
       "Gnosis",
       "Aurora",
+      "Celo"
       // "BSC"
     ],
     chainMapping: {

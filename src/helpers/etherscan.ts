@@ -8,7 +8,8 @@ const endpoints = {
   fantom: "https://api.ftmscan.com",
   arbitrum: "https://api.arbiscan.io",
   optimism: "https://api-optimistic.etherscan.io",
-  aurora: "https://api.aurorascan.dev"
+  aurora: "https://api.aurorascan.dev",
+  celo: "https://api.celoscan.io"
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -19,7 +20,8 @@ const apiKeys = {
   fantom: "QWYPA9TEQKJVX4MKXVBT9A2SVA1B4F6X44",
   arbitrum: "WH4E9QCMQTMQ9ZT2YEW1FJ3RQ3YUIAK5MA",
   optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
-  aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN"
+  aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
+  celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI"
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (

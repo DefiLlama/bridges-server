@@ -49,6 +49,11 @@ need to map all of them (using tokenTransform)
 
 ***Xdai***
 0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D is Anyswap: Router V3 (?)
+
+***Celo***
+0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D is Anyswap: Router V3
+0xf27Ee99622C3C9b264583dACB2cCE056e194494f is Anyswap: Router V3 (again?)
+0xbbc4A8d076F4B1888fec42581B6fc58d242CF2D5 is Anyswap: Router V3 (again??)
 */
 
 const contractAddresses = {
@@ -182,6 +187,14 @@ const contractAddresses = {
       "0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D",
     ],
     nativeToken: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d",
+  },
+  celo: {
+    routers: [
+      "0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D",
+      "0xf27Ee99622C3C9b264583dACB2cCE056e194494f",
+      "0xbbc4A8d076F4B1888fec42581B6fc58d242CF2D5"
+    ],
+    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438",
   },
 } as {
   [chain: string]: {
@@ -323,7 +336,8 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  gnosis: constructParams("xdai")
+  gnosis: constructParams("xdai"),
+  celo: constructParams("celo")
 };
 
 export default adapter;

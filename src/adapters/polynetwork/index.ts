@@ -40,6 +40,10 @@ const contractAddresses = {
     contract: "0x77F3A156e8E597C64d4a12d62f20a0d2ff839dD5",
     nativeToken: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d", // WDAI
   },
+  celo: {
+    contract: "0x526444013Cd4D457212fF88Fe6F8e7c995DF1E40",
+    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438" // CELO
+  }
 } as {
   [chain: string]: {
     contract: string;
@@ -132,7 +136,8 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  gnosis: constructParams("xdai")
+  gnosis: constructParams("xdai"),
+  celo: constructParams("celo")
 };
 
 export default adapter;

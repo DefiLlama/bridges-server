@@ -58,6 +58,10 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0xbCfeF6Bb4597e724D720735d32A9249E0640aA11 is OriginalTokenVaultV2
 0x4384d5a9D7354C65cE3aee411337bd40493Ad1bC is PeggedTokenBridge
 0xbdd2739AE69A054895Be33A22b2D2ed71a1DE778 is PeggedTokenBridgeV2
+
+***Celo***
+0xBB7684Cc5408F4DD0921E5c2Cadd547b8f1AD573 is Celer Network: cBridge 2.0 (pool-based)
+0xDA1DD66924B0470501aC7736372d4171cDd1162E is PeggedTokenBridge
 */
 
 const contractAddresses = {
@@ -115,6 +119,10 @@ const contractAddresses = {
     vaultV2: ["0xbCfeF6Bb4597e724D720735d32A9249E0640aA11"],
     peggedV1: ["0x4384d5a9D7354C65cE3aee411337bd40493Ad1bC"],
     peggedV2: ["0xbdd2739AE69A054895Be33A22b2D2ed71a1DE778"],
+  },
+  celo: {
+    poolV2: ["0xBB7684Cc5408F4DD0921E5c2Cadd547b8f1AD573"],
+    peggedV1: ["0xDA1DD66924B0470501aC7736372d4171cDd1162E"],
   },
 } as {
   [chain: string]: {
@@ -445,7 +453,8 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   gnosis: constructParams("xdai"),
-  aurora: constructParams("aurora")
+  aurora: constructParams("aurora"),
+  celo: constructParams("celo"),
 };
 
 export default adapter;
