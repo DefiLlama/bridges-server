@@ -296,6 +296,7 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
   },
+  /*
   {
     id: 20,
     displayName: "deBridge",
@@ -313,5 +314,15 @@ export default [
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
+  },
+  */
+  {
+    id: 21,
+    displayName: "Optics",
+    bridgeDbName: "optics",
+    iconLink: "chains:celo",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Celo"],
   },
 ] as BridgeNetwork[];
