@@ -64,6 +64,7 @@ export default [
       gnosis: "xdai",
     },
   },
+  /* The adapter for this seems to be missing a significant amount of transactions and needs to be checked.
   {
     id: 6,
     displayName: "Poly Network",
@@ -87,6 +88,7 @@ export default [
       gnosis: "xdai",
     },
   },
+  */
   {
     id: 7,
     displayName: "Orbit Bridge",
@@ -326,7 +328,7 @@ export default [
     id: 21,
     displayName: "Optics",
     bridgeDbName: "optics",
-    iconLink: "chains:celo",
+    iconLink: "chain:celo",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Celo"],

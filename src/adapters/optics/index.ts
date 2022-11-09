@@ -45,6 +45,7 @@ const contractAddresses = {
       ercBridge: "0x1548cf5cf7dBd93f4dA11f45fCce315573d21B60",
       withdrawals: "0xfde0a96468ae91B4E13794E1B8e5B222E7Db6a23",
     },
+    extraWithdrawals: "0xcDE146d1C673fE13f4fF1569d3F0d9f4d0b9c837" // seems to be another copy of withdrawal contract, not sure why but it processes most txs
   },
 } as {
   [chain: string]: {
@@ -59,6 +60,7 @@ const contractAddresses = {
       nativeHelper?: string;
     };
     nativeToken?: string;
+    extraWithdrawals?: string;
   };
 };
 
@@ -161,6 +163,15 @@ const constructParams = (chain: string) => {
   const { v1, v2, nativeToken } = chainAddresses;
 
   if (chain === "celo") {
+    const extraWithdrawals = chainAddresses.extraWithdrawals!
+    const finalExtraWithdrawalParams = {
+      ...withdrawalParams,
+      target: extraWithdrawals,
+      fixedEventData: {
+        from: extraWithdrawals,
+      },
+    };
+    eventParams.push(finalExtraWithdrawalParams);
     [v1, v2].map(({ ercBridge, withdrawals }) => {
       const finalDepositParams = {
         ...depositParams,
