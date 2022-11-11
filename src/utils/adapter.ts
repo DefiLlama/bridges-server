@@ -195,31 +195,44 @@ export const runAdapterHistorical = async (
         `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
       );
       await sql.begin(async (sql) => {
-        let lastSuccessfulTimestamp = 0;
-        const eventLogPromises = Promise.all(
-          eventLogs.map(async (log) => {
-            // add timeout?
-            let block = {} as { timestamp: number; number: number };
-            for (let i = 0; i < 4; i++) {
-              try {
-                block = await provider.getBlock(log.blockNumber);
-                if (block.timestamp) {
-                  lastSuccessfulTimestamp = block.timestamp;
-                  break;
-                }
-              } catch (e) {
-                console.error(
-                  `Failed to get block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
+        let txBlocks = [] as number[];
+        eventLogs.map((log) => {
+          const { blockNumber } = log;
+          txBlocks.push(blockNumber);
+        });
+        const minBlock = Math.min(...txBlocks);
+        const maxBlock = Math.max(...txBlocks);
+        const blockRange = maxBlock - minBlock;
+        // dividing blocks into 10 buckets and giving all blocks within a bucket the same timestamp,
+        // in order to reduce number of getBlock calls
+        let blockTimestamps = {} as { [bucket: number]: number };
+        let block = {} as { timestamp: number; number: number };
+        for (let i = 0; i < 10; i++) {
+          const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
+          for (let j = 0; j < 4; j++) {
+            try {
+              // add timeout?
+              block = await provider.getBlock(blockNumber);
+              if (block.timestamp) {
+                blockTimestamps[i] = block.timestamp;
+                break;
+              }
+            } catch (e) {
+              console.error(`Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}`);
+              if (j >= 3) {
+                throw new Error(
+                  `Failed to get block timestamps at block number ${blockNumber} on chain ${chainContractsAreOn}`
                 );
-                if (i >= 3 && !lastSuccessfulTimestamp) {
-                  throw new Error(
-                    `Failed to get initial block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
-                  );
-                }
               }
             }
-            const timestamp = Object.keys(block).length ? block.timestamp * 1000 : lastSuccessfulTimestamp * 1000;
+          }
+        }
+
+        const eventLogPromises = Promise.all(
+          eventLogs.map(async (log) => {
             const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
+            const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
+            const timestamp = blockTimestamps[bucket]
             const amountString = amount.toString();
             await insertTransactionRow(
               sql,
