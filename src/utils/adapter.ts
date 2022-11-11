@@ -10,6 +10,7 @@ import { store } from "./s3";
 import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
+import { wait } from "../helpers/etherscan";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -52,7 +53,8 @@ export const runAllAdaptersToCurrentBlock = async (
       }
       await insertConfigEntriesForAdapter(adapter, bridgeDbName);
       const adapterPromises = Promise.all(
-        Object.keys(adapter).map(async (chain) => {
+        Object.keys(adapter).map(async (chain, i) => {
+          await wait(250 * i); // attempt to space out API calls
           const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
             ? bridgeNetwork.chainMapping?.[chain as Chain]
             : chain;
@@ -198,7 +200,7 @@ export const runAdapterHistorical = async (
           eventLogs.map(async (log) => {
             // add timeout?
             let block = {} as { timestamp: number; number: number };
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 4; i++) {
               try {
                 block = await provider.getBlock(log.blockNumber);
                 if (block.timestamp) {
@@ -209,7 +211,7 @@ export const runAdapterHistorical = async (
                 console.error(
                   `Failed to get block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
                 );
-                if (i >= 4 && !lastSuccessfulTimestamp) {
+                if (i >= 3 && !lastSuccessfulTimestamp) {
                   throw new Error(
                     `Failed to get initial block for block number ${log.blockNumber} on chain ${chainContractsAreOn}`
                   );
