@@ -123,7 +123,9 @@ const ethDepositParams: PartialContractEventParams = {
   txKeys: {
     from: "from",
   },
-  matchFunctionSignatures: ["0x1114cd"],
+  functionSignatureFilter: {
+    includeSignatures: ["0x1114cd"],
+  },
   fixedEventData: {
     token: "",
     to: "",

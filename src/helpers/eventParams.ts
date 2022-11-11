@@ -1,6 +1,7 @@
 import {
   PartialContractEventParams,
   EventLogFilter,
+  FunctionSignatureFilter
 } from "./bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 
@@ -8,7 +9,7 @@ export const constructTransferParams = (
   target: string,
   isDeposit: boolean,
   filter?: EventLogFilter,
-  matchFunctionSignatures?: string[],
+  functionSignatureFilter?: FunctionSignatureFilter,
   chain?: Chain,
 ) => {
   return Object.fromEntries(
@@ -18,7 +19,7 @@ export const constructTransferParams = (
       isDeposit: isDeposit,
       isTransfer: true,
       filter: filter,
-      matchFunctionSignatures: matchFunctionSignatures,
+      functionSignatureFilter: functionSignatureFilter,
     }).filter(([_k, v]) => v != null)
   ) as PartialContractEventParams;
 };

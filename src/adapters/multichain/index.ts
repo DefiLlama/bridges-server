@@ -183,16 +183,14 @@ const contractAddresses = {
     nativeToken: "0x4200000000000000000000000000000000000006",
   },
   xdai: {
-    routers: [
-      "0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D",
-    ],
+    routers: ["0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D"],
     nativeToken: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d",
   },
   celo: {
     routers: [
       "0x7C598c96D02398d89FbCb9d41Eab3DF0C16F227D",
       "0xf27Ee99622C3C9b264583dACB2cCE056e194494f",
-      "0xbbc4A8d076F4B1888fec42581B6fc58d242CF2D5"
+      "0xbbc4A8d076F4B1888fec42581B6fc58d242CF2D5",
     ],
     nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438",
   },
@@ -307,15 +305,17 @@ const constructParams = (chain: string) => {
     if (EOAs) {
       await Promise.all(
         EOAs.map(async (address, i) => {
-          await wait(i*1600)
-          const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, signatures);
+          await wait(i * 1600);
+          const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+            includeSignatures: signatures,
+          });
           if (txs.length) {
             const hashes = txs.map((tx: any) => tx.hash);
             const nativeTokenTransfers = await getNativeTokenTransfersFromHash(
               chain as Chain,
               hashes,
               address,
-              nativeToken,
+              nativeToken
             );
             nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
           }
@@ -337,7 +337,7 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   gnosis: constructParams("xdai"),
-  celo: constructParams("celo")
+  celo: constructParams("celo"),
 };
 
 export default adapter;

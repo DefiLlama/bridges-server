@@ -1,7 +1,7 @@
 import { getLatestBlock } from "@defillama/sdk/build/util";
 import { Chain } from "@defillama/sdk/build/general";
 import adapters from "./";
-import bridgeNetworks from "../data/bridgeNetworkData";
+import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
 
@@ -28,7 +28,7 @@ const testAdapter = async () => {
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
-  const bridgeNetwork = bridgeNetworks.find((obj) => obj.bridgeDbName === adapterName);
+  const bridgeNetwork = importBridgeNetwork(adapterName)
   if (!bridgeNetwork) {
     throw new Error(`No entry for bridge found in src/data/bridgeNetworkData. Add an entry there before testing.`);
   }
@@ -38,7 +38,7 @@ const testAdapter = async () => {
     const contractsChain = bridgeNetwork.chainMapping?.[chain as Chain]
       ? bridgeNetwork.chainMapping?.[chain as Chain]
       : chain;
-    const { number, timestamp } = await getLatestBlock(contractsChain);
+    let { number, timestamp } = await getLatestBlock(contractsChain);
     if (!(number && timestamp)) {
       throw new Error(`Unable to get blocks for ${adapterName} adapter on chain ${contractsChain}.`);
     }
@@ -65,7 +65,9 @@ const testAdapter = async () => {
             );
           }
         });
-        const tokenKey = transformTokens[contractsChain]?.[log.token] ? transformTokens[contractsChain]?.[log.token] : `${contractsChain}:${log.token}`;
+        const tokenKey = transformTokens[contractsChain]?.[log.token]
+          ? transformTokens[contractsChain]?.[log.token]
+          : `${contractsChain}:${log.token}`;
         uniqueTokens[tokenKey] = true;
       })
     );

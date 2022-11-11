@@ -6,6 +6,10 @@ import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 
 /*
+****TODO: All withdrawals of wrapped wormhole assets are missed. Need to get them from null address xfers.
+
+Contracts: https://book.wormhole.com/reference/contracts.html
+
 ***Ethereum***
 0x3ee18B2214AFF97000D974cf647E7C347E8fa585 is Wormhole: Portal Token Bridge
 
@@ -26,6 +30,9 @@ import { EventData } from "../../utils/types";
 
 ***Celo***
 0x796Dff6D74F3E27060B71255Fe517BFb23C93eed is Wormhole: Portal Token Bridge
+
+***Klaytn***
+0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F is Wormhole: Portal Token Bridge
 */
 
 const contractAddresses = {
@@ -55,14 +62,18 @@ const contractAddresses = {
   },
   celo: {
     tokenBridge: "0x796Dff6D74F3E27060B71255Fe517BFb23C93eed",
-    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438"
-  }
+    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438",
+  },
+  klaytn: {
+    tokenBridge: "0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F",
+    nativeToken: "0xe4f05a66ec68b54a58b17c22107b02e0232cc817",
+  },
 } as {
   [chain: string]: {
     tokenBridge: string;
     nativeToken: string;
   };
-}; // fix
+};
 
 const nativeTokenTransferSignatures = {
   ethereum: ["0x998150", "0xff200c"],
@@ -90,18 +101,28 @@ const constructParams = (chain: string) => {
   return async (fromBlock: number, toBlock: number) => {
     const eventLogData = await getTxDataFromEVMEventLogs("portal", chain as Chain, fromBlock, toBlock, eventParams);
 
+    // for native token transfers, only able to get from subgraph, Etherscan API, etc.
+    // skipped for chains without available API
     let nativeTokenData = [] as EventData[];
-    // for native token transfers
-    const signatures = nativeTokenTransferSignatures[chain];
-    if (!nativeToken) {
-      throw new Error(`Chain ${chain} is missing native token address.`);
-    }
-    await wait(1000)
-    const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, signatures);
-    if (txs.length) {
-      const hashes = txs.map((tx: any) => tx.hash);
-      const nativeTokenTransfers = await getNativeTokenTransfersFromHash(chain as Chain, hashes, address, nativeToken);
-      nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
+    if (["ethereum", "polygon", "fantom", "avalanche", "bsc", "aurora", "celo"].includes(chain)) {
+      const signatures = nativeTokenTransferSignatures[chain];
+      if (!nativeToken) {
+        throw new Error(`Chain ${chain} is missing native token address.`);
+      }
+      await wait(1000);
+      const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+        includeSignatures: signatures,
+      });
+      if (txs.length) {
+        const hashes = txs.map((tx: any) => tx.hash);
+        const nativeTokenTransfers = await getNativeTokenTransfersFromHash(
+          chain as Chain,
+          hashes,
+          address,
+          nativeToken
+        );
+        nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
+      }
     }
     return [...eventLogData, ...nativeTokenData];
   };
@@ -115,6 +136,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
+  //klaytn: constructParams("klaytn"),
 };
 
 export default adapter;

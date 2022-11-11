@@ -5,6 +5,7 @@ import { ContractEventParams, PartialContractEventParams } from "../helpers/brid
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import BigNumber from "bignumber.js";
+import { getTxsBlockRangeEtherscan } from "./etherscan";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -16,6 +17,14 @@ const EventKeyTypes = {
 } as {
   [key: string]: string;
 };
+
+interface EventLog {
+  blockNumber: number;
+  blockHash: string;
+  transactionIndex: number;
+  removed: boolean;
+  address: string;
+}
 
 const setTransferEventParams = (isDeposit: boolean, target: string) => {
   const topic = "Transfer(address,address,uint256)";
@@ -50,17 +59,35 @@ export const getTxDataFromEVMEventLogs = async (
   let accEventData = [] as EventData[];
   const getLogsPromises = Promise.all(
     paramsArray.map(async (params) => {
+      let {
+        target,
+        topic,
+        abi,
+        logKeys,
+        argKeys,
+        txKeys,
+        topics,
+        isDeposit,
+        chain,
+        isTransfer,
+        fixedEventData,
+        inputDataExtraction,
+        selectIndexesFromArrays,
+        functionSignatureFilter,
+        filter,
+        mapTokens,
+        getTokenFromReceipt,
+      } = params;
       // if this is ever used, need to also overwrite fromBlock and toBlock
-      const overriddenChain = params.chain ? params.chain : chainContractsAreOn;
-      if (params.isTransfer) {
-        if (!params.target) {
+      const overriddenChain = chain ? chain : chainContractsAreOn;
+      if (isTransfer) {
+        if (!target) {
           throw new Error(
-            `${adapterName} adapter records Transfer events but no ${params.target} is given for them in adapter.`
+            `${adapterName} adapter records Transfer events but no ${target} is given for them in adapter.`
           );
         }
         // can make following function include a chain parameter if needed
-        let topic, logKeys, argKeys, abi, topics, target;
-        ({ topic, logKeys, argKeys, abi, topics, target } = setTransferEventParams(params.isDeposit, params.target));
+        ({ topic, logKeys, argKeys, abi, topics, target } = setTransferEventParams(isDeposit, target));
         params = {
           ...params,
           topic,
@@ -71,8 +98,8 @@ export const getTxDataFromEVMEventLogs = async (
           target,
         };
       }
-      if (!params.logKeys) {
-        params.logKeys = params.isDeposit
+      if (!logKeys) {
+        logKeys = isDeposit
           ? {
               blockNumber: "blockNumber",
               txHash: "transactionHash",
@@ -84,38 +111,36 @@ export const getTxDataFromEVMEventLogs = async (
               from: "address",
             };
       }
-      if (!(params.topic && params.abi)) {
+      if (!(topic && abi)) {
         throw new Error(
-          `adapter ${adapterName} with target ${params.target} either is missing param(s) or isTransfer param is false.`
+          `adapter ${adapterName} with target ${target} either is missing param(s) or isTransfer param is false.`
         );
       }
 
-      const iface = new ethers.utils.Interface(params.abi);
+      const iface = new ethers.utils.Interface(abi);
       let data = {} as any;
       let logs = [] as any[];
       for (let i = 0; i < 5; i++) {
         try {
           logs = (
             await getLogs({
-              target: params.target,
-              topic: params.topic,
+              target: target,
+              topic: topic,
               keys: [],
               fromBlock: fromBlock,
               toBlock: toBlock,
-              topics: params.topics,
+              topics: topics,
               chain: overriddenChain,
             })
           ).output;
           //console.log(logs)
           if (logs.length === 0) {
-            console.info(
-              `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${params.topic}.`
-            );
+            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic}.`);
           }
           break;
         } catch (e) {
           if (i >= 4) {
-            console.error(params.target, e);
+            console.error(target, e);
           } else {
             continue;
           }
@@ -127,8 +152,8 @@ export const getTxDataFromEVMEventLogs = async (
       const logPromises = Promise.all(
         logs.map(async (txLog: any, i) => {
           data[i] = data[i] || {};
-          data[i]["isDeposit"] = params.isDeposit;
-          Object.entries(params.logKeys!).map(([eventKey, logKey]) => {
+          data[i]["isDeposit"] = isDeposit;
+          Object.entries(logKeys!).map(([eventKey, logKey]) => {
             const value = txLog[logKey];
             if (typeof value !== EventKeyTypes[eventKey]) {
               throw new Error(
@@ -153,12 +178,12 @@ export const getTxDataFromEVMEventLogs = async (
             return;
           }
           //console.log(parsedLog)
-          if (params.argKeys) {
+          if (argKeys) {
             const args = parsedLog?.args;
             if (args === undefined || args.length === 0) {
-              throw new Error(`Unable to get log args for ${adapterName} with arg keys ${params.argKeys}.`);
+              throw new Error(`Unable to get log args for ${adapterName} with arg keys ${argKeys}.`);
             }
-            Object.entries(params.argKeys).map(([eventKey, argKey]) => {
+            Object.entries(argKeys).map(([eventKey, argKey]) => {
               const value = args[argKey];
               if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                 throw new Error(
@@ -169,9 +194,9 @@ export const getTxDataFromEVMEventLogs = async (
               }
               data[i][eventKey] = value;
             });
-            if (params.filter?.includeArg) {
+            if (filter?.includeArg) {
               let toFilter = true;
-              const includeArgArray = params.filter.includeArg;
+              const includeArgArray = filter.includeArg;
               includeArgArray.map((argMappingToInclude) => {
                 const argKeyToInclude = Object.keys(argMappingToInclude)[0];
                 const argValueToInclude = Object.values(argMappingToInclude)[0];
@@ -181,9 +206,9 @@ export const getTxDataFromEVMEventLogs = async (
               });
               if (toFilter) dataKeysToFilter.push(i);
             }
-            if (params.filter?.excludeArg) {
+            if (filter?.excludeArg) {
               let toFilter = false;
-              const excludeArgArray = params.filter.excludeArg;
+              const excludeArgArray = filter.excludeArg;
               excludeArgArray.map((argMappingToExclude) => {
                 const argKeyToExclude = Object.keys(argMappingToExclude)[0];
                 const argValueToExclude = Object.values(argMappingToExclude)[0];
@@ -194,13 +219,13 @@ export const getTxDataFromEVMEventLogs = async (
               if (toFilter) dataKeysToFilter.push(i);
             }
           }
-          if (params.txKeys) {
+          if (txKeys) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             if (!tx) {
               console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
               dataKeysToFilter.push(i);
             } else {
-              Object.entries(params.txKeys).map(([eventKey, logKey]) => {
+              Object.entries(txKeys).map(([eventKey, logKey]) => {
                 const value = tx[logKey];
                 if (typeof value !== EventKeyTypes[eventKey]) {
                   throw new Error(
@@ -213,14 +238,14 @@ export const getTxDataFromEVMEventLogs = async (
               });
             }
           }
-          if (params.filter?.includeTxData) {
+          if (filter?.includeTxData) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             if (!tx) {
               console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
               dataKeysToFilter.push(i);
             } else {
               let toFilter = true;
-              const includeTxDataArray = params.filter.includeTxData;
+              const includeTxDataArray = filter.includeTxData;
               includeTxDataArray.map((txMappingToInclude) => {
                 const txKeyToInclude = Object.keys(txMappingToInclude)[0];
                 const txValueToInclude = Object.values(txMappingToInclude)[0];
@@ -231,7 +256,7 @@ export const getTxDataFromEVMEventLogs = async (
               if (toFilter) dataKeysToFilter.push(i);
             }
           }
-          if (params.getTokenFromReceipt && params.getTokenFromReceipt.token) {
+          if (getTokenFromReceipt && getTokenFromReceipt.token) {
             const txReceipt = await provider.getTransactionReceipt(txLog.transactionHash);
             if (!txReceipt) {
               console.error(`WARNING: Unable to get transaction receipt for ${adapterName}, SKIPPING tx.`);
@@ -257,7 +282,7 @@ export const getTxDataFromEVMEventLogs = async (
                 const firstLog = filteredLogs[0];
                 const address = firstLog.address;
                 data[i].token = address;
-                if (params.getTokenFromReceipt.amount) {
+                if (getTokenFromReceipt.amount) {
                   const amountData = firstLog.data;
                   const bnAmount = ethers.BigNumber.from(amountData);
                   data[i].amount = bnAmount;
@@ -270,7 +295,13 @@ export const getTxDataFromEVMEventLogs = async (
               }
             }
           }
-          if (params.matchFunctionSignatures) {
+          /*
+          type FunctionSignatureFilter = {
+            includeFunctionSignature?: string[]  // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
+            excludeFunctionSignature?: string[]
+            }
+          */
+          if (functionSignatureFilter) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             if (!tx) {
               console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
@@ -278,29 +309,34 @@ export const getTxDataFromEVMEventLogs = async (
               return;
             } else {
               const signature = tx.data.slice(0, 8);
-              if (!params.matchFunctionSignatures.includes(signature)) {
+              if (functionSignatureFilter.includeSignatures && !functionSignatureFilter.includeSignatures.includes(signature)) {
+                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
+                dataKeysToFilter.push(i);
+                return;
+              }
+              if (functionSignatureFilter.excludeSignatures && functionSignatureFilter.excludeSignatures.includes(signature)) {
                 console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }
             }
           }
-          if (params.inputDataExtraction) {
+          if (inputDataExtraction) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             try {
               let inputData = [] as any;
-              if (params.inputDataExtraction.useDefaultAbiEncoder) {
+              if (inputDataExtraction.useDefaultAbiEncoder) {
                 inputData = ethers.utils.defaultAbiCoder.decode(
-                  params.inputDataExtraction.inputDataABI,
+                  inputDataExtraction.inputDataABI,
                   ethers.utils.hexDataSlice(tx.data, 4)
                 );
               } else {
-                const iface = new ethers.utils.Interface(params.inputDataExtraction.inputDataABI);
-                inputData = iface.decodeFunctionData(params.inputDataExtraction.inputDataFnName || "", tx.data);
+                const iface = new ethers.utils.Interface(inputDataExtraction.inputDataABI);
+                inputData = iface.decodeFunctionData(inputDataExtraction.inputDataFnName || "", tx.data);
               }
-              Object.entries(params.inputDataExtraction.inputDataKeys).map(([eventKey, inputDataKey]) => {
+              Object.entries(inputDataExtraction.inputDataKeys).map(([eventKey, inputDataKey]) => {
                 let value = "" as any;
-                if (params.inputDataExtraction?.useDefaultAbiEncoder) {
+                if (inputDataExtraction?.useDefaultAbiEncoder) {
                   value = inputData[parseInt(inputDataKey)];
                 } else {
                   value = inputData[inputDataKey];
@@ -320,8 +356,8 @@ export const getTxDataFromEVMEventLogs = async (
               return;
             }
           }
-          if (params.selectIndexesFromArrays) {
-            Object.entries(params.selectIndexesFromArrays).map(([eventKey, value]) => {
+          if (selectIndexesFromArrays) {
+            Object.entries(selectIndexesFromArrays).map(([eventKey, value]) => {
               if (!Array.isArray(data[i][eventKey])) {
                 throw new Error(
                   `${eventKey} is not an array, but it has been specified as being one in 'selectIndexesFromArrays' in adapter.`
@@ -331,15 +367,15 @@ export const getTxDataFromEVMEventLogs = async (
               data[i][eventKey] = extractedValue;
             });
           }
-          if (params.mapTokens) {
-            const map = params.mapTokens;
+          if (mapTokens) {
+            const map = mapTokens;
             const token = data[i].token;
             if (token && map[token]) {
               data[i].token = map[token];
             }
           }
-          if (params.fixedEventData) {
-            Object.entries(params.fixedEventData).map(([eventKey, value]) => {
+          if (fixedEventData) {
+            Object.entries(fixedEventData).map(([eventKey, value]) => {
               if (typeof value !== EventKeyTypes[eventKey]) {
                 throw new Error(
                   `Type of ${eventKey} in fixedEventData is ${typeof value} when it must be ${EventKeyTypes[eventKey]}.`
@@ -362,14 +398,14 @@ export const getTxDataFromEVMEventLogs = async (
         let toFilter = false;
         toFilter =
           toFilter ||
-          (params.filter?.excludeFrom?.includes(log.from) ?? false) ||
-          (params.filter?.excludeTo?.includes(log.to) ?? false) ||
-          (params.filter?.excludeToken?.includes(log.token) ?? false);
+          (filter?.excludeFrom?.includes(log.from) ?? false) ||
+          (filter?.excludeTo?.includes(log.to) ?? false) ||
+          (filter?.excludeToken?.includes(log.token) ?? false);
         toFilter =
           toFilter ||
-          !(params.filter?.includeFrom?.includes(log.from) ?? true) ||
-          !(params.filter?.includeTo?.includes(log.to) ?? true) ||
-          !(params.filter?.includeToken?.includes(log.token) ?? true);
+          !(filter?.includeFrom?.includes(log.from) ?? true) ||
+          !(filter?.includeTo?.includes(log.to) ?? true) ||
+          !(filter?.includeToken?.includes(log.token) ?? true);
         return !toFilter;
       });
       accEventData = [...accEventData, ...filteredData];

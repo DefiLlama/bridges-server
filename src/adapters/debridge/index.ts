@@ -1,9 +1,7 @@
 import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getTxDataFromEVMEventLogs, getNativeTokenTransfersFromHash } from "../../helpers/processTransactions";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
-import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
-import { EventData } from "../../utils/types";
 import { ethers } from "ethers";
 
 /*
@@ -69,7 +67,9 @@ const routerCalldepositParams: ContractEventParams = {
     null,
     ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
   ],
-  matchFunctionSignatures: ["0x060203"],
+  functionSignatureFilter: {
+    includeSignatures: ["0x060203"],
+  },
   isDeposit: true,
 };
 
@@ -101,7 +101,9 @@ const swapV2DepositParams: ContractEventParams = {
     null,
     ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
   ],
-  matchFunctionSignatures: ["0x5dfd9b"],
+  functionSignatureFilter: {
+    includeSignatures: ["0x5dfd9b"],
+  },
   isDeposit: true,
 };
 
@@ -133,7 +135,9 @@ const swapV3DepositParams: ContractEventParams = {
     null,
     ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
   ],
-  matchFunctionSignatures: ["0x5c5c57"],
+  functionSignatureFilter: {
+    includeSignatures: ["0x5c5c57"],
+  },
   isDeposit: true,
 };
 
@@ -164,7 +168,9 @@ const sendV2DepositParams: ContractEventParams = {
   mapTokens: {
     "0x0000000000000000000000000000000000000000": WETH,
   },
-  matchFunctionSignatures: ["0x1624ea"],
+  functionSignatureFilter: {
+    includeSignatures: ["0x1624ea"],
+  },
   fixedEventData: {
     to: "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
   },

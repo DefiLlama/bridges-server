@@ -18,6 +18,11 @@ export type EventLogFilter = {
   includeTxData?: { [key: string]: string }[];
 };
 
+export type FunctionSignatureFilter = {
+  includeSignatures?: string[]  // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
+  excludeSignatures?: string[]
+}
+
 type InputDataExtraction = {
   inputDataABI: string[];
   inputDataFnName?: string;
@@ -39,12 +44,12 @@ export type ContractEventParams = {
   fixedEventData?: EventKeyMapping; // hard-code any final values
   inputDataExtraction?: InputDataExtraction; // retrieve data from event log's input data field
   selectIndexesFromArrays?: EventKeyMapping; // extract data returned as an array by specifying the index of element
-  matchFunctionSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array
+  functionSignatureFilter?: FunctionSignatureFilter;
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string }; // can expand to map other keys if needed
   getTokenFromReceipt?: {
-    token: boolean,
-    amount?: boolean
+    token: boolean;
+    amount?: boolean;
   }; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
 };
 
@@ -62,11 +67,11 @@ export type PartialContractEventParams = {
   fixedEventData?: EventKeyMapping;
   inputDataExtraction?: InputDataExtraction;
   selectIndexesFromArrays?: EventKeyMapping;
-  matchFunctionSignatures?: string[];
+  functionSignatureFilter?: FunctionSignatureFilter;
   filter?: EventLogFilter;
   mapTokens?: { [token: string]: string };
   getTokenFromReceipt?: {
-    token: boolean,
-    amount?: boolean
-  }
+    token: boolean;
+    amount?: boolean;
+  };
 };

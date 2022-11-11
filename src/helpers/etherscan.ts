@@ -1,3 +1,4 @@
+import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 const axios = require("axios");
 
 const endpoints = {
@@ -29,7 +30,7 @@ export const getTxsBlockRangeEtherscan = async (
   address: string,
   startBlock: number,
   endBlock: number,
-  matchFunctionSignatures?: string[]
+  functionSignatureFilter?: FunctionSignatureFilter
 ) => {
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
@@ -40,15 +41,18 @@ export const getTxsBlockRangeEtherscan = async (
   ).data as any;
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
-      if (matchFunctionSignatures) {
+      if (functionSignatureFilter) {
         const signature = tx.input.slice(0, 8);
-        if (matchFunctionSignatures.includes(signature)) {
-          return true;
-        } else {
+        if (functionSignatureFilter.includeSignatures && !functionSignatureFilter.includeSignatures.includes(signature)) {
           console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
-          return false;
+          return false
+        }
+        if (functionSignatureFilter.excludeSignatures && functionSignatureFilter.excludeSignatures.includes(signature)) {
+          console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
+          return false
         }
       }
+      console.log(true)
       return true;
     });
     return filteredResults;
@@ -61,8 +65,8 @@ export const getTxsBlockRangeEtherscan = async (
   return [];
 };
 
-export const wait = (time: number) => new Promise((resolve, _reject) => {
+export const wait = (ms: number) => new Promise((resolve, _reject) => {
     setTimeout(() => {
         resolve("");
-    }, time)
+    }, ms)
   });
