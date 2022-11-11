@@ -200,9 +200,9 @@ export const runAdapterHistorical = async (
           const { blockNumber } = log;
           txBlocks.push(blockNumber);
         });
-        const minBlock = Math.min(...txBlocks);
-        const maxBlock = Math.max(...txBlocks);
-        const blockRange = maxBlock - minBlock;
+        const minBlock = Math.min(...txBlocks) ?? 0;
+        const maxBlock = Math.max(...txBlocks) ?? 0;
+        const blockRange = (maxBlock - minBlock) || 1
         // dividing blocks into 10 buckets and giving all blocks within a bucket the same timestamp,
         // in order to reduce number of getBlock calls
         let blockTimestamps = {} as { [bucket: number]: number };
@@ -232,7 +232,7 @@ export const runAdapterHistorical = async (
           eventLogs.map(async (log) => {
             const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-            const timestamp = blockTimestamps[bucket]
+            const timestamp = blockTimestamps[bucket];
             const amountString = amount.toString();
             await insertTransactionRow(
               sql,

@@ -5,7 +5,6 @@ import { ContractEventParams, PartialContractEventParams } from "../helpers/brid
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import BigNumber from "bignumber.js";
-import { getTxsBlockRangeEtherscan } from "./etherscan";
 
 const EventKeyTypes = {
   blockNumber: "number",
