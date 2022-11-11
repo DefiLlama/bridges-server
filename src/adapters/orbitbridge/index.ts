@@ -13,9 +13,11 @@ Docs: https://bridge-docs.orbitchain.io/
 Adapter is finished for chains with a vault: Ethereum, BSC, (also on Klaytn).
 Issue is that other chains have minter contracts, and there appears to be multiple (at least on Polygon).
 It's difficult to find them all, but can use explorer txs to find them: https://scope.klaytn.com/bridge
-(stil not sure I have found them all, some chains do not have much activity)
+(stil not sure I have found them all, some chains do not have much activity).
 
-Polygon has a different contract with no verified version to get events from, getting them
+Seems like Klaytn has both vault and minters, not sure if this is also true for Ethereum or BSC.
+
+Polygon has a different contract with no verified version to get events from, I get those
 separately: 0x506dc4c6408813948470a06ef6e4a1daf228dbd5
 
 mappings:
@@ -41,7 +43,7 @@ mappings:
 0xCc2a9051E904916047c26C90f41c000D4f273456 to ethereum:0x39fBBABf11738317a448031930706cd3e612e1B9
 0x12c9FFE6538f20A982FD4D17912f0ca00fA82D30 to ethereum:0x662b67d00a13faf93254714dd601f5ed49ef2f51
 
-MISSING GNOSIS (there have been no transactions in like over 2 months, so I skipped adding it)
+MISSING GNOSIS (there have been no transactions in like over 2 months, so I did not add it yet)
 */
 
 const contractAddresses = {
@@ -79,6 +81,16 @@ const contractAddresses = {
   bsc: {
     vault: "0x89c527764f03BCb7dC469707B23b79C1D7Beb780",
     nativeToken: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
+  },
+  klaytn: {
+    vault: "0x9abc3f6c11dbd83234d6e6b2c373dfc1893f648d",
+    nativeToken: "0xe4f05a66ec68b54a58b17c22107b02e0232cc817", // WKLAY
+    minters: [
+      "0xb0a83941058b109bd0543fa26d22efb8a2d0f431", // BSC tokens
+      "0x917655b6c27a3d831b4193ce18ece6bfcc806bf8", // XRPL tokens
+      "0x60070f5d2e1c1001400a04f152e7abd43410f7b9", // Ethereum tokens
+      "0x9bb0bf13103dfd75877979c5224173562e4ff552", // Orbit tokens
+    ],
   },
 } as {
   [chain: string]: {
@@ -149,9 +161,9 @@ const nativeWithdrawalParams: PartialContractEventParams = {
 
 const minterDepositParams: PartialContractEventParams = {
   target: "",
-  topic: "SwapRequest(string,address,bytes,bytes,address,uint8,uint,uint,bytes)",
+  topic: "SwapRequest(string,address,bytes,bytes,address,uint8,uint256,uint256,bytes)",
   abi: [
-    "event SwapRequest(string toChain, address fromAddr, bytes toAddr, bytes token, address tokenAddress, uint8 decimal, uint amount, uint depositId, bytes data)",
+    "event SwapRequest(string toChain, address fromAddr, bytes toAddr, bytes token, address tokenAddress, uint8 decimal, uint256 amount, uint256 depositId, bytes data)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -160,10 +172,7 @@ const minterDepositParams: PartialContractEventParams = {
   argKeys: {
     token: "tokenAddress",
     from: "fromAddr",
-    amount: "uints",
-  },
-  selectIndexesFromArrays: {
-    amount: "0",
+    amount: "amount",
   },
   fixedEventData: {
     to: "",
@@ -201,7 +210,25 @@ const constructParams = (chain: string) => {
   const nativeToken = contractAddresses[chain].nativeToken;
   const minters = contractAddresses[chain].minters;
 
-  if (vaultAddress) {
+  if (!vaultAddress || chain === "klaytn") {
+    minters?.map((minterAddress) => {
+      const finalMinterWithdrawalParams = {
+        ...minterWithdrawalParams,
+        target: minterAddress,
+        fixedEventData: {
+          from: minterAddress,
+        },
+      };
+      const finalMinterDepositParams = {
+        ...minterDepositParams,
+        target: minterAddress,
+        fixedEventData: {
+          to: minterAddress,
+        },
+      };
+      eventParams.push(finalMinterDepositParams, finalMinterWithdrawalParams);
+    });
+  } else {
     const finalNativeDepositParams = {
       ...nativeDepositParams,
       target: vaultAddress,
@@ -228,38 +255,24 @@ const constructParams = (chain: string) => {
         includeToken: [nativeToken],
       },
     };
-    const ercDepositParams = constructTransferParams(vaultAddress, true);
-    const ercWithdrawalParams = constructTransferParams(vaultAddress, false);
-    eventParams.push(finalNativeDepositParams, finalNativeWithdrawalParams, ercDepositParams, ercWithdrawalParams);
-  } else {
-    minters?.map((minterAddress) => {
-      const finalMinterWithdrawalParams = {
-        ...minterWithdrawalParams,
-        target: minterAddress,
-        fixedEventData: {
-          from: minterAddress,
-        },
-      };
-      const finalMinterDepositParams = {
-        ...minterDepositParams,
-        target: minterAddress,
-        fixedEventData: {
-          to: minterAddress,
-        },
-      };
-      eventParams.push(finalMinterDepositParams, finalMinterWithdrawalParams);
+    const ercDepositParams = constructTransferParams(vaultAddress, true, undefined, {
+      excludeSignatures: ["0x7d7c2a"],
     });
+    const ercWithdrawalParams = constructTransferParams(vaultAddress, false, undefined, {
+      excludeSignatures: ["0x7d7c2a"],
+    });
+    eventParams.push(finalNativeDepositParams, finalNativeWithdrawalParams, ercDepositParams, ercWithdrawalParams);
   }
 
   if (chain === "polygon") {
-    const meshDepositParams = constructTransferParams("0x506dc4c6408813948470a06ef6e4a1daf228dbd5", true, undefined, [
-      "0x0ac096",
-    ]);
+    const meshDepositParams = constructTransferParams("0x506dc4c6408813948470a06ef6e4a1daf228dbd5", true, undefined, {
+      includeSignatures: ["0x0ac096"],
+    });
     const meshWithdrawalParams = constructTransferParams(
       "0x506dc4c6408813948470a06ef6e4a1daf228dbd5",
       false,
       undefined,
-      ["0x2ac5ab"]
+      { includeSignatures: ["0x2ac5ab"] }
     );
     eventParams.push(meshDepositParams, meshWithdrawalParams);
   }
@@ -274,6 +287,7 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
+  //klaytn: constructParams("klaytn"),
 };
 
 export default adapter;
