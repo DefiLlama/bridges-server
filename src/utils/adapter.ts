@@ -37,82 +37,79 @@ export const runAllAdaptersToCurrentBlock = async (
     throw new Error(errString);
   }
 
-  const bridgeNetworkPromises = Promise.all(
-    bridgeNetworks.map(async (bridgeNetwork) => {
-      const { id, bridgeDbName } = bridgeNetwork;
-      const adapter = adapters[bridgeDbName];
-      if (!adapter) {
-        const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
-        await insertErrorRow({
-          ts: getCurrentUnixTimestamp() * 1000,
-          target_table: "transactions",
-          keyword: "critical",
-          error: errString,
-        });
-        throw new Error(errString);
-      }
-      await insertConfigEntriesForAdapter(adapter, bridgeDbName);
-      const adapterPromises = Promise.all(
-        Object.keys(adapter).map(async (chain, i) => {
-          await wait(250 * i); // attempt to space out API calls
-          const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-            ? bridgeNetwork.chainMapping?.[chain as Chain]
-            : chain;
-          const { number, timestamp } = await getLatestBlock(chainContractsAreOn); // probably need timeout here
-          if (!(number && timestamp)) {
-            const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
-            await insertErrorRow({
-              ts: getCurrentUnixTimestamp() * 1000,
-              target_table: "transactions",
-              keyword: "data",
-              error: errString,
-            });
-            console.error(errString);
-            return;
-          }
-          const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
-            ? maxBlocksToQueryByChain[chainContractsAreOn]
-            : maxBlocksToQueryByChain.default;
-          let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
-          if (!lastRecordedEndBlock) {
-            const defaultStartBlock = number - maxBlocksToQuery;
-            lastRecordedEndBlock = defaultStartBlock;
-            console.log(
-              `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${
-                lastRecordedEndBlock + 1
-              }.`
-            );
-          }
-          try {
-            await runAdapterHistorical(
-              lastRecordedEndBlock + 1,
-              number,
-              id,
-              chain as Chain,
-              allowNullTxValues,
-              true,
-              onConflict
-            );
-            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? lastRecordedEndBlock + 1;
-            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = number;
-          } catch (e) {
-            const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
-            await insertErrorRow({
-              ts: getCurrentUnixTimestamp() * 1000,
-              target_table: "transactions",
-              keyword: "data",
-              error: errString,
-            });
-            console.error(errString, e);
-          }
-        })
-      );
-      await adapterPromises;
-    })
-  );
-  await bridgeNetworkPromises;
+  for (const bridgeNetwork of bridgeNetworks) {
+    const { id, bridgeDbName } = bridgeNetwork;
+    const adapter = adapters[bridgeDbName];
+    if (!adapter) {
+      const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
+      await insertErrorRow({
+        ts: getCurrentUnixTimestamp() * 1000,
+        target_table: "transactions",
+        keyword: "critical",
+        error: errString,
+      });
+      throw new Error(errString);
+    }
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    const adapterPromises = Promise.all(
+      Object.keys(adapter).map(async (chain, i) => {
+        await wait(100 * i); // attempt to space out API calls
+        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
+          ? bridgeNetwork.chainMapping?.[chain as Chain]
+          : chain;
+        const { number, timestamp } = await getLatestBlock(chainContractsAreOn); // probably need timeout here
+        if (!(number && timestamp)) {
+          const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
+          await insertErrorRow({
+            ts: getCurrentUnixTimestamp() * 1000,
+            target_table: "transactions",
+            keyword: "data",
+            error: errString,
+          });
+          console.error(errString);
+          return;
+        }
+        const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
+          ? maxBlocksToQueryByChain[chainContractsAreOn]
+          : maxBlocksToQueryByChain.default;
+        let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
+        if (!lastRecordedEndBlock) {
+          const defaultStartBlock = number - maxBlocksToQuery;
+          lastRecordedEndBlock = defaultStartBlock;
+          console.log(
+            `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${
+              lastRecordedEndBlock + 1
+            }.`
+          );
+        }
+        try {
+          await runAdapterHistorical(
+            lastRecordedEndBlock + 1,
+            number,
+            id,
+            chain as Chain,
+            allowNullTxValues,
+            true,
+            onConflict
+          );
+          recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+          recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+            recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? lastRecordedEndBlock + 1;
+          recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = number;
+        } catch (e) {
+          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          await insertErrorRow({
+            ts: getCurrentUnixTimestamp() * 1000,
+            target_table: "transactions",
+            keyword: "data",
+            error: errString,
+          });
+          console.error(errString, e);
+        }
+      })
+    );
+    await adapterPromises;
+  }
   // need better error catching
   await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
   console.log("runAllAdaptersToCurrentBlock successfully ran.");
@@ -202,7 +199,7 @@ export const runAdapterHistorical = async (
         });
         const minBlock = Math.min(...txBlocks) ?? 0;
         const maxBlock = Math.max(...txBlocks) ?? 0;
-        const blockRange = (maxBlock - minBlock) || 1
+        const blockRange = maxBlock - minBlock || 1;
         // dividing blocks into 10 buckets and giving all blocks within a bucket the same timestamp,
         // in order to reduce number of getBlock calls
         let blockTimestamps = {} as { [bucket: number]: number };
