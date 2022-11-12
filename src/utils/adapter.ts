@@ -11,6 +11,7 @@ import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
+import { lookupBlock } from "@defillama/sdk/build/util";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -113,6 +114,63 @@ export const runAllAdaptersToCurrentBlock = async (
   // need better error catching
   await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
   console.log("runAllAdaptersToCurrentBlock successfully ran.");
+};
+
+export const runAllAdaptersTimestampRange = async (
+  allowNullTxValues: boolean = false,
+  onConflict: "ignore" | "error" | "upsert" = "error",
+  startTimestamp: number,
+  endTimestamp: number
+) => {
+
+  for (const bridgeNetwork of bridgeNetworks) {
+    const { id, bridgeDbName } = bridgeNetwork;
+    const adapter = adapters[bridgeDbName];
+    if (!adapter) {
+      const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
+      await insertErrorRow({
+        ts: getCurrentUnixTimestamp() * 1000,
+        target_table: "transactions",
+        keyword: "critical",
+        error: errString,
+      });
+      throw new Error(errString);
+    }
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    const adapterPromises = Promise.all(
+      Object.keys(adapter).map(async (chain, i) => {
+        await wait(100 * i); // attempt to space out API calls
+        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
+          ? bridgeNetwork.chainMapping?.[chain as Chain]
+          : chain;
+          const startBlock = (await lookupBlock(startTimestamp, {chain: chainContractsAreOn as Chain})).block
+          const endBlock = (await lookupBlock(endTimestamp, {chain: chainContractsAreOn as Chain})).block 
+        try {
+          await runAdapterHistorical(
+            startBlock,
+            endBlock,
+            id,
+            chain as Chain,
+            allowNullTxValues,
+            true,
+            onConflict
+          );
+        } catch (e) {
+          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          await insertErrorRow({
+            ts: getCurrentUnixTimestamp() * 1000,
+            target_table: "transactions",
+            keyword: "data",
+            error: errString,
+          });
+          console.error(errString, e);
+        }
+      })
+    );
+    await adapterPromises;
+  }
+  // need better error catching
+  console.log("runAllAdaptersTimestampRange successfully ran.");
 };
 
 export const runAdapterHistorical = async (
@@ -229,7 +287,7 @@ export const runAdapterHistorical = async (
           eventLogs.map(async (log) => {
             const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-            const timestamp = blockTimestamps[bucket];
+            const timestamp = blockTimestamps[bucket] * 1000;
             const amountString = amount.toString();
             await insertTransactionRow(
               sql,
