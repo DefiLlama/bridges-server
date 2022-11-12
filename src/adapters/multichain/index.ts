@@ -305,7 +305,7 @@ const constructParams = (chain: string) => {
     if (EOAs) {
       await Promise.all(
         EOAs.map(async (address, i) => {
-          await wait(i * 1600);
+          await wait(i * 220);
           const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
             includeSignatures: signatures,
           });

@@ -52,7 +52,6 @@ export const getTxsBlockRangeEtherscan = async (
           return false
         }
       }
-      console.log(true)
       return true;
     });
     return filteredResults;
@@ -64,6 +63,14 @@ export const getTxsBlockRangeEtherscan = async (
   console.error(`WARNING: Etherscan did not return valid response for address ${address}.`);
   return [];
 };
+
+const etherscanDelay = 500 // in milliseconds
+
+export const etherscanWait = () => new Promise((resolve, _reject) => {
+  setTimeout(() => {
+      resolve("");
+  }, etherscanDelay)
+});
 
 export const wait = (ms: number) => new Promise((resolve, _reject) => {
     setTimeout(() => {
