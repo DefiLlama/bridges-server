@@ -50,7 +50,7 @@ export const runAggregateDataHistorical = async (
   hourly: boolean = false,
   chainToRestrictTo?: string
 ) => {
-  const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
+  const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
@@ -427,33 +427,33 @@ export const aggregateData = async (
       });
       console.error(errString, e);
     }
-    largeTxs.map(async (largeTx) => {
-      const txPK = largeTx.id;
-      const timestamp = largeTx.ts;
-      const usdValue = largeTx.usdValue;
-      const existingEntry = await getLargeTransaction(txPK, timestamp);
-      if (existingEntry) {
-        console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
-        return;
-      }
-      try {
-        await sql.begin(async (sql) => {
-          await insertLargeTransactionRow(sql, {
-            tx_pk: txPK,
-            ts: timestamp,
-            usd_value: usdValue,
-          });
-        });
-      } catch (e) {
-        const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
-        await insertErrorRow({
-          ts: getCurrentUnixTimestamp() * 1000,
-          target_table: "large_transactions",
-          keyword: "data",
-          error: errString,
-        });
-        console.log(errString, e);
-      }
-    });
   }
+  largeTxs.map(async (largeTx) => {
+    const txPK = largeTx.id;
+    const timestamp = largeTx.ts;
+    const usdValue = largeTx.usdValue;
+    const existingEntry = await getLargeTransaction(txPK, timestamp);
+    if (existingEntry) {
+      console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
+      return;
+    }
+    try {
+      await sql.begin(async (sql) => {
+        await insertLargeTransactionRow(sql, {
+          tx_pk: txPK,
+          ts: timestamp,
+          usd_value: usdValue,
+        });
+      });
+    } catch (e) {
+      const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
+      await insertErrorRow({
+        ts: getCurrentUnixTimestamp() * 1000,
+        target_table: "large_transactions",
+        keyword: "data",
+        error: errString,
+      });
+      console.log(errString, e);
+    }
+  });
 };
