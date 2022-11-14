@@ -4,6 +4,8 @@ import { getTxDataFromEVMEventLogs, getNativeTokenTransfersFromHash } from "../.
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxsBlockRangeEtherscan, etherscanWait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
+import { getProvider } from "@defillama/sdk/build/general";
+import { ethers } from "ethers";
 
 /*
 ****TODO: All withdrawals of wrapped wormhole assets are missed. Need to get them from null address xfers.
@@ -86,6 +88,149 @@ const nativeTokenTransferSignatures = {
   aurora: ["0x998150", "0xff200c"],
 } as { [chain: string]: string[] };
 
+const depositInputDataExtraction = {
+  inputDataABI: [
+    "function transferTokens(address token,uint256 amount,uint16 recipientChain,bytes32 recipient,uint256 arbiterFee,uint32 nonce)",
+  ],
+  inputDataFnName: "transferTokens",
+};
+
+const nativeDepositInputDataExtraction = {
+  inputDataABI: [
+    "function wrapAndTransferETH(uint16 recipientChain,bytes32 recipient,uint256 arbiterFee,uint32 nonce)",
+  ],
+  inputDataFnName: "wrapAndTransferETH",
+};
+
+const nativeWithdrawalInputDataExtraction = {
+  inputDataABI: ["function completeTransferAndUnwrapETH(bytes encodedVm)"],
+  inputDataFnName: "completeTransferAndUnwrapETH",
+};
+
+const portalNativeTokenTransfersFromHash = async (
+  chain: Chain,
+  hashes: string[],
+  address: string,
+  nativeToken: string
+) => {
+  const provider = getProvider(chain) as any;
+  const transactions = (
+    await Promise.all(
+      hashes.map(async (hash) => {
+        // TODO: add timeout
+        const tx = await provider.getTransaction(hash);
+        const receipt = await provider.getTransactionReceipt(hash);
+        if (!tx) {
+          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
+          return;
+        }
+        if (!receipt) {
+          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
+          return;
+        }
+        let isDeposit;
+        let { blockNumber, from, to, value } = tx;
+        // if it is a deposit, can directly get all needed info from tx
+        if (tx.data.slice(0, 8) === "0x998150") {
+          if (!(address === from || address === to)) {
+            console.error(
+              `WARNING: Address given for native transfer on chain ${chain} not present in tx, SKIPPING tx.`
+            );
+            return;
+          }
+          isDeposit = true;
+        } else if (tx.data.slice(0, 8) === "0xff200c") {
+          // attempts to get total amount of WETH sent to contract for withdrawal
+          const logs = receipt.logs;
+          const filteredLogs = logs.filter((log: any) => {
+            const topics = log.topics;
+            const address = log.address;
+            let isTransfer = false;
+            topics.map((topic: string) => {
+              if (topic.slice(0, 8) === "0x7fcf53" && address === nativeToken) {
+                // this is sig for WETH withdrawal fn
+                isTransfer = true;
+              }
+            });
+            return isTransfer;
+          });
+          if (filteredLogs.length === 0) {
+            // console.error(`Warning: Transaction receipt on chain ${chain} contained no token transfers, SKIPPING tx.`);
+            return;
+          } else {
+            let bnAmountSum = ethers.BigNumber.from(0);
+            for (const log of filteredLogs) {
+              const value = ethers.BigNumber.from(log.data);
+              bnAmountSum = bnAmountSum.add(value);
+            }
+            value = bnAmountSum;
+            isDeposit = false;
+            // switch "from" and "to" when it is a withdrawal
+            const a = from;
+            from = to;
+            to = a;
+          }
+        }
+
+        return {
+          blockNumber: blockNumber,
+          txHash: hash,
+          from: from,
+          to: to,
+          token: nativeToken,
+          amount: value,
+          isDeposit: isDeposit,
+        } as EventData;
+      })
+    )
+  ).filter((tx) => tx) as EventData[];
+  return transactions;
+};
+
+// checks deposits for Solana as receipient chain, withdrawals for Solana as source chain and returns only those txs
+// the 'wormhole chain id' for Solana is 1
+const processLogsForSolana = async (logs: EventData[], chain: Chain) => {
+  const provider = getProvider(chain) as any;
+  const solanaLogs = await Promise.all(
+    logs.map(async (log) => {
+      const { txHash, isDeposit } = log;
+      const tx = await provider.getTransaction(txHash);
+      const data = tx.data as string;
+
+      let override = false;
+      if (isDeposit) {
+        if (data.slice(0, 10) === "0x0f5287b0") {
+          const iface = new ethers.utils.Interface(depositInputDataExtraction.inputDataABI);
+          const inputData = iface.decodeFunctionData(depositInputDataExtraction.inputDataFnName || "", data);
+          if (inputData.recipientChain === 1) {
+            override = true;
+          }
+        } else if (data.slice(0, 10) === "0x9981509f") {
+          const iface = new ethers.utils.Interface(nativeDepositInputDataExtraction.inputDataABI);
+          const inputData = iface.decodeFunctionData(nativeDepositInputDataExtraction.inputDataFnName || "", data);
+          if (inputData.recipientChain === 1) {
+            override = true;
+          }
+        }
+      } else {
+        if (data.slice(0, 10) === "0xc6878519" || data.slice(0, 10) === "0xff200cde") {
+          const from = tx.from;
+          const index = data.indexOf(from.slice(2).toLowerCase());
+          const chainID = data.slice(index + 40, index + 44); // this is a hack because I couldn't figure out how to decode the input data
+          if (parseInt(chainID) === 1) {
+            override = true;
+          }
+        }
+      }
+      if (override) {
+        return { ...log, isDeposit: !log.isDeposit, chainOverride: "solana" };
+      }
+      return null;
+    })
+  );
+  return solanaLogs.filter((log) => log) as EventData[];
+};
+
 const constructParams = (chain: string) => {
   let eventParams = [] as any;
   const chainAddresses = contractAddresses[chain];
@@ -115,7 +260,7 @@ const constructParams = (chain: string) => {
       });
       if (txs.length) {
         const hashes = txs.map((tx: any) => tx.hash);
-        const nativeTokenTransfers = await getNativeTokenTransfersFromHash(
+        const nativeTokenTransfers = await portalNativeTokenTransfersFromHash(
           chain as Chain,
           hashes,
           address,
@@ -124,7 +269,10 @@ const constructParams = (chain: string) => {
         nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
       }
     }
-    return [...eventLogData, ...nativeTokenData];
+    // every chain also checks for and inserts logs for solana txs
+    const solanaLogs = await processLogsForSolana([...eventLogData, ...nativeTokenData], chain as Chain);
+
+    return [...eventLogData, ...nativeTokenData, ...solanaLogs];
   };
 };
 
