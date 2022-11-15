@@ -1,6 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
-import { getTxDataFromEVMEventLogs, getNativeTokenTransfersFromHash } from "../../helpers/processTransactions";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxsBlockRangeEtherscan, etherscanWait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
@@ -80,7 +80,7 @@ const nativeAndWrappedTokenTransferSignatures = [
   "0xff200c",
   "0xc68785", // wrapped token xfers
   "0x0f5287",
-]
+];
 
 const depositInputDataExtraction = {
   inputDataABI: [
@@ -186,16 +186,18 @@ const portalNativeAndWrappedTransfersFromHashes = async (
           } else {
             const firstLog = filteredLogs[0];
             const address = firstLog.address;
-            const amountData = firstLog.data;
-            const bnAmount = ethers.BigNumber.from(amountData);
+            let bnAmount = ethers.BigNumber.from(0);
+            for (const log of filteredLogs) {
+              if (address === log.address) {
+                bnAmount = bnAmount.add(ethers.BigNumber.from(log.data))
+              }
+            }
             token = address;
             value = bnAmount;
             isDeposit = false;
           }
           if (filteredLogs.length > 1) {
-            console.error(
-              `Warning: Transaction receipt on chain ${chain} contained multiple token transfers, retrieving first token only.`
-            );
+            // console.error(`Warning: Transaction receipt on chain ${chain} contained multiple token transfers.`);
           }
           // switch "from" and "to" when it is a withdrawal
           const a = from;
@@ -271,7 +273,6 @@ const constructParams = (chain: string) => {
   const chainAddresses = contractAddresses[chain];
   const address = chainAddresses.tokenBridge;
   const nativeToken = chainAddresses.nativeToken;
-
   const depositEventParams: PartialContractEventParams = constructTransferParams(address, true);
   const withdrawalEventParams: PartialContractEventParams = constructTransferParams(address, false, {
     excludeTo: ["0x0000000000000000000000000000000000000000"],
@@ -303,6 +304,7 @@ const constructParams = (chain: string) => {
         nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
       }
     }
+
     // every chain also checks for and inserts logs for solana txs
     const solanaLogs = await processLogsForSolana([...eventLogData, ...nativeTokenData], chain as Chain);
 
