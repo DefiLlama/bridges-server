@@ -122,7 +122,6 @@ export const runAllAdaptersTimestampRange = async (
   startTimestamp: number,
   endTimestamp: number
 ) => {
-
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
     const adapter = adapters[bridgeDbName];
@@ -143,18 +142,10 @@ export const runAllAdaptersTimestampRange = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-          const startBlock = (await lookupBlock(startTimestamp, {chain: chainContractsAreOn as Chain})).block
-          const endBlock = (await lookupBlock(endTimestamp, {chain: chainContractsAreOn as Chain})).block 
+        const startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
+        const endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
         try {
-          await runAdapterHistorical(
-            startBlock,
-            endBlock,
-            id,
-            chain as Chain,
-            allowNullTxValues,
-            true,
-            onConflict
-          );
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
@@ -283,17 +274,41 @@ export const runAdapterHistorical = async (
           }
         }
 
+        let storedBridgeIds = {} as { [chain: string]: string };
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
-            const { txHash, blockNumber, from, to, token, amount, isDeposit } = log;
+            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
             const amountString = amount.toString();
+
+            // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
+            let bridgeIdOverride = bridgeID
+            if (chainOverride) {
+              const storedBridgeID = storedBridgeIds[chainOverride]
+              if (storedBridgeID) {
+                bridgeIdOverride = storedBridgeID
+              } else {
+                const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
+                bridgeIdOverride = overrideID
+                storedBridgeIds[chainOverride] = overrideID
+                if (!overrideID) {
+                  const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
+                  await insertErrorRow({
+                    ts: getCurrentUnixTimestamp() * 1000,
+                    target_table: "transactions",
+                    keyword: "critical",
+                    error: errString,
+                  });
+                  throw new Error(errString);
+                }
+              }
+            }
             await insertTransactionRow(
               sql,
               allowNullTxValues,
               {
-                bridge_id: bridgeID,
+                bridge_id: bridgeIdOverride,
                 chain: chainContractsAreOn,
                 tx_hash: txHash ?? null,
                 ts: timestamp,
@@ -326,7 +341,7 @@ export const runAdapterHistorical = async (
     }
     block = startBlockForQuery - 1;
   }
-  console.log("finished inserting all transactions");
+  console.log(`finished inserting all transactions for ${bridgeID}`);
 };
 
 export const insertConfigEntriesForAdapter = async (
