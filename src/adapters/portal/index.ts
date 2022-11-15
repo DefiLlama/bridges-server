@@ -8,8 +8,6 @@ import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 
 /*
-****TODO: All withdrawals of wrapped wormhole assets are missed. Need to get them from null address xfers.
-
 Contracts: https://book.wormhole.com/reference/contracts.html
 
 ***Ethereum***
@@ -77,16 +75,12 @@ const contractAddresses = {
   };
 };
 
-const nativeTokenTransferSignatures = {
-  ethereum: ["0x998150", "0xff200c"],
-  fantom: ["0x998150", "0xff200c"],
-  bsc: ["0x998150", "0xff200c"],
-  polygon: ["0x998150", "0xff200c"],
-  avax: ["0x998150", "0xff200c"],
-  arbitrum: ["0x998150", "0xff200c"],
-  optimism: ["0x998150", "0xff200c"],
-  aurora: ["0x998150", "0xff200c"],
-} as { [chain: string]: string[] };
+const nativeAndWrappedTokenTransferSignatures = [
+  "0x998150", // native token xfers
+  "0xff200c",
+  "0xc68785", // wrapped token xfers
+  "0x0f5287",
+]
 
 const depositInputDataExtraction = {
   inputDataABI: [
@@ -102,12 +96,7 @@ const nativeDepositInputDataExtraction = {
   inputDataFnName: "wrapAndTransferETH",
 };
 
-const nativeWithdrawalInputDataExtraction = {
-  inputDataABI: ["function completeTransferAndUnwrapETH(bytes encodedVm)"],
-  inputDataFnName: "completeTransferAndUnwrapETH",
-};
-
-const portalNativeTokenTransfersFromHash = async (
+const portalNativeAndWrappedTransfersFromHashes = async (
   chain: Chain,
   hashes: string[],
   address: string,
@@ -128,19 +117,24 @@ const portalNativeTokenTransfersFromHash = async (
           console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
           return;
         }
-        let isDeposit;
-        let { blockNumber, from, to, value } = tx;
+        const functionSignature = tx.data.slice(0, 8);
+        let isDeposit, token, value;
+        let { blockNumber, from, to } = tx;
+        // ***NATIVE TOKENS***
         // if it is a deposit, can directly get all needed info from tx
-        if (tx.data.slice(0, 8) === "0x998150") {
+        if (functionSignature === "0x998150") {
           if (!(address === from || address === to)) {
             console.error(
               `WARNING: Address given for native transfer on chain ${chain} not present in tx, SKIPPING tx.`
             );
             return;
           }
+          token = nativeToken;
+          value = tx.value;
           isDeposit = true;
-        } else if (tx.data.slice(0, 8) === "0xff200c") {
-          // attempts to get total amount of WETH sent to contract for withdrawal
+        }
+        // if it is a withdrawal, attempts to get total amount of WETH sent to contract for withdrawal
+        else if (functionSignature === "0xff200c") {
           const logs = receipt.logs;
           const filteredLogs = logs.filter((log: any) => {
             const topics = log.topics;
@@ -163,6 +157,7 @@ const portalNativeTokenTransfersFromHash = async (
               const value = ethers.BigNumber.from(log.data);
               bnAmountSum = bnAmountSum.add(value);
             }
+            token = nativeToken;
             value = bnAmountSum;
             isDeposit = false;
             // switch "from" and "to" when it is a withdrawal
@@ -171,13 +166,53 @@ const portalNativeTokenTransfersFromHash = async (
             to = a;
           }
         }
+        // ***WRAPPED TOKENS***
+        // if it is a deposit, it is already caught by 'depositEventParams'
+        // if it is a withdrawal, attempt to get the token minted from tx receipt
+        else if (functionSignature === "0xc68785") {
+          const logs = receipt.logs;
+          const filteredLogs = logs.filter((log: any) => {
+            const topics = log.topics;
+            let isTransfer = false;
+            topics.map((topic: string) => {
+              if (topic.slice(0, 8) === "0xddf252") {
+                isTransfer = true;
+              }
+            });
+            return isTransfer;
+          });
+          if (filteredLogs.length === 0) {
+            // console.error(`Warning: Transaction receipt on chain ${chain} contained no token transfers, SKIPPING tx.`);
+          } else {
+            const firstLog = filteredLogs[0];
+            const address = firstLog.address;
+            const amountData = firstLog.data;
+            const bnAmount = ethers.BigNumber.from(amountData);
+            token = address;
+            value = bnAmount;
+            isDeposit = false;
+          }
+          if (filteredLogs.length > 1) {
+            console.error(
+              `Warning: Transaction receipt on chain ${chain} contained multiple token transfers, retrieving first token only.`
+            );
+          }
+          // switch "from" and "to" when it is a withdrawal
+          const a = from;
+          from = to;
+          to = a;
+        }
+        // this could be a deposit tx already covered, or a reverted tx
+        if (!token) {
+          return null;
+        }
 
         return {
           blockNumber: blockNumber,
           txHash: hash,
           from: from,
           to: to,
-          token: nativeToken,
+          token: token,
           amount: value,
           isDeposit: isDeposit,
         } as EventData;
@@ -250,17 +285,16 @@ const constructParams = (chain: string) => {
     // skipped for chains without available API
     let nativeTokenData = [] as EventData[];
     if (["ethereum", "polygon", "fantom", "avalanche", "bsc", "aurora", "celo"].includes(chain)) {
-      const signatures = nativeTokenTransferSignatures[chain];
       if (!nativeToken) {
         throw new Error(`Chain ${chain} is missing native token address.`);
       }
       await etherscanWait();
       const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-        includeSignatures: signatures,
+        includeSignatures: nativeAndWrappedTokenTransferSignatures,
       });
       if (txs.length) {
         const hashes = txs.map((tx: any) => tx.hash);
-        const nativeTokenTransfers = await portalNativeTokenTransfersFromHash(
+        const nativeTokenTransfers = await portalNativeAndWrappedTransfersFromHashes(
           chain as Chain,
           hashes,
           address,
