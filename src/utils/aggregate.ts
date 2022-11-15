@@ -66,24 +66,38 @@ export const runAggregateDataHistorical = async (
   const chains = Object.keys(adapter);
   let timestamp = endTimestamp;
   while (timestamp > startTimestamp) {
-    const chainsPromises = Promise.all(
-      chains.map(async (chain) => {
-        if (chainToRestrictTo && chain !== chainToRestrictTo) return;
-        try {
-          await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
-        } catch (e) {
-          const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
-          await insertErrorRow({
-            ts: getCurrentUnixTimestamp() * 1000,
-            target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-            keyword: "data",
-            error: errString,
-          });
-          console.error(errString, e);
-        }
-      })
-    );
-    await chainsPromises;
+    if (chainToRestrictTo) {
+      try {
+        await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
+      } catch (e) {
+        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping.`;
+        await insertErrorRow({
+          ts: getCurrentUnixTimestamp() * 1000,
+          target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+          keyword: "data",
+          error: errString,
+        });
+        console.error(errString, e);
+      }
+    } else {
+      const chainsPromises = Promise.all(
+        chains.map(async (chain) => {
+          try {
+            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
+          } catch (e) {
+            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.`;
+            await insertErrorRow({
+              ts: getCurrentUnixTimestamp() * 1000,
+              target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+              keyword: "data",
+              error: errString,
+            });
+            console.error(errString, e);
+          }
+        })
+      );
+      await chainsPromises;
+    }
     console.log(`Successfully aggregated data for ${bridgeDbName} at timestamp ${timestamp}.`);
     timestamp -= hourly ? secondsInHour : secondsInDay;
   }

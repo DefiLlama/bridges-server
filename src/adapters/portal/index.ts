@@ -189,7 +189,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (
             let bnAmount = ethers.BigNumber.from(0);
             for (const log of filteredLogs) {
               if (address === log.address) {
-                bnAmount = bnAmount.add(ethers.BigNumber.from(log.data))
+                bnAmount = bnAmount.add(ethers.BigNumber.from(log.data));
               }
             }
             token = address;
@@ -233,30 +233,30 @@ const processLogsForSolana = async (logs: EventData[], chain: Chain) => {
       const { txHash, isDeposit } = log;
       const tx = await provider.getTransaction(txHash);
       const data = tx.data as string;
+      const functionSignature = data.slice(0, 10);
 
       let override = false;
       if (isDeposit) {
-        if (data.slice(0, 10) === "0x0f5287b0") {
+        if (functionSignature === "0x0f5287b0") {
           const iface = new ethers.utils.Interface(depositInputDataExtraction.inputDataABI);
           const inputData = iface.decodeFunctionData(depositInputDataExtraction.inputDataFnName || "", data);
           if (inputData.recipientChain === 1) {
             override = true;
           }
-        } else if (data.slice(0, 10) === "0x9981509f") {
+        } else if (functionSignature === "0x9981509f") {
           const iface = new ethers.utils.Interface(nativeDepositInputDataExtraction.inputDataABI);
           const inputData = iface.decodeFunctionData(nativeDepositInputDataExtraction.inputDataFnName || "", data);
           if (inputData.recipientChain === 1) {
             override = true;
           }
         }
-      } else {
-        if (data.slice(0, 10) === "0xc6878519" || data.slice(0, 10) === "0xff200cde") {
-          const from = tx.from;
-          const index = data.indexOf(from.slice(2).toLowerCase());
-          const chainID = data.slice(index + 40, index + 44); // this is a hack because I couldn't figure out how to decode the input data
-          if (parseInt(chainID) === 1) {
-            override = true;
-          }
+      } else if (functionSignature === "0xc6878519" || functionSignature === "0xff200cde") {
+        const from = tx.from;
+        const index = data.indexOf(from.slice(2).toLowerCase());
+        const chainID = data.slice(index + 40, index + 44); // this is a hack because I couldn't figure out how to decode the input data
+        // ***THIS DOESN'T WORK BECAUSE chainID IS THE DESTINATION CHAIN, I THINK NO WAY TO GET SOURCE CHAIN
+        if (parseInt(chainID) === 1) {
+          override = true;
         }
       }
       if (override) {
@@ -306,9 +306,9 @@ const constructParams = (chain: string) => {
     }
 
     // every chain also checks for and inserts logs for solana txs
-    const solanaLogs = await processLogsForSolana([...eventLogData, ...nativeTokenData], chain as Chain);
+    // const solanaLogs = await processLogsForSolana([...eventLogData, ...nativeTokenData], chain as Chain);
 
-    return [...eventLogData, ...nativeTokenData, ...solanaLogs];
+    return [...eventLogData, ...nativeTokenData];
   };
 };
 
