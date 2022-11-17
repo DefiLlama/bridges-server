@@ -273,10 +273,23 @@ export const getTxDataFromEVMEventLogs = async (
                 return isTransfer;
               });
               if (filteredLogs.length === 0) {
-                console.error(
-                  `Warning: Transaction receipt for ${adapterName} contained no token transfers, SKIPPING tx.`
-                );
-                dataKeysToFilter.push(i);
+                if (!getTokenFromReceipt.native) {
+                  console.error(
+                    `Warning: Transaction receipt for ${adapterName} contained no token transfers and native address was not provided, SKIPPING tx.`
+                  );
+                  dataKeysToFilter.push(i);
+                } else {
+                  const tx = await provider.getTransaction(txLog.transactionHash);
+                  if (!tx) {
+                    console.error(`WARNING: Unable to get transaction data for ${adapterName}, SKIPPING tx.`);
+                    dataKeysToFilter.push(i);
+                  } else {
+                    const amount = tx.value;
+                    const token = getTokenFromReceipt.native;
+                    data[i].amount = amount;
+                    data[i].token = token;
+                  }
+                }
               } else {
                 const firstLog = filteredLogs[0];
                 const address = firstLog.address;
@@ -308,12 +321,18 @@ export const getTxDataFromEVMEventLogs = async (
               return;
             } else {
               const signature = tx.data.slice(0, 8);
-              if (functionSignatureFilter.includeSignatures && !functionSignatureFilter.includeSignatures.includes(signature)) {
+              if (
+                functionSignatureFilter.includeSignatures &&
+                !functionSignatureFilter.includeSignatures.includes(signature)
+              ) {
                 console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }
-              if (functionSignatureFilter.excludeSignatures && functionSignatureFilter.excludeSignatures.includes(signature)) {
+              if (
+                functionSignatureFilter.excludeSignatures &&
+                functionSignatureFilter.excludeSignatures.includes(signature)
+              ) {
                 console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
@@ -454,6 +473,7 @@ export const getTxDataFromHashAndToken = async (
   return transactions;
 };
 
+// note this only works if ETH is transferred directly to/from the contract, use with caution if WETH is involved
 export const getNativeTokenTransfersFromHash = async (
   chain: Chain,
   hashes: string[],

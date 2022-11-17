@@ -50,6 +50,7 @@ export type ContractEventParams = {
   getTokenFromReceipt?: {
     token: boolean;
     amount?: boolean;
+    native?: string;  // if provided native token address, will return amount of native token transferred if there are no ercs transferred
   }; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
 };
 
@@ -73,5 +74,6 @@ export type PartialContractEventParams = {
   getTokenFromReceipt?: {
     token: boolean;
     amount?: boolean;
+    native?: string;
   };
 };
