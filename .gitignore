@@ -12,3 +12,6 @@ src/adapters/portal/junk.ts
 src/adapters/newchainchecklist.txt
 src/utils/format.ts
 src/utils/getts.ts
+src/adapters/axelar/api.json
+src/adapters/axelar/process.ts
+src/utils/runall.ts
