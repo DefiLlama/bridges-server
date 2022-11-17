@@ -333,4 +333,16 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Celo"],
   },
+  {
+    id: 22,
+    displayName: "Allbridge Core",
+    bridgeDbName: "allbridge",
+    iconLink: "icons:allbridge",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "BSC"
+    ],
+  },
 ] as BridgeNetwork[];
