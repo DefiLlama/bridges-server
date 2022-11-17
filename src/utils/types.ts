@@ -10,6 +10,7 @@ export type EventData = {
     token: string;
     amount: BigNumber;
     isDeposit: boolean;
+    chainOverride?: string  // used to insert tx using bridgeID from same bridgeNetwork but a different chain
   };
 
 export type EventKeyMapping = {
