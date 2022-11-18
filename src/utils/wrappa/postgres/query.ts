@@ -263,10 +263,18 @@ const queryLargeTransactionsTimestampRange = async (
 
 const queryTransactionsTimestampRangeByBridgeNetwork = async (
   startTimestamp: number,
-  endTimestamp: number,
-  bridgeNetworkName?: string
+  endTimestamp?: number,
+  bridgeNetworkName?: string,
+  chain?: string
 ) => {
   let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
+  let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
+  if (bridgeNetworkName && chain) {
+    bridgeNetworkEqual = sql`
+    WHERE bridge_name = ${bridgeNetworkName} AND
+    chain = ${chain}
+    `;
+  }
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,
        transactions.tx_hash,
@@ -286,7 +294,7 @@ WHERE  config.id IN (SELECT id
                      FROM   bridges.config
                      ${bridgeNetworkEqual})
        AND transactions.ts >= to_timestamp(${startTimestamp})
-       AND transactions.ts <= to_timestamp(${endTimestamp})
+       ${timestampLessThan}
        `;
 };
 
