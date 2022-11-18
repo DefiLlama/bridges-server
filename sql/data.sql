@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS bridges.transactions (
     amount VARCHAR NOT NULL,
     is_deposit BOOLEAN NOT NULL,
     PRIMARY KEY(id),
-    UNIQUE (bridge_id, chain, tx_hash),
+    UNIQUE (bridge_id, chain, tx_hash, token, tx_from, tx_to),
     CONSTRAINT fk_bridge_id
         FOREIGN KEY(bridge_id)
             REFERENCES bridges.config(id)
