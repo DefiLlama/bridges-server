@@ -62,6 +62,10 @@ import { constructTransferParams } from "../../helpers/eventParams";
 ***Celo***
 0xBB7684Cc5408F4DD0921E5c2Cadd547b8f1AD573 is Celer Network: cBridge 2.0 (pool-based)
 0xDA1DD66924B0470501aC7736372d4171cDd1162E is PeggedTokenBridge
+
+***Klaytn***
+0x4c882ec256823ee773b25b414d36f92ef58a7c0c is Celer Network: cBridge 2.0 (pool-based)
+0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56 is PeggedTokenBridgeV2
 */
 
 const contractAddresses = {
@@ -123,6 +127,10 @@ const contractAddresses = {
   celo: {
     poolV2: ["0xBB7684Cc5408F4DD0921E5c2Cadd547b8f1AD573"],
     peggedV1: ["0xDA1DD66924B0470501aC7736372d4171cDd1162E"],
+  },
+  klaytn: {
+    poolV2: ["0x4c882ec256823ee773b25b414d36f92ef58a7c0c"],
+    peggedV2: ["0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56"],
   },
 } as {
   [chain: string]: {
@@ -455,6 +463,7 @@ const adapter: BridgeAdapter = {
   gnosis: constructParams("xdai"),
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
+  klaytn: constructParams("klaytn"),
 };
 
 export default adapter;

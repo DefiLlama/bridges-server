@@ -1270,6 +1270,8 @@ export const transformTokens = {
     // portal
     "0x5C13E303a62Fc5DEdf5B52D66873f2E59fEdADC2": "ethereum:0xdAC17F958D2ee523a2206206994597C13D831ec7",
     "0x608792Deb376CCE1c9FA4D0E6B7b44f507CfFa6A": "ethereum:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    // synapse
+    "0xd6dAb4CfF47dF175349e6e7eE2BF7c40Bb8C05A3": "ethereum:0xdAC17F958D2ee523a2206206994597C13D831ec7"
   },
   kava: {
     // anyswap

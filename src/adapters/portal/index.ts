@@ -320,7 +320,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
-  //klaytn: constructParams("klaytn"),
+  klaytn: constructParams("klaytn"),
 };
 
 export default adapter;

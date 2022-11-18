@@ -5,6 +5,8 @@ import { Chain } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 
 /*
+contract addresses: https://docs.synapseprotocol.com/reference/contract-addresses
+
 ***Ethereum***
 0x6571d6be3d8460CF5F7d6711Cd9961860029D85F Synapse Bridge Zap 3
 -deposits of: 
@@ -30,7 +32,10 @@ import { ethers } from "ethers";
 
 0x85fCD7Dd0a1e1A9FCD5FD886ED522dE8221C3EE5 Synapse FlashSwapLoan, seems to only be involved in swaps
 
-^same goes for all other non-ethereum chains
+^same goes for all other non-Ethereum chains, except:
+
+Klaytn and Dogechain just use wrapped assets contracts.
+
 */
 
 const contractAddresses = {
@@ -69,13 +74,29 @@ const contractAddresses = {
     synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
     nusd: "0x07379565cD8B0CaE7c60Dc78e7f601b34AF2A21c",
   },
+  klaytn: {
+    burnAddress: "0x911766fa1a425cb7cccb0377bc152f37f276f8d6",
+    tokens: {
+      usdc: "0x6270b58be569a7c0b8f47594f191631ae5b2c86c",
+      usdt: "0xd6dab4cff47df175349e6e7ee2bf7c40bb8c05a3",
+      dai: "0x078db7827a5531359f6cb63f62cfa20183c4f10c",
+      wbtc: "0xdcbacf3f7a069922e677912998c8d57423c37dfa",
+      weth: "0xCD6f29dC9Ca217d0973d3D21bF58eDd3CA871a86",
+    },
+  },
 } as {
   [chain: string]: {
-    bridgeZap: string;
-    synapseBridge: string;
-    nusd: string;
+    bridgeZap?: string;
+    synapseBridge?: string;
+    nusd?: string;
+    burnAddress?: string;
+    tokens?: {
+      [token: string]: string;
+    };
   };
 };
+
+const nullAddress = "0x0000000000000000000000000000000000000000";
 
 const ethereumDepositParams: PartialContractEventParams = constructTransferParams(
   "0x6571d6be3d8460CF5F7d6711Cd9961860029D85F",
@@ -135,7 +156,53 @@ const ethereumWithdrawalParams: PartialContractEventParams = constructTransferPa
   { excludeToken: ["0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F"] } // nUSD
 );
 
-const constructParams = (chain: Chain) => {
+const mintParams: PartialContractEventParams = {
+  target: "",
+  topic: "Transfer(address,address,uint256)",
+  topics: [ethers.utils.id("Transfer(address,address,uint256)"), ethers.utils.hexZeroPad(nullAddress, 32)],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+    token: "address",
+  },
+  argKeys: {
+    amount: "value",
+  },
+  txKeys: {
+    from: "to"
+  },
+  inputDataExtraction: {
+    inputDataABI: ["function mint(address to, address token, uint256 amount, uint256 fee, bytes32 kappa)"],
+    inputDataFnName: "mint",
+    inputDataKeys: {
+      to: "to",
+    },
+  },
+  isDeposit: false,
+};
+
+/*
+const burnParams: PartialContractEventParams = {
+  target: "",
+  topic: "Transfer(address,address,uint256)",
+  topics: [ethers.utils.id("Transfer(address,address,uint256)"), null, ethers.utils.hexZeroPad(nullAddress, 32)],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+    token: "address",
+  },
+  argKeys: {
+    from: "from",
+    to: "to",
+    amount: "value",
+  },
+  isDeposit: true,
+};
+*/
+
+const constructParams = (chain: string) => {
   let eventParams = [] as any;
   if (chain === "ethereum") {
     eventParams.push(
@@ -144,10 +211,22 @@ const constructParams = (chain: Chain) => {
       ethereumWithdrawalParams,
       ethereumEthWithdrawalParams
     );
+  } else if (chain === "klaytn") {
+    const burnAddress = contractAddresses[chain].burnAddress!;
+    const tokens = contractAddresses[chain].tokens!;
+    const burnParams = constructTransferParams(burnAddress, true);
+    eventParams.push(burnParams);
+    Object.values(tokens).map((tokenAddress) => {
+      const finalMintParams = {
+        ...mintParams,
+        target: tokenAddress,
+      };
+      eventParams.push(finalMintParams);
+    });
   } else {
-    const bridgeZapAddress = contractAddresses[chain].bridgeZap;
-    const synapseBridgeAddress = contractAddresses[chain].synapseBridge;
-    const nusdAddress = contractAddresses[chain].nusd;
+    const bridgeZapAddress = contractAddresses[chain].bridgeZap!;
+    const synapseBridgeAddress = contractAddresses[chain].synapseBridge!;
+    const nusdAddress = contractAddresses[chain].nusd!;
     const depositParams = constructTransferParams(bridgeZapAddress, true, {
       excludeToken: [nusdAddress],
     });
@@ -156,10 +235,11 @@ const constructParams = (chain: Chain) => {
   }
 
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("synapse", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("synapse", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
+  /*
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
@@ -167,7 +247,9 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  aurora: constructParams("aurora")
+  aurora: constructParams("aurora"),
+  */
+  klaytn: constructParams("klaytn"),
 };
 
 export default adapter;

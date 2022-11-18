@@ -64,7 +64,6 @@ export default [
       gnosis: "xdai",
     },
   },
-  /* The adapter for this seems to be missing a significant amount of transactions and needs to be checked.
   {
     id: 6,
     displayName: "Poly Network",
@@ -88,7 +87,6 @@ export default [
       gnosis: "xdai",
     },
   },
-  */
   {
     id: 7,
     displayName: "Orbit Bridge",
@@ -101,6 +99,7 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
+      "Klaytn"
       // "BSC",
       // "Celo" (disabled)
 
@@ -142,7 +141,8 @@ export default [
       "Fantom",
       "Avalanche",
       "Aurora",
-      "Celo"
+      "Celo",
+      "Klaytn"
       // "BSC"
     ],
     chainMapping: {
@@ -165,7 +165,8 @@ export default [
       "Optimism",
       "Gnosis",
       "Aurora",
-      "Celo"
+      "Celo",
+      "Klaytn"
       // "BSC"
     ],
     chainMapping: {
@@ -188,6 +189,7 @@ export default [
       "Arbitrum",
       "Optimism",
       "Aurora",
+      "Klaytn"
       // "BSC"
     ],
     chainMapping: {
@@ -333,6 +335,7 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Celo"],
   },
+  /*
   {
     id: 22,
     displayName: "Allbridge Core",
@@ -345,4 +348,5 @@ export default [
       "BSC"
     ],
   },
+  */
 ] as BridgeNetwork[];

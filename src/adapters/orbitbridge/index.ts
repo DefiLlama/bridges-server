@@ -287,7 +287,7 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
   bsc: constructParams("bsc"),
-  //klaytn: constructParams("klaytn"),
+  klaytn: constructParams("klaytn"),
 };
 
 export default adapter;
