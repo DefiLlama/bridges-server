@@ -12,7 +12,7 @@ import orbitbridge from "./orbitbridge";
 import chainport from "./chainport";
 import stargate from "./stargate";
 import portal from "./portal";
-import bsc from "./bsc";
+import binancepeg from "./binancepeg";
 import xdai from "./xdai";
 import avalanchebtc from "./avalanche-btc";
 import axelar from "./axelar";
@@ -36,7 +36,7 @@ export default {
   chainport,
   stargate,
   portal,
-  bsc,
+  binancepeg,
   xdai,
   "avalanche-btc": avalanchebtc,
   axelar,

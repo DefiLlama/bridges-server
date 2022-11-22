@@ -1,6 +1,6 @@
 import type { BridgeNetwork } from "./types";
 
-// FIX need to control chain naming here
+// TODO: FIX need to control chain naming here
 export default [
   {
     id: 1,
@@ -56,8 +56,8 @@ export default [
       "Arbitrum",
       "Optimism",
       "Gnosis",
-      "Celo"
-      // "BSC"
+      "Celo",
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -79,8 +79,8 @@ export default [
       "Arbitrum",
       "Optimism",
       "Gnosis",
-      "Celo"
-      // "BSC"
+      "Celo",
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
@@ -99,8 +99,8 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
-      "Klaytn"
-      // "BSC",
+      "Klaytn",
+      "BSC",
       // "Celo" (disabled)
 
     ],
@@ -122,7 +122,7 @@ export default [
       "Fantom",
       "Avalanche",
       "Aurora",
-      // "BSC"
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
@@ -142,8 +142,8 @@ export default [
       "Avalanche",
       "Aurora",
       "Celo",
-      "Klaytn"
-      // "BSC"
+      "Klaytn",
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -166,8 +166,8 @@ export default [
       "Gnosis",
       "Aurora",
       "Celo",
-      "Klaytn"
-      // "BSC"
+      "Klaytn",
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
@@ -189,8 +189,8 @@ export default [
       "Arbitrum",
       "Optimism",
       "Aurora",
-      "Klaytn"
-      // "BSC"
+      "Klaytn",
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax",
@@ -210,7 +210,7 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      // "BSC"
+      "BSC"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -228,18 +228,16 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
-  /*
   {
     id: 14,
-    displayName: "Binance Issued",
-    bridgeDbName: "bsc",
+    displayName: "Binance-Peg Tokens",
+    bridgeDbName: "binancepeg",
     iconLink: "",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "BSC"],
     destinationChain: "Ethereum",
   },
-  */
   {
     id: 15,
     displayName: "Core Bitcoin Bridge",
@@ -335,7 +333,6 @@ export default [
     url: "",
     chains: ["Ethereum", "Polygon", "Celo"],
   },
-  /*
   {
     id: 22,
     displayName: "Allbridge Core",
@@ -348,5 +345,4 @@ export default [
       "BSC"
     ],
   },
-  */
 ] as BridgeNetwork[];

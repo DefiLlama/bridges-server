@@ -239,7 +239,6 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
-  /*
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
@@ -248,7 +247,6 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   aurora: constructParams("aurora"),
-  */
   klaytn: constructParams("klaytn"),
 };
 

@@ -369,8 +369,8 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   gnosis: constructParams("xdai"),
-  celo: constructParams("celo")
-  //bsc: constructParams("bsc"),
+  celo: constructParams("celo"),
+  bsc: constructParams("bsc"),
 };
 
 export default adapter;
