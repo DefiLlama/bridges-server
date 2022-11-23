@@ -369,7 +369,7 @@ export const getTxDataFromEVMEventLogs = async (
                 data[i][eventKey] = value;
               });
             } catch (e) {
-              console.error(`Unable to extract Input Data. Check this transaction: ${JSON.stringify(txLog)}`);
+              console.error(`Unable to extract Input Data. Check this transaction: ${txLog.transactionHash}`);
               dataKeysToFilter.push(i);
               return;
             }
@@ -464,7 +464,7 @@ export const getTxDataFromHashAndToken = async (
           from: from,
           to: to,
           token: token,
-          amount: ethersBnAmount as BigNumber,
+          amount: ethersBnAmount,
           isDeposit: isDeposit,
         } as EventData;
       })

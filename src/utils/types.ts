@@ -1,4 +1,4 @@
-import BigNumber from "bignumber.js";
+import { ethers } from "ethers";
 
 type EventKeys = "blockNumber" | "txHash" | "from" | "to" | "token" | "amount";
 
@@ -8,7 +8,7 @@ export type EventData = {
     from: string;
     to: string;
     token: string;
-    amount: BigNumber;
+    amount: ethers.BigNumber;
     isDeposit: boolean;
     chainOverride?: string  // used to insert tx using bridgeID from same bridgeNetwork but a different chain
   };
