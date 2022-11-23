@@ -232,7 +232,7 @@ export default [
     id: 14,
     displayName: "Binance-Peg Tokens",
     bridgeDbName: "binancepeg",
-    iconLink: "",
+    iconLink: "chain:bsc",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "BSC"],
