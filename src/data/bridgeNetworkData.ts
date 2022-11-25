@@ -235,8 +235,8 @@ export default [
     iconLink: "chain:bsc",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "BSC"],
-    destinationChain: "Ethereum",
+    chains: ["BSC"],
+    destinationChain: "-",
   },
   {
     id: 15,
