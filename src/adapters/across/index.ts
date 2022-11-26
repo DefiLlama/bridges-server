@@ -103,7 +103,7 @@ const relaysParams: PartialContractEventParams = {
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "totalFilledAmount",
+    amount: "fillAmount",
     to: "recipient",
     from: "depositor",
     token: "destinationToken"
