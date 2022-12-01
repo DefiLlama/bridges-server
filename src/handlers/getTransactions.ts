@@ -10,11 +10,12 @@ const getTransactions = async (
   chain?: string,
   sourceChain?: string
 ) => {
-  if (chain && !bridgeNetworkId) {
+  if (bridgeNetworkId && !(bridgeNetworkId === "all") && isNaN(parseInt(bridgeNetworkId))) {
     return errorResponse({
-      message: "Must include a bridge id when querying for a particular chain.",
+      message: "Invalid Bridge ID entered. Use Bridge ID from 'bridges' endpoint as path param, or `all`.",
     });
   }
+
   if (chain && sourceChain) {
     return errorResponse({
       message: "Cannot include both 'chain' and 'sourceChain' as query params.",
@@ -24,7 +25,7 @@ const getTransactions = async (
   const queryEndTimestamp = endTimestamp ? parseInt(endTimestamp) : undefined;
   const queryChain = sourceChain ? sourceChain : chain;
   let queryName = undefined;
-  if (bridgeNetworkId) {
+  if (bridgeNetworkId && !isNaN(parseInt(bridgeNetworkId))) {
     const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
     const { bridgeDbName } = bridgeNetwork!;
     queryName = bridgeDbName;
@@ -40,7 +41,7 @@ const getTransactions = async (
   const response = transactions
     .map((tx) => {
       if (sourceChain) {
-        if (tx.is_deposit) {
+        if (tx.is_deposit && sourceChain === tx.chain) {
           delete tx.is_deposit;
         } else return null;
       }
@@ -48,7 +49,7 @@ const getTransactions = async (
       return tx;
     })
     .filter((tx) => tx);
-
+ 
   return response;
 };
 
@@ -57,8 +58,8 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const startTimestamp = event.queryStringParameters?.starttimestamp;
   const endTimestamp = event.queryStringParameters?.endtimestamp;
   const chain = event.queryStringParameters?.chain;
-  const sourceChain = event.queryStringParameters?.sourcechain;
-  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, sourceChain);
+  const source = event.queryStringParameters?.source;
+  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, source);
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 

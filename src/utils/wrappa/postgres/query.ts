@@ -267,13 +267,11 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   bridgeNetworkName?: string,
   chain?: string
 ) => {
-  let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
   let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
+  let chainEqual = chain ? sql`WHERE (chain = ${chain} OR destination_chain = ${chain})` : sql``;
+  let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : chainEqual;
   if (bridgeNetworkName && chain) {
-    bridgeNetworkEqual = sql`
-    WHERE bridge_name = ${bridgeNetworkName} AND
-    chain = ${chain}
-    `;
+    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`
   }
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,
