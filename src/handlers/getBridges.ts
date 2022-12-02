@@ -39,7 +39,7 @@ const getBridges = async () => {
           lastMonthDailyVolume.map((entry, i) => {
             const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
             monthlyVolume += volume;
-            if (i < 7) {
+            if (i > lastMonthDailyVolume.length - 8) {
               weeklyVolume += volume;
             }
           });
@@ -68,6 +68,8 @@ const getBridges = async () => {
           displayName: displayName,
           // url: url,
           icon: iconLink,
+          volumePrevDay: lastDailyVolume ?? 0, // temporary, remove
+          volumePrev2Day: dayBeforeLastVolume ?? 0, // temporary, remove
           lastHourlyVolume: lastHourlyVolume ?? 0,
           currentDayVolume: currentDayVolume ?? 0,
           lastDailyVolume: lastDailyVolume ?? 0,
