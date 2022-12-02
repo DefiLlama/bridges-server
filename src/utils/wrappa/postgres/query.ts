@@ -284,10 +284,13 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
        transactions.amount,
        transactions.is_deposit,
        transactions.chain,
-       config.bridge_name
+       config.bridge_name,
+       large_transactions.usd_value
 FROM   bridges.transactions
        INNER JOIN bridges.config
                ON transactions.bridge_id = config.id
+       LEFT JOIN bridges.large_transactions
+               ON transactions.id = large_transactions.tx_pk
 WHERE  config.id IN (SELECT id
                      FROM   bridges.config
                      ${bridgeNetworkEqual})
