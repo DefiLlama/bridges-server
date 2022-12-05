@@ -53,20 +53,26 @@ const getTransactions = async (
     .map((tx) => {
       delete tx.bridge_id;
       if (sourceChain) {
-        tx.sourceChain = sourceChain
-        if ((tx.is_deposit && sourceChain === tx.chain) || (!(tx.is_deposit) && sourceChain === tx.destination_chain)) {
+        tx.sourceChain = sourceChain;
+        if ((tx.is_deposit && sourceChain === tx.chain) || (!tx.is_deposit && sourceChain === tx.destination_chain)) {
           delete tx.is_deposit;
         } else return null;
       }
-      delete tx.destination_chain
+      delete tx.destination_chain;
       if (addressHash) {
-        if (!((addressHash === tx.tx_to || addressHash === tx.tx_from) && addressChain === tx.chain)) return null;
+        if (
+          !(
+            (addressHash === tx.tx_to.toLowerCase() || addressHash === tx.tx_from.toLowerCase()) &&
+            addressChain === tx.chain
+          )
+        )
+          return null;
       }
       return tx;
     })
     .filter((tx) => tx)
     .slice(-responseLimit);
- 
+
   return response;
 };
 
