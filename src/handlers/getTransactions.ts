@@ -71,7 +71,7 @@ const getTransactions = async (
       return tx;
     })
     .filter((tx) => tx)
-    .slice(-responseLimit);
+    .slice(0, responseLimit);
 
   return response;
 };

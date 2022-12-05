@@ -297,6 +297,7 @@ WHERE  config.id IN (SELECT id
                      ${bridgeNetworkEqual})
        AND transactions.ts >= to_timestamp(${startTimestamp})
        ${timestampLessThan}
+ORDER BY transactions.ts DESC
        `;
 };
 
