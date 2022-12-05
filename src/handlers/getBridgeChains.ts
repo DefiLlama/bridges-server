@@ -28,8 +28,8 @@ export async function craftBridgeChainsResponse() {
         chain
       );
       let volumePrevDay = 0;
-      if (lastWeekDailyBridgeVolume.length) {
-        const lastDailyBridgeVolume = lastWeekDailyBridgeVolume[lastWeekDailyBridgeVolume.length - 1];
+      if (lastWeekDailyBridgeVolume.length > 1) {
+        const lastDailyBridgeVolume = lastWeekDailyBridgeVolume[lastWeekDailyBridgeVolume.length - 2];
         volumePrevDay = lastDailyBridgeVolume?.depositUSD + lastDailyBridgeVolume?.withdrawUSD;
       }
 
