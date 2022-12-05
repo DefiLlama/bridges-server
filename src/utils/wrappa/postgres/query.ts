@@ -285,6 +285,7 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
        transactions.is_deposit,
        transactions.chain,
        config.bridge_name,
+       config.destination_chain,
        large_transactions.usd_value
 FROM   bridges.transactions
        INNER JOIN bridges.config

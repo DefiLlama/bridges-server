@@ -53,10 +53,12 @@ const getTransactions = async (
     .map((tx) => {
       delete tx.bridge_id;
       if (sourceChain) {
-        if (tx.is_deposit && sourceChain === tx.chain) {
+        tx.sourceChain = sourceChain
+        if ((tx.is_deposit && sourceChain === tx.chain) || (!(tx.is_deposit) && sourceChain === tx.destination_chain)) {
           delete tx.is_deposit;
         } else return null;
       }
+      delete tx.destination_chain
       if (addressHash) {
         if (!((addressHash === tx.tx_to || addressHash === tx.tx_from) && addressChain === tx.chain)) return null;
       }
@@ -64,7 +66,7 @@ const getTransactions = async (
     })
     .filter((tx) => tx)
     .slice(-responseLimit);
-
+ 
   return response;
 };
 
@@ -72,11 +74,11 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const id = event.pathParameters?.id?.toLowerCase();
   const startTimestamp = event.queryStringParameters?.starttimestamp;
   const endTimestamp = event.queryStringParameters?.endtimestamp;
-  const chain = event.queryStringParameters?.chain;
-  const source = event.queryStringParameters?.source;
+  const chain = event.queryStringParameters?.chain?.toLowerCase();
+  const sourceChain = event.queryStringParameters?.sourcechain?.toLowerCase();
   const address = event.queryStringParameters?.address?.toLowerCase();
   const limit = event.queryStringParameters?.limit;
-  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, source, address, limit);
+  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, sourceChain, address, limit);
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
