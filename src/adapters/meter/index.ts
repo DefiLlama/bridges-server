@@ -206,7 +206,7 @@ const constructParams = (chain: string) => {
   eventParams.push(underlyingDepositParams, underlyingWithdrawalParams);
 
   return async (fromBlock: number, toBlock: number) => {
-    const eventData = await getTxDataFromEVMEventLogs("axelar", chain as Chain, fromBlock, toBlock, eventParams);
+    const eventData = await getTxDataFromEVMEventLogs("meter", chain as Chain, fromBlock, toBlock, eventParams);
     const uniqueHashesEventData = makeTxHashesUnique(eventData)
     return uniqueHashesEventData
   }
@@ -215,9 +215,14 @@ const constructParams = (chain: string) => {
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   bsc: constructParams("bsc"),
+  // polygon: constructParams("polygon"), only has 2 tokens, but they do not have prices
+  // avalanche: constructParams("avax"), has no transactions
+  // the following chains are not yet supported
+  /*
   moonriver: constructParams("moonriver"),
   meter: constructParams("meter"),
   theta: constructParams("theta")
+  */
 };
 
 export default adapter;

@@ -19,8 +19,11 @@ import axelar from "./axelar";
 import rainbowbridge from "./rainbowbridge";
 import across from "./across";
 import debridge from "./debridge";
-import optics from "./optics"
-import allbridge from "./allbridge"
+import optics from "./optics";
+import allbridge from "./allbridge";
+import ibc from "./ibc";
+import meter from "./meter";
+// import tronpeg from "./tronpeg"
 
 export default {
   polygon,
@@ -44,7 +47,9 @@ export default {
   across,
   debridge,
   optics,
-  allbridge
+  allbridge,
+  ibc,
+  meter,
 } as {
   [bridge: string]: BridgeAdapter;
 };

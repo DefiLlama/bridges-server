@@ -48,17 +48,7 @@ export default [
     iconLink: "icons:multichain",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      "Gnosis",
-      "Celo",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Gnosis", "Celo", "BSC"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
       gnosis: "xdai",
@@ -71,17 +61,7 @@ export default [
     iconLink: "icons:poly-network",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      "Gnosis",
-      "Celo",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Gnosis", "Celo", "BSC"],
     chainMapping: {
       avalanche: "avax",
       gnosis: "xdai",
@@ -102,7 +82,6 @@ export default [
       "Klaytn",
       "BSC",
       // "Celo" (disabled)
-
     ],
     chainMapping: {
       avalanche: "avax",
@@ -116,14 +95,7 @@ export default [
     iconLink: "icons:chainport",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Aurora",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
     chainMapping: {
       avalanche: "avax",
     },
@@ -135,16 +107,7 @@ export default [
     iconLink: "icons:portal",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Aurora",
-      "Celo",
-      "Klaytn",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "Celo", "Klaytn", "BSC"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -167,7 +130,7 @@ export default [
       "Aurora",
       "Celo",
       "Klaytn",
-      "BSC"
+      "BSC",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -181,17 +144,7 @@ export default [
     iconLink: "icons:synapse",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      "Aurora",
-      "Klaytn",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "Klaytn", "BSC"],
     chainMapping: {
       avalanche: "avax",
     },
@@ -203,15 +156,7 @@ export default [
     iconLink: "icons:stargate",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      "BSC"
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -237,6 +182,7 @@ export default [
     url: "",
     chains: ["BSC"],
     destinationChain: "-",
+    runDaily: true,
   },
   {
     id: 15,
@@ -340,9 +286,28 @@ export default [
     iconLink: "icons:allbridge",
     largeTxThreshold: 10000,
     url: "",
+    chains: ["Ethereum", "BSC"],
+  },
+  /*
+  {
+    id: 23,
+    displayName: "IBC",
+    bridgeDbName: "ibc",
+    iconLink: "",
+    largeTxThreshold: 10000,
+    url: "",
     chains: [
-      "Ethereum",
-      "BSC"
+      "Osmosis", "Secret", "Injective"
     ],
+  },
+  */
+  {
+    id: 24,
+    displayName: "Meter Passport",
+    bridgeDbName: "meter",
+    iconLink: "icons:meter-passport",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon"],
   },
 ] as BridgeNetwork[];
