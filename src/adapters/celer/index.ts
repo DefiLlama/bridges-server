@@ -145,9 +145,9 @@ const contractAddresses = {
 
 const poolV1WithdrawalParams: PartialContractEventParams = {
   target: "",
-  topic: "WithdrawDone(bytes32,uint64,address,address,uint256,bytes32)",
+  topic: "Relay(bytes32,address,address,address,uint256,uint64,bytes32)",
   abi: [
-    "event WithdrawDone(bytes32 withdrawId, uint64 seqnum, address receiver, address token, uint256 amount, bytes32 refid)",
+    "event Relay(bytes32 transferId, address sender, address receiver, address token, uint256 amount, uint64 srcChainId, bytes32 srcTransferId)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
