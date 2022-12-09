@@ -12,6 +12,7 @@ const txTypes = {
   token: "string",
   amount: "string",
   is_deposit: "boolean",
+  is_usd_volume: "boolean",
 } as { [key: string]: string };
 
 export const insertTransactionRow = async (
