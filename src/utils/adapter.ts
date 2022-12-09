@@ -61,9 +61,9 @@ const getBlocksForRunningAdapter = async (
           lastRecordedEndBlock + 1
         }.`
       );
-      startBlock = lastRecordedEndBlock + 1;
-      useRecordedBlocks = true;
     }
+    startBlock = lastRecordedEndBlock + 1;
+    useRecordedBlocks = true;
   } else {
     startBlock = 0;
     endBlock = 0;
@@ -118,7 +118,6 @@ export const runAllAdaptersToCurrentBlock = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-
         const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
           bridgeDbName,
           chain,
@@ -376,7 +375,7 @@ export const runAdapterHistorical = async (
                 token: token,
                 amount: amountString,
                 is_deposit: isDeposit,
-                is_usd_volume: isUSDVolume ?? false
+                is_usd_volume: isUSDVolume ?? false,
               },
               onConflict
             );
