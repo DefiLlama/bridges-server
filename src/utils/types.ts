@@ -11,6 +11,7 @@ export type EventData = {
     amount: ethers.BigNumber;
     isDeposit: boolean;
     chainOverride?: string  // used to insert tx using bridgeID from same bridgeNetwork but a different chain
+    isUSDVolume?: boolean // used to insert tx without specifying any token, only a USD value
   };
 
 export type EventKeyMapping = {

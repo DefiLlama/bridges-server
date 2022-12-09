@@ -5,22 +5,78 @@ import { getBridgeID } from "./wrappa/postgres/query";
 import { insertTransactionRow, insertConfigRow, insertErrorRow } from "./wrappa/postgres/write";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
-import { maxBlocksToQueryByChain } from "./constants";
+import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import { store } from "./s3";
 import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
 import { lookupBlock } from "@defillama/sdk/build/util";
+import { tronGetLatestBlock } from "../helpers/tron";
 const axios = require("axios");
 const retry = require("async-retry");
 
 // FIX timeout problems throughout functions here
 
+const getBlocksForRunningAdapter = async (
+  bridgeDbName: string,
+  chain: string,
+  chainContractsAreOn: string,
+  recordedBlocks: RecordedBlocks
+) => {
+  const currentTimestamp = await getCurrentUnixTimestamp();
+  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+  let startBlock = undefined;
+  let endBlock = undefined;
+  let useRecordedBlocks = undefined;
+  if (useChainBlocks) {
+    // probably need timeouts here
+    if (chainContractsAreOn === "tron") {
+      const { number } = await tronGetLatestBlock();
+      endBlock = number;
+    } else {
+      const { number } = await getLatestBlock(chainContractsAreOn);
+      endBlock = number;
+    }
+    if (!endBlock) {
+      const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
+      await insertErrorRow({
+        ts: currentTimestamp,
+        target_table: "transactions",
+        keyword: "data",
+        error: errString,
+      });
+      console.error(errString);
+      return { startBlock, endBlock, useRecordedBlocks };
+    }
+    const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
+      ? maxBlocksToQueryByChain[chainContractsAreOn]
+      : maxBlocksToQueryByChain.default;
+    let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
+    if (!lastRecordedEndBlock) {
+      const defaultStartBlock = endBlock - maxBlocksToQuery;
+      lastRecordedEndBlock = defaultStartBlock;
+      console.log(
+        `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${
+          lastRecordedEndBlock + 1
+        }.`
+      );
+      startBlock = lastRecordedEndBlock + 1;
+      useRecordedBlocks = true;
+    }
+  } else {
+    startBlock = 0;
+    endBlock = 0;
+    useRecordedBlocks = false;
+  }
+  return { startBlock, endBlock, useRecordedBlocks };
+};
+
 export const runAllAdaptersToCurrentBlock = async (
   allowNullTxValues: boolean = false,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
+  const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const recordedBlocks = (
     await retry(
       async (_bail: any) =>
@@ -30,7 +86,7 @@ export const runAllAdaptersToCurrentBlock = async (
   if (!recordedBlocks) {
     const errString = `Unable to retrieve recordedBlocks from s3.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: "transactions",
       keyword: "critical",
       error: errString,
@@ -39,17 +95,21 @@ export const runAllAdaptersToCurrentBlock = async (
   }
 
   for (const bridgeNetwork of bridgeNetworks) {
-    const { id, bridgeDbName } = bridgeNetwork;
+    const { id, bridgeDbName, runDaily } = bridgeNetwork;
     const adapter = adapters[bridgeDbName];
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp() * 1000,
+        ts: currentTimestamp,
         target_table: "transactions",
         keyword: "critical",
         error: errString,
       });
       throw new Error(errString);
+    }
+    const currentHour = new Date(currentTimestamp).getUTCHours();
+    if (runDaily && !(currentHour === 0)) {
+      return;
     }
     await insertConfigEntriesForAdapter(adapter, bridgeDbName);
     const adapterPromises = Promise.all(
@@ -58,49 +118,26 @@ export const runAllAdaptersToCurrentBlock = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-        const { number, timestamp } = await getLatestBlock(chainContractsAreOn); // probably need timeout here
-        if (!(number && timestamp)) {
-          const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
-          await insertErrorRow({
-            ts: getCurrentUnixTimestamp() * 1000,
-            target_table: "transactions",
-            keyword: "data",
-            error: errString,
-          });
-          console.error(errString);
-          return;
-        }
-        const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
-          ? maxBlocksToQueryByChain[chainContractsAreOn]
-          : maxBlocksToQueryByChain.default;
-        let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
-        if (!lastRecordedEndBlock) {
-          const defaultStartBlock = number - maxBlocksToQuery;
-          lastRecordedEndBlock = defaultStartBlock;
-          console.log(
-            `Adapter for ${bridgeDbName} is missing recordedBlocks entry for chain ${chain}. Starting at block ${
-              lastRecordedEndBlock + 1
-            }.`
-          );
-        }
+
+        const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
+          bridgeDbName,
+          chain,
+          chainContractsAreOn,
+          recordedBlocks
+        );
+        if (!startBlock) return;
         try {
-          await runAdapterHistorical(
-            lastRecordedEndBlock + 1,
-            number,
-            id,
-            chain as Chain,
-            allowNullTxValues,
-            true,
-            onConflict
-          );
-          recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-          recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-            recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? lastRecordedEndBlock + 1;
-          recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = number;
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          if (useRecordedBlocks) {
+            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
+            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
+          }
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
-            ts: getCurrentUnixTimestamp() * 1000,
+            ts: currentTimestamp,
             target_table: "transactions",
             keyword: "data",
             error: errString,
@@ -142,9 +179,18 @@ export const runAllAdaptersTimestampRange = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-        const startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
-        const endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
+        if (chainContractsAreOn === "tron") {
+          console.info(`Skipping running adapter ${bridgeDbName} on chain Tron.`);
+          return;
+        }
+        const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
         try {
+          let startBlock = 0;
+          let endBlock = 0;
+          if (useChainBlocks) {
+            startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
+            endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
+          }
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
@@ -173,6 +219,7 @@ export const runAdapterHistorical = async (
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
+  const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
@@ -200,17 +247,7 @@ export const runAdapterHistorical = async (
   const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
     ? bridgeNetwork.chainMapping?.[chain as Chain]
     : chain;
-  const provider = getProvider(chainContractsAreOn as Chain) as any;
-  if (!provider) {
-    const errString = `Could not get provider for chain ${chainContractsAreOn}.`;
-    await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
-      target_table: "transactions",
-      keyword: "critical",
-      error: errString,
-    });
-    throw new Error(errString);
-  }
+
   const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
     const errString = `${bridgeDbName} on chain ${chain} is missing in config table.`;
@@ -225,6 +262,7 @@ export const runAdapterHistorical = async (
   const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
+  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
   let block = endBlock;
   console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
   while (block > startBlock) {
@@ -240,6 +278,20 @@ export const runAdapterHistorical = async (
       console.log(
         `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
       );
+      let provider = undefined as any;
+      if (useChainBlocks) {
+        provider = getProvider(chainContractsAreOn as Chain);
+        if (!provider) {
+          const errString = `Could not get provider for chain ${chainContractsAreOn}.`;
+          await insertErrorRow({
+            ts: getCurrentUnixTimestamp() * 1000,
+            target_table: "transactions",
+            keyword: "critical",
+            error: errString,
+          });
+          throw new Error(errString);
+        }
+      }
       await sql.begin(async (sql) => {
         let txBlocks = [] as number[];
         eventLogs.map((log) => {
@@ -257,10 +309,15 @@ export const runAdapterHistorical = async (
           const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
           for (let j = 0; j < 4; j++) {
             try {
-              // add timeout?
-              block = await provider.getBlock(blockNumber);
-              if (block.timestamp) {
-                blockTimestamps[i] = block.timestamp;
+              if (useChainBlocks) {
+                // add timeout?
+                block = await provider.getBlock(blockNumber);
+                if (block.timestamp) {
+                  blockTimestamps[i] = block.timestamp;
+                  break;
+                }
+              } else {
+                blockTimestamps[i] = currentTimestamp;
                 break;
               }
             } catch (e) {
@@ -277,21 +334,22 @@ export const runAdapterHistorical = async (
         let storedBridgeIds = {} as { [chain: string]: string };
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
-            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride } = log;
+            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
             const amountString = amount.toString();
 
             // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
-            let bridgeIdOverride = bridgeID
+            // (don't believe this is actually used in codebase yet)
+            let bridgeIdOverride = bridgeID;
             if (chainOverride) {
-              const storedBridgeID = storedBridgeIds[chainOverride]
+              const storedBridgeID = storedBridgeIds[chainOverride];
               if (storedBridgeID) {
-                bridgeIdOverride = storedBridgeID
+                bridgeIdOverride = storedBridgeID;
               } else {
                 const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
-                bridgeIdOverride = overrideID
-                storedBridgeIds[chainOverride] = overrideID
+                bridgeIdOverride = overrideID;
+                storedBridgeIds[chainOverride] = overrideID;
                 if (!overrideID) {
                   const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
                   await insertErrorRow({
@@ -318,6 +376,7 @@ export const runAdapterHistorical = async (
                 token: token,
                 amount: amountString,
                 is_deposit: isDeposit,
+                is_usd_volume: isUSDVolume ?? false
               },
               onConflict
             );

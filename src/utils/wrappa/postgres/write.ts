@@ -28,6 +28,7 @@ export const insertTransactionRow = async (
     token: string;
     amount: string;
     is_deposit: boolean;
+    is_usd_volume: boolean;
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
