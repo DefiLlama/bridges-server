@@ -50,13 +50,14 @@ export const runAggregateDataHistorical = async (
   hourly: boolean = false,
   chainToRestrictTo?: string
 ) => {
+  const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "critical",
       error: errString,
@@ -72,7 +73,7 @@ export const runAggregateDataHistorical = async (
       } catch (e) {
         const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping.`;
         await insertErrorRow({
-          ts: getCurrentUnixTimestamp() * 1000,
+          ts: currentTimestamp,
           target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
           keyword: "data",
           error: errString,
@@ -87,7 +88,7 @@ export const runAggregateDataHistorical = async (
           } catch (e) {
             const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.`;
             await insertErrorRow({
-              ts: getCurrentUnixTimestamp() * 1000,
+              ts: currentTimestamp,
               target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
               keyword: "data",
               error: errString,
@@ -136,8 +137,6 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
 Couldn't figure out how to insert unknown usd values as null into composite sql types
 and didn't spend time to fix it, so unknown usd values are 0 instead.
 
-Large value transactions are only logged when aggregating daily stats.
-
 Aggregates hourly data for the hour previous to timestamp's current hour, and daily data for the day previous to timestamp's current day.
 */
 export const aggregateData = async (
@@ -147,11 +146,12 @@ export const aggregateData = async (
   hourly?: boolean,
   largeTxThreshold?: number
 ) => {
+  const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
     const errString = `Could not find ID for ${bridgeDbName} on chain ${chain}, make sure it is added to config db.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "critical",
       error: errString,
@@ -184,7 +184,7 @@ export const aggregateData = async (
   if (txs.length === 0) {
     const errString = `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -210,7 +210,7 @@ export const aggregateData = async (
       } catch (e) {
         const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
         await insertErrorRow({
-          ts: getCurrentUnixTimestamp() * 1000,
+          ts: currentTimestamp,
           target_table: "daily_aggregated",
           keyword: "data",
           error: errString,
@@ -238,18 +238,20 @@ export const aggregateData = async (
 
   const uniqueTokenPromises = Promise.all(
     txs.map(async (tx) => {
-      const { token, chain } = tx;
-      const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-      uniqueTokens[tokenKey] = true;
+      const { token, chain, is_usd_volume } = tx;
+      if (!is_usd_volume) {
+        const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
+        uniqueTokens[tokenKey] = true;
+      }
     })
   );
   await uniqueTokenPromises;
   tokensForPricing = Object.keys(uniqueTokens);
   const llamaPrices = await getLlamaPrices(tokensForPricing, startTimestamp); // this prices tokens all at the same timestamp, can revise how this is done later
-  if (Object.keys(llamaPrices).length === 0) {
+  if (Object.keys(llamaPrices).length === 0 && tokensForPricing.length > 0) {
     const errString = `No prices for any tokens were found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -260,66 +262,77 @@ export const aggregateData = async (
   let tokensWithNullPrices = new Set();
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
-      const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from } = tx;
-      const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-      const bnAmount = BigNumber(amount);
+      const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume } = tx;
+      const rawBnAmount = BigNumber(amount);
       let usdValue = null;
-      const priceData = llamaPrices?.[tokenKey];
-      if (priceData && priceData.confidence > defaultConfidenceThreshold) {
-        const { price, decimals } = priceData;
-        const bnAmount = BigNumber(amount).dividedBy(10 ** decimals);
-        usdValue = bnAmount.multipliedBy(price).toNumber();
-        if (usdValue > 10 ** 9) {
-          const errString = `USD value of tx id ${id} is ${usdValue}.`;
-          await insertErrorRow({
-            ts: getCurrentUnixTimestamp() * 1000,
-            target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-            keyword: "data",
-            error: errString,
-          });
+      let tokenKey = null;
+      if (is_usd_volume) {
+        usdValue = rawBnAmount.toNumber();
+      } else {
+        tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
+        const priceData = llamaPrices?.[tokenKey];
+        if (priceData && priceData.confidence > defaultConfidenceThreshold) {
+          const { price, decimals } = priceData;
+          const bnAmount = rawBnAmount.dividedBy(10 ** decimals);
+          usdValue = bnAmount.multipliedBy(price).toNumber();
+          if (usdValue > 10 ** 9) {
+            const errString = `USD value of tx id ${id} is ${usdValue}.`;
+            await insertErrorRow({
+              ts: currentTimestamp,
+              target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+              keyword: "data",
+              error: errString,
+            });
+          }
+          if (usdValue > 10 ** 10) {
+            console.error(`USD value of tx id ${id} is over 10 billion, skipping.`);
+            return;
+          }
+          if (largeTxThreshold && id && usdValue > largeTxThreshold) {
+            largeTxs.push({
+              id: id,
+              ts: ts,
+              usdValue: usdValue,
+            });
+          }
         }
-        if (usdValue > 10 ** 10) {
-          console.error(`USD value of tx id ${id} is over 10 billion, skipping.`);
-          return;
+        if (!usdValue) {
+          tokensWithNullPrices.add(tokenKey);
         }
-        if (largeTxThreshold && id && usdValue > largeTxThreshold) {
-          largeTxs.push({
-            id: id,
-            ts: ts,
-            usdValue: usdValue,
-          });
-        }
-      }
-      if (!usdValue) {
-        tokensWithNullPrices.add(tokenKey);
       }
       if (is_deposit) {
         totalDepositTxs += 1;
         totalDepositedUsd += usdValue ?? 0;
-        cumTokensDeposited[tokenKey] = cumTokensDeposited[tokenKey] || {};
-        cumTokensDeposited[tokenKey].amount = cumTokensDeposited[tokenKey].amount
-          ? cumTokensDeposited[tokenKey].amount.plus(bnAmount)
-          : bnAmount;
-        cumTokensDeposited[tokenKey].usdValue = (cumTokensDeposited[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
-        if (tx_from) {
-          const addressKey = `${chain}:${tx_from}`;
-          cumAddressDeposited[addressKey] = cumAddressDeposited[addressKey] || {};
-          cumAddressDeposited[addressKey].numberTxs = (cumAddressDeposited[addressKey].numberTxs ?? 0) + 1;
-          cumAddressDeposited[addressKey].usdValue = (cumAddressDeposited[addressKey].usdValue ?? 0) + (usdValue ?? 0);
+        if (!is_usd_volume && tokenKey) {
+          cumTokensDeposited[tokenKey] = cumTokensDeposited[tokenKey] || {};
+          cumTokensDeposited[tokenKey].amount = cumTokensDeposited[tokenKey].amount
+            ? cumTokensDeposited[tokenKey].amount.plus(rawBnAmount)
+            : rawBnAmount;
+          cumTokensDeposited[tokenKey].usdValue = (cumTokensDeposited[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
+          if (tx_from) {
+            const addressKey = `${chain}:${tx_from}`;
+            cumAddressDeposited[addressKey] = cumAddressDeposited[addressKey] || {};
+            cumAddressDeposited[addressKey].numberTxs = (cumAddressDeposited[addressKey].numberTxs ?? 0) + 1;
+            cumAddressDeposited[addressKey].usdValue =
+              (cumAddressDeposited[addressKey].usdValue ?? 0) + (usdValue ?? 0);
+          }
         }
       } else {
         totalWithdrawalTxs += 1;
         totalWithdrawnUsd += usdValue ?? 0;
-        cumTokensWithdrawn[tokenKey] = cumTokensWithdrawn[tokenKey] || {};
-        cumTokensWithdrawn[tokenKey].amount = cumTokensWithdrawn[tokenKey].amount
-          ? cumTokensWithdrawn[tokenKey].amount.plus(bnAmount)
-          : bnAmount;
-        cumTokensWithdrawn[tokenKey].usdValue = (cumTokensWithdrawn[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
-        if (tx_to) {
-          const addressKey = `${chain}:${tx_to}`;
-          cumAddressWithdrawn[addressKey] = cumAddressWithdrawn[addressKey] || {};
-          cumAddressWithdrawn[addressKey].numberTxs = (cumAddressWithdrawn[addressKey].numberTxs ?? 0) + 1;
-          cumAddressWithdrawn[addressKey].usdValue = (cumAddressWithdrawn[addressKey].usdValue ?? 0) + (usdValue ?? 0);
+        if (!is_usd_volume && tokenKey) {
+          cumTokensWithdrawn[tokenKey] = cumTokensWithdrawn[tokenKey] || {};
+          cumTokensWithdrawn[tokenKey].amount = cumTokensWithdrawn[tokenKey].amount
+            ? cumTokensWithdrawn[tokenKey].amount.plus(rawBnAmount)
+            : rawBnAmount;
+          cumTokensWithdrawn[tokenKey].usdValue = (cumTokensWithdrawn[tokenKey].usdValue ?? 0) + (usdValue ?? 0);
+          if (tx_to) {
+            const addressKey = `${chain}:${tx_to}`;
+            cumAddressWithdrawn[addressKey] = cumAddressWithdrawn[addressKey] || {};
+            cumAddressWithdrawn[addressKey].numberTxs = (cumAddressWithdrawn[addressKey].numberTxs ?? 0) + 1;
+            cumAddressWithdrawn[addressKey].usdValue =
+              (cumAddressWithdrawn[addressKey].usdValue ?? 0) + (usdValue ?? 0);
+          }
         }
       }
     })
@@ -328,7 +341,7 @@ export const aggregateData = async (
   if (tokensWithNullPrices.size > nullPriceCountThreshold) {
     const errString = `There are ${tokensWithNullPrices.size} missing prices for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -370,7 +383,7 @@ export const aggregateData = async (
   if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
     const errString = `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
-      ts: getCurrentUnixTimestamp() * 1000,
+      ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
       keyword: "data",
       error: errString,
@@ -408,7 +421,7 @@ export const aggregateData = async (
     } catch (e) {
       const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp() * 1000,
+        ts: currentTimestamp,
         target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
         keyword: "data",
         error: errString,
@@ -434,7 +447,7 @@ export const aggregateData = async (
     } catch (e) {
       const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp() * 1000,
+        ts: currentTimestamp,
         target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
         keyword: "data",
         error: errString,
@@ -462,7 +475,7 @@ export const aggregateData = async (
     } catch (e) {
       const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
       await insertErrorRow({
-        ts: getCurrentUnixTimestamp() * 1000,
+        ts: currentTimestamp,
         target_table: "large_transactions",
         keyword: "data",
         error: errString,

@@ -25,6 +25,7 @@ interface ITransaction {
   amount: string;
   is_deposit: boolean;
   usd_value?: number;
+  is_usd_volume?: boolean
 }
 
 interface IAggregatedData {
