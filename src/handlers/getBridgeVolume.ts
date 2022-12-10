@@ -50,6 +50,14 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
       depositTxs: currentDayDepositTxs,
       withdrawTxs: currentDayWithdrawTxs,
     };
+  } else {
+    currentDayEntry = {
+      date: (lastDailyTs + secondsInDay).toString(),
+      depositUSD: 0,
+      withdrawUSD: 0,
+      depositTxs: 0,
+      withdrawTxs: 0,
+    };
   }
 
   let response = dailyVolumes;
