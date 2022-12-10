@@ -95,7 +95,7 @@ export const runAllAdaptersToCurrentBlock = async (
   }
 
   for (const bridgeNetwork of bridgeNetworks) {
-    const { id, bridgeDbName, runDaily } = bridgeNetwork;
+    const { id, bridgeDbName } = bridgeNetwork;
     const adapter = adapters[bridgeDbName];
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
@@ -106,10 +106,6 @@ export const runAllAdaptersToCurrentBlock = async (
         error: errString,
       });
       throw new Error(errString);
-    }
-    const currentHour = new Date(currentTimestamp).getUTCHours();
-    if (runDaily && !(currentHour === 0)) {
-      return;
     }
     await insertConfigEntriesForAdapter(adapter, bridgeDbName);
     const adapterPromises = Promise.all(
