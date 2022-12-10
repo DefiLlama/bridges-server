@@ -19,8 +19,19 @@ export const maxBlocksToQueryByChain = {
   klaytn: 6000,
 } as { [chain: string]: number };
 
-export const nonBlocksChains = ["osmosis", "secret", "injective"];
-
+export const nonBlocksChains = [
+  "osmosis",
+  "secret",
+  "injective",
+  "terra",
+  "crescent",
+  "juno",
+  "kujira",
+  "sifchain",
+  "stride",
+  "cosmos",
+  "canto",
+];
 /*
 // for slow adapters
 export const maxBlocksToQueryByChain = {

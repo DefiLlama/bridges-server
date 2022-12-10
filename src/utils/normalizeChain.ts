@@ -11,21 +11,10 @@ export function normalizeChain(chain: string) {
   return normalizedChainReplacements[normalizedChain] ?? normalizedChain;
 }
 
-export const nonChains = [
-  "PK",
-  "SK",
-  "tvl",
-  "totalCirculating",
-  "tvlPrev1Hour",
-  "tvlPrev1Day",
-  "tvlPrev1Week",
-];
+export const nonChains = ["PK", "SK", "tvl", "totalCirculating", "tvlPrev1Hour", "tvlPrev1Day", "tvlPrev1Week"];
 
 export function addToChains(chains: string[], chainDisplayName: string) {
-  if (
-    chainCoingeckoIds[chainDisplayName] !== undefined &&
-    !chains.includes(chainDisplayName)
-  ) {
+  if (chainCoingeckoIds[chainDisplayName] !== undefined && !chains.includes(chainDisplayName)) {
     chains.push(chainDisplayName);
   } else if (chainDisplayName.includes("-")) {
     const chainName = chainDisplayName.split("-")[0];
@@ -821,11 +810,11 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  Canto: {
-    geckoId: null,
-    symbol: null,
-    cmcId: null,
-    categories: ["EVM"],
+  "Canto": {
+    geckoId: "canto",
+    symbol: "CANTO",
+    cmcId: "21516",
+    categories: ["EVM", "Cosmos"],
   },
   Ripple: {
     geckoId: "ripple",
@@ -849,6 +838,30 @@ export const chainCoingeckoIds = {
     cmcId: "15185",
     categories: ["Cosmos"],
   },
+  Injective: {
+    geckoId: "injective-protocol",
+    symbol: "INJ",
+    cmcId: null,
+    categories: ["Cosmos"],
+  },
+  Crescent: {
+    geckoId: "crescent-network",
+    symbol: "CRE",
+    cmcId: null,
+    categories: ["Cosmos"],
+  },
+  Juno: {
+    geckoId: "juno-network",
+    symbol: "JUNO",
+    cmcId: "14299",
+    categories: ["Cosmos"],
+  },
+  "Stride": {
+    geckoId: "stride",
+    symbol: "STRD",
+    cmcId: "21781",
+    categories: ["Cosmos"],
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -862,13 +875,7 @@ chainCoingeckoIds["Binance"] = chainCoingeckoIds["BSC"];
 chainCoingeckoIds["Kucoin"] = chainCoingeckoIds["KCC"];
 chainCoingeckoIds["Cosmos"] = chainCoingeckoIds["CosmosHub"];
 
-export const extraSections = [
-  "staking",
-  "pool2",
-  "offers",
-  "borrowed",
-  "masterchef",
-];
+export const extraSections = ["staking", "pool2", "offers", "borrowed", "masterchef"];
 
 export function transformNewChainName(chain: string) {
   switch (chain) {
@@ -885,10 +892,7 @@ export function transformNewChainName(chain: string) {
   }
 }
 
-export function getChainDisplayName(
-  normalizedChain: string,
-  useNewChainNames: boolean
-): string {
+export function getChainDisplayName(normalizedChain: string, useNewChainNames: boolean): string {
   if (extraSections.includes(normalizedChain)) {
     return normalizedChain;
   }
@@ -1065,11 +1069,16 @@ export function getChainDisplayName(
       return "Arbitrum Nova";
     case "kujira":
       return "Kujira";
-
+    case "injective":
+      return "Injective";
+    case "crescent":
+      return "Crescent";
+    case "juno":
+      return "Juno";
+    case "stride":
+      return "Stride"
     default:
-      return (
-        normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1)
-      ); // Capitalize first letter
+      return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
 }
 
