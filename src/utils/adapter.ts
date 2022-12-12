@@ -25,7 +25,8 @@ const getBlocksForRunningAdapter = async (
   recordedBlocks: RecordedBlocks
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
-  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+  // todo: fix this line
+  const useChainBlocks = (!nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let startBlock = undefined;
   let endBlock = undefined;
   let useRecordedBlocks = undefined;
@@ -66,7 +67,7 @@ const getBlocksForRunningAdapter = async (
     useRecordedBlocks = true;
   } else {
     startBlock = 0;
-    endBlock = 0;
+    endBlock = 1;
     useRecordedBlocks = false;
   }
   return { startBlock, endBlock, useRecordedBlocks };

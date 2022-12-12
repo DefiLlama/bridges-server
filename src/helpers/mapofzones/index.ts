@@ -1,3 +1,4 @@
+import { getLatestBlock } from "@defillama/sdk/build/util";
 import { GraphQLClient, gql } from "graphql-request";
 import { ZonesTableDocument } from "./ZonesTable.query.generated";
 import { ethers } from "ethers";
@@ -6,6 +7,8 @@ import { getCurrentUnixTimestamp } from "../../utils/date";
 
 const endpoint = "https://api2.mapofzones.com/v1/graphql";
 const graphQLClient = new GraphQLClient(endpoint);
+
+const useBlocksChains = ["evmos", "cronos"]
 
 export const getLatestMapOfZonesTableData = async () => {
   const variables = {
@@ -30,15 +33,21 @@ export const getIbcVolumeByZoneName = (chainName: string, zoneName: string) => {
       return [];
     }
     const tableData = await getLatestMapOfZonesTableData();
+
     const chainData = tableData.find((chain: any) => {
       return chain.zone === zoneName;
     });
     if (chainData) {
       const switchedStats = chainData.switchedStats[0];
-      const { ibcVolumeOut, ibcVolumeIn } = switchedStats;
+      const { ibcVolumeOut, ibcVolumeIn, ibcTransfers } = switchedStats;
+      let block = timestamp
+      if (useBlocksChains.includes(chainName)) {
+        const { number } = await getLatestBlock(chainName);
+        block = number
+      }
       const depositAmount = ethers.BigNumber.from(ibcVolumeOut);
       const depositTx = {
-        blockNumber: timestamp,
+        blockNumber: block,
         txHash: `flows-${chainName}-${timestamp}-deposit`,
         from: "null",
         to: "null",
@@ -46,10 +55,11 @@ export const getIbcVolumeByZoneName = (chainName: string, zoneName: string) => {
         amount: depositAmount,
         isDeposit: true,
         isUSDVolume: true,
+        txsCountedAs: Math.floor(ibcTransfers / 2)
       };
       const withdrawalAmount = ethers.BigNumber.from(ibcVolumeIn);
       const withdrawTx = {
-        blockNumber: timestamp,
+        blockNumber: block,
         txHash: `flows-${chainName}-${timestamp}-withdrawal`,
         from: "null",
         to: "null",
@@ -57,6 +67,7 @@ export const getIbcVolumeByZoneName = (chainName: string, zoneName: string) => {
         amount: withdrawalAmount,
         isDeposit: false,
         isUSDVolume: true,
+        txsCountedAs: Math.floor(ibcTransfers / 2)
       };
       return [depositTx, withdrawTx] as EventData[];
     } else return [];
