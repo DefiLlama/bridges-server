@@ -13,6 +13,7 @@ const txTypes = {
   amount: "string",
   is_deposit: "boolean",
   is_usd_volume: "boolean",
+  txs_counted_as: "number"
 } as { [key: string]: string };
 
 export const insertTransactionRow = async (
@@ -30,6 +31,7 @@ export const insertTransactionRow = async (
     amount: string;
     is_deposit: boolean;
     is_usd_volume: boolean;
+    txs_counted_as: number | null;
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {

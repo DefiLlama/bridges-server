@@ -262,7 +262,7 @@ export const aggregateData = async (
   let tokensWithNullPrices = new Set();
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
-      const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume } = tx;
+      const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume, txs_counted_as } = tx;
       const rawBnAmount = BigNumber(amount);
       let usdValue = null;
       let tokenKey = null;
@@ -301,8 +301,12 @@ export const aggregateData = async (
         }
       }
       if (is_deposit) {
-        totalDepositTxs += 1;
         totalDepositedUsd += usdValue ?? 0;
+        if (txs_counted_as) {
+          totalDepositTxs += txs_counted_as;
+        } else {
+          totalDepositTxs += 1;
+        }
         if (!is_usd_volume && tokenKey) {
           cumTokensDeposited[tokenKey] = cumTokensDeposited[tokenKey] || {};
           cumTokensDeposited[tokenKey].amount = cumTokensDeposited[tokenKey].amount
@@ -318,8 +322,12 @@ export const aggregateData = async (
           }
         }
       } else {
-        totalWithdrawalTxs += 1;
         totalWithdrawnUsd += usdValue ?? 0;
+        if (txs_counted_as) {
+          totalWithdrawalTxs += txs_counted_as;
+        } else {
+          totalWithdrawalTxs += 1;
+        }
         if (!is_usd_volume && tokenKey) {
           cumTokensWithdrawn[tokenKey] = cumTokensWithdrawn[tokenKey] || {};
           cumTokensWithdrawn[tokenKey].amount = cumTokensWithdrawn[tokenKey].amount

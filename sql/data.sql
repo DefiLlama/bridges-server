@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS bridges.transactions (
     amount VARCHAR NOT NULL,
     is_deposit BOOLEAN NOT NULL,
     is_usd_volume BOOLEAN,
+    txs_counted_as INTEGER,
     PRIMARY KEY(id),
     UNIQUE (bridge_id, chain, tx_hash, token, tx_from, tx_to),
     CONSTRAINT fk_bridge_id

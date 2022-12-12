@@ -181,7 +181,7 @@ export const runAllAdaptersTimestampRange = async (
         const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
         try {
           let startBlock = 0;
-          let endBlock = 0;
+          let endBlock = 1;
           if (useChainBlocks) {
             startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
@@ -329,7 +329,7 @@ export const runAdapterHistorical = async (
         let storedBridgeIds = {} as { [chain: string]: string };
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
-            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume } = log;
+            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
             const amountString = amount.toString();
@@ -372,6 +372,7 @@ export const runAdapterHistorical = async (
                 amount: amountString,
                 is_deposit: isDeposit,
                 is_usd_volume: isUSDVolume ?? false,
+                txs_counted_as: txsCountedAs ?? null,
               },
               onConflict
             );

@@ -25,7 +25,8 @@ interface ITransaction {
   amount: string;
   is_deposit: boolean;
   usd_value?: number;
-  is_usd_volume?: boolean
+  is_usd_volume?: boolean;
+  txs_counted_as?: number;
 }
 
 interface IAggregatedData {
