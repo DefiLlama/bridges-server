@@ -42,8 +42,8 @@ export async function craftBridgeChainsResponse() {
     })
   );
 
-  const response = await chainPromises;
-
+  const response = (await chainPromises).filter((chain) => chain);
+ 
   return response;
 }
 
