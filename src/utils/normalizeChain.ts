@@ -1,7 +1,13 @@
-const normalizedChainReplacements = {
+export const normalizedChainReplacements = {
   binance: "bsc",
   wanchain: "wan",
   kucoin: "kcc",
+  //gnosis: "xdai",
+  "terra%20classic": "terra",
+  sxnetwork: "sx",
+  "arbitrum%20nova":"arbitrum_nova",
+  ethereumpow: "ethpow",
+  "milkomeda%20c1": "milkomeda",
 } as {
   [chain: string]: string;
 };
@@ -862,6 +868,18 @@ export const chainCoingeckoIds = {
     cmcId: "21781",
     categories: ["Cosmos"],
   },
+  Axelar: {
+    geckoId: "axelar",
+    symbol: "AXL",
+    cmcId: "17799",
+    categories: ["Cosmos"],
+  },
+  "Gravity Bridge": {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["Cosmos"],
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1067,6 +1085,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Ripple";
     case "arbitrum_nova":
       return "Arbitrum Nova";
+    case "gravity_bridge":
+      return "Gravity Bridge";
     case "kujira":
       return "Kujira";
     case "injective":
@@ -1076,7 +1096,9 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
     case "juno":
       return "Juno";
     case "stride":
-      return "Stride"
+      return "Stride";
+    case "axelar":
+      return "Axelar";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

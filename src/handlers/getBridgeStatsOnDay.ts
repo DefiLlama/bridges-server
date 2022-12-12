@@ -5,6 +5,7 @@ import { queryAggregatedDailyDataAtTimestamp, queryConfig } from "../utils/wrapp
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const numberOfTokensToReturn = 30 // also determines # of addresses returned
 
@@ -91,6 +92,7 @@ const sumAddressTxs = (addressTotals: string[], dailyAddresssRecord: AddressReco
 // don't let chain be 'all'
 const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridgeId?: string) => {
   let bridgeDbName = undefined as any;
+  const queryChain = chain === "" ? "" : normalizeChain(chain)
   if (!bridgeId) {
     bridgeDbName = undefined;
   } else {
@@ -107,7 +109,7 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
     }
   }
 
-  const sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
+  const sourceChainConfigs = (await queryConfig(undefined, undefined, queryChain)).filter((config) => {
     if (bridgeId) {
       return config.bridge_name === bridgeDbName;
     }
@@ -127,7 +129,7 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
       sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
     })
   );
-  const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, chain, bridgeDbName);
+  const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, queryChain, bridgeDbName);
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
   let dailyAddressesDeposited = {} as AddressRecord;

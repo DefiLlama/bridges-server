@@ -4,6 +4,7 @@ import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolu
 import { secondsInDay, getCurrentUnixTimestamp, secondsInHour } from "../utils/date";
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const getBridge = async (bridgeNetworkId?: number) => {
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
@@ -17,7 +18,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
   let chainBreakdown = {} as any;
   await Promise.all(
     [...chains, "all"].map(async (chain) => {
-      const queryChain = chain === "all" ? undefined : chain.toLowerCase();
+      const queryChain = chain === "all" ? undefined : normalizeChain(chain);
 
       let lastHourlyVolume, lastDailyVolume, dayBeforeLastVolume;
       let currentDayVolume = 0;

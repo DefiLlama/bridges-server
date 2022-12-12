@@ -3,9 +3,15 @@ import wrap from "../utils/wrap";
 import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolume";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { secondsInDay, getCurrentUnixTimestamp } from "../utils/date";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
-  const queryChain = chain === "all" ? undefined : chain;
+  if (!chain) {
+    return errorResponse({
+      message: "Must include a chain or 'all' as path parameter.",
+    });
+  }
+  const queryChain = chain === "all" ? undefined : normalizeChain(chain);
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {

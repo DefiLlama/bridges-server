@@ -5,6 +5,7 @@ import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -13,7 +14,7 @@ const getLargeTransactions = async (
 ) => {
   const queryStartTimestamp = parseInt(startTimestamp);
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
-  const queryChain = chain === "all" ? null : chain;
+  const queryChain = chain === "all" ? null : normalizeChain(chain);
   
   const configs = await queryConfig()
   let configMapping = {} as any

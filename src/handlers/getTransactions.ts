@@ -2,6 +2,7 @@ import { IResponse, successResponse, errorResponse } from "../utils/lambda-respo
 import wrap from "../utils/wrap";
 import { queryTransactionsTimestampRangeByBridgeNetwork } from "../utils/wrappa/postgres/query";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const maxResponseTxs = 6000; // maximum number of transactions to return
 
@@ -27,7 +28,7 @@ const getTransactions = async (
   }
   const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : 0;
   const queryEndTimestamp = endTimestamp ? parseInt(endTimestamp) : undefined;
-  const queryChain = sourceChain ? sourceChain : chain;
+  const queryChain = sourceChain ? normalizeChain(sourceChain) : chain ? normalizeChain(chain) : chain;
   let queryName = undefined;
   if (bridgeNetworkId && !isNaN(parseInt(bridgeNetworkId))) {
     const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
