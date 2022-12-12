@@ -12,6 +12,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
     });
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
+  console.log(queryChain);
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {
@@ -30,40 +31,47 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   const dailyVolumes = await getDailyBridgeVolume(undefined, undefined, queryChain, queryId);
 
   let currentDayEntry = null as unknown;
-  const lastDailyTs = parseInt(dailyVolumes?.[dailyVolumes.length - 1]?.date) || 9999999999;
-  const currentTimestamp = getCurrentUnixTimestamp();
-  const hourlyStartTimestamp = currentTimestamp - secondsInDay;
-  const lastDayHourlyVolume = await getHourlyBridgeVolume(hourlyStartTimestamp, currentTimestamp, queryChain, queryId);
-  if (lastDayHourlyVolume?.length) {
-    let currentDayDepositUSD = 0;
-    let currentDayWithdrawUSD = 0;
-    let currentDayDepositTxs = 0;
-    let currentDayWithdrawTxs = 0;
-    lastDayHourlyVolume.map((entry) => {
-      const { date, depositTxs, withdrawTxs, depositUSD, withdrawUSD } = entry;
-      // lastDailyTs is timestamp at 00:00 UTC of *previous* day
-      if (parseInt(date) > lastDailyTs + secondsInDay) {
-        currentDayDepositUSD += depositUSD;
-        currentDayWithdrawUSD += withdrawUSD;
-        currentDayDepositTxs += depositTxs;
-        currentDayWithdrawTxs += withdrawTxs;
-      }
-    });
-    currentDayEntry = {
-      date: (lastDailyTs + secondsInDay).toString(),
-      depositUSD: currentDayDepositUSD,
-      withdrawUSD: currentDayWithdrawUSD,
-      depositTxs: currentDayDepositTxs,
-      withdrawTxs: currentDayWithdrawTxs,
-    };
-  } else {
-    currentDayEntry = {
-      date: (lastDailyTs + secondsInDay).toString(),
-      depositUSD: 0,
-      withdrawUSD: 0,
-      depositTxs: 0,
-      withdrawTxs: 0,
-    };
+  const lastDailyTs = parseInt(dailyVolumes?.[dailyVolumes.length - 1]?.date);
+  if (lastDailyTs) {
+    const currentTimestamp = getCurrentUnixTimestamp();
+    const hourlyStartTimestamp = currentTimestamp - secondsInDay;
+    const lastDayHourlyVolume = await getHourlyBridgeVolume(
+      hourlyStartTimestamp,
+      currentTimestamp,
+      queryChain,
+      queryId
+    );
+    if (lastDayHourlyVolume?.length) {
+      let currentDayDepositUSD = 0;
+      let currentDayWithdrawUSD = 0;
+      let currentDayDepositTxs = 0;
+      let currentDayWithdrawTxs = 0;
+      lastDayHourlyVolume.map((entry) => {
+        const { date, depositTxs, withdrawTxs, depositUSD, withdrawUSD } = entry;
+        // lastDailyTs is timestamp at 00:00 UTC of *previous* day
+        if (parseInt(date) > lastDailyTs + secondsInDay) {
+          currentDayDepositUSD += depositUSD;
+          currentDayWithdrawUSD += withdrawUSD;
+          currentDayDepositTxs += depositTxs;
+          currentDayWithdrawTxs += withdrawTxs;
+        }
+      });
+      currentDayEntry = {
+        date: (lastDailyTs + secondsInDay).toString(),
+        depositUSD: currentDayDepositUSD,
+        withdrawUSD: currentDayWithdrawUSD,
+        depositTxs: currentDayDepositTxs,
+        withdrawTxs: currentDayWithdrawTxs,
+      };
+    } else {
+      currentDayEntry = {
+        date: (lastDailyTs + secondsInDay).toString(),
+        depositUSD: 0,
+        withdrawUSD: 0,
+        depositTxs: 0,
+        withdrawTxs: 0,
+      };
+    }
   }
 
   let response = dailyVolumes;
