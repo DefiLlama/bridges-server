@@ -203,29 +203,31 @@ const constructParams = (chain: string) => {
     };
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   });
-  const finalDepositParams = {
-    ...depositParams,
-    target: ampl,
-    fixedEventData: {
-      token: ampl,
-      to: amplVault,
-    },
-    filter: {
-      includeTxData: [{ to: amplVault }],
-    },
-  };
-  const finalWithdrawalParams = {
-    ...withdrawalParams,
-    target: ampl,
-    fixedEventData: {
-      token: ampl,
-      from: amplVault,
-    },
-    filter: {
-      includeTxData: [{ to: amplVault }],
-    },
-  };
-  eventParams.push(finalDepositParams, finalWithdrawalParams);
+  if (chain == "ehereum") {
+    const finalDepositParams = {
+      ...depositParams,
+      target: ampl,
+      fixedEventData: {
+        token: ampl,
+        to: amplVault,
+      },
+      filter: {
+        includeTxData: [{ to: amplVault }],
+      },
+    };
+    const finalWithdrawalParams = {
+      ...withdrawalParams,
+      target: ampl,
+      fixedEventData: {
+        token: ampl,
+        from: amplVault,
+      },
+      filter: {
+        includeTxData: [{ to: amplVault }],
+      },
+    };
+    eventParams.push(finalDepositParams, finalWithdrawalParams);
+  }
   const underlyingDepositParams = constructTransferParams(gateway, true);
   const underlyingWithdrawalParams = constructTransferParams(gateway, false);
   eventParams.push(underlyingDepositParams, underlyingWithdrawalParams);
