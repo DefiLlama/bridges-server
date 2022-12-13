@@ -5,6 +5,9 @@ import { ethers } from "ethers";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 const nullAddress = "0x0000000000000000000000000000000000000000";
+const ampl = "0xD46bA6D942050d489DBd938a2C909A5d5039A161";
+const amplVault = "0x805c7Ecba41f9321bb098ec1cf31d86d9407de2F"
+
 
 const contractAddresses = {
   ethereum: {
@@ -181,7 +184,7 @@ const constructParams = (chain: string) => {
       target: address,
       fixedEventData: {
         token: address,
-        to: address,
+        to: gateway,
       },
       filter: {
         includeTxData: [{ to: gateway }],
@@ -192,7 +195,7 @@ const constructParams = (chain: string) => {
       target: address,
       fixedEventData: {
         token: address,
-        from: address,
+        from: gateway,
       },
       filter: {
         includeTxData: [{ to: gateway }],
@@ -200,7 +203,31 @@ const constructParams = (chain: string) => {
     };
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   });
-
+  if (chain == "ehereum") {
+    const finalDepositParams = {
+      ...depositParams,
+      target: ampl,
+      fixedEventData: {
+        token: ampl,
+        to: amplVault,
+      },
+      filter: {
+        includeTxData: [{ to: amplVault }],
+      },
+    };
+    const finalWithdrawalParams = {
+      ...withdrawalParams,
+      target: ampl,
+      fixedEventData: {
+        token: ampl,
+        from: amplVault,
+      },
+      filter: {
+        includeTxData: [{ to: amplVault }],
+      },
+    };
+    eventParams.push(finalDepositParams, finalWithdrawalParams);
+  }
   const underlyingDepositParams = constructTransferParams(gateway, true);
   const underlyingWithdrawalParams = constructTransferParams(gateway, false);
   eventParams.push(underlyingDepositParams, underlyingWithdrawalParams);
