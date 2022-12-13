@@ -2,9 +2,10 @@ import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolume";
 import { craftBridgeChainsResponse } from "./getBridgeChains";
-import { secondsInDay, getCurrentUnixTimestamp } from "../utils/date";
+import { secondsInDay, getCurrentUnixTimestamp, secondsInHour } from "../utils/date";
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import bridgeNetworks from "../data/bridgeNetworkData";
+import { normalizeChain } from "../utils/normalizeChain";
 
 const getBridges = async () => {
   const response = (
@@ -61,6 +62,29 @@ const getBridges = async () => {
           });
         }
 
+        // can change this: gets daily vols for all chains for prev. month, but it's not returned (only last day's vol is currently needed)
+        let chainDailyVolumes = {} as any;
+        await Promise.all(
+          chains.map(async (chain) => {
+            const queryChain = normalizeChain(chain);
+            let chainLastDailyVolume;
+            const chainLastMonthDailyVolume = await getDailyBridgeVolume(
+              dailyStartTimestamp,
+              currentTimestamp,
+              queryChain,
+              id
+            );
+            let chainLastDailyTs = 0;
+            if (chainLastMonthDailyVolume?.length) {
+              const chainLastDailyVolumeRecord = chainLastMonthDailyVolume[chainLastMonthDailyVolume.length - 1];
+              chainLastDailyTs = parseInt(chainLastDailyVolumeRecord.date);
+              chainLastDailyVolume =
+                (chainLastDailyVolumeRecord.depositUSD + chainLastDailyVolumeRecord.withdrawUSD) / 2;
+            }
+            chainDailyVolumes[chain] = chainLastDailyVolume ?? 0;
+          })
+        );
+
         // can include transaction count if needed
         const dataToReturn = {
           id: id,
@@ -76,7 +100,7 @@ const getBridges = async () => {
           dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
           weeklyVolume: weeklyVolume ?? 0,
           monthlyVolume: monthlyVolume ?? 0,
-          chains: chains,
+          chains: chains.sort((a, b) => chainDailyVolumes[b] - chainDailyVolumes[a]),
           destinationChain: destinationChain ?? "false",
         } as any;
         return dataToReturn;
