@@ -4,6 +4,7 @@ import { getDailyBridgeVolume } from "../utils/bridgeVolume";
 import { getChainDisplayName, chainCoingeckoIds } from "../utils/normalizeChain";
 import { getCurrentUnixTimestamp, secondsInDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
+import { normalizeChain } from "../utils/normalizeChain";
 
 export async function craftBridgeChainsResponse() {
   const chainsSet = new Set<string>();
@@ -25,11 +26,11 @@ export async function craftBridgeChainsResponse() {
       const lastWeekDailyBridgeVolume = await getDailyBridgeVolume(
         currentTimestamp - 7 * secondsInDay,
         currentTimestamp,
-        chain
+        normalizeChain(chain)
       );
       let volumePrevDay = 0;
       if (lastWeekDailyBridgeVolume.length > 1) {
-        const lastDailyBridgeVolume = lastWeekDailyBridgeVolume[lastWeekDailyBridgeVolume.length - 2];
+        const lastDailyBridgeVolume = lastWeekDailyBridgeVolume[lastWeekDailyBridgeVolume.length - 1];
         volumePrevDay = lastDailyBridgeVolume?.depositUSD + lastDailyBridgeVolume?.withdrawUSD;
       }
 
@@ -43,7 +44,7 @@ export async function craftBridgeChainsResponse() {
   );
 
   const response = (await chainPromises).filter((chain) => chain);
- 
+
   return response;
 }
 
