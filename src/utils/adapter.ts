@@ -26,7 +26,7 @@ const getBlocksForRunningAdapter = async (
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
   // todo: fix this line
-  const useChainBlocks = (!nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
+  const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let startBlock = undefined;
   let endBlock = undefined;
   let useRecordedBlocks = undefined;
@@ -125,6 +125,7 @@ export const runAllAdaptersToCurrentBlock = async (
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
           if (useRecordedBlocks) {
+            console.log(endBlock);
             recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
             recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
               recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
@@ -179,7 +180,7 @@ export const runAllAdaptersTimestampRange = async (
           console.info(`Skipping running adapter ${bridgeDbName} on chain Tron.`);
           return;
         }
-        const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+        const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
         try {
           let startBlock = 0;
           let endBlock = 1;
@@ -330,7 +331,18 @@ export const runAdapterHistorical = async (
         let storedBridgeIds = {} as { [chain: string]: string };
         const eventLogPromises = Promise.all(
           eventLogs.map(async (log) => {
-            const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs } = log;
+            const {
+              txHash,
+              blockNumber,
+              from,
+              to,
+              token,
+              amount,
+              isDeposit,
+              chainOverride,
+              isUSDVolume,
+              txsCountedAs,
+            } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
             const amountString = amount.toString();
