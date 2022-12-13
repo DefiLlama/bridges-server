@@ -51,7 +51,7 @@ export const insertTransactionRow = async (
   Object.entries(params).map(([key, val]) => {
     if (val == null) {
       if (allowNullTxValues) {
-        console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
+        // console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       } else {
         throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       }
