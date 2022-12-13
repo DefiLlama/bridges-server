@@ -12,7 +12,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
     });
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
-  console.log(queryChain);
+  
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {
