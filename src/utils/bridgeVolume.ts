@@ -248,12 +248,15 @@ export const getHourlyBridgeVolume = async (
 
   const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
 
-  const sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
-    if (bridgeNetworkId) {
-      return config.bridge_name === bridgeDbName;
-    }
-    return true;
-  });
+  let sourceChainConfigs = [] as IConfig[];
+  if (chain) {
+    sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
+      if (bridgeNetworkId) {
+        return config.bridge_name === bridgeDbName;
+      }
+      return true;
+    });
+  }
 
   let sourceChainsHourlyData = [] as IAggregatedData[];
   await Promise.all(
