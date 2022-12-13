@@ -173,6 +173,7 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
+  /* breaking running adapters, disable temporarily
   {
     id: 14,
     displayName: "Binance-Peg Tokens",
@@ -182,8 +183,8 @@ export default [
     url: "",
     chains: ["BSC"],
     destinationChain: "-",
-    runDaily: true,
   },
+  */
   {
     id: 15,
     displayName: "Core Bitcoin Bridge",
@@ -288,19 +289,29 @@ export default [
     url: "",
     chains: ["Ethereum", "BSC"],
   },
-  /*
   {
     id: 23,
     displayName: "IBC",
     bridgeDbName: "ibc",
-    iconLink: "",
+    iconLink: "chain:cosmos",
     largeTxThreshold: 10000,
     url: "",
     chains: [
-      "Osmosis", "Secret", "Injective"
+      "Osmosis",
+      "Secret",
+      "Injective",
+      "Terra Classic",
+      "Crescent",
+      "Cronos",
+      "Evmos",
+      "Juno",
+      "Kujira",
+      "Sifchain",
+      "Stride",
+      "Cosmos",
+      "Canto",
     ],
   },
-  */
   {
     id: 24,
     displayName: "Meter Passport",
@@ -308,6 +319,6 @@ export default [
     iconLink: "icons:meter-passport",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon"],
+    chains: ["Ethereum", "BSC"],
   },
 ] as BridgeNetwork[];
