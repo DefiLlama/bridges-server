@@ -121,7 +121,7 @@ export const runAllAdaptersToCurrentBlock = async (
           chainContractsAreOn,
           recordedBlocks
         );
-        if (!startBlock) return;
+        if (startBlock == null) return;
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
           if (useRecordedBlocks) {
