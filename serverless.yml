@@ -109,6 +109,10 @@ functions:
       - http:
           path: largetransactions/{chain}
           method: get
+  runAdapter:
+    handler: src/handlers/runAdapter.default
+    timeout: 900
+    memorySize: 10240
   runAllAdapters:
     handler: src/handlers/runAllAdapters.default
     timeout: 900
