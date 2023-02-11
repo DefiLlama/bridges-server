@@ -123,12 +123,12 @@ export const getTxDataFromEVMEventLogs = async (
         try {
           logs = (
             await getLogs({
-              target: target,
+              target: target!,
               topic: topic,
               keys: [],
               fromBlock: fromBlock,
               toBlock: toBlock,
-              topics: topics,
+              topics: topics as string[],
               chain: overriddenChain,
             })
           ).output;
