@@ -7,7 +7,8 @@ const sql = postgres(
     username: 'postgresmaster',
     password: process.env.PSQL_PW,
     idle_timeout: 20,
-    max_lifetime: 60 * 30,
+    max_lifetime: 60 * 3,
+    max: 10,
   }
 );
 

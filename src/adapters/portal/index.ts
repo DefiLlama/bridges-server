@@ -6,6 +6,7 @@ import { getTxsBlockRangeEtherscan, getLock } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
+import { PromisePool } from '@supercharge/promise-pool'
 
 /*
 Contracts: https://book.wormhole.com/reference/contracts.html
@@ -103,9 +104,11 @@ const portalNativeAndWrappedTransfersFromHashes = async (
   nativeToken: string
 ) => {
   const provider = getProvider(chain) as any;
-  const transactions = (
-    await Promise.all(
-      hashes.map(async (hash) => {
+
+  const { results, errors } = await PromisePool
+  .withConcurrency(20)
+  .for(hashes)
+  .process(async (hash) => {
         // TODO: add timeout
         const tx = await provider.getTransaction(hash);
         const receipt = await provider.getTransactionReceipt(hash);
@@ -219,9 +222,10 @@ const portalNativeAndWrappedTransfersFromHashes = async (
           isDeposit: isDeposit,
         } as EventData;
       })
-    )
-  ).filter((tx) => tx) as EventData[];
-  return transactions;
+  if(errors.length>0){
+    console.error("Errors in Portal's portalNativeAndWrappedTransfersFromHashes", errors)
+  }
+  return results.filter((tx) => tx) as EventData[];
 };
 
 // checks deposits for Solana as receipient chain, withdrawals for Solana as source chain and returns only those txs

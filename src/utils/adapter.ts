@@ -400,8 +400,8 @@ export const runAdapterHistorical = async (
                 break;
               }
             } catch (e) {
-              console.error(`Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}`);
               if (j >= 3) {
+                console.error(`Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}`);
                 throw new Error(
                   `Failed to get block timestamps at block number ${blockNumber} on chain ${chainContractsAreOn}`
                 );
