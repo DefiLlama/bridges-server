@@ -17,3 +17,5 @@ src/adapters/axelar/process.ts
 src/utils/runall.ts
 src/utils/filljobs.ts
 src/utils/filljobs2.ts
+
+.env
