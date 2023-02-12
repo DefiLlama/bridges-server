@@ -94,3 +94,23 @@ export const wait = (ms: number) =>
       resolve("");
     }, ms);
   });
+
+const locks = [] as ((value: unknown) => void)[];
+export function getLock() {
+  return new Promise((resolve) => {
+    locks.push(resolve);
+  });
+}
+function releaseLock() {
+  const firstLock = locks.shift();
+  if (firstLock !== undefined) {
+    firstLock(null);
+  }
+}
+function setTimer(timeBetweenTicks: number) {
+  const timer = setInterval(() => {
+    releaseLock();
+  }, timeBetweenTicks);
+  return timer;
+}
+setTimer(500); // Rate limit is 5 calls/s for etherscan's API

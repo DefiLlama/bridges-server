@@ -84,6 +84,7 @@ export const runAdapterToCurrentBlock = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
+  console.log(`Getting data for bridge ${bridgeNetwork.displayName}`)
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`
   const recordedBlocks = (
     await retry(
@@ -349,7 +350,7 @@ export const runAdapterHistorical = async (
       const eventLogs = await adapterChainEventsFn(startBlockForQuery, block);
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
-        console.log(`No transactions found for ${bridgeID} from ${startBlockForQuery} to ${block}.`);
+        console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${startBlockForQuery} to ${block}.`);
         block = startBlockForQuery - 1;
         continue;
       }
