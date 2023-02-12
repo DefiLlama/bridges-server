@@ -36,9 +36,11 @@ export const getTxsBlockRangeEtherscan = async (
   const apiKey = apiKeys[chain];
   let res;
   if (chain === "aurora") {
-    await axios.get(
-      `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
-    );
+    res = (
+      await axios.get(
+        `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+      )
+    ).data as any;
   } else {
     res = (
       await axios.get(
