@@ -51,9 +51,7 @@ const getBlocksForRunningAdapter = async (
       console.error(errString);
       return { startBlock, endBlock, useRecordedBlocks };
     }
-    const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
-      ? maxBlocksToQueryByChain[chainContractsAreOn]
-      : maxBlocksToQueryByChain.default;
+    const maxBlocksToQuery = (maxBlocksToQueryByChain[chainContractsAreOn] ?? maxBlocksToQueryByChain.default) * 4;
     let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
     if (!lastRecordedEndBlock) {
       const defaultStartBlock = endBlock - maxBlocksToQuery;

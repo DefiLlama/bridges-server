@@ -112,13 +112,13 @@ functions:
   runAdapter:
     handler: src/handlers/runAdapter.default
     timeout: 900
-    memorySize: 10240
+    memorySize: 1024
   runAllAdapters:
     handler: src/handlers/runAllAdapters.default
     timeout: 900
-    memorySize: 10240
+    memorySize: 250
     events:
-      - schedule: cron(2 * * * ? *)
+      - schedule: cron(2,17,32,47 * * * ? *)
   runAggregateAllAdapters:
     handler: src/handlers/runAggregateAllAdapters.default
     timeout: 900
