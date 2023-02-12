@@ -9,8 +9,8 @@ const endpoints = {
   fantom: "https://api.ftmscan.com",
   arbitrum: "https://api.arbiscan.io",
   optimism: "https://api-optimistic.etherscan.io",
-  aurora: "https://api.aurorascan.dev",
-  celo: "https://api.celoscan.io"
+  aurora: "https://explorer.mainnet.aurora.dev/api",
+  celo: "https://api.celoscan.io",
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -22,7 +22,7 @@ const apiKeys = {
   arbitrum: "WH4E9QCMQTMQ9ZT2YEW1FJ3RQ3YUIAK5MA",
   optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
   aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
-  celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI"
+  celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI",
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (
@@ -34,22 +34,35 @@ export const getTxsBlockRangeEtherscan = async (
 ) => {
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
-  const res = (
-        await axios.get(
-          `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
-        )
-  ).data as any;
+  let res;
+  if (chain === "aurora") {
+    await axios.get(
+      `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+    );
+  } else {
+    res = (
+      await axios.get(
+        `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
+      )
+    ).data as any;
+  }
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (functionSignatureFilter) {
         const signature = tx.input.slice(0, 8);
-        if (functionSignatureFilter.includeSignatures && !functionSignatureFilter.includeSignatures.includes(signature)) {
+        if (
+          functionSignatureFilter.includeSignatures &&
+          !functionSignatureFilter.includeSignatures.includes(signature)
+        ) {
           console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
-          return false
+          return false;
         }
-        if (functionSignatureFilter.excludeSignatures && functionSignatureFilter.excludeSignatures.includes(signature)) {
+        if (
+          functionSignatureFilter.excludeSignatures &&
+          functionSignatureFilter.excludeSignatures.includes(signature)
+        ) {
           console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
-          return false
+          return false;
         }
       }
       return true;
@@ -57,23 +70,25 @@ export const getTxsBlockRangeEtherscan = async (
     return filteredResults;
   } else if (res.message === "No transactions found") {
     console.info(`No Etherscan txs found for address ${address}.`);
-    return []
+    return [];
   }
-  console.log(res)
+  console.log(res);
   console.error(`WARNING: Etherscan did not return valid response for address ${address}.`);
   return [];
 };
 
-const etherscanDelay = 500 // in milliseconds
+const etherscanDelay = 500; // in milliseconds
 
-export const etherscanWait = () => new Promise((resolve, _reject) => {
-  setTimeout(() => {
-      resolve("");
-  }, etherscanDelay)
-});
-
-export const wait = (ms: number) => new Promise((resolve, _reject) => {
+export const etherscanWait = () =>
+  new Promise((resolve, _reject) => {
     setTimeout(() => {
-        resolve("");
-    }, ms)
+      resolve("");
+    }, etherscanDelay);
+  });
+
+export const wait = (ms: number) =>
+  new Promise((resolve, _reject) => {
+    setTimeout(() => {
+      resolve("");
+    }, ms);
   });
