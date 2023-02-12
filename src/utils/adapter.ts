@@ -467,7 +467,7 @@ export const runAdapterHistorical = async (
                 amount: amountString,
                 is_deposit: isDeposit,
                 is_usd_volume: isUSDVolume ?? false,
-                txs_counted_as: txsCountedAs ?? null,
+                txs_counted_as: txsCountedAs ?? 0,
               },
               onConflict
             );
