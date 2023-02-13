@@ -65,6 +65,7 @@ provider:
     ETHEREUM_RPC: ${env:ETHEREUM_RPC}
     OPTIMISM_RPC: ${env:OPTIMISM_RPC}
     AURORA_RPC: ${env:AURORA_RPC}
+    ARBITRUM_RPC: ${env:ARBITRUM_RPC}
 
 functions:
   bridgeDayStats:

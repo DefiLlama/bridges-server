@@ -4,7 +4,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
-import BigNumber from "bignumber.js";
+import { PromisePool } from '@supercharge/promise-pool'
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -148,8 +148,11 @@ export const getTxDataFromEVMEventLogs = async (
 
       let dataKeysToFilter = [] as number[];
       const provider = getProvider(overriddenChain) as any;
-      const logPromises = Promise.all(
-        logs.map(async (txLog: any, i) => {
+
+      const { results, errors } = await PromisePool
+        .withConcurrency(20)
+        .for(logs)
+        .process(async (txLog: any, i) => {
           data[i] = data[i] || {};
           data[i]["isDeposit"] = isDeposit;
           Object.entries(logKeys!).map(([eventKey, logKey]) => {
@@ -402,9 +405,12 @@ export const getTxDataFromEVMEventLogs = async (
               data[i][eventKey] = value;
             });
           }
-        })
+        }
       );
-      await logPromises;
+
+      if(errors.length>0){
+        console.error("Errors in getTxDataFromEVMEventLogs", errors)
+      }
 
       dataKeysToFilter.map((key) => {
         delete data[key];
