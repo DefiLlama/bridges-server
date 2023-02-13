@@ -295,9 +295,9 @@ export const aggregateData = async (
               usdValue: usdValue,
             });
           }
-        }
-        if (!usdValue) {
-          tokensWithNullPrices.add(tokenKey);
+          if (!usdValue) {
+            tokensWithNullPrices.add(tokenKey);
+          }
         }
       }
       if (is_deposit) {
