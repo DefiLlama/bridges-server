@@ -164,20 +164,20 @@ export const aggregateData = async (
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
     startTimestamp = currentHourTimestamp - secondsInHour;
     endTimestamp = currentHourTimestamp - 1;
-    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
-    if (existingEntry.length) {
-      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
-      return;
-    }
+    // const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    // if (existingEntry.length) {
+    //   console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+    //   return;
+    // }
   } else {
     const timestampAtStartOfDay = getTimestampAtStartOfDayUTC(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay;
     endTimestamp = timestampAtStartOfDay - 1;
-    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
-    if (existingEntry.length) {
-      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
-      return;
-    }
+    // const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    // if (existingEntry.length) {
+    //   console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+    //   return;
+    // }
   }
   const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
@@ -468,10 +468,10 @@ export const aggregateData = async (
     const timestamp = largeTx.ts;
     const usdValue = largeTx.usdValue;
     const existingEntry = await getLargeTransaction(txPK, timestamp);
-    if (existingEntry) {
-      console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
-      return;
-    }
+    // if (existingEntry) {
+    //   console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
+    //   return;
+    // }
     try {
       await sql.begin(async (sql) => {
         await insertLargeTransactionRow(sql, {

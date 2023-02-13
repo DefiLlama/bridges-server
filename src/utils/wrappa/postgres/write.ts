@@ -13,7 +13,7 @@ const txTypes = {
   amount: "string",
   is_deposit: "boolean",
   is_usd_volume: "boolean",
-  txs_counted_as: "number"
+  txs_counted_as: "number",
 } as { [key: string]: string };
 
 export const insertTransactionRow = async (
@@ -45,7 +45,11 @@ export const insertTransactionRow = async (
       ON CONFLICT DO NOTHING
     `;
   } else if (onConflict === "upsert") {
-    // FIX finish
+    sqlCommand = sql`
+      insert into bridges.transactions ${sql(params)}
+      ON CONFLICT (bridge_id, chain, tx_hash, token, tx_from, tx_to)
+      DO UPDATE SET ${sql(params)}
+    `;
   }
 
   Object.entries(params).map(([key, val]) => {
@@ -153,6 +157,8 @@ export const insertHourlyAggregatedRow = async (
     try {
       await sql`
         insert into bridges.hourly_aggregated ${sql(params)}
+        ON CONFLICT (bridge_id, ts)
+        DO UPDATE SET ${sql(params)}
       `;
       return;
     } catch (e) {
@@ -198,6 +204,8 @@ export const insertDailyAggregatedRow = async (
     try {
       await sql`
           insert into bridges.daily_aggregated ${sql(params)}
+          ON CONFLICT (bridge_id, ts)
+          DO UPDATE SET ${sql(params)}
         `;
       return;
     } catch (e) {
@@ -225,6 +233,8 @@ export const insertLargeTransactionRow = async (
     try {
       await sql`
           insert into bridges.large_transactions ${sql(params)}
+          ON CONFLICT (tx_pk)
+          DO UPDATE SET ${sql(params)}
         `;
       return;
     } catch (e) {
