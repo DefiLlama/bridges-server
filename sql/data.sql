@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS bridges.config (
 CREATE TABLE IF NOT EXISTS bridges.transactions (
     id INT GENERATED ALWAYS AS IDENTITY,
     bridge_id uuid NOT NULL,
-    chain VARCHAR NOT NULL,
     tx_hash VARCHAR,
     ts TIMESTAMPTZ NOT NULL,
     tx_block INTEGER,
@@ -22,8 +21,10 @@ CREATE TABLE IF NOT EXISTS bridges.transactions (
     token VARCHAR NOT NULL,
     amount VARCHAR NOT NULL,
     is_deposit BOOLEAN NOT NULL,
+    chain VARCHAR NOT NULL,
     is_usd_volume BOOLEAN,
     txs_counted_as INTEGER,
+    
     PRIMARY KEY(id),
     UNIQUE (bridge_id, chain, tx_hash, token, tx_from, tx_to),
     CONSTRAINT fk_bridge_id
@@ -71,8 +72,8 @@ CREATE INDEX IF NOT EXISTS hourly_aggregated_ts ON bridges.hourly_aggregated (ts
 CREATE TABLE IF NOT EXISTS bridges.large_transactions (
     id INT GENERATED ALWAYS AS IDENTITY,
     tx_pk INT UNIQUE NOT NULL,
-    ts TIMESTAMPTZ NOT NULL,
     usd_value NUMERIC NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     PRIMARY KEY(id),
     CONSTRAINT fk_tx_pk
         FOREIGN KEY(tx_pk)
