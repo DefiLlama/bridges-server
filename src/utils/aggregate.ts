@@ -241,7 +241,7 @@ export const aggregateData = async (
       const { token, chain, is_usd_volume } = tx;
       if (!is_usd_volume) {
         const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        uniqueTokens[tokenKey] = true;
+        uniqueTokens[tokenKey.toLowerCase()] = true;
       }
     })
   );
@@ -270,7 +270,8 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        const priceData = llamaPrices?.[tokenKey];
+        tokenKey = tokenKey.toLowerCase();
+        const priceData = llamaPrices[tokenKey];
         if (priceData && priceData.confidence > defaultConfidenceThreshold) {
           const { price, decimals } = priceData;
           const bnAmount = rawBnAmount.dividedBy(10 ** decimals);
@@ -295,7 +296,7 @@ export const aggregateData = async (
               usdValue: usdValue,
             });
           }
-          if (!usdValue) {
+          if (!priceData) {
             tokensWithNullPrices.add(tokenKey);
           }
         }
@@ -397,6 +398,10 @@ export const aggregateData = async (
       error: errString,
     });
     console.error(errString);
+  } else {
+    console.log(
+      `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
+    );
   }
 
   /*
