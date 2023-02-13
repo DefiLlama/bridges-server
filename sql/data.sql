@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS bridges.transactions (
     bridge_id uuid NOT NULL,
     chain VARCHAR NOT NULL,
     tx_hash VARCHAR,
-    ts TIMESTAMPZ NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     tx_block INTEGER,
     tx_from VARCHAR,
     tx_to VARCHAR,
@@ -42,14 +42,14 @@ CREATE TYPE token_total AS (
 
 CREATE TYPE address_total AS (
     address         VARCHAR,
-    usd_value       NUMERIC
-    txs             INT,
+    usd_value       NUMERIC,
+    txs             INT
 );
 
 CREATE TABLE IF NOT EXISTS bridges.hourly_aggregated (
     id INT GENERATED ALWAYS AS IDENTITY,
     bridge_id uuid NOT NULL,
-    ts TIMESTAMPZ NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     total_tokens_deposited token_total [],
     total_tokens_withdrawn token_total [],
     total_deposited_usd NUMERIC,
@@ -71,7 +71,7 @@ CREATE INDEX IF NOT EXISTS hourly_aggregated_ts ON bridges.hourly_aggregated (ts
 CREATE TABLE IF NOT EXISTS bridges.large_transactions (
     id INT GENERATED ALWAYS AS IDENTITY,
     tx_pk INT UNIQUE NOT NULL,
-    ts TIMESTAMPZ NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     usd_value NUMERIC NOT NULL,
     PRIMARY KEY(id),
     CONSTRAINT fk_tx_pk
@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS large_transactions_ts ON bridges.large_transactions (
 CREATE TABLE IF NOT EXISTS bridges.daily_aggregated (
     id INT GENERATED ALWAYS AS IDENTITY,
     bridge_id uuid NOT NULL,
-    ts TIMESTAMPZ NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     total_tokens_deposited token_total [],
     total_tokens_withdrawn token_total [],
     total_deposited_usd NUMERIC,
@@ -108,7 +108,7 @@ CREATE INDEX IF NOT EXISTS daily_aggregated_ts ON bridges.daily_aggregated (ts);
 --'keyword' can be one of "critical", "data" (missing), 
 CREATE TABLE IF NOT EXISTS bridges.errors (
     id INT GENERATED ALWAYS AS IDENTITY,
-    ts TIMESTAMPZ NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
     target_table varchar,
     keyword varchar,
     error varchar,
