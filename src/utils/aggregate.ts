@@ -164,20 +164,20 @@ export const aggregateData = async (
     const currentHourTimestamp = getTimestampAtStartOfHour(timestamp);
     startTimestamp = currentHourTimestamp - secondsInHour;
     endTimestamp = currentHourTimestamp - 1;
-    const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
-    if (existingEntry.length) {
-      console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
-      return;
-    }
+    // const existingEntry = await queryAggregatedHourlyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    // if (existingEntry.length) {
+    //   console.log(`Hourly aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+    //   return;
+    // }
   } else {
     const timestampAtStartOfDay = getTimestampAtStartOfDayUTC(timestamp);
     startTimestamp = timestampAtStartOfDay - secondsInDay;
     endTimestamp = timestampAtStartOfDay - 1;
-    const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
-    if (existingEntry.length) {
-      console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
-      return;
-    }
+    // const existingEntry = await queryAggregatedDailyDataAtTimestamp(startTimestamp, chain, bridgeDbName);
+    // if (existingEntry.length) {
+    //   console.log(`Daily aggregated entry for ${bridgeID} at timestamp ${startTimestamp} already exists, skipping.`);
+    //   return;
+    // }
   }
   const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
@@ -241,7 +241,7 @@ export const aggregateData = async (
       const { token, chain, is_usd_volume } = tx;
       if (!is_usd_volume) {
         const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        uniqueTokens[tokenKey] = true;
+        uniqueTokens[tokenKey.toLowerCase()] = true;
       }
     })
   );
@@ -270,7 +270,8 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        const priceData = llamaPrices?.[tokenKey];
+        tokenKey = tokenKey.toLowerCase();
+        const priceData = llamaPrices[tokenKey];
         if (priceData && priceData.confidence > defaultConfidenceThreshold) {
           const { price, decimals } = priceData;
           const bnAmount = rawBnAmount.dividedBy(10 ** decimals);
@@ -295,9 +296,9 @@ export const aggregateData = async (
               usdValue: usdValue,
             });
           }
-        }
-        if (!usdValue) {
-          tokensWithNullPrices.add(tokenKey);
+          if (!priceData) {
+            tokensWithNullPrices.add(tokenKey);
+          }
         }
       }
       if (is_deposit) {
@@ -397,6 +398,10 @@ export const aggregateData = async (
       error: errString,
     });
     console.error(errString);
+  } else {
+    console.log(
+      `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
+    );
   }
 
   /*
@@ -468,10 +473,10 @@ export const aggregateData = async (
     const timestamp = largeTx.ts;
     const usdValue = largeTx.usdValue;
     const existingEntry = await getLargeTransaction(txPK, timestamp);
-    if (existingEntry) {
-      console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
-      return;
-    }
+    // if (existingEntry) {
+    //   console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
+    //   return;
+    // }
     try {
       await sql.begin(async (sql) => {
         await insertLargeTransactionRow(sql, {
