@@ -425,7 +425,13 @@ export const runAdapterHistorical = async (
             } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
-            const amountString = amount.toString();
+            
+            let amountString;
+            if (!amount) {
+              amountString = "0";
+            } else {
+              amountString = amount.toString();
+            }
 
             // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
             // (don't believe this is actually used in codebase yet)
