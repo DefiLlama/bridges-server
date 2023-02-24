@@ -34,4 +34,4 @@ async function fillAdapterHistorical(startTimestamp: number, endTimestamp: numbe
   await promises;
 }
 
-fillAdapterHistorical(1671580800, 1676419200, "stargate");
+fillAdapterHistorical(1662073200, 1677110400, "portal");

@@ -4,4 +4,4 @@ import { aggregateData, runAggregateDataAllAdapters, runAggregateDataHistorical 
 
 //runAggregateDataAllAdapters(1663762030)
 
-runAggregateDataHistorical(1664279906, 1664802563, 1, false)
+runAggregateDataHistorical(1662073200, 1662086800, 7, false)
