@@ -24,7 +24,7 @@ import {
 import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
-import { defaultConfidenceThreshold } from "./constants";
+import { defaultConfidenceThreshold, tokenWhitelist } from "./constants";
 import { transformTokens } from "../helpers/tokenMappings";
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
@@ -270,7 +270,10 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        tokenKey = tokenKey.toLowerCase();
+        tokenKey = tokenKey.toLowerCase() as string;
+        if (!tokenWhitelist.includes(tokenKey)) {
+          return;
+        }
         const priceData = llamaPrices[tokenKey];
         if (priceData && priceData.confidence > defaultConfidenceThreshold) {
           const { price, decimals } = priceData;
