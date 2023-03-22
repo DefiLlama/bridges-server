@@ -435,7 +435,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  metis: constructParams("metis"),
+  // metis: constructParams("metis"),
 };
 
 export default adapter;
