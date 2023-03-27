@@ -272,8 +272,15 @@ export const aggregateData = async (
       } else {
         tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
         tokenKey = tokenKey.toLowerCase();
-        if (blacklist.includes(tokenKey)) return;
+        if (blacklist.includes(tokenKey)) {
+          console.log(`${tokenKey} in blacklist. Skipping`);
+          return;
+        }
         const priceData = llamaPrices[tokenKey];
+        if (!priceData) {
+          console.log(`No price data for ${tokenKey}`);
+          tokensWithNullPrices.add(tokenKey);
+        }
         if (priceData && priceData.confidence > defaultConfidenceThreshold) {
           const { price, decimals } = priceData;
           const bnAmount = rawBnAmount.dividedBy(10 ** decimals);
@@ -297,9 +304,6 @@ export const aggregateData = async (
               ts: ts,
               usdValue: usdValue,
             });
-          }
-          if (!priceData) {
-            tokensWithNullPrices.add(tokenKey);
           }
         }
       }
