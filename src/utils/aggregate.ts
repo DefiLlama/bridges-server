@@ -241,7 +241,8 @@ export const aggregateData = async (
     txs.map(async (tx) => {
       const { token, chain, is_usd_volume } = tx;
       if (!is_usd_volume) {
-        const tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
+        const tokenL = token.toLowerCase();
+        const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
         uniqueTokens[tokenKey.toLowerCase()] = true;
       }
     })
@@ -270,14 +271,14 @@ export const aggregateData = async (
       if (is_usd_volume) {
         usdValue = rawBnAmount.toNumber();
       } else {
-        tokenKey = transformTokens[chain]?.[token] ? transformTokens[chain]?.[token] : `${chain}:${token}`;
-        tokenKey = tokenKey.toLowerCase();
+        const tokenL = token.toLowerCase();
+        const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
         }
         const priceData = llamaPrices[tokenKey];
-        if (!priceData) {
+        if (!priceData && !tokensWithNullPrices.has(tokenKey)) {
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
         }
