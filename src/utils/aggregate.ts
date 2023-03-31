@@ -272,7 +272,7 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
+        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
@@ -284,8 +284,8 @@ export const aggregateData = async (
         }
         if (priceData && priceData.confidence > defaultConfidenceThreshold) {
           const { price, decimals } = priceData;
-          const bnAmount = rawBnAmount.dividedBy(10 ** decimals);
-          usdValue = bnAmount.multipliedBy(price).toNumber();
+          const bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+          usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
           if (usdValue > 10 ** 9) {
             const errString = `USD value of tx id ${id} is ${usdValue}.`;
             await insertErrorRow({
