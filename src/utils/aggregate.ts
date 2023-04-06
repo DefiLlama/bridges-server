@@ -283,7 +283,7 @@ export const aggregateData = async (
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
         }
-        if (priceData) {
+        if (priceData && (priceData.confidence === undefined || priceData.confidence > defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
           const bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();

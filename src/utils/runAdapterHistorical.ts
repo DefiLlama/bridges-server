@@ -16,6 +16,7 @@ async function fillAdapterHistorical(startTimestamp: number, endTimestamp: numbe
       } else {
         nChain = chain.toLowerCase();
       }
+      if (nChain !== "bsc") return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
       const startBlock = await lookupBlock(startTimestamp, { chain: nChain as Chain });
@@ -34,4 +35,4 @@ async function fillAdapterHistorical(startTimestamp: number, endTimestamp: numbe
   await promises;
 }
 
-fillAdapterHistorical(1662073200, 1677110400, "portal");
+fillAdapterHistorical(1676592000, 1680761124, "multichain");
