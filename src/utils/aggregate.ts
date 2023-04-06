@@ -241,6 +241,7 @@ export const aggregateData = async (
     txs.map(async (tx) => {
       const { token, chain, is_usd_volume } = tx;
       if (!is_usd_volume) {
+        if (!token || !chain) return;
         const tokenL = token.toLowerCase();
         const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
         uniqueTokens[tokenKey.toLowerCase()] = true;
@@ -282,7 +283,7 @@ export const aggregateData = async (
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
         }
-        if (priceData && priceData.confidence > defaultConfidenceThreshold) {
+        if (priceData) {
           const { price, decimals } = priceData;
           const bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
@@ -410,18 +411,6 @@ export const aggregateData = async (
       `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
     );
   }
-
-  /*
-  console.log(totalTokensDeposited);
-  console.log(totalTokensWithdrawn);
-  console.log(totalAddressDeposited);
-  console.log(totalAddressWithdrawn);
-  console.log(totalDepositedUsd);
-  console.log(totalWithdrawnUsd);
-  console.log(totalDepositTxs);
-  console.log(totalWithdrawalTxs);
-  */
-
   if (hourly) {
     try {
       await sql.begin(async (sql) => {

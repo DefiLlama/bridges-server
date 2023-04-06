@@ -260,6 +260,8 @@ export const insertErrorRow = async (params: {
     try {
       await sql`
           insert into bridges.errors ${sql(params)}
+          ON CONFLICT (ts,error)
+          DO UPDATE SET ${sql(params)}
         `;
       return;
     } catch (e) {
