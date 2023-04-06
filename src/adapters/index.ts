@@ -36,7 +36,7 @@ import axelarsatellite from "./axelar-satellite";
 import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
-import rhinofi from './rhinofi';
+import rhinofi from "./rhinofi";
 
 export default {
   polygon,
