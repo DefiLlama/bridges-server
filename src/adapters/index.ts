@@ -24,6 +24,7 @@ import allbridge from "./allbridge";
 import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
+import wanbridge from './wanbridge';
 
 export default {
   polygon,
@@ -50,6 +51,7 @@ export default {
   allbridge,
   ibc,
   meter,
+  wanbridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
