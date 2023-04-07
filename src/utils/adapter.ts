@@ -63,8 +63,8 @@ const getBlocksForRunningAdapter = async (
       );
     }
     startBlock = lastRecordedEndBlock + 1;
-    if((endBlock - startBlock)>maxBlocksToQuery){
-      endBlock = startBlock+maxBlocksToQuery;
+    if (endBlock - startBlock > maxBlocksToQuery) {
+      endBlock = startBlock + maxBlocksToQuery;
     }
     useRecordedBlocks = true;
   } else {
@@ -82,8 +82,8 @@ export const runAdapterToCurrentBlock = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
-  console.log(`Getting data for bridge ${bridgeNetwork.displayName}`)
-  const recordedBlocksFilename = `blocks-${bridgeDbName}.json`
+  console.log(`Getting data for bridge ${bridgeNetwork.displayName}`);
+  const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
   const recordedBlocks = (
     await retry(
       async (_bail: any) =>
@@ -101,53 +101,53 @@ export const runAdapterToCurrentBlock = async (
     throw new Error(errString);
   }
 
-    const adapter = adapters[bridgeDbName];
-    if (!adapter) {
-      const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
-      await insertErrorRow({
-        ts: currentTimestamp,
-        target_table: "transactions",
-        keyword: "critical",
-        error: errString,
-      });
-      throw new Error(errString);
-    }
-    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
-    const adapterPromises = Promise.all(
-      Object.keys(adapter).map(async (chain, i) => {
-        await wait(100 * i); // attempt to space out API calls
-        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-          ? bridgeNetwork.chainMapping?.[chain as Chain]
-          : chain;
-        const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
-          bridgeDbName,
-          chain,
-          chainContractsAreOn,
-          recordedBlocks
-        );
-        if (startBlock == null) return;
-        try {
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-          if (useRecordedBlocks) {
-            console.log(endBlock);
-            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
-            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
-          }
-        } catch (e) {
-          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
-          await insertErrorRow({
-            ts: currentTimestamp,
-            target_table: "transactions",
-            keyword: "data",
-            error: errString,
-          });
-          console.error(errString, e);
+  const adapter = adapters[bridgeDbName];
+  if (!adapter) {
+    const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
+    await insertErrorRow({
+      ts: currentTimestamp,
+      target_table: "transactions",
+      keyword: "critical",
+      error: errString,
+    });
+    throw new Error(errString);
+  }
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  const adapterPromises = Promise.all(
+    Object.keys(adapter).map(async (chain, i) => {
+      await wait(100 * i); // attempt to space out API calls
+      const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
+        ? bridgeNetwork.chainMapping?.[chain as Chain]
+        : chain;
+      const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
+        bridgeDbName,
+        chain,
+        chainContractsAreOn,
+        recordedBlocks
+      );
+      if (startBlock == null) return;
+      try {
+        await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+        if (useRecordedBlocks) {
+          console.log(endBlock);
+          recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+          recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+            recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
+          recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
         }
-      })
-    );
-    await adapterPromises;
+      } catch (e) {
+        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+        await insertErrorRow({
+          ts: currentTimestamp,
+          target_table: "transactions",
+          keyword: "data",
+          error: errString,
+        });
+        console.error(errString, e);
+      }
+    })
+  );
+  await adapterPromises;
   // need better error catching
   await store(recordedBlocksFilename, JSON.stringify(recordedBlocks));
   console.log(`runAdapterToCurrentBlock for ${bridgeNetwork.displayName} successfully ran.`);
@@ -348,7 +348,9 @@ export const runAdapterHistorical = async (
       const eventLogs = await adapterChainEventsFn(startBlockForQuery, block);
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
-        console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${startBlockForQuery} to ${block}.`);
+        console.log(
+          `No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${startBlockForQuery} to ${block}.`
+        );
         block = startBlockForQuery - 1;
         continue;
       }
@@ -425,7 +427,7 @@ export const runAdapterHistorical = async (
             } = log;
             const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
             const timestamp = blockTimestamps[bucket] * 1000;
-            
+
             let amountString;
             if (!amount) {
               amountString = "0";
@@ -456,6 +458,11 @@ export const runAdapterHistorical = async (
                 }
               }
             }
+            if (
+              from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+              to.toLowerCase() === "0x0000000000000000000000000000000000000000"
+            )
+              return;
             await insertTransactionRow(
               sql,
               allowNullTxValues,

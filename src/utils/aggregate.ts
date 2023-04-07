@@ -266,6 +266,11 @@ export const aggregateData = async (
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume, txs_counted_as } = tx;
+      if (
+        tx_from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+        tx_to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
+      )
+        return;
       const rawBnAmount = BigNumber(amount);
       let usdValue = null;
       let tokenKey = null;
