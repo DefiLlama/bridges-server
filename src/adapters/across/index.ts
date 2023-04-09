@@ -36,6 +36,7 @@ const tokenAddresses = {
     WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     UMA: "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
     BAL: "0xba100000625a3754423978a60c9317c58a424e3D",
+    ACX: "0x44108f0223a3c3028f5fe7aec7f9bb2e66bef82f",
   },
   polygon: {
     WETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
@@ -44,6 +45,7 @@ const tokenAddresses = {
     WBTC: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
     UMA: "0x3066818837c5e6eD6601bd5a91B0762877A6B731",
     BAL: "0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3",
+    ACX: "0xf328b73b6c685831f238c30a23fc19140cb4d8fc",
   },
   arbitrum: {
     WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
@@ -53,6 +55,7 @@ const tokenAddresses = {
     WBTC: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
     BAL: "0x040d1edc9569d4bab2d15287dc5a4f10f56a56b8",
     UMA: "0xd693Ec944A85eeca4247eC1c3b130DCa9B0C3b22",
+    ACX: "0x53691596d1bce8cea565b84d4915e69e03d9c99d",
   },
   optimism: {
     WETH: "0x4200000000000000000000000000000000000006",
@@ -61,6 +64,7 @@ const tokenAddresses = {
     WBTC: "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
     UMA: "0xe7798f023fc62146e8aa1b36da45fb70855a77ea",
     BAL: "0xFE8B128bA8C78aabC59d4c64cEE7fF28e9379921",
+    ACX: "0xff733b2a3557a7ed6697007ab5d11b79fdd1b76b",
   },
   // boba: {
   //   WETH: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000",
@@ -86,7 +90,7 @@ const depositParams: PartialContractEventParams = {
     amount: "amount",
     to: "recipient",
     from: "depositor",
-    token: "originToken"
+    token: "originToken",
   },
   isDeposit: true,
 };
@@ -106,7 +110,7 @@ const relaysParams: PartialContractEventParams = {
     amount: "fillAmount",
     to: "recipient",
     from: "depositor",
-    token: "destinationToken"
+    token: "destinationToken",
   },
   isDeposit: false,
 };
