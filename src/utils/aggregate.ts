@@ -243,8 +243,12 @@ export const aggregateData = async (
       if (!is_usd_volume) {
         if (!token || !chain) return;
         const tokenL = token.toLowerCase();
-        const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
-        uniqueTokens[tokenKey.toLowerCase()] = true;
+        if (transformTokens[chain][tokenL]) {
+          uniqueTokens[transformTokens[chain][tokenL]] = true;
+          uniqueTokens[`${chain}:${tokenL}`] = true;
+        } else {
+          uniqueTokens[`${chain}:${tokenL}`] = true;
+        }
       }
     })
   );
@@ -272,25 +276,53 @@ export const aggregateData = async (
       )
         return;
       const rawBnAmount = BigNumber(amount);
+      if (rawBnAmount.isEqualTo(0)) {
+        console.log(`Skipping tx with 0 amount`);
+        return;
+      }
       let usdValue = null;
       let tokenKey = null;
+      let tokenKey2 = null;
       if (is_usd_volume) {
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
+        if (transformTokens[chain][tokenL]) {
+          tokenKey = transformTokens[chain][tokenL];
+          tokenKey2 = `${chain}:${tokenL}`;
+        } else {
+          tokenKey = `${chain}:${tokenL}`;
+        }
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
         }
         const priceData = llamaPrices[tokenKey];
+        let priceData2 = tokenKey2 ? llamaPrices[tokenKey2] : null;
+        if (tokenKey2 && !priceData2 && !tokensWithNullPrices.has(tokenKey2)) {
+          console.log(`No price data for ${tokenKey2}`);
+          tokensWithNullPrices.add(tokenKey2);
+        }
         if (!priceData && !tokensWithNullPrices.has(tokenKey)) {
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
         }
-        if (priceData && (priceData.confidence === undefined || priceData.confidence > defaultConfidenceThreshold)) {
+        if (priceData && (priceData.confidence === undefined || priceData.confidence >= defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
-          const bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+          let bnAmount = null;
+          if (!tokenKey2) {
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+          } else if (
+            tokenKey2 &&
+            priceData2 &&
+            (priceData2.confidence === undefined || priceData2.confidence >= defaultConfidenceThreshold)
+          ) {
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(priceData2.decimals));
+          } else {
+            console.log("No data for original token. Skipping")
+            bnAmount = BigNumber(0);
+          }
+
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
           if (usdValue > 10 ** 9) {
             const errString = `USD value of tx id ${id} is ${usdValue}.`;
@@ -416,6 +448,16 @@ export const aggregateData = async (
       `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
     );
   }
+
+  // console.log(totalTokensDeposited);
+  // console.log(totalTokensWithdrawn);
+  // console.log(totalAddressDeposited);
+  // console.log(totalAddressWithdrawn);
+  // console.log(totalDepositedUsd);
+  // console.log(totalWithdrawnUsd);
+  // console.log(totalDepositTxs);
+  // console.log(totalWithdrawalTxs);
+
   if (hourly) {
     try {
       await sql.begin(async (sql) => {
