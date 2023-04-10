@@ -319,7 +319,7 @@ export const aggregateData = async (
           ) {
             bnAmount = rawBnAmount.dividedBy(10 ** Number(priceData2.decimals));
           } else {
-            console.log("No data for original token. Skipping")
+            console.log(`No data for ${tokenKey2} at timestamp ${timestamp}. Skipping`)
             bnAmount = BigNumber(0);
           }
 
