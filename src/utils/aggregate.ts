@@ -277,7 +277,7 @@ export const aggregateData = async (
         return;
       const rawBnAmount = BigNumber(amount);
       if (rawBnAmount.isEqualTo(0)) {
-        console.log(`Skipping tx with 0 amount`);
+        // console.log(`Skipping tx with 0 amount`);
         return;
       }
       let usdValue = null;

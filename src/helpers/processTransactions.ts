@@ -4,7 +4,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
-import { PromisePool } from '@supercharge/promise-pool'
+import { PromisePool } from "@supercharge/promise-pool";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -149,8 +149,7 @@ export const getTxDataFromEVMEventLogs = async (
       let dataKeysToFilter = [] as number[];
       const provider = getProvider(overriddenChain) as any;
 
-      const { results, errors } = await PromisePool
-        .withConcurrency(20)
+      const { results, errors } = await PromisePool.withConcurrency(20)
         .for(logs)
         .process(async (txLog: any, i) => {
           data[i] = data[i] || {};
@@ -181,44 +180,51 @@ export const getTxDataFromEVMEventLogs = async (
           }
           //console.log(parsedLog)
           if (argKeys) {
-            const args = parsedLog?.args;
-            if (args === undefined || args.length === 0) {
-              throw new Error(`Unable to get log args for ${adapterName} with arg keys ${argKeys}.`);
-            }
-            Object.entries(argKeys).map(([eventKey, argKey]) => {
-              const value = args[argKey];
-              if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
-                throw new Error(
-                  `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
-                    EventKeyTypes[eventKey]
-                  }.`
-                );
+            try {
+              const args = parsedLog?.args;
+              if (args === undefined || args.length === 0) {
+                throw new Error(`Unable to get log args for ${adapterName} with arg keys ${argKeys}.`);
               }
-              data[i][eventKey] = value;
-            });
-            if (filter?.includeArg) {
-              let toFilter = true;
-              const includeArgArray = filter.includeArg;
-              includeArgArray.map((argMappingToInclude) => {
-                const argKeyToInclude = Object.keys(argMappingToInclude)[0];
-                const argValueToInclude = Object.values(argMappingToInclude)[0];
-                if (args[argKeyToInclude] === argValueToInclude) {
-                  toFilter = false;
+              Object.entries(argKeys).map(([eventKey, argKey]) => {
+                const value = args[argKey];
+                if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
+                  throw new Error(
+                    `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
+                      EventKeyTypes[eventKey]
+                    }.`
+                  );
                 }
+                data[i][eventKey] = value;
               });
-              if (toFilter) dataKeysToFilter.push(i);
-            }
-            if (filter?.excludeArg) {
-              let toFilter = false;
-              const excludeArgArray = filter.excludeArg;
-              excludeArgArray.map((argMappingToExclude) => {
-                const argKeyToExclude = Object.keys(argMappingToExclude)[0];
-                const argValueToExclude = Object.values(argMappingToExclude)[0];
-                if (args[argKeyToExclude] === argValueToExclude) {
-                  toFilter = true;
-                }
-              });
-              if (toFilter) dataKeysToFilter.push(i);
+              if (filter?.includeArg) {
+                let toFilter = true;
+                const includeArgArray = filter.includeArg;
+                includeArgArray.map((argMappingToInclude) => {
+                  const argKeyToInclude = Object.keys(argMappingToInclude)[0];
+                  const argValueToInclude = Object.values(argMappingToInclude)[0];
+                  if (args[argKeyToInclude] === argValueToInclude) {
+                    toFilter = false;
+                  }
+                });
+                if (toFilter) dataKeysToFilter.push(i);
+              }
+              if (filter?.excludeArg) {
+                let toFilter = false;
+                const excludeArgArray = filter.excludeArg;
+                excludeArgArray.map((argMappingToExclude) => {
+                  const argKeyToExclude = Object.keys(argMappingToExclude)[0];
+                  const argValueToExclude = Object.values(argMappingToExclude)[0];
+                  if (args[argKeyToExclude] === argValueToExclude) {
+                    toFilter = true;
+                  }
+                });
+                if (toFilter) dataKeysToFilter.push(i);
+              }
+            } catch (error) {
+              console.error(
+                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash}`
+              );
+              return;
             }
           }
           if (txKeys) {
@@ -405,11 +411,10 @@ export const getTxDataFromEVMEventLogs = async (
               data[i][eventKey] = value;
             });
           }
-        }
-      );
+        });
 
-      if(errors.length>0){
-        console.error("Errors in getTxDataFromEVMEventLogs", errors)
+      if (errors.length > 0) {
+        console.error("Errors in getTxDataFromEVMEventLogs", errors);
       }
 
       dataKeysToFilter.map((key) => {
