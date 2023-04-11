@@ -55,7 +55,7 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      "Gnosis",
+      // "Gnosis",
       // "Celo",
       "BSC",
     ],
@@ -155,7 +155,7 @@ export default [
       "Avalanche",
       "Arbitrum",
       "Optimism",
-      "Gnosis",
+      // "Gnosis",
       // "Aurora",
       // "Celo",
       // "Klaytn",
@@ -207,7 +207,13 @@ export default [
     iconLink: "icons:hop-protocol",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Gnosis"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Arbitrum",
+      "Optimism",
+      // "Gnosis"
+    ],
     chainMapping: {
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
