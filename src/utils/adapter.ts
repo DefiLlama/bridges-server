@@ -355,7 +355,7 @@ export const runAdapterHistorical = async (
         continue;
       }
       console.log(
-        `${eventLogs.length} transactions were found for ${bridgeID} from ${startBlockForQuery} to ${block}.`
+        `${eventLogs.length} transactions were found for ${bridgeID} (${bridgeDbName}) on ${chain} from ${startBlockForQuery} to ${block}.`
       );
       let provider = undefined as any;
       if (useChainBlocks) {
