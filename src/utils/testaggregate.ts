@@ -20,4 +20,4 @@ async function aggregateHistorical(
   await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, restrictChain);
 }
 
-aggregateHistorical(1661990400, 1681257600, "synapse");
+aggregateHistorical(1661990400, 1681257600, "stargate");

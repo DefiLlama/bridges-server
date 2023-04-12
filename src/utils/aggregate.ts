@@ -25,7 +25,7 @@ import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
-import { transformTokens } from "../helpers/tokenMappings";
+import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
 import { blacklist } from "../data/blacklist";
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
@@ -243,12 +243,7 @@ export const aggregateData = async (
       if (!is_usd_volume) {
         if (!token || !chain) return;
         const tokenL = token.toLowerCase();
-        if (transformTokens[chain][tokenL]) {
-          uniqueTokens[transformTokens[chain][tokenL]] = true;
-          uniqueTokens[`${chain}:${tokenL}`] = true;
-        } else {
-          uniqueTokens[`${chain}:${tokenL}`] = true;
-        }
+        uniqueTokens[transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`] = true;
       }
     })
   );
@@ -282,27 +277,17 @@ export const aggregateData = async (
       }
       let usdValue = null;
       let tokenKey = null;
-      let tokenKey2 = null;
       if (is_usd_volume) {
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        if (transformTokens[chain][tokenL]) {
-          tokenKey = transformTokens[chain][tokenL];
-          tokenKey2 = `${chain}:${tokenL}`;
-        } else {
-          tokenKey = `${chain}:${tokenL}`;
-        }
+        const transformedDecimals = transformTokenDecimals[chain][tokenL] ?? null;
+        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
         }
         const priceData = llamaPrices[tokenKey];
-        let priceData2 = tokenKey2 ? llamaPrices[tokenKey2] : null;
-        if (tokenKey2 && !priceData2 && !tokensWithNullPrices.has(tokenKey2)) {
-          console.log(`No price data for ${tokenKey2}`);
-          tokensWithNullPrices.add(tokenKey2);
-        }
         if (!priceData && !tokensWithNullPrices.has(tokenKey)) {
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
@@ -310,17 +295,10 @@ export const aggregateData = async (
         if (priceData && (priceData.confidence === undefined || priceData.confidence >= defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
           let bnAmount = null;
-          if (!tokenKey2) {
-            bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
-          } else if (
-            tokenKey2 &&
-            priceData2 &&
-            (priceData2.confidence === undefined || priceData2.confidence >= defaultConfidenceThreshold)
-          ) {
-            bnAmount = rawBnAmount.dividedBy(10 ** Number(priceData2.decimals));
+          if (transformedDecimals) {
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
           } else {
-            console.log(`No data for ${tokenKey2} at timestamp ${timestamp}. Skipping`)
-            bnAmount = BigNumber(0);
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
           }
 
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
