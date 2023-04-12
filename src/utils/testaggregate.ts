@@ -4,5 +4,5 @@ import { aggregateData, runAggregateDataAllAdapters, runAggregateDataHistorical 
 
 // runAggregateDataAllAdapters(1680220800)
 
-runAggregateDataHistorical(1676592000, 1680761124, 5, false);
+runAggregateDataHistorical(1661990400, 1681257600, 11, false);
 // runAggregateDataHistorical(1680220800 - 68400, 1680220800, 12, false);

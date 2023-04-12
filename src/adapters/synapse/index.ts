@@ -1,44 +1,14 @@
+import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { Chain } from "@defillama/sdk/build/general";
-import { ethers } from "ethers";
-
-/*
-contract addresses: https://docs.synapseprotocol.com/reference/contract-addresses
-
-***Ethereum***
-0x6571d6be3d8460CF5F7d6711Cd9961860029D85F Synapse Bridge Zap 3
--deposits of: 
-  -USDC, USDT, DAI (swapped for nUSD); nUSD (ignore)
-  -SYN (burned) 
-  -WETH and all other tokens are forwarded to Synapse: Bridge (WETH deposits can be recorded there)
-
-0x2796317b0fF8538F253012862c06787Adfb8cEb6 Synapse: Bridge
--withdrawals of: 
-  -ETH via TokenWithdraw
-  -all other tokens via TokenWithdrawAndRemove 
-    TokenWithdrawAndRemove does not give which token is withdrawn, so instead can look at all 
-    withdrawals and filter nUSD withdrawals.
-
-***Polygon***
-0x1c6aE197fF4BF7BA96c66C5FD64Cb22450aF9cC8 Synapse Bridge Zap 1
--deposits of:
-  -USDC, USDT, DAI (swapped for nUSD); nUSD (ignore)
-  -all other tokens (burned)
-
-0x8F5BBB2BB8c2Ee94639E55d5F41de9b4839C1280 Synapse Bridge
--withdrawals of all tokens (ignore nUSD)
-
-0x85fCD7Dd0a1e1A9FCD5FD886ED522dE8221C3EE5 Synapse FlashSwapLoan, seems to only be involved in swaps
-
-^same goes for all other non-Ethereum chains, except:
-
-Klaytn and Dogechain just use wrapped assets contracts.
-
-*/
 
 const contractAddresses = {
+  ethereum: {
+    bridgeZap: "0x6571d6be3d8460CF5F7d6711Cd9961860029D85F",
+    synapseBridge: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
+    nusd: "0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F",
+  },
   polygon: {
     bridgeZap: "0x1c6aE197fF4BF7BA96c66C5FD64Cb22450aF9cC8",
     synapseBridge: "0x8F5BBB2BB8c2Ee94639E55d5F41de9b4839C1280",
@@ -69,170 +39,81 @@ const contractAddresses = {
     synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
     nusd: "0x67C10C397dD0Ba417329543c1a40eb48AAa7cd00",
   },
-  aurora: {
-    bridgeZap: "0x2D8Ee8d6951cB4Eecfe4a79eb9C2F973C02596Ed",
-    synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
-    nusd: "0x07379565cD8B0CaE7c60Dc78e7f601b34AF2A21c",
-  },
-  klaytn: {
-    burnAddress: "0x911766fa1a425cb7cccb0377bc152f37f276f8d6",
-    tokens: {
-      usdc: "0x6270b58be569a7c0b8f47594f191631ae5b2c86c",
-      usdt: "0xd6dab4cff47df175349e6e7ee2bf7c40bb8c05a3",
-      dai: "0x078db7827a5531359f6cb63f62cfa20183c4f10c",
-      wbtc: "0xdcbacf3f7a069922e677912998c8d57423c37dfa",
-      weth: "0xCD6f29dC9Ca217d0973d3D21bF58eDd3CA871a86",
-    },
-  },
 } as {
   [chain: string]: {
-    bridgeZap?: string;
-    synapseBridge?: string;
-    nusd?: string;
-    burnAddress?: string;
-    tokens?: {
-      [token: string]: string;
-    };
+    bridgeZap: string;
+    synapseBridge: string;
+    nusd: string;
   };
 };
 
 const nullAddress = "0x0000000000000000000000000000000000000000";
 
-const ethereumDepositParams: PartialContractEventParams = constructTransferParams(
-  "0x6571d6be3d8460CF5F7d6711Cd9961860029D85F",
-  true,
-  {
-    excludeToken: [
-      "0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F", // nUSD
-    ],
-  }
-);
+// const tokenDeposit: ContractEventParams = {
+//   target: "",
+//   topic: "TokenDeposit(address,uint256,address,uint256)",
+//   abi: [" event TokenDeposit(address indexed to, uint256 chainId, IERC20 token, uint256 amount)"],
+//   argKeys: {
+//     to: "to",
+//     token: "token",
+//     amount: "amount",
+//   },
+//   isDeposit: true,
 
-const ethereumEthDepositParams: ContractEventParams = {
-  target: null,
-  topic: "Transfer(address,address,uint256)",
-  topics: [
-    ethers.utils.id("Transfer(address,address,uint256)"),
-    null,
-    ethers.utils.hexZeroPad("0x2796317b0fF8538F253012862c06787Adfb8cEb6", 32),
-  ],
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-    token: "address",
-  },
-  argKeys: {
-    to: "to",
-    amount: "value",
-  },
-  txKeys: {
-    from: "from",
-  },
-  isDeposit: true,
-  filter: {
-    includeToken: ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], // WETH
-  },
-};
+// };
 
-const ethereumEthWithdrawalParams: ContractEventParams = {
-  target: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
-  topic: "TokenWithdraw(address,address,uint256,uint256,bytes32)",
-  abi: ["event TokenWithdraw(address indexed to, address token, uint256 amount, uint256 fee, bytes32 indexed kappa)"],
-  argKeys: {
-    token: "token",
-    amount: "amount",
-    to: "to",
-  },
-  isDeposit: false,
-  filter: {
-    includeToken: ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], // WETH
-  },
-};
+// const tokenDepositAndSwap: ContractEventParams = {
+//   target: "",
+//   topic: "TokenDepositAndSwap(address,uint256,address,uint256,uint8,uint8,uint256,uint256)",
+//   abi: [
+//     "event TokenDepositAndSwap(address indexed to,uint256 chainId,IERC20 token,uint256 amount,uint8 tokenIndexFrom,uint8 tokenIndexTo,uint256 minDy,uint256 deadline)",
+//   ],
+//   argKeys: {
+//     to: "to",
+//     token: "token",
+//     amount: "amount",
+//   },
+//   isDeposit: true,
+// };
 
-const ethereumWithdrawalParams: PartialContractEventParams = constructTransferParams(
-  "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
-  false,
-  { excludeToken: ["0x1B84765dE8B7566e4cEAF4D0fD3c5aF52D3DdE4F"] } // nUSD
-);
+// const tokenWithdraw: ContractEventParams = {
+//   target: "",
+//   topic: "TokenWithdraw(address,address,uint256,uint256,bytes32)",
+//   abi: ["event TokenWithdraw(address indexed to, IERC20 token, uint256 amount, uint256 fee, bytes32 indexed kappa)"],
+//   argKeys: {
+//     to: "to",
+//     token: "token",
+//     amount: "amount",
+//   },
+//   isDeposit: false,
+// };
 
-const mintParams: PartialContractEventParams = {
-  target: "",
-  topic: "Transfer(address,address,uint256)",
-  topics: [ethers.utils.id("Transfer(address,address,uint256)"), ethers.utils.hexZeroPad(nullAddress, 32)],
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-    token: "address",
-  },
-  argKeys: {
-    amount: "value",
-  },
-  txKeys: {
-    from: "to"
-  },
-  inputDataExtraction: {
-    inputDataABI: ["function mint(address to, address token, uint256 amount, uint256 fee, bytes32 kappa)"],
-    inputDataFnName: "mint",
-    inputDataKeys: {
-      to: "to",
-    },
-  },
-  isDeposit: false,
-};
-
-/*
-const burnParams: PartialContractEventParams = {
-  target: "",
-  topic: "Transfer(address,address,uint256)",
-  topics: [ethers.utils.id("Transfer(address,address,uint256)"), null, ethers.utils.hexZeroPad(nullAddress, 32)],
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-    token: "address",
-  },
-  argKeys: {
-    from: "from",
-    to: "to",
-    amount: "value",
-  },
-  isDeposit: true,
-};
-*/
+// const tokenWithdrawAndRemove: ContractEventParams = {
+//   target: "",
+//   topic: "TokenWithdrawAndRemove(address,address,uint256,uint256,uint8,uint256,uint256,bool,bytes32)",
+//   abi: [
+//     "event TokenWithdrawAndRemove(address indexed to,IERC20 token,uint256 amount,uint256 fee,uint8 swapTokenIndex,uint256 swapMinAmount,uint256 swapDeadline,bool swapSuccess,bytes32 indexed kappa)",
+//   ],
+//   argKeys: {
+//     to: "to",
+//     token: "token",
+//     amount: "amount",
+//   },
+//   isDeposit: false,
+// };
 
 const constructParams = (chain: string) => {
-  let eventParams = [] as any;
-  if (chain === "ethereum") {
-    eventParams.push(
-      ethereumDepositParams,
-      ethereumEthDepositParams,
-      ethereumWithdrawalParams,
-      ethereumEthWithdrawalParams
-    );
-  } else if (chain === "klaytn") {
-    const burnAddress = contractAddresses[chain].burnAddress!;
-    const tokens = contractAddresses[chain].tokens!;
-    const burnParams = constructTransferParams(burnAddress, true);
-    eventParams.push(burnParams);
-    Object.values(tokens).map((tokenAddress) => {
-      const finalMintParams = {
-        ...mintParams,
-        target: tokenAddress,
-      };
-      eventParams.push(finalMintParams);
-    });
-  } else {
-    const bridgeZapAddress = contractAddresses[chain].bridgeZap!;
-    const synapseBridgeAddress = contractAddresses[chain].synapseBridge!;
-    const nusdAddress = contractAddresses[chain].nusd!;
-    const depositParams = constructTransferParams(bridgeZapAddress, true, {
-      excludeToken: [nusdAddress],
-    });
-    const withdrawalParams = constructTransferParams(synapseBridgeAddress, false, { excludeToken: [nusdAddress] });
-    eventParams.push(depositParams, withdrawalParams);
-  }
+  let eventParams = [] as PartialContractEventParams[];
+  const addys = contractAddresses[chain];
+  const depositParams = constructTransferParams(addys.bridgeZap, true, {
+    excludeToken: [addys.nusd],
+    excludeFrom: [addys.bridgeZap],
+  });
+  const withdrawalParams = constructTransferParams(addys.synapseBridge, false, {
+    excludeToken: [addys.nusd],
+    excludeTo: [addys.synapseBridge],
+  });
+  eventParams.push(depositParams, withdrawalParams);
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("synapse", chain as Chain, fromBlock, toBlock, eventParams);
@@ -246,8 +127,6 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  aurora: constructParams("aurora"),
-  klaytn: constructParams("klaytn"),
 };
 
 export default adapter;
