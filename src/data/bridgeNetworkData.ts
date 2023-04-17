@@ -332,7 +332,13 @@ export default [
     iconLink: "icons:allbridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "BSC", "Avalanche", "Fantom", "Polygon"],
+    chains: [
+      "Ethereum",
+      "BSC",
+      // "Avalanche",
+      // "Fantom",
+      // "Polygon"
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
