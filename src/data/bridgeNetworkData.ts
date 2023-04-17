@@ -325,15 +325,18 @@ export default [
   //   url: "",
   //   chains: ["Ethereum", "Polygon", "Celo"],
   // },
-  // {
-  //   id: 22,
-  //   displayName: "Allbridge Core",
-  //   bridgeDbName: "allbridge",
-  //   iconLink: "icons:allbridge",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: ["Ethereum", "BSC"],
-  // },
+  {
+    id: 22,
+    displayName: "Allbridge Core",
+    bridgeDbName: "allbridge",
+    iconLink: "icons:allbridge",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "BSC", "Avalanche", "Fantom", "Polygon"],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
   // {
   //   id: 23,
   //   displayName: "IBC",
