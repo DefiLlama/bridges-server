@@ -41,4 +41,5 @@ async function fillAdapterHistorical(
   console.log(`Finished running adapter from ${startTimestamp} to ${endTimestamp} for ${bridgeDbName}`);
 }
 
-fillAdapterHistorical(1661990400, 1681257600, "synapse");
+fillAdapterHistorical(1661990400, 1681719878, "allbridge");
+

@@ -517,6 +517,7 @@ export const insertConfigEntriesForAdapter = async (
       return;
     }
     await sql.begin(async (sql) => {
+      console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
       await insertConfigRow(sql, { bridge_name: bridgeDbName, chain: chain, destination_chain: destinationChain });
     });
   });

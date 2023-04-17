@@ -110,12 +110,12 @@ export const insertConfigRow = async (
       destination_chain: params.destination_chain,
     };
   }
-  const sqlStatement = `
-      insert into bridges.config ${sql(paramsToAvoidTsError)}
-    `;
   for (let i = 0; i < 5; i++) {
     try {
-      await sqlStatement;
+      console.log(`inserting into bridges.config`);
+      await sql`
+      insert into bridges.config ${sql(paramsToAvoidTsError)}
+    `;
       return;
     } catch (e) {
       if (i >= 4) {

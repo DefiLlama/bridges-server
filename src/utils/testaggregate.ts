@@ -12,12 +12,18 @@ async function aggregateHistorical(
   startTimestamp: number,
   endTimestamp: number,
   bridgeDbName: string,
-  restrictChain?: string
+  restrictChain?: string[]
 ) {
   const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
   console.log(`Found ${bridgeDbName}`);
-  await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, restrictChain);
+  if (restrictChain) {
+    restrictChain.forEach(async (chain: string) => {
+      await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, chain);
+    });
+  } else {
+    await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, restrictChain);
+  }
 }
 
-aggregateHistorical(1661990400, 1681257600, "stargate");
+aggregateHistorical(1661990400, 1681719878, "allbridge", ["ethereum", "bsc"]);
