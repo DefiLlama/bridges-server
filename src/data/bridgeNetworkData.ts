@@ -256,27 +256,18 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
-  /*
-  {
-    id: 17,
-    displayName: "Axelar",
-    bridgeDbName: "axelar",
-    iconLink: "icons:axelar",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Avalanche", 
-      //"BSC",
-      "Fantom",
-      "Aurora",
-    ],
-    chainMapping: {
-      avalanche: "avax", // this is needed temporarily, need to fix and remove
-    },
-  },
-  */
+  // {
+  //   id: 17,
+  //   displayName: "Axelar",
+  //   bridgeDbName: "axelar",
+  //   iconLink: "icons:axelar",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Arbitrum"],
+  //   chainMapping: {
+  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
+  //   },
+  // },
   {
     id: 18,
     displayName: "Rainbow Bridge",
@@ -368,5 +359,14 @@ export default [
   //   largeTxThreshold: 10000,
   //   url: "",
   //   chains: ["Ethereum", "BSC"],
+  // },
+  // {
+  //   id: 25,
+  //   displayName: "Beamer Bridge",
+  //   bridgeDbName: "beamer",
+  //   iconLink: "",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: ["Ethereum", "Arbitrum", "Optimism"]
   // },
 ] as BridgeNetwork[];
