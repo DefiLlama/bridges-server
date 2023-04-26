@@ -72,9 +72,9 @@ const tokenAddresses = {
 
 const depositParams: PartialContractEventParams = {
   target: "",
-  topic: "FundsDeposited(uint256,uint256,uint256,uint64,uint32,uint32,address,address,address,bytes)",
+  topic: "FundsDeposited(uint256,uint256,uint256,int64,uint32,uint32,address,address,address,bytes)",
   abi: [
-    "event FundsDeposited(uint256 amount, uint256 originChainId, uint256 destinationChainId, uint64 relayerFeePct, uint32 indexed depositId, uint32 quoteTimestamp, address indexed originToken, address recipient, address indexed depositor, bytes message)",
+    "event FundsDeposited(uint256 amount, uint256 originChainId, uint256 destinationChainId, int64 relayerFeePct, uint32 indexed depositId, uint32 quoteTimestamp, address indexed originToken, address recipient, address indexed depositor, bytes message)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -92,9 +92,9 @@ const depositParams: PartialContractEventParams = {
 const relaysParams: PartialContractEventParams = {
   target: "",
   topic:
-    "FilledRelay(uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint32,address,address,address,address,bytes,tuple(address,bytes,int64,bool,int256))",
+    "FilledRelay(uint256,uint256,uint256,uint256,uint256,uint256,int64,int64,uint32,address,address,address,address,bytes,tuple(address,bytes,int64,bool,int256))",
   abi: [
-    "event FilledRelay(uint256 amount, uint256 totalFilledAmount, uint256 fillAmount, uint256 repaymentChainId, uint256 originChainId, uint256 destinationChainId, uint64 relayerFeePct, uint64 realizedLpFeePct, uint32 depositId, address destinationToken,address indexed relayer,address indexed depositor, address recipient, bytes message, tuple(address recipient, bytes message, int64 relayerFeePct, bool isSlowRelay, int256 payoutAdjustmentPct) updatableRelayData)",
+    "event FilledRelay(uint256 amount, uint256 totalFilledAmount, uint256 fillAmount, uint256 repaymentChainId, uint256 originChainId, uint256 destinationChainId, int64 relayerFeePct, int64 realizedLpFeePct, uint32 depositId, address destinationToken,address indexed relayer,address indexed depositor, address recipient, bytes message, tuple(address recipient, bytes message, int64 relayerFeePct, bool isSlowRelay, int256 payoutAdjustmentPct) updatableRelayData)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
