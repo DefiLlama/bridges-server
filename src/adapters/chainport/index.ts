@@ -13,12 +13,30 @@ this function called in any other contracts. It's only called by 'Gameverse', ig
 */
 
 const contractAddresses = {
-  ethereum: "0x763A0CA93AF05adE98A52dc1E5B936b89bF8b89a",
-  polygon: "0xF9ac9365A23D837F97078DaD50638a12c9E256C8",
-  fantom: "0x241663B6Ae912f2A5dFFDCb7a3550Bf60c0A5df5",
-  avax: "0x241663B6Ae912f2A5dFFDCb7a3550Bf60c0A5df5",
-  bsc: "0x5C80AE9c3396CA4394F9D8E6786Ed9aa74489afE",
-  aurora: "0xFB19ADD1db30A140915Da55222Ab5f968b32B900"
+  ethereum: {
+    "main_chain": "0x763a0ca93af05ade98a52dc1e5b936b89bf8b89a",
+    "side_chain": "0xd02c8a355599fee7e4f1d1d71f7a01c0108e353c"
+  },
+  polygon: {
+    "main_chain": "0xc07cd7fcda887119bff8e1eed2256ad433bee125",
+    "side_chain": "0xf9ac9365a23d837f97078dad50638a12c9e256c8"
+  },
+  fantom: {
+    "main_chain": "0xc30da5144d1b9f47ff86345fee14fe2da94c7203",
+    "side_chain": "0x241663b6ae912f2a5dffdcb7a3550bf60c0a5df5"
+  },
+  avax: {
+    "main_chain": "0x927f5f422bafd00df2ae817945b6e8694ad2f852",
+    "side_chain": "0x241663b6ae912f2a5dffdcb7a3550bf60c0a5df5"
+  },
+  bsc: {
+    "main_chain": "0x2cd90158baae285010a5ed7c549c2e5b4c0715f4",
+    "side_chain": "0x5c80ae9c3396ca4394f9d8e6786ed9aa74489afe"
+  },
+  aurora: {
+    "main_chain": null,
+    "side_chain": "0xfb19add1db30a140915da55222ab5f968b32b900"
+  }
 } as { [chain: string]: any };
 
 const burnDepositParams: PartialContractEventParams = {
@@ -90,31 +108,32 @@ const withdrawalParams: PartialContractEventParams = {
 
 const constructParams = (chain: string) => {
   let eventParams = [] as any;
-  const chainAddress = contractAddresses[chain];
+  const main_chain_address = contractAddresses[chain]["main_chain"];
+  const side_chain_address = contractAddresses[chain]["side_chain"];
   if (chain === "ethereum") {
-    const finalDepositParams = constructTransferParams(chainAddress, true);
-    const finalWithdrawalParams = constructTransferParams(chainAddress, false);
+    const finalDepositParams = constructTransferParams(main_chain_address, true);
+    const finalWithdrawalParams = constructTransferParams(main_chain_address, false);
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   } else {
     const finalBurnDepositParams = {
       ...burnDepositParams,
-      target: chainAddress,
+      target: side_chain_address,
       fixedEventData: {
-        to: chainAddress,
+        to: side_chain_address,
       },
     };
     const finalTransferDepositParams = {
       ...transferDepositParams,
-      target: chainAddress,
+      target: side_chain_address,
       fixedEventData: {
-        to: chainAddress,
+        to: side_chain_address,
       },
     };
     const finalWithdrawalParams = {
       ...withdrawalParams,
-      target: chainAddress,
+      target: main_chain_address,
       fixedEventData: {
-        from: chainAddress,
+        from: main_chain_address,
       },
     };
     eventParams.push(finalBurnDepositParams, finalTransferDepositParams, finalWithdrawalParams);
