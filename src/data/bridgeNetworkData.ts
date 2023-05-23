@@ -369,4 +369,14 @@ export default [
   //   url: "",
   //   chains: ["Ethereum", "Arbitrum", "Optimism"]
   // },
+  {
+    id: 26,
+    displayName: "zkSync Era Bridge",
+    bridgeDbName: "zksync",
+    iconLink: "chain:zksync",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "zkSync"],
+    destinationChain: "zkSync",
+  },
 ] as BridgeNetwork[];
