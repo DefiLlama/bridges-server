@@ -3,7 +3,7 @@
     "deploy:prod": "export NODE_OPTIONS=--max-old-space-size=10240 && sls deploy --stage prod",
     "serve": "sls offline start",
     "build": "sls webpack",
-    "test": "ts-node test.js"
+    "test": "ts-node ./src/adapters/test.ts"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.101",
