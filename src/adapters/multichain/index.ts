@@ -321,7 +321,7 @@ const constructParams = (chain: string) => {
           }
         })
       );
-      return [...eventLogData, ...nativeTokenData];
+      return [...eventLogData, ...nativeTokenData].filter((event) => (chain === "bsc" ? !!event?.to : true));
     }
 
     return eventLogData;
