@@ -21,6 +21,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         PSQL_URL: ${{ secrets.PSQL_URL }}
         PSQL_USERNAME: ${{ secrets.PSQL_USERNAME }}
+        PSQL_PW: ${{ secrets.PSQL_PW }}
         BSC_RPC: ${{ secrets.BSC_RPC }}
         CELO_RPC: ${{ secrets.CELO_RPC }}
         ETHEREUM_RPC: ${{ secrets.ETHEREUM_RPC }}
