@@ -14,6 +14,7 @@ import { wait } from "../helpers/etherscan";
 import { lookupBlock } from "@defillama/sdk/build/util";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { BridgeNetwork } from "../data/types";
+import { groupBy } from "lodash";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -344,8 +345,10 @@ export const runAdapterHistorical = async (
   console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
   while (block > startBlock) {
     const startBlockForQuery = Math.max(startBlock, block - maxBlocksToQuery);
+    await wait(500);
     try {
-      const eventLogs = await adapterChainEventsFn(startBlockForQuery, block);
+      const eventLogs = await retry(async () => adapterChainEventsFn(startBlockForQuery, block));
+
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
         console.log(
@@ -373,7 +376,7 @@ export const runAdapterHistorical = async (
       }
       await sql.begin(async (sql) => {
         let txBlocks = [] as number[];
-        eventLogs.map((log) => {
+        eventLogs.map((log: any) => {
           const { blockNumber } = log;
           txBlocks.push(blockNumber);
         });
@@ -390,7 +393,7 @@ export const runAdapterHistorical = async (
             try {
               if (useChainBlocks) {
                 // add timeout?
-                block = await provider.getBlock(blockNumber);
+                block = await retry(async () => provider.getBlock(blockNumber));
                 if (block.timestamp) {
                   blockTimestamps[i] = block.timestamp;
                   break;
@@ -410,81 +413,76 @@ export const runAdapterHistorical = async (
           }
         }
 
+        // drop sus multi transfers
+        const groupedEvents = groupBy(eventLogs, (event: any) => event?.txHash);
+        const filteredEvents = Object.values(groupedEvents)
+          .filter((events) => events.length < 100)
+          .flat();
+
         let storedBridgeIds = {} as { [chain: string]: string };
-        const eventLogPromises = Promise.all(
-          eventLogs.map(async (log) => {
-            const {
-              txHash,
-              blockNumber,
-              from,
-              to,
-              token,
-              amount,
-              isDeposit,
-              chainOverride,
-              isUSDVolume,
-              txsCountedAs,
-            } = log;
-            const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-            const timestamp = blockTimestamps[bucket] * 1000;
+        for (let i = 0; i < filteredEvents?.length; i++) {
+          let log = filteredEvents[i];
 
-            let amountString;
-            if (!amount) {
-              amountString = "0";
+          const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs } =
+            log;
+          const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
+          const timestamp = blockTimestamps[bucket] * 1000;
+
+          let amountString;
+          if (!amount) {
+            amountString = "0";
+          } else {
+            amountString = amount.toString();
+          }
+
+          // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
+          // (don't believe this is actually used in codebase yet)
+          let bridgeIdOverride = bridgeID;
+          if (chainOverride) {
+            const storedBridgeID = storedBridgeIds[chainOverride];
+            if (storedBridgeID) {
+              bridgeIdOverride = storedBridgeID;
             } else {
-              amountString = amount.toString();
-            }
-
-            // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
-            // (don't believe this is actually used in codebase yet)
-            let bridgeIdOverride = bridgeID;
-            if (chainOverride) {
-              const storedBridgeID = storedBridgeIds[chainOverride];
-              if (storedBridgeID) {
-                bridgeIdOverride = storedBridgeID;
-              } else {
-                const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
-                bridgeIdOverride = overrideID;
-                storedBridgeIds[chainOverride] = overrideID;
-                if (!overrideID) {
-                  const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
-                  await insertErrorRow({
-                    ts: getCurrentUnixTimestamp() * 1000,
-                    target_table: "transactions",
-                    keyword: "critical",
-                    error: errString,
-                  });
-                  throw new Error(errString);
-                }
+              const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
+              bridgeIdOverride = overrideID;
+              storedBridgeIds[chainOverride] = overrideID;
+              if (!overrideID) {
+                const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
+                await insertErrorRow({
+                  ts: getCurrentUnixTimestamp() * 1000,
+                  target_table: "transactions",
+                  keyword: "critical",
+                  error: errString,
+                });
+                throw new Error(errString);
               }
             }
-            if (
-              from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
-              to.toLowerCase() === "0x0000000000000000000000000000000000000000"
-            )
-              return;
-            await insertTransactionRow(
-              sql,
-              allowNullTxValues,
-              {
-                bridge_id: bridgeIdOverride,
-                chain: chainContractsAreOn,
-                tx_hash: txHash ?? null,
-                ts: timestamp,
-                tx_block: blockNumber ?? null,
-                tx_from: from ?? null,
-                tx_to: to ?? null,
-                token: token,
-                amount: amountString,
-                is_deposit: isDeposit,
-                is_usd_volume: isUSDVolume ?? false,
-                txs_counted_as: txsCountedAs ?? 0,
-              },
-              onConflict
-            );
-          })
-        );
-        await eventLogPromises;
+          }
+          if (
+            from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+            to.toLowerCase() === "0x0000000000000000000000000000000000000000"
+          )
+            return;
+          await insertTransactionRow(
+            sql,
+            allowNullTxValues,
+            {
+              bridge_id: bridgeIdOverride,
+              chain: chainContractsAreOn,
+              tx_hash: txHash ?? null,
+              ts: timestamp,
+              tx_block: blockNumber ?? null,
+              tx_from: from ?? null,
+              tx_to: to ?? null,
+              token: token,
+              amount: amountString,
+              is_deposit: isDeposit,
+              is_usd_volume: isUSDVolume ?? false,
+              txs_counted_as: txsCountedAs ?? 0,
+            },
+            onConflict
+          );
+        }
       });
       console.log("finished inserting transactions");
     } catch (e) {
