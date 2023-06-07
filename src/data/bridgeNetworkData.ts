@@ -329,17 +329,17 @@ export default [
     },
   },
 
-  {
-    id: 23,
-    displayName: "Polygon zkEVM Bridge",
-    bridgeDbName: "polygon_zkevm",
-    iconLink: "chain:polygon_zkevm",
-    largeTxThreshold: 10000,
-    url: "",
-    chainMapping: { "polygon zkevm": "polygon_zkevm" },
-    chains: ["Ethereum"],
-    destinationChain: "Polygon zkEVM",
-  },
+  // {
+  //   id: 23,
+  //   displayName: "Polygon zkEVM Bridge",
+  //   bridgeDbName: "polygon_zkevm",
+  //   iconLink: "chain:polygon_zkevm",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chainMapping: { "polygon zkevm": "polygon_zkevm" },
+  //   chains: ["Ethereum"],
+  //   destinationChain: "Polygon zkEVM",
+  // },
   // {
   //   id: 23,
   //   displayName: "IBC",
