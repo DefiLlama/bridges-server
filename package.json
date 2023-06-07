@@ -18,7 +18,7 @@
     "ts-loader": "^9.3.1"
   },
   "dependencies": {
-    "@defillama/sdk": "^2.3.84",
+    "@defillama/sdk": "^3.0.51",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
     "bignumber.js": "^9.0.1",

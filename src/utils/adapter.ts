@@ -393,7 +393,8 @@ export const runAdapterHistorical = async (
             try {
               if (useChainBlocks) {
                 // add timeout?
-                block = await retry(async () => provider.getBlock(blockNumber));
+                await wait(j * 100);
+                block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
                 if (block.timestamp) {
                   blockTimestamps[i] = block.timestamp;
                   break;
@@ -443,7 +444,7 @@ export const runAdapterHistorical = async (
             if (storedBridgeID) {
               bridgeIdOverride = storedBridgeID;
             } else {
-              const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
+              const overrideID = await retry(async () => getBridgeID(bridgeDbName, chainOverride))?.id;
               bridgeIdOverride = overrideID;
               storedBridgeIds[chainOverride] = overrideID;
               if (!overrideID) {
@@ -516,7 +517,11 @@ export const insertConfigEntriesForAdapter = async (
     }
     await sql.begin(async (sql) => {
       console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
-      await insertConfigRow(sql, { bridge_name: bridgeDbName, chain: chain, destination_chain: destinationChain });
+      await insertConfigRow(sql, {
+        bridge_name: bridgeDbName,
+        chain: chain,
+        destination_chain: destinationChain,
+      });
     });
   });
 };
