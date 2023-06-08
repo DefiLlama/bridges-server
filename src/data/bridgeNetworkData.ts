@@ -388,7 +388,7 @@ export default [
     iconLink: "chain:zksync",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "zkSync"],
+    chains: ["Ethereum"],
     destinationChain: "zkSync",
   },
 ] as BridgeNetwork[];

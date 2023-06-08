@@ -19,9 +19,9 @@ export type EventLogFilter = {
 };
 
 export type FunctionSignatureFilter = {
-  includeSignatures?: string[]  // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
-  excludeSignatures?: string[]
-}
+  includeSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
+  excludeSignatures?: string[];
+};
 
 type InputDataExtraction = {
   inputDataABI: string[];
@@ -36,6 +36,7 @@ export type ContractEventParams = {
   abi: string[];
   logKeys?: EventKeyMapping; // retrieve data from event log
   argKeys?: EventKeyMapping; // retrieve data from parsed event log
+  argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping; // retrieve data from transaction referenced in event log
   topics?: (string | null)[];
   isDeposit: boolean;
@@ -50,7 +51,7 @@ export type ContractEventParams = {
   getTokenFromReceipt?: {
     token: boolean;
     amount?: boolean;
-    native?: string;  // if provided native token address, will return amount of native token transferred if there are no ercs transferred
+    native?: string; // if provided native token address, will return amount of native token transferred if there are no ercs transferred
   }; // attempt to get the token transferred from the tx receipt data, only use if only 1 token is transferred per tx
 };
 
@@ -60,6 +61,7 @@ export type PartialContractEventParams = {
   abi?: string[];
   logKeys?: EventKeyMapping;
   argKeys?: EventKeyMapping;
+  argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping;
   topics?: (string | null)[];
   isDeposit: boolean;
