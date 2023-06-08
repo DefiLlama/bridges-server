@@ -2,6 +2,8 @@ import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
 
+const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+
 const BRIDGES_ADDRESS = "0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe";
 const etherDepositEventParams: ContractEventParams = {
   target: BRIDGES_ADDRESS,
@@ -12,9 +14,7 @@ const etherDepositEventParams: ContractEventParams = {
   argKeys: {
     from: "destinationAddress",
     amount: "amount",
-  },
-  fixedEventData: {
-    token: ethers.constants.AddressZero,
+    token: "originAddress",
   },
   isDeposit: true,
 };
@@ -28,9 +28,9 @@ const etherWithdrawEventParams: ContractEventParams = {
   argKeys: {
     to: "destinationAddress",
     amount: "amount",
+    token: "originAddress",
   },
   fixedEventData: {
-    token: ethers.constants.AddressZero,
     from: BRIDGES_ADDRESS,
   },
   isDeposit: false,
