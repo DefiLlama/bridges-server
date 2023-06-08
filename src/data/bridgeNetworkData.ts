@@ -333,7 +333,7 @@ export default [
     id: 23,
     displayName: "Polygon zkEVM Bridge",
     bridgeDbName: "polygon_zkevm",
-    iconLink: "chain:polygon_zkevm",
+    iconLink: "chain:polygon zkevm",
     largeTxThreshold: 10000,
     url: "",
     chainMapping: { "polygon zkevm": "polygon_zkevm" },
