@@ -1,6 +1,7 @@
 import { getLogs } from "@defillama/sdk/build/util";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
+import { get } from "lodash";
 import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
@@ -76,6 +77,7 @@ export const getTxDataFromEVMEventLogs = async (
         filter,
         mapTokens,
         getTokenFromReceipt,
+        argGetters,
       } = params;
       // if this is ever used, need to also overwrite fromBlock and toBlock
       const overriddenChain = chain ? chain : chainContractsAreOn;
@@ -148,7 +150,6 @@ export const getTxDataFromEVMEventLogs = async (
 
       let dataKeysToFilter = [] as number[];
       const provider = getProvider(overriddenChain) as any;
-
       const { results, errors } = await PromisePool.withConcurrency(20)
         .for(logs)
         .process(async (txLog: any, i) => {
@@ -178,7 +179,6 @@ export const getTxDataFromEVMEventLogs = async (
             dataKeysToFilter.push(i);
             return;
           }
-          //console.log(parsedLog)
           if (argKeys) {
             try {
               const args = parsedLog?.args;
@@ -186,7 +186,8 @@ export const getTxDataFromEVMEventLogs = async (
                 throw new Error(`Unable to get log args for ${adapterName} with arg keys ${argKeys}.`);
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
-                const value = args[argKey];
+                // @ts-ignore
+                const value = argGetters?.[eventKey](args) || get(args, argKey);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${

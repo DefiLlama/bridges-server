@@ -25,6 +25,7 @@ import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
 import beamer from "./beamer";
+import zksync from "./zksync";
 import polygon_zkevm from "./polygon_zkevm";
 
 export default {
@@ -53,6 +54,7 @@ export default {
   ibc,
   meter,
   beamer,
+  zksync,
   polygon_zkevm,
 } as {
   [bridge: string]: BridgeAdapter;
