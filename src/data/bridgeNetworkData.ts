@@ -328,6 +328,18 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+
+  {
+    id: 23,
+    displayName: "Polygon zkEVM Bridge",
+    bridgeDbName: "polygon_zkevm",
+    iconLink: "chain:polygon zkevm",
+    largeTxThreshold: 10000,
+    url: "",
+    chainMapping: { "polygon zkevm": "polygon_zkevm" },
+    chains: ["Ethereum"],
+    destinationChain: "Polygon zkEVM",
+  },
   // {
   //   id: 23,
   //   displayName: "IBC",

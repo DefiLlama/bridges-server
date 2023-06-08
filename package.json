@@ -3,7 +3,7 @@
     "deploy:prod": "export NODE_OPTIONS=--max-old-space-size=10240 && sls deploy --stage prod",
     "serve": "sls offline start",
     "build": "sls webpack",
-    "test": "ts-node test.js"
+    "test": "ts-node ./src/adapters/test.ts"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.101",
@@ -18,7 +18,7 @@
     "ts-loader": "^9.3.1"
   },
   "dependencies": {
-    "@defillama/sdk": "^2.3.84",
+    "@defillama/sdk": "^3.0.51",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
     "bignumber.js": "^9.0.1",

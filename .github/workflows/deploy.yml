@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ master ]
+    
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Get Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '16'
+    - run: npm ci
+    - name: Deploy infrastructure stack
+      run: npm run deploy:prod
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        PSQL_URL: ${{ secrets.PSQL_URL }}
+        PSQL_USERNAME: ${{ secrets.PSQL_USERNAME }}
+        PSQL_PW: ${{ secrets.PSQL_PW }}
+        BSC_RPC: ${{ secrets.BSC_RPC }}
+        CELO_RPC: ${{ secrets.CELO_RPC }}
+        ETHEREUM_RPC: ${{ secrets.ETHEREUM_RPC }}
+        OPTIMISM_RPC: ${{ secrets.OPTIMISM_RPC }}
+        AURORA_RPC: ${{ secrets.AURORA_RPC }}
+        ARBITRUM_RPC: ${{ secrets.ARBITRUM_RPC }}
