@@ -397,7 +397,6 @@ export const runAdapterHistorical = async (
             try {
               if (useChainBlocks) {
                 // add timeout?
-                await wait(j * 100);
                 block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
                 if (block.timestamp) {
                   blockTimestamps[i] = block.timestamp;
