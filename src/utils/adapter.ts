@@ -91,13 +91,14 @@ export const runAdapterToCurrentBlock = async (
     recordedBlocks = (
       await retry(
         async (_bail: any) =>
-          await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`)
+          await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
+        { retries: 4, factor: 1 }
       )
     ).data as RecordedBlocks;
+    console.log("Retrieved recorded blocks");
   } catch (e) {
     console.log("No recorded blocks data for " + bridgeDbName);
   }
-  console.log("Retrieved recorded blocks");
 
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
