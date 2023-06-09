@@ -86,7 +86,7 @@ export const runAdapterToCurrentBlock = async (
 
   console.log(`Getting data for bridge ${bridgeNetwork.displayName}$`);
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
-  let recordedBlocks;
+  let recordedBlocks: RecordedBlocks | null = null;
   try {
     recordedBlocks = (
       await retry(
@@ -118,12 +118,7 @@ export const runAdapterToCurrentBlock = async (
     Object.keys(adapter).map(async (chain, i) => {
       await wait(100 * i); // attempt to space out API calls
       const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
-      const recordedBlocks = (
-        await retry(
-          async (_bail: any) =>
-            await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`)
-        )
-      ).data as RecordedBlocks;
+
       const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
