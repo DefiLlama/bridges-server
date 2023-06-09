@@ -83,7 +83,7 @@ export const runAdapterToCurrentBlock = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
-  console.log(`Getting data for bridge ${bridgeNetwork.displayName}`);
+  console.log(`Getting data for bridge ${bridgeNetwork.displayName}$`);
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
   const recordedBlocks = (
     await retry(
@@ -101,6 +101,7 @@ export const runAdapterToCurrentBlock = async (
     });
     throw new Error(errString);
   }
+  console.log("Retrieved recorded blocks");
 
   const adapter = adapters[bridgeDbName];
   if (!adapter) {
@@ -114,6 +115,8 @@ export const runAdapterToCurrentBlock = async (
     throw new Error(errString);
   }
   await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  console.log("Inserted or skipped config");
+
   const adapterPromises = Promise.all(
     Object.keys(adapter).map(async (chain, i) => {
       await wait(100 * i); // attempt to space out API calls
@@ -126,6 +129,7 @@ export const runAdapterToCurrentBlock = async (
         chainContractsAreOn,
         recordedBlocks
       );
+      console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
       if (startBlock == null) return;
       try {
         await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
