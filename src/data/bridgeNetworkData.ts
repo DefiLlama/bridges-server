@@ -385,7 +385,7 @@ export default [
     id: 26,
     displayName: "zkSync Era Bridge",
     bridgeDbName: "zksync",
-    iconLink: "chain:zksync",
+    iconLink: "chain:zksync era",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum"],
