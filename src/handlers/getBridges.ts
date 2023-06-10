@@ -54,11 +54,8 @@ const getBridges = async () => {
 
           lastDayHourlyVolume.map((entry) => {
             const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
-            const { date, depositTxs, withdrawTxs } = entry;
-            // lastDailyTs is timestamp at 00:00 UTC of *previous* day
-            if (parseInt(date) > lastDailyTs + secondsInDay) {
-              currentDayVolume += volume;
-            }
+
+            currentDayVolume += volume;
           });
         }
 
