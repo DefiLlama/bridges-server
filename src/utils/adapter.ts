@@ -88,13 +88,16 @@ export const runAdapterToCurrentBlock = async (
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
   let recordedBlocks: RecordedBlocks | null = null;
   try {
-    recordedBlocks = (
-      await retry(
-        async (_bail: any) =>
-          await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
-        { retries: 4, factor: 1 }
-      )
-    ).data as RecordedBlocks;
+    recordedBlocks =
+      bridgeDbName !== "multichain"
+        ? ((
+            await retry(
+              async (_bail: any) =>
+                await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
+              { retries: 4, factor: 1 }
+            )
+          ).data as RecordedBlocks)
+        : null;
     console.log("Retrieved recorded blocks");
   } catch (e) {
     console.log("No recorded blocks data for " + bridgeDbName);
@@ -454,7 +457,6 @@ export const runAdapterHistorical = async (
         const filteredEvents = Object.values(groupedEvents)
           .filter((events) => events.length < 100)
           .flat();
-
         let storedBridgeIds = {} as { [chain: string]: string };
         for (let i = 0; i < filteredEvents?.length; i++) {
           let log = filteredEvents[i];
