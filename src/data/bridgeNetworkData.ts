@@ -337,7 +337,7 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chainMapping: { "polygon zkevm": "polygon_zkevm" },
-    chains: ["Ethereum"],
+    chains: ["Ethereum", "Polygon zkEVM"],
     destinationChain: "Polygon zkEVM",
   },
   // {
@@ -388,7 +388,7 @@ export default [
     iconLink: "chain:zksync era",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum"],
+    chains: ["Ethereum", "Zksync Era"],
     destinationChain: "zkSync",
   },
 ] as BridgeNetwork[];
