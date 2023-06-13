@@ -5,7 +5,7 @@ export const normalizedChainReplacements = {
   //gnosis: "xdai",
   "terra%20classic": "terra",
   sxnetwork: "sx",
-  "arbitrum%20nova":"arbitrum_nova",
+  "arbitrum%20nova": "arbitrum_nova",
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
 } as {
@@ -43,6 +43,22 @@ export const chainCoingeckoIds = {
     categories: ["EVM", "Rollup"],
     parent: "Ethereum",
     chainId: 42161,
+  },
+  "zkSync Era": {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 324,
+  },
+  "Polygon zkEVM": {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 1101,
   },
   Palm: {
     geckoId: null,
@@ -816,7 +832,7 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  "Canto": {
+  Canto: {
     geckoId: "canto",
     symbol: "CANTO",
     cmcId: "21516",
@@ -862,7 +878,7 @@ export const chainCoingeckoIds = {
     cmcId: "14299",
     categories: ["Cosmos"],
   },
-  "Stride": {
+  Stride: {
     geckoId: "stride",
     symbol: "STRD",
     cmcId: "21781",
@@ -1099,6 +1115,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Stride";
     case "axelar":
       return "Axelar";
+    case "zkSync Era":
+      return "zkSync Era";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

@@ -12,7 +12,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
     });
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
-  
+
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
   if (bridgeNetworkId && queryId) {
     try {
@@ -83,7 +83,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
-  const chain = event.pathParameters?.chain?.toLowerCase();
+  const chain = event.pathParameters?.chain?.toLowerCase().replace(/%20/g, " ");
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeVolume(chain, bridgeNetworkId);
   return successResponse(response, 10 * 60); // 10 mins cache
