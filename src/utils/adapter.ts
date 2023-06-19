@@ -156,7 +156,7 @@ export const runAdapterToCurrentBlock = async (
       } else {
         try {
           let startBlock = (
-            await sql`select * from bridges.transactions where bridge_id = ${bridgeID} order by ts desc limit 1;`
+            await sql`select * from bridges.transactions where bridge_id = ${bridgeID} and chain = ${chain} order by ts desc limit 1;`
           )[0].tx_block;
 
           const { number: endBlock } = await getLatestBlock(chainContractsAreOn);
