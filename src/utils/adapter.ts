@@ -339,6 +339,7 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -546,19 +547,21 @@ export const insertConfigEntriesForAdapter = async (
   bridgeDbName: string,
   destinationChain?: string
 ) => {
-  await Object.keys(adapter).map(async (chain) => {
-    const existingEntry = await getBridgeID(bridgeDbName, chain);
-    if (existingEntry) {
-      console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
-      return;
-    }
-    await sql.begin(async (sql) => {
-      console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
-      await insertConfigRow(sql, {
-        bridge_name: bridgeDbName,
-        chain: chain,
-        destination_chain: destinationChain,
+  await Promise.all(
+    Object.keys(adapter).map(async (chain) => {
+      const existingEntry = await getBridgeID(bridgeDbName, chain);
+      if (existingEntry) {
+        console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
+        return;
+      }
+      return sql.begin(async (sql) => {
+        console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
+        return insertConfigRow(sql, {
+          bridge_name: bridgeDbName,
+          chain: chain,
+          destination_chain: destinationChain,
+        });
       });
-    });
-  });
+    })
+  );
 };

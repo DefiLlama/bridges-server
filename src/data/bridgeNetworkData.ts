@@ -391,4 +391,30 @@ export default [
     chains: ["Ethereum", "zkSync Era"],
     destinationChain: "zkSync Era",
   },
+  {
+    id: 27,
+    displayName: "Symbiosis",
+    bridgeDbName: "symbiosis",
+    iconLink: "icons:symbiosis",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "BSC",
+      "Avalanche",
+      "Polygon",
+      "Telos",
+      "Kava",
+      "Boba",
+      "Boba BNB",
+      "Zksync Era",
+      "Arbitrum One",
+      "Arbitrum Nova",
+      "Optimism",
+      "Polygon zkEVM",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
 ] as BridgeNetwork[];
