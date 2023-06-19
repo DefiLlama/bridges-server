@@ -411,7 +411,10 @@ export default [
       "Arbitrum One",
       "Arbitrum Nova",
       "Optimism",
-      "Polygon zkEVM"
+      "Polygon zkEVM",
     ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
   },
 ] as BridgeNetwork[];

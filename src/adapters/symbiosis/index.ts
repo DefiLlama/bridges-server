@@ -55,7 +55,7 @@ const contracts = {
   polygon_zkevm: {
     portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
     synthesis: ZERO_ADDRESS,
-  }
+  },
 } as const;
 
 type SupportedChains = keyof typeof contracts;
@@ -99,21 +99,20 @@ const burnRequestParams: PartialContractEventParams = {
 };
 
 const constructParams = (chain: SupportedChains) => {
-
-  const eventParams: PartialContractEventParams[] = []
+  const eventParams: PartialContractEventParams[] = [];
 
   if (contracts[chain].portal !== ZERO_ADDRESS) {
     eventParams.push({
       ...synthesizeRequestParams,
       target: contracts[chain].portal,
-    })
+    });
   }
 
   if (contracts[chain].synthesis !== ZERO_ADDRESS) {
     eventParams.push({
       ...burnRequestParams,
       target: contracts[chain].synthesis,
-    })
+    });
   }
 
   return async (fromBlock: number, toBlock: number) =>
@@ -123,7 +122,7 @@ const constructParams = (chain: SupportedChains) => {
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   bsc: constructParams("bsc"),
-  avax: constructParams("avax"),
+  avalanche: constructParams("avax"),
   polygon: constructParams("polygon"),
 };
 
