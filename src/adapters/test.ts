@@ -28,7 +28,7 @@ const testAdapter = async () => {
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
-  const bridgeNetwork = importBridgeNetwork(adapterName)
+  const bridgeNetwork = importBridgeNetwork(adapterName);
   if (!bridgeNetwork) {
     throw new Error(`No entry for bridge found in src/data/bridgeNetworkData. Add an entry there before testing.`);
   }
@@ -85,6 +85,9 @@ const testAdapter = async () => {
         console.log(`token ${token} is missing price.`);
       }
     }
+
+    console.log("Done!");
+    process.exit();
   });
 };
 
