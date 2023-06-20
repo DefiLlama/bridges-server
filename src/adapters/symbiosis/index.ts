@@ -124,6 +124,15 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   avalanche: constructParams("avax"),
   polygon: constructParams("polygon"),
+  telos: constructParams("telos"),
+  kava: constructParams("kava"),
+  boba: constructParams("boba"),
+  // boba_bnb: constructParams("boba_bnb"),
+  // zksync: constructParams("zksync"),
+  arbitrum: constructParams("arbitrum"),
+  optimism: constructParams("optimism"),
+  arbitrum_nova: constructParams("arbitrum_nova"),
+  polygon_zkevm: constructParams("polygon_zkevm"),
 };
 
 export default adapter;
