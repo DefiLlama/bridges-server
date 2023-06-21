@@ -14,6 +14,7 @@ import { wait } from "../helpers/etherscan";
 import { lookupBlock } from "@defillama/sdk/build/util";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { BridgeNetwork } from "../data/types";
+import { groupBy } from "lodash";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -82,23 +83,24 @@ export const runAdapterToCurrentBlock = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
-  console.log(`Getting data for bridge ${bridgeNetwork.displayName}`);
+
+  console.log(`Getting data for bridge ${bridgeNetwork.displayName}$`);
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
-  const recordedBlocks = (
-    await retry(
-      async (_bail: any) =>
-        await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`)
-    )
-  ).data as RecordedBlocks;
-  if (!recordedBlocks) {
-    const errString = `Unable to retrieve recordedBlocks from s3.`;
-    await insertErrorRow({
-      ts: currentTimestamp,
-      target_table: "transactions",
-      keyword: "critical",
-      error: errString,
-    });
-    throw new Error(errString);
+  let recordedBlocks: RecordedBlocks | null = null;
+  try {
+    recordedBlocks =
+      bridgeDbName !== "multichain"
+        ? ((
+            await retry(
+              async (_bail: any) =>
+                await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
+              { retries: 4, factor: 1 }
+            )
+          ).data as RecordedBlocks)
+        : null;
+    console.log("Retrieved recorded blocks");
+  } catch (e) {
+    console.log("No recorded blocks data for " + bridgeDbName);
   }
 
   const adapter = adapters[bridgeDbName];
@@ -113,37 +115,74 @@ export const runAdapterToCurrentBlock = async (
     throw new Error(errString);
   }
   await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  console.log("Inserted or skipped config");
+
   const adapterPromises = Promise.all(
     Object.keys(adapter).map(async (chain, i) => {
       await wait(100 * i); // attempt to space out API calls
+      const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
+
       const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
-      const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
-        bridgeDbName,
-        chain,
-        chainContractsAreOn,
-        recordedBlocks
-      );
-      if (startBlock == null) return;
-      try {
-        await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-        if (useRecordedBlocks) {
-          console.log(endBlock);
-          recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-          recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-            recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
-          recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
+      if (recordedBlocks) {
+        const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
+          bridgeDbName,
+          chain,
+          chainContractsAreOn,
+          recordedBlocks
+        );
+        console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
+        if (startBlock == null) return;
+        try {
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          if (useRecordedBlocks) {
+            console.log(endBlock);
+            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
+            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
+          }
+        } catch (e) {
+          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          await insertErrorRow({
+            ts: currentTimestamp,
+            target_table: "transactions",
+            keyword: "data",
+            error: errString,
+          });
+          console.error(errString, e);
         }
-      } catch (e) {
-        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
-        await insertErrorRow({
-          ts: currentTimestamp,
-          target_table: "transactions",
-          keyword: "data",
-          error: errString,
-        });
-        console.error(errString, e);
+      } else {
+        try {
+          let startBlock = (
+            await sql`select * from bridges.transactions where bridge_id = ${bridgeID} and chain = ${chain} order by ts desc limit 1;`
+          )[0].tx_block;
+
+          const { number: endBlock } = await getLatestBlock(chainContractsAreOn);
+
+          while (startBlock < endBlock) {
+            await runAdapterHistorical(
+              startBlock,
+              startBlock + 10,
+              id,
+              chain as Chain,
+              allowNullTxValues,
+              true,
+              onConflict
+            );
+            startBlock += 10;
+          }
+        } catch (e) {
+          const errString = `Adapter txs without s3 for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          await insertErrorRow({
+            ts: currentTimestamp,
+            target_table: "transactions",
+            keyword: "data",
+            error: errString,
+          });
+          console.error(errString, e);
+        }
       }
     })
   );
@@ -300,6 +339,7 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -344,8 +384,10 @@ export const runAdapterHistorical = async (
   console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
   while (block > startBlock) {
     const startBlockForQuery = Math.max(startBlock, block - maxBlocksToQuery);
+    await wait(500);
     try {
-      const eventLogs = await adapterChainEventsFn(startBlockForQuery, block);
+      const eventLogs = await retry(async () => adapterChainEventsFn(startBlockForQuery, block));
+
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
         console.log(
@@ -373,7 +415,7 @@ export const runAdapterHistorical = async (
       }
       await sql.begin(async (sql) => {
         let txBlocks = [] as number[];
-        eventLogs.map((log) => {
+        eventLogs.map((log: any) => {
           const { blockNumber } = log;
           txBlocks.push(blockNumber);
         });
@@ -390,7 +432,8 @@ export const runAdapterHistorical = async (
             try {
               if (useChainBlocks) {
                 // add timeout?
-                block = await provider.getBlock(blockNumber);
+                await wait(100);
+                block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
                 if (block.timestamp) {
                   blockTimestamps[i] = block.timestamp;
                   break;
@@ -410,81 +453,75 @@ export const runAdapterHistorical = async (
           }
         }
 
+        // drop sus multi transfers
+        const groupedEvents = groupBy(eventLogs, (event: any) => event?.txHash);
+        const filteredEvents = Object.values(groupedEvents)
+          .filter((events) => events.length < 100)
+          .flat();
         let storedBridgeIds = {} as { [chain: string]: string };
-        const eventLogPromises = Promise.all(
-          eventLogs.map(async (log) => {
-            const {
-              txHash,
-              blockNumber,
-              from,
-              to,
-              token,
-              amount,
-              isDeposit,
-              chainOverride,
-              isUSDVolume,
-              txsCountedAs,
-            } = log;
-            const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-            const timestamp = blockTimestamps[bucket] * 1000;
+        for (let i = 0; i < filteredEvents?.length; i++) {
+          let log = filteredEvents[i];
 
-            let amountString;
-            if (!amount) {
-              amountString = "0";
+          const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs } =
+            log;
+          const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
+          const timestamp = blockTimestamps[bucket] * 1000;
+
+          let amountString;
+          if (!amount) {
+            amountString = "0";
+          } else {
+            amountString = amount.toString();
+          }
+
+          // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
+          // (don't believe this is actually used in codebase yet)
+          let bridgeIdOverride = bridgeID;
+          if (chainOverride) {
+            const storedBridgeID = storedBridgeIds[chainOverride];
+            if (storedBridgeID) {
+              bridgeIdOverride = storedBridgeID;
             } else {
-              amountString = amount.toString();
-            }
-
-            // this overrides the bridgeID inserted to if a log contains value for 'chainOverride'
-            // (don't believe this is actually used in codebase yet)
-            let bridgeIdOverride = bridgeID;
-            if (chainOverride) {
-              const storedBridgeID = storedBridgeIds[chainOverride];
-              if (storedBridgeID) {
-                bridgeIdOverride = storedBridgeID;
-              } else {
-                const overrideID = (await getBridgeID(bridgeDbName, chainOverride))?.id;
-                bridgeIdOverride = overrideID;
-                storedBridgeIds[chainOverride] = overrideID;
-                if (!overrideID) {
-                  const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
-                  await insertErrorRow({
-                    ts: getCurrentUnixTimestamp() * 1000,
-                    target_table: "transactions",
-                    keyword: "critical",
-                    error: errString,
-                  });
-                  throw new Error(errString);
-                }
+              const overrideID = await retry(async () => getBridgeID(bridgeDbName, chainOverride))?.id;
+              bridgeIdOverride = overrideID;
+              storedBridgeIds[chainOverride] = overrideID;
+              if (!overrideID) {
+                const errString = `${bridgeDbName} on chain ${chainOverride} is missing in config table.`;
+                await insertErrorRow({
+                  ts: getCurrentUnixTimestamp() * 1000,
+                  target_table: "transactions",
+                  keyword: "critical",
+                  error: errString,
+                });
+                throw new Error(errString);
               }
             }
-            if (
-              from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
-              to.toLowerCase() === "0x0000000000000000000000000000000000000000"
-            )
-              return;
-            await insertTransactionRow(
-              sql,
-              allowNullTxValues,
-              {
-                bridge_id: bridgeIdOverride,
-                chain: chainContractsAreOn,
-                tx_hash: txHash ?? null,
-                ts: timestamp,
-                tx_block: blockNumber ?? null,
-                tx_from: from ?? null,
-                tx_to: to ?? null,
-                token: token,
-                amount: amountString,
-                is_deposit: isDeposit,
-                is_usd_volume: isUSDVolume ?? false,
-                txs_counted_as: txsCountedAs ?? 0,
-              },
-              onConflict
-            );
-          })
-        );
-        await eventLogPromises;
+          }
+          if (
+            from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+            to.toLowerCase() === "0x0000000000000000000000000000000000000000"
+          )
+            return;
+          await insertTransactionRow(
+            sql,
+            allowNullTxValues,
+            {
+              bridge_id: bridgeIdOverride,
+              chain: chainContractsAreOn,
+              tx_hash: txHash ?? null,
+              ts: timestamp,
+              tx_block: blockNumber ?? null,
+              tx_from: from ?? null,
+              tx_to: to ?? null,
+              token: token,
+              amount: amountString,
+              is_deposit: isDeposit,
+              is_usd_volume: isUSDVolume ?? false,
+              txs_counted_as: txsCountedAs ?? 0,
+            },
+            onConflict
+          );
+        }
       });
       console.log("finished inserting transactions");
     } catch (e) {
@@ -510,15 +547,21 @@ export const insertConfigEntriesForAdapter = async (
   bridgeDbName: string,
   destinationChain?: string
 ) => {
-  await Object.keys(adapter).map(async (chain) => {
-    const existingEntry = await getBridgeID(bridgeDbName, chain);
-    if (existingEntry) {
-      console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
-      return;
-    }
-    await sql.begin(async (sql) => {
-      console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
-      await insertConfigRow(sql, { bridge_name: bridgeDbName, chain: chain, destination_chain: destinationChain });
-    });
-  });
+  await Promise.all(
+    Object.keys(adapter).map(async (chain) => {
+      const existingEntry = await getBridgeID(bridgeDbName, chain);
+      if (existingEntry) {
+        console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
+        return;
+      }
+      return sql.begin(async (sql) => {
+        console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
+        return insertConfigRow(sql, {
+          bridge_name: bridgeDbName,
+          chain: chain,
+          destination_chain: destinationChain,
+        });
+      });
+    })
+  );
 };
