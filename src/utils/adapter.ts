@@ -88,16 +88,14 @@ export const runAdapterToCurrentBlock = async (
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
   let recordedBlocks: RecordedBlocks | null = null;
   try {
-    recordedBlocks =
-      bridgeDbName !== "multichain"
-        ? ((
-            await retry(
-              async (_bail: any) =>
-                await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
-              { retries: 4, factor: 1 }
-            )
-          ).data as RecordedBlocks)
-        : null;
+    recordedBlocks = (
+      await retry(
+        async (_bail: any) =>
+          await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
+        { retries: 4, factor: 1 }
+      )
+    ).data as RecordedBlocks;
+
     console.log("Retrieved recorded blocks");
   } catch (e) {
     console.log("No recorded blocks data for " + bridgeDbName);
@@ -118,10 +116,7 @@ export const runAdapterToCurrentBlock = async (
   console.log("Inserted or skipped config");
 
   const adapterPromises = Promise.all(
-    Object.keys(adapter).map(async (chain, i) => {
-      await wait(100 * i); // attempt to space out API calls
-      const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
-
+    Object.keys(adapter).map(async (chain) => {
       const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
@@ -130,13 +125,14 @@ export const runAdapterToCurrentBlock = async (
           bridgeDbName,
           chain,
           chainContractsAreOn,
-          recordedBlocks
+          recordedBlocks!
         );
+
         console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
         if (startBlock == null) return;
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-          if (useRecordedBlocks) {
+          if (useRecordedBlocks && recordedBlocks) {
             console.log(endBlock);
             recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
             recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
@@ -155,6 +151,9 @@ export const runAdapterToCurrentBlock = async (
         }
       } else {
         try {
+          return;
+
+          const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
           let startBlock = (
             await sql`select * from bridges.transactions where bridge_id = ${bridgeID} and chain = ${chain} order by ts desc limit 1;`
           )[0].tx_block;
