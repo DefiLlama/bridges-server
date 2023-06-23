@@ -28,6 +28,7 @@ import beamer from "./beamer";
 import zksync from "./zksync";
 import polygon_zkevm from "./polygon_zkevm";
 import symbiosis from "./symbiosis";
+import meson from "./meson";
 
 export default {
   polygon,
@@ -58,6 +59,7 @@ export default {
   zksync,
   polygon_zkevm,
   symbiosis,
+  meson,
 } as {
   [bridge: string]: BridgeAdapter;
 };

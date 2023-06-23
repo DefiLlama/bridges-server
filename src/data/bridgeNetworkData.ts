@@ -417,4 +417,34 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  {
+    id: 28,
+    displayName: "Meson",
+    bridgeDbName: "meson",
+    iconLink: "",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      "Polygon zkEVM",
+      "Aurora",
+      "BSC",
+    ],
+    destinationChain: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      "Polygon zkEVM",
+      "Aurora",
+      "BSC",
+    ],
+  }
 ] as BridgeNetwork[];
