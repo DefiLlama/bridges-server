@@ -30,7 +30,7 @@ export default wrapScheduledLambda(async (_event) => {
   for (let i = 0; i < bridgeNetworks.length; i++) {
     await invokeLambda(`llama-bridges-prod-runAdapter`, {
       bridgeIndex: i,
-      lastRecordedBlocks,
+      lastRecordedBlocks: lastRecordedBlocks[0].result,
     });
   }
 });
