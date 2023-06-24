@@ -79,7 +79,8 @@ const getBlocksForRunningAdapter = async (
 export const runAdapterToCurrentBlock = async (
   bridgeNetwork: BridgeNetwork,
   allowNullTxValues: boolean = false,
-  onConflict: "ignore" | "error" | "upsert" = "error"
+  onConflict: "ignore" | "error" | "upsert" = "error",
+  lastRecordedBlocks: Record<string, RecordedBlocks> = {}
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
@@ -120,74 +121,74 @@ export const runAdapterToCurrentBlock = async (
       const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
-      if (recordedBlocks) {
-        const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
-          bridgeDbName,
-          chain,
-          chainContractsAreOn,
-          recordedBlocks!
-        );
+      const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
+      const { startBlock, endBlock } = await getBlocksForRunningAdapter(
+        bridgeDbName,
+        chain,
+        chainContractsAreOn,
+        lastRecordedBlocks[bridgeID] || lastRecordedBlocks
+      );
 
-        console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
-        if (startBlock == null) return;
-        try {
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-          if (useRecordedBlocks && recordedBlocks) {
-            console.log(endBlock);
-            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
-            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
-          }
-        } catch (e) {
-          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
-          await insertErrorRow({
-            ts: currentTimestamp,
-            target_table: "transactions",
-            keyword: "data",
-            error: errString,
-          });
-          console.error(errString, e);
-        }
-      } else {
-        try {
-          return;
-
-          const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
-          let startBlock = (
-            await sql`select * from bridges.transactions where bridge_id = ${bridgeID} and chain = ${chain} order by ts desc limit 1;`
-          )[0].tx_block;
-
-          const { number: endBlock } = await getLatestBlock(chainContractsAreOn);
-
-          while (startBlock < endBlock) {
-            await runAdapterHistorical(
-              startBlock,
-              startBlock + 10,
-              id,
-              chain as Chain,
-              allowNullTxValues,
-              true,
-              onConflict
-            );
-            startBlock += 10;
-          }
-        } catch (e) {
-          const errString = `Adapter txs without s3 for ${bridgeDbName} on chain ${chain} failed, skipped.`;
-          await insertErrorRow({
-            ts: currentTimestamp,
-            target_table: "transactions",
-            keyword: "data",
-            error: errString,
-          });
-          console.error(errString, e);
-        }
+      console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
+      if (startBlock == null) return;
+      try {
+        await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+        // if (useRecordedBlocks && recordedBlocks) {
+        //   console.log(endBlock);
+        //   recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
+        //   recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
+        //     recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
+        //   recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
+        // }
+      } catch (e) {
+        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+        await insertErrorRow({
+          ts: currentTimestamp,
+          target_table: "transactions",
+          keyword: "data",
+          error: errString,
+        });
+        console.error(errString, e);
       }
+      // else {
+      //   try {
+      //     const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
+      //     let startBlock = (
+      //       await sql`select * from bridges.transactions where bridge_id = ${bridgeID} and chain = ${chain} order by ts desc limit 1;`
+      //     )[0].tx_block;
+
+      //     const { number: endBlock } = await getLatestBlock(chainContractsAreOn);
+
+      //     while (startBlock < endBlock) {
+      //       await runAdapterHistorical(
+      //         startBlock,
+      //         startBlock + 10,
+      //         id,
+      //         chain as Chain,
+      //         allowNullTxValues,
+      //         true,
+      //         onConflict
+      //       );
+      //       startBlock += 10;
+      //     }
+      //   } catch (e) {
+      //     const errString = `Adapter txs without s3 for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+      //     await insertErrorRow({
+      //       ts: currentTimestamp,
+      //       target_table: "transactions",
+      //       keyword: "data",
+      //       error: errString,
+      //     });
+      //     console.error(errString, e);
+      //   }
+      // }
     })
   );
   await adapterPromises;
   // need better error catching
-  await store(recordedBlocksFilename, JSON.stringify(recordedBlocks));
+  if (recordedBlocks) {
+    await store(recordedBlocksFilename, JSON.stringify(recordedBlocks));
+  }
   console.log(`runAdapterToCurrentBlock for ${bridgeNetwork.displayName} successfully ran.`);
 };
 
