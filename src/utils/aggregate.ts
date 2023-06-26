@@ -131,6 +131,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
     })
   );
   await bridgeNetworksPromises;
+  await sql.end();
   console.log("Finished aggregating job.");
 };
 
