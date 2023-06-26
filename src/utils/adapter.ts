@@ -322,6 +322,7 @@ export const runAllAdaptersTimestampRange = async (
     );
     await adapterPromises;
   }
+  await sql.end();
   // need better error catching
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
