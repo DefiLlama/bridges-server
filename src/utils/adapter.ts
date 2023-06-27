@@ -122,7 +122,7 @@ export const runAdapterToCurrentBlock = async (
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
       const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
-      const { startBlock, endBlock } = await getBlocksForRunningAdapter(
+      let { startBlock, endBlock } = await getBlocksForRunningAdapter(
         bridgeDbName,
         chain,
         chainContractsAreOn,
@@ -132,14 +132,18 @@ export const runAdapterToCurrentBlock = async (
       console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
       if (startBlock == null) return;
       try {
-        await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-        // if (useRecordedBlocks && recordedBlocks) {
-        //   console.log(endBlock);
-        //   recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-        //   recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-        //     recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
-        //   recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
-        // }
+        while (startBlock < endBlock) {
+          await runAdapterHistorical(
+            startBlock,
+            startBlock + 10,
+            id,
+            chain as Chain,
+            allowNullTxValues,
+            true,
+            onConflict
+          );
+          startBlock += 10;
+        }
       } catch (e) {
         const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
         await insertErrorRow({
