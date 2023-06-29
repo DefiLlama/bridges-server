@@ -497,25 +497,31 @@ export const runAdapterHistorical = async (
             to.toLowerCase() === "0x0000000000000000000000000000000000000000"
           )
             return;
-          await insertTransactionRow(
-            sql,
-            allowNullTxValues,
-            {
-              bridge_id: bridgeIdOverride,
-              chain: chainContractsAreOn,
-              tx_hash: txHash ?? null,
-              ts: timestamp,
-              tx_block: blockNumber ?? null,
-              tx_from: from ?? null,
-              tx_to: to ?? null,
-              token: token,
-              amount: amountString,
-              is_deposit: isDeposit,
-              is_usd_volume: isUSDVolume ?? false,
-              txs_counted_as: txsCountedAs ?? 0,
-            },
-            onConflict
-          );
+
+          try {
+            await insertTransactionRow(
+              sql,
+              allowNullTxValues,
+              {
+                bridge_id: bridgeIdOverride,
+                chain: chainContractsAreOn,
+                tx_hash: txHash ?? null,
+                ts: timestamp,
+                tx_block: blockNumber ?? null,
+                tx_from: from ?? null,
+                tx_to: to ?? null,
+                token: token,
+                amount: amountString,
+                is_deposit: isDeposit,
+                is_usd_volume: isUSDVolume ?? false,
+                txs_counted_as: txsCountedAs ?? 0,
+              },
+              onConflict
+            );
+          } catch (e: any) {
+            console.error("Error: Insert failed" + e?.message);
+            continue;
+          }
         }
       });
       console.log("finished inserting transactions");
