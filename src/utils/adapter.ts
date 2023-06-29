@@ -64,9 +64,7 @@ const getBlocksForRunningAdapter = async (
       );
     }
     startBlock = lastRecordedEndBlock + 1;
-    if (endBlock - startBlock > maxBlocksToQuery) {
-      endBlock = startBlock + maxBlocksToQuery;
-    }
+
     useRecordedBlocks = true;
   } else {
     startBlock = 0;
@@ -379,24 +377,22 @@ export const runAdapterHistorical = async (
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
   const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
-  let block = endBlock;
+  let block = startBlock;
   console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
-  while (block > startBlock) {
-    const startBlockForQuery = Math.max(startBlock, block - maxBlocksToQuery);
+  while (block < endBlock) {
     await wait(500);
+    const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
     try {
-      const eventLogs = await retry(async () => adapterChainEventsFn(startBlockForQuery, block));
+      const eventLogs = await retry(() => adapterChainEventsFn(block, endBlockForQuery), { retries: 3, factor: 1 });
 
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
-        console.log(
-          `No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${startBlockForQuery} to ${block}.`
-        );
-        block = startBlockForQuery - 1;
+        console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${block} to ${endBlock}.`);
+        block = block + maxBlocksToQuery;
         continue;
       }
       console.log(
-        `${eventLogs.length} transactions were found for ${bridgeID} (${bridgeDbName}) on ${chain} from ${startBlockForQuery} to ${block}.`
+        `${eventLogs.length} transactions were found for ${bridgeID} (${bridgeDbName}) on ${chain} from ${block} to ${endBlockForQuery}.`
       );
       let provider = undefined as any;
       if (useChainBlocks) {
@@ -523,8 +519,10 @@ export const runAdapterHistorical = async (
         }
       });
       console.log("finished inserting transactions");
-    } catch (e) {
-      const errString = `Adapter for ${bridgeDbName} failed to get and insert logs for chain ${chain} for blocks ${startBlockForQuery}-${block}.`;
+    } catch (e: any) {
+      const errString = `Adapter for ${bridgeDbName} failed to get and insert logs for chain ${chain} for blocks ${block}-${endBlockForQuery}. ${
+        e && e?.message
+      }`;
       await insertErrorRow({
         ts: getCurrentUnixTimestamp() * 1000,
         target_table: "transactions",
@@ -536,7 +534,7 @@ export const runAdapterHistorical = async (
       }
       console.error(errString, e);
     }
-    block = startBlockForQuery - 1;
+    block = block + maxBlocksToQuery;
   }
   console.log(`finished inserting all transactions for ${bridgeID}`);
 };
