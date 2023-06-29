@@ -22,12 +22,11 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
-  avalanche: constructParams("avax"),
+  avax: constructParams("avax"),
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   aurora: constructParams("aurora"),
-  polygon_zkEVM: constructParams("polygon_zkEVM")
 };
 
 export default adapter;
