@@ -71,8 +71,8 @@ export const runAggregateDataHistorical = async (
     if (chainToRestrictTo) {
       try {
         await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
-      } catch (e) {
-        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping.`;
+      } catch (e: any) {
+        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -86,8 +86,8 @@ export const runAggregateDataHistorical = async (
         chains.map(async (chain) => {
           try {
             await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
-          } catch (e) {
-            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.`;
+          } catch (e: any) {
+            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.${e?.message}`;
             await insertErrorRow({
               ts: currentTimestamp,
               target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -209,8 +209,8 @@ export const aggregateData = async (
             total_address_withdrawn: null,
           });
         });
-      } catch (e) {
-        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+      } catch (e: any) {
+        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "daily_aggregated",

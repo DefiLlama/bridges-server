@@ -128,21 +128,15 @@ export const runAdapterToCurrentBlock = async (
         chainContractsAreOn,
         lastRecordedBlocks[bridgeID] || lastRecordedBlocks
       );
+      const step = maxBlocksToQueryByChain[chain] || 400;
 
       console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
       if (startBlock == null) return;
       try {
         while (startBlock < endBlock) {
-          await runAdapterHistorical(
-            startBlock,
-            startBlock + 10,
-            id,
-            chain as Chain,
-            allowNullTxValues,
-            true,
-            onConflict
-          );
-          startBlock += 10;
+          let toBlock = startBlock + step > endBlock ? endBlock : startBlock + step;
+          await runAdapterHistorical(startBlock, toBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          startBlock += step;
         }
       } catch (e) {
         const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
