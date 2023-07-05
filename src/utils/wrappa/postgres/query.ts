@@ -94,7 +94,11 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
 };
 
 // need to FIX 'to_timestamp' throughout so I can pass already formatted timestamps**********************
-const queryTransactionsTimestampRangeByBridge = async (startTimestamp: number, endTimestamp: number, bridgeID: string) => {
+const queryTransactionsTimestampRangeByBridge = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeID: string
+) => {
   return await sql<ITransaction[]>`
   SELECT * FROM 
     bridges.transactions
@@ -227,10 +231,11 @@ const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: st
     );`;
   }
   return await sql<IAggregatedData[]>`
-  SELECT * FROM 
-    bridges.daily_aggregated
+ 
+  SELECT date(ts) as ts, * FROM 
+    bridges.hourly_aggregated
   WHERE 
-    ts = to_timestamp(${timestamp}) 
+    date(ts) = date(to_timestamp(${timestamp}))
     ${bridgeIdIn}
   `;
 };
@@ -273,7 +278,7 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   let chainEqual = chain ? sql`WHERE (chain = ${chain} OR destination_chain = ${chain})` : sql``;
   let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : chainEqual;
   if (bridgeNetworkName && chain) {
-    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`
+    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`;
   }
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,
