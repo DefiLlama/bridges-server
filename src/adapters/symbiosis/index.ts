@@ -43,7 +43,7 @@ const adapter: BridgeAdapter = {
   kava: constructParams("kava"),
   boba: constructParams("boba"),
   // boba_bnb: constructParams("boba_bnb"),
-  // zksync: constructParams("zksync"),
+  // zksync: constructParams("era"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   arbitrum_nova: constructParams("arbitrum_nova"),
