@@ -64,7 +64,6 @@ const contractAddresses = {
 } as {
     [chain: string]: {
         synapseBridge: string;
-
     };
   };
 
@@ -76,27 +75,16 @@ const contractAddresses = {
     target: "",
     //Using "address" instead of "contract" in topic and abi because code fails without this
     topic:"TokenDeposit(address,uint256,address,uint256)",
-    abi: [
-      "event TokenDeposit(address indexed to, uint256 chainId, address, uint256 amount)",
-    ],
+    abi: ["event TokenDeposit(address indexed to, uint256 chainId, IERC20 token, uint256 amount)"],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
-      from: "address"
+      from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function deposit(address to, uint256 chainId, address token, uint256 amount)",
-      ],
-      inputDataFnName: "deposit",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: true,
   };
@@ -105,54 +93,34 @@ const contractAddresses = {
     target: "",
     topic:"TokenDepositAndSwap(address,uint256,contract,uint256,uint8,uint8,uint256,uint256)",
     abi: [
-      "event TokenDepositAndSwap(address indexed to, uint256 chainId, address, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
-    ],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-      from: "address"
-    },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function depositAndSwap(address to, uint256 chainId, address token, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
-      ],
-      inputDataFnName: "depositAndSwap",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
-    },
-    isDeposit: true,
-  };
-
-  const TokenRedeemDepositParams: PartialContractEventParams = {
-    target: "",
-    topic:"TokenRedeem(address,uint256,address,uint256)",
-    abi: [
-      "event TokenRedeem(address indexed to, uint256 chainId, address, uint256 amount)",
+      "event TokenDepositAndSwap(address indexed to, uint256 chainId, address token, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function redeem(address to, uint256 chainId, address token, uint256 amount) ",
-      ],
-      inputDataFnName: "redeem",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
-    fixedEventData: {
+    isDeposit: true,
+  };
 
+  const TokenRedeemDepositParams: PartialContractEventParams = {
+    target: "",
+    topic: "TokenRedeem(address,uint256,address,uint256)",
+    abi: ["event TokenRedeem(address indexed to, uint256 chainId, address token, uint256 amount)",],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+      from: "address",
+    },
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: true,
   };
@@ -161,26 +129,17 @@ const contractAddresses = {
     target: "",
     topic:"TokenRedeemAndRemove(address,uint256,address,uint256,uint8,uint256,uint256)",
     abi: [
-      "event TokenRedeemAndRemove(address indexed to, uint256 chainId, address, uint256 amount, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline)",
+      "event TokenRedeemAndRemove(address indexed to, uint256 chainId, address token, uint256 amount, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function redeemAndRemove(address to, uint256 chainId, address token, uint256 amount, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline)",
-      ],
-      inputDataFnName: "redeemAndRemove",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: true,
   };
@@ -189,26 +148,17 @@ const contractAddresses = {
     target: "",
     topic:"TokenRedeemAndSwap(address,uint256,address,uint256,uint8,uint8,uint256,uint256)",
     abi: [
-      "event TokenRedeemAndSwap(address indexed to, uint256 chainId, address, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
+      "event TokenRedeemAndSwap(address indexed to, uint256 chainId, address token, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function redeemAndSwap(address to, uint256 chainId, address token, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
-      ],
-      inputDataFnName: "redeemAndSwap",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: true,
   };
@@ -217,31 +167,22 @@ const contractAddresses = {
     target: "",
     topic:"TokenRedeemV2(bytes32,uint256,address,uint256)",
     abi: [
-      "event TokenRedeemV2(bytes32 indexed to, uint256 chainId, address, uint256 amount)",
+      "event TokenRedeemV2(bytes32 indexed to, uint256 chainId, address token, uint256 amount)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
-    },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function redeemV2(bytes32 to, uint256 chainId, address token, uint256 amount)",
-      ],
-      inputDataFnName: "redeemV2",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    },    
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: true,
   };
 
-//Begin outlining the withdraws
+// //Begin outlining the withdraws
 const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     target: "",
     topic:"TokenWithdraw(address,address,uint256,uint256,bytes32)",
@@ -253,19 +194,10 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function withdraw(address to, address token, uint256 amount, uint256 fee, bytes32 kappa)",
-      ],
-      inputDataFnName: "withdraw",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: false,
   };
@@ -281,19 +213,10 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function withdrawAndRemove(address to, address token, uint256 amount, uint256 fee, address pool, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline, bytes32 kappa)",
-      ],
-      inputDataFnName: "withdrawAndRemove",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: false,
   };
@@ -302,26 +225,17 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     target: "",
     topic:"TokenMint(address,address,uint256,uint256,bytes32)",
     abi: [
-      "event TokenMint(address indexed to, address, uint256 amount, uint256 fee, bytes32 indexed kappa)",
+      "event TokenMint(address indexed to, address token, uint256 amount, uint256 fee, bytes32 indexed kappa)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function mint(address payable to, address token, uint256 amount, uint256 fee, bytes32 kappa) ",
-      ],
-      inputDataFnName: "mint",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token",
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: false,
   };
@@ -330,30 +244,20 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     target: "",
     topic:"TokenMintAndSwap(address,address,uint256,uint256,uint8,uint8,uint256,uint256,bool,bytes32)",
     abi: [
-      "event TokenMintAndSwap(address indexed to, address, uint256 amount, uint256 fee, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline, bool swapSuccess, bytes32 indexed kappa)",
+      "event TokenMintAndSwap(address indexed to, address token, uint256 amount, uint256 fee, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline, bool swapSuccess, bytes32 indexed kappa)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
       from: "address",
     },
-    inputDataExtraction: {
-      inputDataABI: [
-        "function mintAndSwap(address payable to, address token, uint256 amount, uint256 fee, address pool, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline, bytes32 kappa)",
-      ],
-      inputDataFnName: "mintAndSwap",
-      inputDataKeys: {
-        to: "to",
-        amount: "amount",
-        token: "token"
-      },
-    },
-    fixedEventData: {
-
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "to",
     },
     isDeposit: false,
   };
-
 
 //Add all partial events to eventParams
 
@@ -414,7 +318,7 @@ const constructParams = (chain:string) => {
         finalTokenWithdrawWithdrawParams,
         finalTokenWithdrawAndRemoveWithdrawParams,
         finalTokenMintWithdrawParams,
-        finalTokenMintAndSwapWithdrawParams
+        finalTokenMintAndSwapWithdrawParams,
     ]
 
     return async (fromBlock: number, toBlock: number) =>
@@ -432,17 +336,17 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   canto: constructParams("canto"),
   cronos: constructParams("cronos"),
-  dfk: constructParams("dfk"),
-  dogechain: constructParams("dogechain"),
+  // dfk: constructParams("dfk"),
+  // dogechain: constructParams("dogechain"),
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
-  harmony: constructParams("harmony"),
-  moonriver: constructParams("moonriver"),
-  moonbeam: constructParams("moonbeam"),
+  // harmony: constructParams("harmony"),
+  // moonriver: constructParams("moonriver"),
+  // moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
-  metis: constructParams("metis"),
-  klaytn: constructParams("klaytn")
+  // metis: constructParams("metis"),
+  // klaytn: constructParams("klaytn")
 };
 
 
