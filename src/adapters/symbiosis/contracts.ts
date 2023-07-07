@@ -31,7 +31,7 @@ export const contracts = {
         portal: null,
         synthesis: "0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8",
     },
-    zksync: {
+    era: {
         portal: "0x39dE19C9fF25693A2311AAD1dc5C790194084A39",
         synthesis: null,
     },
