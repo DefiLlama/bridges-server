@@ -1,5 +1,7 @@
 import { sql } from "./db";
 import BigNumber from "bignumber.js";
+import { PromisePool } from "@supercharge/promise-pool";
+
 import { queryTransactionsTimestampRangeByBridge } from "./wrappa/postgres/query";
 import {
   getTimestampAtStartOfHour,
@@ -55,6 +57,7 @@ export const runAggregateDataHistorical = async (
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
+
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -71,8 +74,8 @@ export const runAggregateDataHistorical = async (
     if (chainToRestrictTo) {
       try {
         await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
-      } catch (e) {
-        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping.`;
+      } catch (e: any) {
+        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -86,8 +89,8 @@ export const runAggregateDataHistorical = async (
         chains.map(async (chain) => {
           try {
             await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
-          } catch (e) {
-            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.`;
+          } catch (e: any) {
+            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.${e?.message}`;
             await insertErrorRow({
               ts: currentTimestamp,
               target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -106,8 +109,9 @@ export const runAggregateDataHistorical = async (
 };
 
 export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boolean = false) => {
-  const bridgeNetworksPromises = Promise.all(
-    bridgeNetworks.map(async (bridgeNetwork) => {
+  await PromisePool.withConcurrency(2)
+    .for(bridgeNetworks)
+    .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
       const adapter = adapters[bridgeDbName];
       const chains = Object.keys(adapter);
@@ -128,9 +132,8 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
         })
       );
       await chainsPromises;
-    })
-  );
-  await bridgeNetworksPromises;
+    });
+
   await sql.end();
   console.log("Finished aggregating job.");
 };
@@ -209,8 +212,8 @@ export const aggregateData = async (
             total_address_withdrawn: null,
           });
         });
-      } catch (e) {
-        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+      } catch (e: any) {
+        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "daily_aggregated",
