@@ -421,7 +421,7 @@ export default [
     id: 28,
     displayName: "Meson",
     bridgeDbName: "meson",
-    iconLink: "",
+    iconLink: "icons:meson",
     largeTxThreshold: 10000,
     url: "",
     chains: [
