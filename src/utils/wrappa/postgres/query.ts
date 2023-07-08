@@ -130,7 +130,7 @@ const queryAggregatedDailyTimestampRange = async (
   return await sql<IAggregatedData[]>`
   SELECT 
     bridge_id, 
-    date_trunc('day', ts) AS day_ts, 
+    date_trunc('day', ts) AS ts, 
     SUM(total_deposited_usd) AS total_deposited_usd, 
     SUM(total_withdrawn_usd) AS total_withdrawn_usd, 
     SUM(total_deposit_txs) AS total_deposit_txs, 
