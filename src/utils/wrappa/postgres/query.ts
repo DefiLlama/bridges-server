@@ -146,6 +146,9 @@ const queryAggregatedDailyTimestampRange = async (
       ${bridgeNetworkNameEqual}
       ${chainEqual}
     )
+    GROUP BY 
+       bridge_id, 
+       date_trunc('day', ts)
     ORDER BY ts;
   `;
 };
