@@ -89,8 +89,16 @@ chains: ["Ethereum", "Polygon"], // Bridge chains. If your bridge is on 2 chains
 destinationChain:  "Polygon", // When bridge connects 2 chains, for example Ethereum<->Optimism and there is only one adapter on one chain which tracks deposits and withdrawals for both chains
 ```
 ### Testing 
+#### Adapter Testing:
 ```bash
 npm run test [adapter name] [number of blocks to test on]
 Example: 
 npm run test across 1000
+```
+
+#### Backfill testing:
+```bash
+npm run test-txs [start ts] [end ts] [adapter name]
+Example: 
+npm run test-txs 1688476361 1688919317 synapse
 ```

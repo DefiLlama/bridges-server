@@ -174,7 +174,7 @@ export const getTxDataFromEVMEventLogs = async (
             });
           } catch (e) {
             console.error(
-              `WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash}`
+              `WARNING: Unable to parse log for ${adapterName}, SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
             );
             dataKeysToFilter.push(i);
             return;
@@ -183,7 +183,9 @@ export const getTxDataFromEVMEventLogs = async (
             try {
               const args = parsedLog?.args;
               if (args === undefined || args.length === 0) {
-                throw new Error(`Unable to get log args for ${adapterName} with arg keys ${argKeys}.`);
+                throw new Error(
+                  `Unable to get log args for ${adapterName} with arg keys ${argKeys} ${chainContractsAreOn}.`
+                );
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
@@ -223,7 +225,7 @@ export const getTxDataFromEVMEventLogs = async (
               }
             } catch (error) {
               console.error(
-                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash}`
+                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
               );
               return;
             }

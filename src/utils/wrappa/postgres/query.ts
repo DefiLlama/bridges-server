@@ -128,17 +128,28 @@ const queryAggregatedDailyTimestampRange = async (
     chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
   }
   return await sql<IAggregatedData[]>`
-  SELECT bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs FROM 
-    bridges.daily_aggregated
+  SELECT 
+    bridge_id, 
+    date_trunc('day', ts) AS ts, 
+    CAST(SUM(total_deposited_usd) AS INTEGER) AS total_deposited_usd, 
+    CAST(SUM(total_withdrawn_usd) AS INTEGER) AS total_withdrawn_usd, 
+    CAST(SUM(total_deposit_txs) AS INTEGER) AS total_deposit_txs, 
+    CAST(SUM(total_withdrawal_txs) AS INTEGER) AS total_withdrawal_txs 
+  FROM 
+    bridges.hourly_aggregated
   WHERE
   ts >= to_timestamp(${startTimestamp}) AND 
   ts <= to_timestamp(${endTimestamp}) AND 
+   ts < DATE_TRUNC('day', NOW()) AND
     bridge_id IN (
       SELECT id FROM
         bridges.config
       ${bridgeNetworkNameEqual}
       ${chainEqual}
     )
+    GROUP BY 
+       bridge_id, 
+       date_trunc('day', ts)
     ORDER BY ts;
   `;
 };
@@ -231,8 +242,8 @@ const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: st
     );`;
   }
   return await sql<IAggregatedData[]>`
- 
-  SELECT date(ts) as ts, * FROM 
+  
+ SELECT date(ts) as ts, * FROM 
     bridges.hourly_aggregated
   WHERE 
     date(ts) = date(to_timestamp(${timestamp}))
