@@ -75,7 +75,7 @@ const contractAddresses = {
     target: "",
     //Using "address" instead of "contract" in topic and abi because code fails without this
     topic:"TokenDeposit(address,uint256,address,uint256)",
-    abi: ["event TokenDeposit(address indexed to, uint256 chainId, IERC20 token, uint256 amount)"],
+    abi: ["event TokenDeposit(address indexed to, uint256 chainId, address token, uint256 amount)"],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
@@ -187,7 +187,7 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     target: "",
     topic:"TokenWithdraw(address,address,uint256,uint256,bytes32)",
     abi: [
-      "event TokenWithdraw(address indexed to, address, uint256 amount, uint256 fee, bytes32 indexed kappa)",
+      "event TokenWithdraw(address indexed to, address token, uint256 amount, uint256 fee, bytes32 indexed kappa)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
@@ -206,7 +206,7 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     target: "",
     topic:"TokenWithdrawAndRemove(address,address,uint256,uint256,uint8,uint256,uint256,bool,bytes32)",
     abi: [
-      "event TokenWithdrawAndRemove(address indexed to, address, uint256 amount, uint256 fee, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline, bool swapSuccess, bytes32 indexed kappa)",
+      "event TokenWithdrawAndRemove(address indexed to, address token, uint256 amount, uint256 fee, uint8 swapTokenIndex, uint256 swapMinAmount, uint256 swapDeadline, bool swapSuccess, bytes32 indexed kappa)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
@@ -332,21 +332,21 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   aurora: constructParams("aurora"),
   avalanche: constructParams("avax"),
-  boba: constructParams("boba"),
+  // boba: constructParams("boba"),
   bsc: constructParams("bsc"),
-  canto: constructParams("canto"),
-  cronos: constructParams("cronos"),
-  // dfk: constructParams("dfk"),
+  // canto: constructParams("canto"),
+  // cronos: constructParams("cronos"),
+  dfk: constructParams("dfk"),
   // dogechain: constructParams("dogechain"),
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
-  // harmony: constructParams("harmony"),
-  // moonriver: constructParams("moonriver"),
-  // moonbeam: constructParams("moonbeam"),
+  harmony: constructParams("harmony"),
+  moonriver: constructParams("moonriver"),
+  moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
   // metis: constructParams("metis"),
-  // klaytn: constructParams("klaytn")
+  klaytn: constructParams("klaytn")
 };
 
 
