@@ -407,14 +407,18 @@ export default [
       "Kava",
       "Boba",
       "Boba BNB",
-      "Zksync Era",
-      "Arbitrum One",
+      "zkSync Era",
+      "Arbitrum",
       "Arbitrum Nova",
       "Optimism",
       "Polygon zkEVM",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
+      "boba bnb": "boba_bnb",
+      "zksync era": "era",
+      "arbitrum nova": "arbitrum_nova",
+      "polygon zkevm": "polygon_zkevm",
     },
   },
   {
@@ -424,16 +428,7 @@ export default [
     iconLink: "icons:meson",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      "Aurora",
-      "BSC",
-    ],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "BSC"],
     chainMapping: {
       avalanche: "avax",
     },

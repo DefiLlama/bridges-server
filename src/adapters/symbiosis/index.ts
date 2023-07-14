@@ -1,7 +1,7 @@
-import {BridgeAdapter, PartialContractEventParams} from "../../helpers/bridgeAdapter.type";
-import {getTxDataFromEVMEventLogs} from "../../helpers/processTransactions";
-import {events} from "./events";
-import {contracts} from "./contracts";
+import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { events } from "./events";
+import { contracts } from "./contracts";
 
 type SupportedChains = keyof typeof contracts;
 
@@ -42,12 +42,12 @@ const adapter: BridgeAdapter = {
   telos: constructParams("telos"),
   kava: constructParams("kava"),
   boba: constructParams("boba"),
-  boba_bnb: constructParams("boba_bnb"),
-  era: constructParams("era"),
+  "boba bnb": constructParams("boba_bnb"),
+  "zksync era": constructParams("era"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  arbitrum_nova: constructParams("arbitrum_nova"),
-  polygon_zkevm: constructParams("polygon_zkevm"),
+  "arbitrum nova": constructParams("arbitrum_nova"),
+  "polygon zkevm": constructParams("polygon_zkevm"),
 };
 
 export default adapter;
