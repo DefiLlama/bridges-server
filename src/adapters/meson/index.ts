@@ -27,6 +27,7 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   aurora: constructParams("aurora"),
+  "zksync era": constructParams("era"),
 };
 
 export default adapter;
