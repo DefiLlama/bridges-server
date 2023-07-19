@@ -220,35 +220,24 @@ const queryAggregatedHourlyDataAtTimestamp = async (timestamp: number, chain?: s
 };
 
 const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: string, bridgeNetworkName?: string) => {
-  let bridgNetworkNameEqual = sql``;
-  let chainEqual = sql``;
-  let bridgeIdIn = sql``;
-  if (bridgeNetworkName && chain) {
-    bridgNetworkNameEqual = sql`
-    WHERE bridge_name = ${bridgeNetworkName} AND
-    chain = ${chain}
-    `;
-  } else {
-    bridgNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
-    chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
-  }
-  if (bridgeNetworkName || chain) {
-    bridgeIdIn = sql`AND
-    bridge_id IN (
-      SELECT id FROM
-        bridges.config
-      ${bridgNetworkNameEqual}
-      ${chainEqual}
-    );`;
-  }
+  let bridgeNetworkCondition = bridgeNetworkName ? sql`AND bc.bridge_name = ${bridgeNetworkName}` : sql``;
+  let chainCondition = chain ? sql`AND bc.chain = ${chain}` : sql``;
+  let dateStr = new Date(timestamp * 1000).toISOString().split("T")[0];
+
   return await sql<IAggregatedData[]>`
-  
- SELECT date(ts) as ts, * FROM 
-    bridges.hourly_aggregated
-  WHERE 
-    date(ts) = date(to_timestamp(${timestamp}))
-    ${bridgeIdIn}
-  `;
+    SELECT ha.ts::date as ts, ha.* 
+    FROM bridges.hourly_aggregated ha
+    JOIN (
+        SELECT id 
+        FROM bridges.config bc
+        WHERE 1 = 1 
+        ${bridgeNetworkCondition}
+        ${chainCondition}
+    ) AS subq
+    ON ha.bridge_id = subq.id
+    WHERE 
+        ha.ts::date = ${dateStr}
+    `;
 };
 
 const queryLargeTransactionsTimestampRange = async (
