@@ -443,4 +443,30 @@ export default [
       "zksync era": "era",
     },
   },
+  {
+    id: 29,
+    displayName: "Orbiter",
+    bridgeDbName: "orbiter",
+    iconLink: "icons:orbiter",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum", 
+      // "Arbitrum", 
+      // "Arbitrum Nova",  
+      // "BNB Chain", 
+      // "Immutable X", 
+      // "Linea", 
+      // "Loopring", 
+      // "Optimism", 
+      // "Polygon", 
+      // "Polygon zkEVM", 
+      // "StarkNet", 
+      // "zkSync Lite", 
+      // "zkSync Era"
+    ],
+    // chainMapping: {
+    //   "zksync era": "era",
+    // },
+  },
 ] as BridgeNetwork[];
