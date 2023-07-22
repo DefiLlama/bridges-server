@@ -44,7 +44,7 @@ export const getDailyBridgeVolume = async (
 ) => {
   let bridgeDbName = undefined as any;
   if (bridgeNetworkId) {
-    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
+    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
     if (!bridgeNetwork) {
       throw new Error("Invalid bridgeNetworkId entered for getting daily bridge volume.");
     }
@@ -117,15 +117,14 @@ export const getDailyBridgeVolume = async (
   */
 
   let historicalDailySums = {} as { [timestamp: string]: any };
-  historicalDailyData.map((dailyData) => {
+  historicalDailyData.map((dailyData: any) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       dailyData;
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
-    historicalDailySums[timestamp].depositUSD =
-      (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_deposited_usd);
+    historicalDailySums[timestamp].depositUSD = (historicalDailySums[timestamp].depositUSD ?? 0) + total_deposited_usd;
     historicalDailySums[timestamp].withdrawUSD =
-      (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      (historicalDailySums[timestamp].withdrawUSD ?? 0) + total_withdrawn_usd;
     historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_deposit_txs;
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
@@ -134,9 +133,9 @@ export const getDailyBridgeVolume = async (
     if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
       historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
       historicalDailySums[timestamp].depositUSD =
-        (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+        (historicalDailySums[timestamp].depositUSD ?? 0) + total_withdrawn_usd;
       historicalDailySums[timestamp].withdrawUSD =
-        (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+        (historicalDailySums[timestamp].withdrawUSD ?? 0) + total_deposited_usd;
       historicalDailySums[timestamp].depositTxs =
         (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
       historicalDailySums[timestamp].withdrawTxs =
@@ -148,10 +147,9 @@ export const getDailyBridgeVolume = async (
     const { ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = dailyData;
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
-    historicalDailySums[timestamp].depositUSD =
-      (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+    historicalDailySums[timestamp].depositUSD = (historicalDailySums[timestamp].depositUSD ?? 0) + total_withdrawn_usd;
     historicalDailySums[timestamp].withdrawUSD =
-      (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+      (historicalDailySums[timestamp].withdrawUSD ?? 0) + total_deposited_usd;
     historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
     historicalDailySums[timestamp].withdrawTxs = (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
   });
@@ -239,7 +237,7 @@ export const getHourlyBridgeVolume = async (
 ) => {
   let bridgeDbName = undefined as any;
   if (bridgeNetworkId) {
-    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId)
+    const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
     if (!bridgeNetwork) {
       throw new Error("Invalid bridgeNetworkId entered for getting daily bridge volume.");
     }
@@ -277,7 +275,7 @@ export const getHourlyBridgeVolume = async (
     chain,
     bridgeDbName
   );
-  
+
   let historicalHourlySums = {} as { [timestamp: string]: any };
   historicalHourlyData.map((hourlyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
