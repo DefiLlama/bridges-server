@@ -147,6 +147,11 @@ const queryAggregatedDailyTimestampRange = async (
       ${bridgeNetworkNameEqual}
       ${chainEqual}
     )
+    AND
+    (total_deposited_usd IS NOT NULL AND total_deposited_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
+    (total_withdrawn_usd IS NOT NULL AND total_withdrawn_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
+    (total_deposit_txs IS NOT NULL AND total_deposit_txs::text ~ '^[0-9]+$') AND 
+    (total_withdrawal_txs IS NOT NULL AND total_withdrawal_txs::text ~ '^[0-9]+$')
     GROUP BY 
        bridge_id, 
        date_trunc('day', ts)
