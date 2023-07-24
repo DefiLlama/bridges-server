@@ -437,9 +437,10 @@ export default [
     iconLink: "icons:meson",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "BSC"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "BSC", "zkSync Era"],
     chainMapping: {
       avalanche: "avax",
+      "zksync era": "era",
     },
   },
 ] as BridgeNetwork[];
