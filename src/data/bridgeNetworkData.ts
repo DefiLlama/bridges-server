@@ -471,4 +471,12 @@ export default [
   //   url: "",
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
   // },
+  {
+    displayName: "Eywa",
+    bridgeDbName: "eywa",
+    iconLink: "icons:eywa",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+  },
 ] as BridgeNetwork[];
