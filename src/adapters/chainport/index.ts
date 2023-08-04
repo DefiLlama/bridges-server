@@ -117,7 +117,7 @@ const transferParams: PartialContractEventParams = {
     txHash: "transactionHash",
   },
   argKeys: {
-    token: "tokenAddress",
+    token: "bridgeTokenAddress",
     from: "issuer",
     to: "issuer",
     amount: "amount"
