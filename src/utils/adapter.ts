@@ -492,9 +492,10 @@ export const runAdapterHistorical = async (
               }
             }
           }
+          if (!from || !to) return;
           if (
-            from.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
-            to.toLowerCase() === "0x0000000000000000000000000000000000000000"
+            from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+            to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
           )
             return;
 
