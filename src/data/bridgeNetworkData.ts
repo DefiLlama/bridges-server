@@ -442,4 +442,14 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 29,
+    displayName: "Base Bridge",
+    bridgeDbName: "base",
+    iconLink: "chain:base",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Base"],
+    destinationChain: "Base",
+  },
 ] as BridgeNetwork[];
