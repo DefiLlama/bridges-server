@@ -60,7 +60,10 @@ const contractAddresses = {
   },
   klaytn: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
-  }
+  },
+  base: {
+    synapseBridge: "0xf07d1C752fAb503E47FEF309bf14fbDD3E867089",
+}
 } as {
     [chain: string]: {
         synapseBridge: string;
@@ -346,7 +349,8 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
   // metis: constructParams("metis"),
-  klaytn: constructParams("klaytn")
+  klaytn: constructParams("klaytn"),
+  base: constructParams("base"),
 };
 
 
