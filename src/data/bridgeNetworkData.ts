@@ -452,4 +452,14 @@ export default [
     chains: ["Ethereum", "Base"],
     destinationChain: "Base",
   },
+  {
+    id: 30,
+    displayName: "Mantle Bridge",
+    bridgeDbName: "mantle",
+    iconLink: "chain:mantle",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Mantle"],
+    destinationChain: "Mantle",
+  },
 ] as BridgeNetwork[];

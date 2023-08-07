@@ -30,6 +30,7 @@ import polygon_zkevm from "./polygon_zkevm";
 import symbiosis from "./symbiosis";
 import meson from "./meson";
 import base from "./base";
+import mantle from "./mantle";
 
 export default {
   polygon,
@@ -62,6 +63,7 @@ export default {
   symbiosis,
   meson,
   base,
+  mantle,
 } as {
   [bridge: string]: BridgeAdapter;
 };
