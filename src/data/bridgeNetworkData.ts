@@ -462,4 +462,13 @@ export default [
     chains: ["Ethereum", "Mantle"],
     destinationChain: "Mantle",
   },
+  {
+    id: 31,
+    displayName: "neuron🧠",
+    bridgeDbName: "neuron",
+    iconLink: "protocols:neuron",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Arbitrum", "Linea", "Optimism", "Base"],
+  },
 ] as BridgeNetwork[];
