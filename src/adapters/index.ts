@@ -31,6 +31,7 @@ import symbiosis from "./symbiosis";
 import meson from "./meson";
 import base from "./base";
 import mantle from "./mantle";
+import neuron from "./neuron";
 
 export default {
   polygon,
@@ -64,6 +65,7 @@ export default {
   meson,
   base,
   mantle,
+  neuron,
 } as {
   [bridge: string]: BridgeAdapter;
 };
