@@ -472,6 +472,7 @@ export default [
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
   // },
   {
+    id: 32,
     displayName: "Eywa",
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
