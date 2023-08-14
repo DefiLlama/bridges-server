@@ -265,18 +265,18 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
-  // {
-  //   id: 17,
-  //   displayName: "Axelar",
-  //   bridgeDbName: "axelar",
-  //   iconLink: "icons:axelar",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Arbitrum"],
-  //   chainMapping: {
-  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
-  //   },
-  // },
+  {
+    id: 17,
+    displayName: "Axelar",
+    bridgeDbName: "axelar",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Arbitrum"],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
   {
     id: 18,
     displayName: "Rainbow Bridge",
@@ -471,4 +471,16 @@ export default [
   //   url: "",
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
   // },
+  {
+    id: 32,
+    displayName: "SquidRouter",
+    bridgeDbName: "squidrouter",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Arbitrum"],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  }, 
 ] as BridgeNetwork[];
