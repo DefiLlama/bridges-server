@@ -108,18 +108,18 @@ export default [
   //     gnosis: "xdai",
   //   },
   // },
-  {
-    id: 8,
-    displayName: "ChainPort",
-    bridgeDbName: "chainport",
-    iconLink: "icons:chainport",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
-    chainMapping: {
-      avalanche: "avax",
-    },
-  },
+//  {
+ //   id: 8,
+  //  displayName: "ChainPort",
+  //  bridgeDbName: "chainport",
+  //  iconLink: "icons:chainport",
+   // largeTxThreshold: 10000,
+  //  url: "",
+  // chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
+  //  chainMapping: {
+  //  avalanche: "avax",
+  //  },
+ // },
   {
     id: 9,
     displayName: "Portal by Wormhole",
