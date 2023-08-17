@@ -32,6 +32,7 @@ import meson from "./meson";
 import base from "./base";
 import mantle from "./mantle";
 import neuron from "./neuron";
+import axelarsatellite from "./axelar-satellite";
 
 export default {
   polygon,
@@ -66,6 +67,7 @@ export default {
   base,
   mantle,
   neuron,
+  axelarsatellite,
 } as {
   [bridge: string]: BridgeAdapter;
 };
