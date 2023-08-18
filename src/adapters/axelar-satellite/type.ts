@@ -4,6 +4,7 @@ export interface LinkedDepositAddress {
   source_chain: string;
   sender_address: string;
   recipient_address: string;
+  denom: string;
 }
 
 export interface FetchDepositTransfersOptions {

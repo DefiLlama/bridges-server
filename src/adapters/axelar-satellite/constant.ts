@@ -1,3 +1,5 @@
+import { ethers } from "ethers";
+
 export const gatewayAddresses = {
   ethereum: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
   bsc: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -7,9 +9,41 @@ export const gatewayAddresses = {
   arbitrum: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   optimism: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   base: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  linea: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  moonbeam: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
+  celo: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  kava: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  filecoin: "0xe432150cce91c13a887f7D836923d5597adD8E31",
 } as {
   [chain: string]: string;
 };
+
+export const withdrawParams = (from: string, to: string) => ({
+  target: "",
+  topic: "Transfer(address,address,uint256)",
+  topics: [
+    ethers.utils.id("Transfer(address,address,uint256)"),
+    ethers.utils.hexZeroPad(from, 32),
+    ethers.utils.hexZeroPad(to, 32),
+  ],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    to: "to",
+    amount: "value",
+  },
+  fixedEventData: {
+    token: "",
+    from: "",
+  },
+  functionSignatureFilter: {
+    includeSignatures: ["0x09c5ea"],
+  },
+  isDeposit: false,
+});
 
 export const supportedChains = [
   "ethereum",
@@ -20,4 +54,9 @@ export const supportedChains = [
   "arbitrum",
   "optimism",
   "base",
+  "moonbeam",
+  "celo",
+  "kava",
+  "linea",
+  "filecoin"
 ];

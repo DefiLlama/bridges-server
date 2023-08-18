@@ -1,11 +1,11 @@
 import { Chain, ETHER_ADDRESS } from "@defillama/sdk/build/general";
-import { getTimestamp } from "@defillama/sdk/build/util";
+import { getTimestamp, normalizeAddress } from "@defillama/sdk/build/util";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import fetch from "node-fetch";
 import { FetchDepositTransfersOptions, FetchDepositTransfersResponse, LinkedDepositAddress } from "./type";
-import { gatewayAddresses, supportedChains } from "./constant";
+import { gatewayAddresses, supportedChains, withdrawParams } from "./constant";
+import fetch from "node-fetch";
 const retry = require("async-retry");
 
 function mapChainToAxelarscanChain(chain: Chain) {
@@ -19,25 +19,20 @@ function mapChainToAxelarscanChain(chain: Chain) {
   }
 }
 
-const withdrawParams = (fromAddress: string, recipientAddress: string) => ({
-  target: "0x408fbd65741e2afdc2866f9312f21063837edbf0",
-  topic: "Transfer(address,address,uint256)",
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  txKeys: {
-    from: "from",
-    to: "to",
-    amount: "amount",
-  },
-  fixedEventData: {
-    from: fromAddress,
-    to: recipientAddress,
-  },
-  isDeposit: false,
-});
+function fetchAssets() {
+  // fetch from axelarscan and pass {"method": "getAssets"} as json body
+  return retry(() =>
+    fetch("https://api.axelarscan.io/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        method: "getAssets",
+      }),
+    }).then((res) => res.json())
+  );
+}
 
 async function fetchDepositAddressTransfers(
   fromBlock: number,
@@ -71,9 +66,6 @@ async function fetchDepositAddressTransfers(
     })
       .then((res) => res.json())
       .then((res: FetchDepositTransfersResponse) => res.data.map((d: any) => d.link))
-      .catch((err) => {
-        console.log(err);
-      })
   );
 }
 
@@ -87,32 +79,65 @@ function constructDepositAddressTransfers(linkedDepositAddresses: LinkedDepositA
   return eventParams;
 }
 
-function constructWithdrawAddressTransfers(linkedDepositAddresses: LinkedDepositAddress[], gateway: string) {
+function constructWithdrawAddressTransfers(
+  linkedDepositAddresses: LinkedDepositAddress[],
+  gateway: string,
+  chain: string,
+  assets: any[]
+) {
+  const _chain = mapChainToAxelarscanChain(chain);
   const eventParams = [] as PartialContractEventParams[];
-  const uniqueRecipientAddresses = new Set(linkedDepositAddresses.map((d) => d.recipient_address));
+  const withdrawTransfers = new Set(
+    linkedDepositAddresses.map((d) => ({
+      recipient: normalizeAddress(d.recipient_address),
+      denom: d.denom,
+    }))
+  );
 
-  for (const recipientAddress of uniqueRecipientAddresses) {
-    const eventParam = constructTransferParams(ETHER_ADDRESS, false, {
-      includeTo: [recipientAddress],
-    });
-    const eventParam2 = constructTransferParams(gateway, false, {
-      includeTo: [recipientAddress],
-    });
-    eventParams.push(eventParam);
+  for (const withdraw of withdrawTransfers) {
+    const asset = assets.find((asset) => asset.denom === withdraw.denom);
+    if (!asset) {
+      // console.log(`[${_chain}] Asset not found`, withdraw.denom, withdraw.recipient);
+      continue;
+    }
 
-    // console.log("linkedDepositAddress", gateway, recipientAddress);
-    // const eventParam2 = withdrawParams(gateway, recipientAddress);
-    // eventParams.push(eventParam2, withdrawParams(ETHER_ADDRESS, recipientAddress));
+    const token = normalizeAddress(asset?.addresses[_chain]?.address);
+
+    const isNativeChain = asset.native_chain === _chain;
+
+    if (isNativeChain) {
+      // token will be transfered from gateway contract.
+      const param = {
+        ...withdrawParams(gateway, normalizeAddress(withdraw.recipient)),
+        target: token,
+        fixedEventData: {
+          token: token,
+          from: token,
+        },
+      };
+      eventParams.push(param);
+    } else {
+      // token will be minted from zero address.
+      const param = {
+        ...withdrawParams(ETHER_ADDRESS, normalizeAddress(withdraw.recipient)),
+        target: token,
+        fixedEventData: {
+          token: token,
+          from: token,
+        },
+      };
+      eventParams.push(param);
+    }
   }
 
   return eventParams;
 }
 
 const constructParams = (chain: string) => {
-  const gateway = gatewayAddresses[chain];
+  const gateway = normalizeAddress(gatewayAddresses[chain]);
 
   return async (fromBlock: number, toBlock: number) => {
-    const [deposits, withdraws] = await retry(() =>
+    const [deposits, withdraws, assets] = await retry(() =>
       Promise.all([
         fetchDepositAddressTransfers(fromBlock, toBlock, chain, {
           isDeposit: true,
@@ -120,32 +145,38 @@ const constructParams = (chain: string) => {
         fetchDepositAddressTransfers(fromBlock, toBlock, chain, {
           isDeposit: false,
         }),
+        fetchAssets(),
       ])
     );
 
-    // logs
-    console.log(`[${chain}] ${deposits.length} deposits`);
-    console.log(`[${chain}] ${withdraws.length} withdraws`);
+    // console.log(`[${chain}] ${deposits.length} deposits`);
+    // console.log(`[${chain}] ${withdraws.length} withdraws`);
 
     const eventParams = [
       ...constructDepositAddressTransfers(deposits),
-      ...constructWithdrawAddressTransfers(withdraws, gateway),
+      ...constructWithdrawAddressTransfers(withdraws, gateway, chain, assets),
     ];
 
-    console.log("eventParams", eventParams.length);
+    // console.log("Total listened events:", eventParams.length);
 
     return getTxDataFromEVMEventLogs("axelar-satellite", chain as Chain, fromBlock, toBlock, eventParams);
   };
 };
 
 const adapter: BridgeAdapter = {
-  // polygon: constructParams("polygon"),
+  polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
-  // avax: constructParams("avax"),
+  avax: constructParams("avax"),
   // bsc: constructParams("bsc"),
-  // ethereum: constructParams("ethereum"),
-  // arbitrum: constructParams("arbitrum"),
-  // optimism: constructParams("optimism"),
+  ethereum: constructParams("ethereum"),
+  arbitrum: constructParams("arbitrum"),
+  optimism: constructParams("optimism"),
+  linea: constructParams("linea"),
+  base: constructParams("base"),
+  moonbeam: constructParams("moonbeam"),
+  celo: constructParams("celo"),
+  kava: constructParams("kava"),
+  filecoin: constructParams("filecoin"),
 };
 
 export default adapter;
