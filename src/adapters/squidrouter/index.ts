@@ -6,17 +6,6 @@ import { ethers } from "ethers";
 
 const squidRouterAddress = "0xce16F69375520ab01377ce7B88f5BA8C48F8D666";
 
-const routerAddresses = {
-  ethereum: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-  bsc: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-  polygon: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-  avax: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-  fantom: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-  arbitrum: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
-} as {
-  [chain: string]: string;
-};
-
 const axelarGatewayAddresses = {
     ethereum: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
     bsc: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
@@ -28,44 +17,11 @@ const axelarGatewayAddresses = {
     [chain: string]: string;
   };
 
-const axelarGasService = {
-    ethereum: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    bsc: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    polygon: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    avax: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    fantom: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    arbitrum: "0x2d5d7d31F671F86C782533cc367F14109a082712",
-    optimism: "0x2d5d7d31F671F86C782533cc367F14109a082712"
-} as {
-    [chain: string]: string
-};
-
-const nullAddress = "0x0000000000000000000000000000000000000000";
-
-const TokenWithdrawalParams: PartialContractEventParams = {
-    target: "",
-    topic: "NativeGasPaidForContractCallWithToken(address,string,string,bytes32,string,uint256,uint256,address)",
-    topics: [ethers.utils.id("NativeGasPaidForContractCallWithToken(address,string,string,bytes32,string,uint256,uint256,address)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
-    abi: ["event NativeGasPaidForContractCallWithToken(address indexed sourceAddress, string destinationChain, string destinationAddress, bytes32 indexed payloadHash, string symbol, uint256 amount, uint256 gasFeeAmount, address refundAddress)"],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    //   token: "token"
-    },
-    argKeys: {
-      from: "refundAddress",
-      amount: "amount",
-      to: "destinationAddress",
-      token: "symbol"
-    },
-    isDeposit: false,
-
-  };
 
   const GatewayWithdrawalParams: PartialContractEventParams = {
     target: "",
     topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
-    // topics: [ethers.utils.id("NativeGasPaidForContractCallWithToken(address,string,string,bytes32,string,uint256,uint256,address)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
+    topics: [ethers.utils.id("ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
     abi: ["event ContractCallWithToken(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload, string symbol, uint256 amount)"],
     logKeys: {
       blockNumber: "blockNumber",
@@ -79,35 +35,44 @@ const TokenWithdrawalParams: PartialContractEventParams = {
       token: "symbol"
     },
     argGetters: {
-        from: (log: any) => log.payload.slice(0,32).toHexString(), // note: this is not the real sender address
+        from: (log: any) => "0x".concat(log.payload.substr(90,40)), // note: this is not the real sender address
         amount: (log: any) => log.amount,
-        to: (log: any) => log.payload.slice(10,42).toHexString(),
+        to: (log: any) => "0x".concat(log.payload.substr(log.payload.lastIndexOf(log.payload.substr(90,40)),40)),
         token: (log: any) => log.symbol,
       },
     isDeposit: false,
 
   };
 
+  const GatewayDepositParams: PartialContractEventParams = {
+    target: "",
+    topic: "ContractCallApprovedWithMint(bytes32,string,string,address,bytes32,string,uint256,bytes32,uint256)",
+    topics: [ethers.utils.id("ContractCallApprovedWithMint(bytes32,string,string,address,bytes32,string,uint256,bytes32,uint256)"), null, ethers.utils.hexZeroPad(squidRouterAddress,32)],
+    abi: ["event ContractCallApprovedWithMint(bytes32 indexed commandId, string sourceChain, string sourceAddress, address indexed contractAddress, bytes32 indexed payloadHash, string symbol, uint256 amount, bytes32 sourceTxHash, uint256 sourceEventIndex)"],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    //   token: "token"
+    },
+    argKeys: {
+      from: "sourceAddress",
+      amount: "amount",
+      to: "contractAddress",
+      token: "symbol"
+    },
+    isDeposit: true,
+  };
+
+
 const constructParams = (chain: string) => {
   let eventParams = [] as PartialContractEventParams[];
-  const addy = axelarGasService[chain];
-
-//   const depositTransfer = constructTransferParams(addy, true, {
-//     excludeFrom: [addy, nullAddress],
-//     excludeTo: [nullAddress],
-//     includeTo: [addy],
-//   });
-
-//   const withdraw = constructTransferParams(addy, false, {
-//     excludeFrom: [nullAddress],
-//     excludeTo: [nullAddress, addy],
-//     includeFrom: [addy],
-//   });
-//   const deposit = {...TokenWithdrawalParams, target: axelarGasService[chain], };
-  const deposit = {...GatewayWithdrawalParams, target: axelarGatewayAddresses[chain], };
 
 
-  eventParams.push(deposit);
+  const deposit = {...GatewayDepositParams, target: axelarGatewayAddresses[chain], };
+  const withdraw = {...GatewayWithdrawalParams, target: axelarGatewayAddresses[chain], };
+
+
+  eventParams.push(deposit, withdraw);
 
   return async (fromBlock: number, toBlock: number) =>
     await getTxDataFromEVMEventLogs("squidrouter", chain as Chain, fromBlock, toBlock, eventParams);
