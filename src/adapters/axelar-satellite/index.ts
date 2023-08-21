@@ -99,12 +99,12 @@ function constructWrapTransfers(wrapTransfers: WrapTransfer[], gateway: string, 
 
   const asset = assets.find((asset) => asset.denom === wrapTransfers[0].denom);
 
-  if (!asset) {
+  if (!asset || !asset?.addresses?.[chain]?.address) {
     // console.log(`[${chain}] Asset not found`, wrapTransfers[0].denom);
     return eventParams;
   }
 
-  const token = normalizeAddress(asset?.addresses[chain]?.address);
+  const token = normalizeAddress(asset?.addresses?.[chain]?.address);
 
   for (const wrapTransfer of wrapTransfers) {
     eventParams.push({
@@ -208,19 +208,19 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
-  polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
   avax: constructParams("avax"),
-  // bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   linea: constructParams("linea"),
   base: constructParams("base"),
   moonbeam: constructParams("moonbeam"),
-  celo: constructParams("celo"),
   kava: constructParams("kava"),
   filecoin: constructParams("filecoin"),
+  polygon: constructParams("polygon"),
+  // bsc: constructParams("bsc"),
+  // celo: constructParams("celo"),
 };
 
 export default adapter;
