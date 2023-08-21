@@ -3,8 +3,13 @@ import { getTimestamp, normalizeAddress } from "@defillama/sdk/build/util";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { FetchDepositTransfersOptions, FetchDepositTransfersResponse, LinkedDepositAddress } from "./type";
-import { gatewayAddresses, supportedChains, withdrawParams } from "./constant";
+import {
+  FetchDepositTransfersOptions,
+  FetchDepositTransfersResponse,
+  DepositAddressTransfer,
+  WrapTransfer,
+} from "./type";
+import { gatewayAddresses, withdrawParams, wrapParams } from "./constant";
 import fetch from "node-fetch";
 const retry = require("async-retry");
 
@@ -34,13 +39,17 @@ function fetchAssets() {
   );
 }
 
-async function fetchDepositAddressTransfers(
+async function fetchDepositAddressTransfers<T extends DepositAddressTransfer>(
   fromBlock: number,
   toBlock: number,
   chain: string,
   options: FetchDepositTransfersOptions
-): Promise<LinkedDepositAddress[]> {
-  const { isDeposit = true, size = 2000 } = options;
+): Promise<T[]> {
+  const { isDeposit = true, type = "deposit_address", size = 2000 } = options;
+  const typeToResponseObj = {
+    deposit_address: "link",
+    wrap: "wrap",
+  };
 
   // Fetch timestamp from block numbers
   const [fromTime, toTime] = await retry(() =>
@@ -56,20 +65,25 @@ async function fetchDepositAddressTransfers(
       },
       body: JSON.stringify({
         method: "searchTransfers",
-        type: "deposit_address",
+        type,
         fromTime,
         toTime,
         size,
         sourceChain: isDeposit ? mapChainToAxelarscanChain(chain) : undefined,
-        destinationChain: isDeposit ? supportedChains.join(",") : mapChainToAxelarscanChain(chain),
+        destinationChain: isDeposit ? undefined : mapChainToAxelarscanChain(chain),
       }),
     })
       .then((res) => res.json())
-      .then((res: FetchDepositTransfersResponse) => res.data.map((d: any) => d.link))
+      .then((res: FetchDepositTransfersResponse) =>
+        res.data.map((d: any) => ({
+          ...d[typeToResponseObj[type]],
+          denom: d.send.denom.startsWith("ibc") ? d.link.denom : d.send.denom,
+        }))
+      )
   );
 }
 
-function constructDepositAddressTransfers(linkedDepositAddresses: LinkedDepositAddress[]) {
+function constructDepositAddressTransfers(linkedDepositAddresses: DepositAddressTransfer[]) {
   const eventParams = [] as PartialContractEventParams[];
 
   for (const linkedDepositAddress of linkedDepositAddresses) {
@@ -79,20 +93,45 @@ function constructDepositAddressTransfers(linkedDepositAddresses: LinkedDepositA
   return eventParams;
 }
 
+function constructWrapTransfers(wrapTransfers: WrapTransfer[], gateway: string, chain: string, assets: any[]) {
+  const eventParams = [] as PartialContractEventParams[];
+  if (wrapTransfers.length === 0) return eventParams;
+
+  const asset = assets.find((asset) => asset.denom === wrapTransfers[0].denom);
+
+  if (!asset) {
+    // console.log(`[${chain}] Asset not found`, wrapTransfers[0].denom);
+    return eventParams;
+  }
+
+  const token = normalizeAddress(asset?.addresses[chain]?.address);
+
+  for (const wrapTransfer of wrapTransfers) {
+    eventParams.push({
+      ...wrapParams(wrapTransfer.deposit_address, gateway),
+      target: token,
+      fixedEventData: {
+        token: token,
+        from: token,
+      },
+    });
+  }
+
+  return eventParams;
+}
+
 function constructWithdrawAddressTransfers(
-  linkedDepositAddresses: LinkedDepositAddress[],
+  linkedDepositAddresses: DepositAddressTransfer[],
   gateway: string,
   chain: string,
   assets: any[]
 ) {
   const _chain = mapChainToAxelarscanChain(chain);
   const eventParams = [] as PartialContractEventParams[];
-  const withdrawTransfers = new Set(
-    linkedDepositAddresses.map((d) => ({
-      recipient: normalizeAddress(d.recipient_address),
-      denom: d.denom,
-    }))
-  );
+  const withdrawTransfers = linkedDepositAddresses.map((d) => ({
+    recipient: normalizeAddress(d.recipient_address),
+    denom: d.denom,
+  }));
 
   for (const withdraw of withdrawTransfers) {
     const asset = assets.find((asset) => asset.denom === withdraw.denom);
@@ -102,7 +141,6 @@ function constructWithdrawAddressTransfers(
     }
 
     const token = normalizeAddress(asset?.addresses[_chain]?.address);
-
     const isNativeChain = asset.native_chain === _chain;
 
     if (isNativeChain) {
@@ -137,12 +175,16 @@ const constructParams = (chain: string) => {
   const gateway = normalizeAddress(gatewayAddresses[chain]);
 
   return async (fromBlock: number, toBlock: number) => {
-    const [deposits, withdraws, assets] = await retry(() =>
+    const [deposits, wraps, withdraws, assets] = await retry(() =>
       Promise.all([
-        fetchDepositAddressTransfers(fromBlock, toBlock, chain, {
+        fetchDepositAddressTransfers<DepositAddressTransfer>(fromBlock, toBlock, chain, {
           isDeposit: true,
         }),
-        fetchDepositAddressTransfers(fromBlock, toBlock, chain, {
+        fetchDepositAddressTransfers<WrapTransfer>(fromBlock, toBlock, chain, {
+          isDeposit: true,
+          type: "wrap",
+        }),
+        fetchDepositAddressTransfers<DepositAddressTransfer>(fromBlock, toBlock, chain, {
           isDeposit: false,
         }),
         fetchAssets(),
@@ -150,10 +192,12 @@ const constructParams = (chain: string) => {
     );
 
     // console.log(`[${chain}] ${deposits.length} deposits`);
+    // console.log(`[${chain}] ${wraps.length} wraps`);
     // console.log(`[${chain}] ${withdraws.length} withdraws`);
 
     const eventParams = [
       ...constructDepositAddressTransfers(deposits),
+      ...constructWrapTransfers(wraps, gateway, chain, assets),
       ...constructWithdrawAddressTransfers(withdraws, gateway, chain, assets),
     ];
 

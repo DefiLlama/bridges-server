@@ -18,6 +18,9 @@ export const gatewayAddresses = {
   [chain: string]: string;
 };
 
+// The same address for all chains
+export const depositServiceAddress = "0xc1DCb196BA862B337Aa23eDA1Cb9503C0801b955";
+
 export const withdrawParams = (from: string, to: string) => ({
   target: "",
   topic: "Transfer(address,address,uint256)",
@@ -45,18 +48,10 @@ export const withdrawParams = (from: string, to: string) => ({
   isDeposit: false,
 });
 
-export const supportedChains = [
-  "ethereum",
-  "binance",
-  "polygon",
-  "avalanche",
-  "fantom",
-  "arbitrum",
-  "optimism",
-  "base",
-  "moonbeam",
-  "celo",
-  "kava",
-  "linea",
-  "filecoin"
-];
+export const wrapParams = (from: string, to: string) => ({
+  ...withdrawParams(from, to),
+  functionSignatureFilter: {
+    includeSignatures: ["0xcf85fb"],
+  },
+  isDeposit: true,
+});
