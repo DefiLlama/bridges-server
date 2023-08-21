@@ -13,6 +13,12 @@ const axelarGatewayAddresses = {
     avax: "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
     fantom: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
     arbitrum: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    base: "0xe432150cce91c13a887f7d836923d5597add8e31",
+    linea: "0xe432150cce91c13a887f7d836923d5597add8e31",
+    celo: "0xe432150cce91c13a887f7d836923d5597add8e31",
+    moonbeam: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
+    kava: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    filecoin: "0xe432150cce91c13a887f7D836923d5597adD8E31"
   } as {
     [chain: string]: string;
   };
@@ -85,6 +91,12 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
+  base: constructParams("base"),
+  linea: constructParams("linea"),
+  celo: constructParams("celo"),
+  moonbeam: constructParams("moonbeam"),
+  kava: constructParams("kava"),
+  filecoin: constructParams("filecoin")
 };
 
 export default adapter;
