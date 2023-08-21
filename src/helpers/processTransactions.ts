@@ -223,9 +223,11 @@ export const getTxDataFromEVMEventLogs = async (
                 });
                 if (toFilter) dataKeysToFilter.push(i);
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error(
-                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
+                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}
+                Error: ${error?.message}
+                `
               );
               return;
             }
