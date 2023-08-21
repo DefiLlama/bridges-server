@@ -49,7 +49,7 @@ const testAdapter = async () => {
       // console.log(eventLogs)
       console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
       for (const log of eventLogs) {
-        console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"}  ${log.txHash}`);
+        console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);
       }
       console.log(`${eventLogs.length} transactions found.`);
       const eventPromises = Promise.all(
