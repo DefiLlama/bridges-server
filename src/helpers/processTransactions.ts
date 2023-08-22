@@ -190,6 +190,8 @@ export const getTxDataFromEVMEventLogs = async (
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
                 const value = argGetters?.[eventKey](args) || get(args, argKey);
+                ////  DEBUG
+                // console.log(argGetters?.[eventKey]);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
@@ -223,9 +225,11 @@ export const getTxDataFromEVMEventLogs = async (
                 });
                 if (toFilter) dataKeysToFilter.push(i);
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error(
-                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
+                `Unable to get log args for ${adapterName} with arg keys ${argKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}
+                Error: ${error?.message}
+                `
               );
               return;
             }

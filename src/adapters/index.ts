@@ -32,6 +32,7 @@ import meson from "./meson";
 import base from "./base";
 import mantle from "./mantle";
 import neuron from "./neuron";
+import squidrouter from "./squidrouter"
 import eywa from "./eywa";
 
 export default {
@@ -67,6 +68,7 @@ export default {
   base,
   mantle,
   neuron,
+  squidrouter,
   eywa,
 } as {
   [bridge: string]: BridgeAdapter;

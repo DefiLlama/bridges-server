@@ -108,18 +108,18 @@ export default [
   //     gnosis: "xdai",
   //   },
   // },
-  {
-    id: 8,
-    displayName: "ChainPort",
-    bridgeDbName: "chainport",
-    iconLink: "icons:chainport",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
-    chainMapping: {
-      avalanche: "avax",
-    },
-  },
+//  {
+ //   id: 8,
+  //  displayName: "ChainPort",
+  //  bridgeDbName: "chainport",
+  //  iconLink: "icons:chainport",
+   // largeTxThreshold: 10000,
+  //  url: "",
+  // chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
+  //  chainMapping: {
+  //  avalanche: "avax",
+  //  },
+ // },
   {
     id: 9,
     displayName: "Portal by Wormhole",
@@ -473,11 +473,36 @@ export default [
   // },
   {
     id: 32,
+    displayName: "SquidRouter",
+    bridgeDbName: "squidrouter",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Arbitrum",
+      "Base",
+      "Linea",
+      "Celo",
+      "Moonbeam",
+      "Kava",
+      "Filecoin",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
+  {
+    id: 33,
     displayName: "Eywa",
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
-  },
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"], 
+  }  
 ] as BridgeNetwork[];
