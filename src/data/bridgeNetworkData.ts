@@ -424,6 +424,9 @@ export default [
       "Arbitrum Nova",
       "Optimism",
       "Polygon zkEVM",
+      "Linea",
+      "Base",
+      "Mantle"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
