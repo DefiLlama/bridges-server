@@ -14,20 +14,26 @@ For all tokens using 'spokepool' contracts:
 const contracts = {
   ethereum: {
     spokePoolv2: "0x4D9079Bb4165aeb4084c526a32695dCfd2F77381",
-    spokePoolv2p5: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5"
+    spokePoolv2p5: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
   },
   polygon: {
     spokePoolv2: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
-    spokePoolv2p5: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096"
+    spokePoolv2p5: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
   },
   arbitrum: {
     spokePoolv2: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
-    spokePoolv2p5: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A"
+    spokePoolv2p5: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
   },
   optimism: {
     spokePoolv2: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
-    spokePoolv2p5: "0x6f26Bf09B1C792e3228e5467807a900A503c0281"
-  }
+    spokePoolv2p5: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
+  },
+  era: {
+    spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
+  },
+  base: {
+    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+  },
 } as const;
 
 type SupportedChains = keyof typeof contracts;
@@ -111,34 +117,39 @@ const relaysParamsv2: PartialContractEventParams = {
 };
 
 const constructParams = (chain: SupportedChains) => {
-  // New Spoke Pools
-  const finalDepositParamsv2p5 = {
-    ...depositParamsv2p5,
-    target: contracts[chain].spokePoolv2p5,
-  };
+  const eventParams: PartialContractEventParams[] = [];
 
-  const finalRelaysParamsv2p5 = {
-    ...relaysParamsv2p5,
-    target: contracts[chain].spokePoolv2p5,
-  };
+  const chainConfig = contracts[chain];
 
   // Old Spoke Pools
-  const finalDepositParamsv2 = {
-    ...depositParamsv2,
-    target: contracts[chain].spokePoolv2,
-  };
+  if ("spokePoolv2" in chainConfig) {
+    const finalDepositParamsv2 = {
+      ...depositParamsv2,
+      target: chainConfig.spokePoolv2,
+    };
+    eventParams.push(finalDepositParamsv2);
 
-  const finalRelaysParamsv2 = {
-    ...relaysParamsv2,
-    target: contracts[chain].spokePoolv2,
-  };
+    const finalRelaysParamsv2 = {
+      ...relaysParamsv2,
+      target: chainConfig.spokePoolv2,
+    };
+    eventParams.push(finalRelaysParamsv2);
+  }
 
-  const eventParams = [
-    finalDepositParamsv2p5,
-    finalRelaysParamsv2p5,
-    finalDepositParamsv2,
-    finalRelaysParamsv2,
-  ]
+  // New Spoke Pools
+  if ("spokePoolv2p5" in chainConfig) {
+    const finalDepositParamsv2p5 = {
+      ...depositParamsv2p5,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalDepositParamsv2p5);
+
+    const finalRelaysParamsv2p5 = {
+      ...relaysParamsv2p5,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalRelaysParamsv2p5);
+  }
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("across", chain, fromBlock, toBlock, eventParams);
@@ -149,6 +160,8 @@ const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  "zksync era": constructParams("era"),
+  base: constructParams("base"),
 };
 
 export default adapter;

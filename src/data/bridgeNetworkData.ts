@@ -108,18 +108,18 @@ export default [
   //     gnosis: "xdai",
   //   },
   // },
-  {
-    id: 8,
-    displayName: "ChainPort",
-    bridgeDbName: "chainport",
-    iconLink: "icons:chainport",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
-    chainMapping: {
-      avalanche: "avax",
-    },
-  },
+  //  {
+  //   id: 8,
+  //  displayName: "ChainPort",
+  //  bridgeDbName: "chainport",
+  //  iconLink: "icons:chainport",
+  // largeTxThreshold: 10000,
+  //  url: "",
+  // chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
+  //  chainMapping: {
+  //  avalanche: "avax",
+  //  },
+  // },
   {
     id: 9,
     displayName: "Portal by Wormhole",
@@ -294,7 +294,10 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base"],
+    chainMapping: {
+      "zksync era": "era",
+    },
   },
   /*
   {
@@ -421,6 +424,9 @@ export default [
       "Arbitrum Nova",
       "Optimism",
       "Polygon zkEVM",
+      "Linea",
+      "Base",
+      "Mantle"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -479,5 +485,30 @@ export default [
   //   largeTxThreshold: 10000,
   //   url: "",
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
+  // },
+  // {
+  //   id: 32,
+  //   displayName: "SquidRouter",
+  //   bridgeDbName: "squidrouter",
+  //   iconLink: "icons:axelar",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: [
+  //     "Ethereum",
+  //     "Polygon",
+  //     "Avalanche",
+  //     "BSC",
+  //     "Fantom",
+  //     "Arbitrum",
+  //     "Base",
+  //     "Linea",
+  //     "Celo",
+  //     "Moonbeam",
+  //     "Kava",
+  //     "Filecoin",
+  //   ],
+  //   chainMapping: {
+  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
+  //   },
   // },
 ] as BridgeNetwork[];
