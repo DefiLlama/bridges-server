@@ -108,18 +108,18 @@ export default [
   //     gnosis: "xdai",
   //   },
   // },
-//  {
- //   id: 8,
+  //  {
+  //   id: 8,
   //  displayName: "ChainPort",
   //  bridgeDbName: "chainport",
   //  iconLink: "icons:chainport",
-   // largeTxThreshold: 10000,
+  // largeTxThreshold: 10000,
   //  url: "",
   // chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Aurora", "BSC"],
   //  chainMapping: {
   //  avalanche: "avax",
   //  },
- // },
+  // },
   {
     id: 9,
     displayName: "Portal by Wormhole",
@@ -294,7 +294,10 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base"],
+    chainMapping: {
+      "zksync era": "era",
+    },
   },
   /*
   {
@@ -421,6 +424,9 @@ export default [
       "Arbitrum Nova",
       "Optimism",
       "Polygon zkEVM",
+      "Linea",
+      "Base",
+      "Mantle"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -504,5 +510,5 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"], 
-  }  
+  },
 ] as BridgeNetwork[];

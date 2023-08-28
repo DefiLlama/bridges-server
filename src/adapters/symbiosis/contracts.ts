@@ -17,7 +17,7 @@ export const contracts = {
     },
     telos: {
         portal: "0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8",
-        synthesis: null,
+        synthesis: "0x1a039cE63AE35a67Bf0E9F6DbFaE969639D59eC8",
     },
     kava: {
         portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
@@ -48,6 +48,18 @@ export const contracts = {
         synthesis: null,
     },
     polygon_zkevm: {
+        portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+        synthesis: null,
+    },
+    linea: {
+        portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+        synthesis: null,
+    },
+    base: {
+        portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+        synthesis: null,
+    },
+    mantle: {
         portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
         synthesis: null,
     },

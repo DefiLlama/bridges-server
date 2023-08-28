@@ -49,6 +49,9 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
+  linea: constructParams("linea"),
+  base: constructParams("base"),
+  mantle: constructParams("mantle"),
 };
 
 export default adapter;
