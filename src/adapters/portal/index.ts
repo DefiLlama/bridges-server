@@ -8,34 +8,8 @@ import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 import { PromisePool } from '@supercharge/promise-pool'
 
-/*
-Contracts: https://book.wormhole.com/reference/contracts.html
-
-***Ethereum***
-0x3ee18B2214AFF97000D974cf647E7C347E8fa585 is Wormhole: Portal Token Bridge
-
-***Polygon***
-0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE is Wormhole: Portal Token Bridge
-
-***BSC***
-0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7 is Wormhole: Portal Token Bridge
-
-***Fantom***
-0x7C9Fc5741288cDFdD83CeB07f3ea7e22618D79D2 is Wormhole: Portal Token Bridge
-
-***Avalanche***
-0x0e082F06FF657D94310cB8cE8B0D9a04541d8052 is Wormhole: Portal Token Bridge
-
-***Aurora***
-0x51b5123a7b0F9b2bA265f9c4C8de7D78D52f510F is Wormhole: Portal Token Bridge
-
-***Celo***
-0x796Dff6D74F3E27060B71255Fe517BFb23C93eed is Wormhole: Portal Token Bridge
-
-***Klaytn***
-0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F is Wormhole: Portal Token Bridge
-*/
-
+// Wormhole: Portal token bridge contract addresses
+// https://docs.wormhole.com/wormhole/blockchain-environments/environments
 const contractAddresses = {
   ethereum: {
     tokenBridge: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
@@ -68,6 +42,22 @@ const contractAddresses = {
   klaytn: {
     tokenBridge: "0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F",
     nativeToken: "0xe4f05a66ec68b54a58b17c22107b02e0232cc817",
+  },
+  moonbeam: {
+    tokenBridge: "0xb1731c586ca89a23809861c6103f0b96b3f57d92",
+    nativeToken: "0xAcc15dC74880C9944775448304B263D191c6077F",
+  },
+  optimism: {
+    tokenBridge: "0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b",
+    nativeToken: "0x4200000000000000000000000000000000000006",
+  },
+  arbitrum: {
+    tokenBridge: "0x0b2402144Bb366A632D14B83F244D2e0e21bD39c",
+    nativeToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+  },
+  base: {
+    tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
+    nativeToken: "0x4200000000000000000000000000000000000006",
   },
 } as {
   [chain: string]: {
@@ -289,7 +279,21 @@ const constructParams = (chain: string) => {
     // for native token transfers, only able to get from subgraph, Etherscan API, etc.
     // skipped for chains without available API
     let nativeTokenData = [] as EventData[];
-    if (["ethereum", "polygon", "fantom", "avalanche", "bsc", "aurora", "celo"].includes(chain)) {
+    if (
+      [
+        "ethereum",
+        "polygon",
+        "fantom",
+        "avalanche",
+        "bsc",
+        "aurora",
+        "celo",
+        "moonbeam",
+        "optimism",
+        "arbitrum",
+        "base",
+      ].includes(chain)
+    ) {
       if (!nativeToken) {
         throw new Error(`Chain ${chain} is missing native token address.`);
       }
@@ -325,6 +329,10 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
   klaytn: constructParams("klaytn"),
+  moonbeam: constructParams("moonbeam"),
+  optimisim: constructParams("optimism"),
+  arbitrum: constructParams("arbitrum"),
+  base: constructParams("base"),
 };
 
 export default adapter;
