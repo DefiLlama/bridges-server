@@ -118,9 +118,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {
-            let chainContractsAreOn = bridgeNetwork.chainMapping?.[chain] ? bridgeNetwork.chainMapping?.[chain] : chain;
-            chainContractsAreOn = chainContractsAreOn === "avax" ? "avalanche" : chainContractsAreOn;
-            await aggregateData(timestamp, bridgeDbName, chainContractsAreOn, hourly, largeTxThreshold);
+            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
           } catch (e) {
             const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
             await insertErrorRow({
