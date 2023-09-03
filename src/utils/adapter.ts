@@ -1,4 +1,4 @@
-import { getLatestBlock } from "@defillama/sdk/build/util";
+import { getLatestBlock, getTimestamp } from "@defillama/sdk/build/util";
 import { Chain, getProvider } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -15,8 +15,11 @@ import { lookupBlock } from "@defillama/sdk/build/util";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
+import { getBlock } from "@defillama/sdk/build/computeTVL/blocks";
 const axios = require("axios");
 const retry = require("async-retry");
+
+const SECONDS_IN_DAY = 86400;
 
 // FIX timeout problems throughout functions here
 
@@ -62,8 +65,16 @@ const getBlocksForRunningAdapter = async (
           lastRecordedEndBlock + 1
         }.`
       );
+    } else {
+      try {
+        const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
+        const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
+        lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY / 4 ? sixHoursBlock : lastRecordedEndBlock;
+      } catch (e) {
+        console.error("Get start block error");
+      }
+      startBlock = lastRecordedEndBlock + 1;
     }
-    startBlock = lastRecordedEndBlock + 1;
 
     useRecordedBlocks = true;
   } else {
