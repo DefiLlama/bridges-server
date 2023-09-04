@@ -56,7 +56,7 @@ const getBlocksForRunningAdapter = async (
       return { startBlock, endBlock, useRecordedBlocks };
     }
     const maxBlocksToQuery = (maxBlocksToQueryByChain[chainContractsAreOn] ?? maxBlocksToQueryByChain.default) * 4;
-    let lastRecordedEndBlock = recordedBlocks[`${bridgeDbName}:${chain}`]?.endBlock;
+    let lastRecordedEndBlock = recordedBlocks?.endBlock;
     if (!lastRecordedEndBlock) {
       const defaultStartBlock = endBlock - maxBlocksToQuery;
       lastRecordedEndBlock = defaultStartBlock;
@@ -66,16 +66,15 @@ const getBlocksForRunningAdapter = async (
         }.`
       );
     } else {
-      try {
-        const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
-        const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
-        lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY / 4 ? sixHoursBlock : lastRecordedEndBlock;
-      } catch (e) {
-        console.error("Get start block error");
-      }
-      startBlock = lastRecordedEndBlock + 1;
+      // try {
+      //   const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
+      //   const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
+      //   lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY ? sixHoursBlock : lastRecordedEndBlock;
+      // } catch (e) {
+      //   console.error("Get start block error");
+      // }
     }
-
+    startBlock = lastRecordedEndBlock + 1;
     useRecordedBlocks = true;
   } else {
     startBlock = 0;
@@ -135,7 +134,7 @@ export const runAdapterToCurrentBlock = async (
         bridgeDbName,
         chain,
         chainContractsAreOn,
-        lastRecordedBlocks[bridgeID] || lastRecordedBlocks
+        lastRecordedBlocks[bridgeID]
       );
       const step = maxBlocksToQueryByChain[chain] || 400;
 
@@ -250,13 +249,6 @@ export const runAllAdaptersToCurrentBlock = async (
         if (startBlock == null) return;
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-          if (useRecordedBlocks) {
-            console.log(endBlock);
-            recordedBlocks[`${bridgeDbName}:${chain}`] = recordedBlocks[`${bridgeDbName}:${chain}`] || {};
-            recordedBlocks[`${bridgeDbName}:${chain}`].startBlock =
-              recordedBlocks[`${bridgeDbName}:${chain}`]?.startBlock ?? startBlock;
-            recordedBlocks[`${bridgeDbName}:${chain}`].endBlock = endBlock;
-          }
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
