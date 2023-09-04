@@ -247,7 +247,7 @@ export const aggregateData = async (
       if (!is_usd_volume) {
         if (!token || !chain) return;
         const tokenL = token.toLowerCase();
-        uniqueTokens[transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`] = true;
+        uniqueTokens[transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`] = true;
       }
     })
   );
@@ -285,8 +285,8 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        const transformedDecimals = transformTokenDecimals[chain][tokenL] ?? null;
-        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
+        const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
+        tokenKey = transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
