@@ -129,7 +129,10 @@ export const runAdapterToCurrentBlock = async (
       const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
+
       const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
+      console.log("Recorded block: ", lastRecordedBlocks, lastRecordedBlocks[bridgeID], bridgeID);
+
       let { startBlock, endBlock } = await getBlocksForRunningAdapter(
         bridgeDbName,
         chain,
