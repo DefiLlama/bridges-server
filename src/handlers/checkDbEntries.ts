@@ -9,7 +9,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDayUTC, secondsInDay } from "../utils/date";
 import { maxBlocksToQueryByChain } from "../utils/constants";
-import type { RecordedBlocks } from "../utils/types";
+import type { RecordedBlocksFromAWS } from "../utils/types";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -66,11 +66,11 @@ export default wrapScheduledLambda(async (_event) => {
       async (_bail: any) =>
         await axios.get("https://llama-bridges-data.s3.eu-central-1.amazonaws.com/recordedBlocks.json")
     )
-  ).data as RecordedBlocks;
+  ).data as any;
   let adaptersBehind = [] as string[];
   let latestChainBlocks = {} as any;
   const getBlocksPromises = Promise.all(
-    Object.keys(recordedBlocks).map(async (adapter) => {
+    Object.keys(recordedBlocks).map(async (adapter: any) => {
       const chain = adapter.split(":")[1];
       if (!latestChainBlocks[chain]) {
         latestChainBlocks[chain] = (await getLatestBlock(chain)).number;
@@ -78,7 +78,7 @@ export default wrapScheduledLambda(async (_event) => {
     })
   );
   await getBlocksPromises;
-  Object.entries(recordedBlocks).map(([adapter, recordedBlocks]) => {
+  Object.entries(recordedBlocks).map(([adapter, recordedBlocks]: [any, any]) => {
     const chain = adapter.split(":")[1];
     const maxBlocksToBeBehindBy = maxBlocksToQueryByChain[chain]
       ? maxBlocksToQueryByChain[chain]
