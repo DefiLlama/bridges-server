@@ -131,7 +131,6 @@ export const runAdapterToCurrentBlock = async (
         : chain;
 
       const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
-      console.log("Recorded block: ", lastRecordedBlocks, lastRecordedBlocks[bridgeID], bridgeID);
 
       let { startBlock, endBlock } = await getBlocksForRunningAdapter(
         bridgeDbName,
