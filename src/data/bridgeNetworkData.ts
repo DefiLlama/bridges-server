@@ -132,10 +132,14 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
-      // "Aurora",
-      // "Celo",
-      // "Klaytn",
+      "Aurora",
+      "Celo",
+      "Klaytn",
       "BSC",
+      "Moonbeam",
+      "Optimism",
+      "Arbitrum",
+      "Base",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
