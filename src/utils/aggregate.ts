@@ -118,9 +118,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {
-            let chainContractsAreOn = bridgeNetwork.chainMapping?.[chain] ? bridgeNetwork.chainMapping?.[chain] : chain;
-            chainContractsAreOn = chainContractsAreOn === "avax" ? "avalanche" : chainContractsAreOn;
-            await aggregateData(timestamp, bridgeDbName, chainContractsAreOn, hourly, largeTxThreshold);
+            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
           } catch (e) {
             const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
             await insertErrorRow({
@@ -249,7 +247,7 @@ export const aggregateData = async (
       if (!is_usd_volume) {
         if (!token || !chain) return;
         const tokenL = token.toLowerCase();
-        uniqueTokens[transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`] = true;
+        uniqueTokens[transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`] = true;
       }
     })
   );
@@ -287,8 +285,8 @@ export const aggregateData = async (
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        const transformedDecimals = transformTokenDecimals[chain][tokenL] ?? null;
-        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
+        const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
+        tokenKey = transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
