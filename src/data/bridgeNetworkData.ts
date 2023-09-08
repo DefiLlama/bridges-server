@@ -430,7 +430,7 @@ export default [
       "Polygon zkEVM",
       "Linea",
       "Base",
-      "Mantle"
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -481,29 +481,28 @@ export default [
   //   url: "",
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
   // },
-  // {
-  //   id: 32,
-  //   displayName: "SquidRouter",
-  //   bridgeDbName: "squidrouter",
-  //   iconLink: "icons:axelar",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: [
-  //     "Ethereum",
-  //     "Polygon",
-  //     "Avalanche",
-  //     "BSC",
-  //     "Fantom",
-  //     "Arbitrum",
-  //     "Base",
-  //     "Linea",
-  //     "Celo",
-  //     "Moonbeam",
-  //     "Kava",
-  //     "Filecoin",
-  //   ],
-  //   chainMapping: {
-  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
-  //   },
-  // },
+  {
+    id: 32,
+    displayName: "SquidRouter",
+    bridgeDbName: "squidrouter",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Arbitrum",
+      "Base",
+      "Linea",
+      "Celo",
+      "Moonbeam",
+      "Kava",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
 ] as BridgeNetwork[];
