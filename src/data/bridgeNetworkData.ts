@@ -426,7 +426,7 @@ export default [
       "Polygon zkEVM",
       "Linea",
       "Base",
-      "Mantle"
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -496,7 +496,6 @@ export default [
       "Celo",
       "Moonbeam",
       "Kava",
-      "Filecoin",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
