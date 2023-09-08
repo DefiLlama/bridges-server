@@ -209,7 +209,7 @@ const constructParams = (chain: string) => {
 
 const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
-  avax: constructParams("avax"),
+  avalanche: constructParams("avax"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
@@ -219,7 +219,7 @@ const adapter: BridgeAdapter = {
   kava: constructParams("kava"),
   filecoin: constructParams("filecoin"),
   polygon: constructParams("polygon"),
-  // bsc: constructParams("bsc"),
+  bsc: constructParams("bsc"),
   // celo: constructParams("celo"),
 };
 

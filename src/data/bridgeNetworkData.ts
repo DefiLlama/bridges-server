@@ -426,7 +426,7 @@ export default [
       "Polygon zkEVM",
       "Linea",
       "Base",
-      "Mantle"
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -469,13 +469,16 @@ export default [
     destinationChain: "Mantle",
   },
   {
-    id: 31,
+    id: 34,
     displayName: "Axelar (Satellite)",
     bridgeDbName: "axelarsatellite",
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chainMapping: {
+      avalanche: "avax",
+    },
   },
   // {
   //   id: 31,
