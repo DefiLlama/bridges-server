@@ -472,6 +472,18 @@ export default [
     chains: ["Ethereum", "Mantle"],
     destinationChain: "Mantle",
   },
+  {
+    id: 34,
+    displayName: "Axelar (Satellite)",
+    bridgeDbName: "axelarsatellite",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
   // {
   //   id: 31,
   //   displayName: "neuron🧠",
