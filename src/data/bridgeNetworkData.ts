@@ -132,10 +132,14 @@ export default [
       "Polygon",
       "Fantom",
       "Avalanche",
-      // "Aurora",
-      // "Celo",
-      // "Klaytn",
+      "Aurora",
+      "Celo",
+      "Klaytn",
       "BSC",
+      "Moonbeam",
+      "Optimism",
+      "Arbitrum",
+      "Base",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -426,7 +430,7 @@ export default [
       "Polygon zkEVM",
       "Linea",
       "Base",
-      "Mantle"
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -468,6 +472,18 @@ export default [
     chains: ["Ethereum", "Mantle"],
     destinationChain: "Mantle",
   },
+  {
+    id: 34,
+    displayName: "Axelar (Satellite)",
+    bridgeDbName: "axelarsatellite",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
   // {
   //   id: 31,
   //   displayName: "neuron🧠",
@@ -477,31 +493,30 @@ export default [
   //   url: "",
   //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
   // },
-  // {
-  //   id: 32,
-  //   displayName: "SquidRouter",
-  //   bridgeDbName: "squidrouter",
-  //   iconLink: "icons:axelar",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: [
-  //     "Ethereum",
-  //     "Polygon",
-  //     "Avalanche",
-  //     "BSC",
-  //     "Fantom",
-  //     "Arbitrum",
-  //     "Base",
-  //     "Linea",
-  //     "Celo",
-  //     "Moonbeam",
-  //     "Kava",
-  //     "Filecoin",
-  //   ],
-  //   chainMapping: {
-  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
-  //   },
-  // },
+  {
+    id: 32,
+    displayName: "SquidRouter",
+    bridgeDbName: "squidrouter",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Arbitrum",
+      "Base",
+      "Linea",
+      "Celo",
+      "Moonbeam",
+      "Kava",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
   {
     id: 33,
     displayName: "Eywa",
@@ -509,6 +524,6 @@ export default [
     iconLink: "icons:eywa",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"], 
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
   },
 ] as BridgeNetwork[];

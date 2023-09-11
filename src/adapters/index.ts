@@ -32,6 +32,7 @@ import meson from "./meson";
 import base from "./base";
 import mantle from "./mantle";
 import neuron from "./neuron";
+import axelarsatellite from "./axelar-satellite";
 import squidrouter from "./squidrouter"
 import eywa from "./eywa";
 
@@ -68,6 +69,7 @@ export default {
   base,
   mantle,
   neuron,
+  axelarsatellite,
   squidrouter,
   eywa,
 } as {

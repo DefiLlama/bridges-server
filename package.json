@@ -4,7 +4,8 @@
     "serve": "sls offline start",
     "build": "sls webpack",
     "test": "ts-node ./src/adapters/test.ts",
-    "test-txs": "ts-node ./src/utils/testAdapterHistorical.ts"
+    "test-txs": "ts-node ./src/utils/testAdapterHistorical.ts",
+    "ts": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.101",
