@@ -495,16 +495,16 @@ export default [
   // },
   {
     id: 32,
-    displayName: "SquidRouter",
-    bridgeDbName: "squidrouter",
-    iconLink: "icons:axelar",
+    displayName: "Squid",
+    bridgeDbName: "squid",
+    iconLink: "icons:squid",
     largeTxThreshold: 10000,
     url: "",
     chains: [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      "BSC",
+      // "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
@@ -512,6 +512,8 @@ export default [
       "Celo",
       "Moonbeam",
       "Kava",
+      "Optimism",
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
