@@ -495,9 +495,9 @@ export default [
   // },
   {
     id: 32,
-    displayName: "SquidRouter",
+    displayName: "Squid",
     bridgeDbName: "squidrouter",
-    iconLink: "icons:axelar",
+    iconLink: "icons:squid",
     largeTxThreshold: 10000,
     url: "",
     chains: [
