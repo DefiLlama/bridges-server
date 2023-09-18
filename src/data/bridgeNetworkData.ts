@@ -474,7 +474,7 @@ export default [
   },
   {
     id: 34,
-    displayName: "Axelar (Satellite)",
+    displayName: "Satellite (Powered by Axelar)",
     bridgeDbName: "axelarsatellite",
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
@@ -510,7 +510,7 @@ export default [
   // },
   {
     id: 32,
-    displayName: "Squid",
+    displayName: "Squid (Powered by Axelar)",
     bridgeDbName: "squidrouter",
     iconLink: "icons:squid",
     largeTxThreshold: 10000,
