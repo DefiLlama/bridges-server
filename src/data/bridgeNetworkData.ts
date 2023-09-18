@@ -479,7 +479,22 @@ export default [
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chains: [
+      "Ethereum",
+      "BSC",
+      "Polygon",
+      "Avalanche",
+      "Fantom",
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Linea",
+      "Moonbeam",
+      "Celo",
+      "Kava",
+      "Filecoin",
+      "Mantle"
+    ],
     chainMapping: {
       avalanche: "avax",
     },
