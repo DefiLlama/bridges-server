@@ -484,6 +484,17 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 35,
+    displayName: "Manta Pacific Bridge",
+    bridgeDbName: "manta",
+    iconLink: "chain:manta",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Manta Pacific"],
+    destinationChain: "Manta Pacific",
+  },
+
   // {
   //   id: 31,
   //   displayName: "neuron🧠",
