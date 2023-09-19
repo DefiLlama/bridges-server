@@ -12,7 +12,9 @@ export const axelarGatewayAddresses = {
     celo: "0xe432150cce91c13a887f7d836923d5597add8e31",
     moonbeam: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
     kava: "0xe432150cce91c13a887f7D836923d5597adD8E31",
-    filecoin: "0xe432150cce91c13a887f7D836923d5597adD8E31"
+    filecoin: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    optimism: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+    mantle: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   } as {
     [chain: string]: string;
   };

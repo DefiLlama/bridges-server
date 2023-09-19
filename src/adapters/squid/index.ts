@@ -85,7 +85,7 @@ const constructParams = (chain: string) => {
 
     eventParams.push(deposit, withdraw);
 
-    return getTxDataFromEVMEventLogs("squidrouter", chain as Chain, fromBlock, toBlock, eventParams);
+    return getTxDataFromEVMEventLogs("squid", chain as Chain, fromBlock, toBlock, eventParams);
   }
     
 };
@@ -94,7 +94,7 @@ const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
-  bsc: constructParams("bsc"),
+  // bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
@@ -102,7 +102,9 @@ const adapter: BridgeAdapter = {
   celo: constructParams("celo"),
   moonbeam: constructParams("moonbeam"),
   kava: constructParams("kava"),
-  filecoin: constructParams("filecoin")
+  filecoin: constructParams("filecoin"),
+  optimism: constructParams("optimism"),
+  mantle: constructParams("mantle"),
 };
 
 export default adapter;

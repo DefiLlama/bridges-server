@@ -527,6 +527,8 @@ export default [
       "Celo",
       "Moonbeam",
       "Kava",
+      "Optimism",
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
