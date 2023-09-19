@@ -14,6 +14,7 @@ export const gatewayAddresses = {
   celo: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   kava: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   filecoin: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  mantle: "0xe432150cce91c13a887f7D836923d5597adD8E31"
 } as {
   [chain: string]: string;
 };
