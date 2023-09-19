@@ -163,10 +163,10 @@ const adapter: BridgeAdapter = {
   [Chains.arbitrum]: constructParams(Chains.arbitrum),
   [Chains.bsc]: constructParams(Chains.bsc),
   [Chains.polygon]: constructParams(Chains.polygon),
-  [Chains.avax]: constructParams(Chains.avax),
   [Chains.fantom]: constructParams(Chains.fantom),
   [Chains.ethereum]: constructParams(Chains.ethereum),
   [Chains.optimism]: constructParams(Chains.optimism),
+  avalanche: constructParams(Chains.avax),
 };
 
 export default adapter;
