@@ -34,6 +34,7 @@ import mantle from "./mantle";
 import neuron from "./neuron";
 import axelarsatellite from "./axelar-satellite";
 import squidrouter from "./squidrouter"
+import eywa from "./eywa";
 
 export default {
   polygon,
@@ -70,6 +71,7 @@ export default {
   neuron,
   axelarsatellite,
   squidrouter,
+  eywa,
 } as {
   [bridge: string]: BridgeAdapter;
 };

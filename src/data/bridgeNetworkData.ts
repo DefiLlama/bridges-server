@@ -532,4 +532,16 @@ export default [
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
+  {
+    id: 35,
+    displayName: "Eywa",
+    bridgeDbName: "eywa",
+    iconLink: "icons:eywa",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
 ] as BridgeNetwork[];
