@@ -494,7 +494,7 @@ export default [
       "Celo",
       "Kava",
       "Filecoin",
-      "Mantle"
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -520,7 +520,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      "BSC",
+      // "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
