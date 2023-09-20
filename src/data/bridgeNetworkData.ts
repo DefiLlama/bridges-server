@@ -485,7 +485,7 @@ export default [
     },
   },
   {
-    id: 35,
+    id: 37,
     displayName: "Manta Pacific Bridge",
     bridgeDbName: "manta",
     iconLink: "chain:manta",
