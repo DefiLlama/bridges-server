@@ -33,6 +33,7 @@ import base from "./base";
 import mantle from "./mantle";
 import neuron from "./neuron";
 import axelarsatellite from "./axelar-satellite";
+import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
 
@@ -71,6 +72,7 @@ export default {
   neuron,
   axelarsatellite,
   squidrouter,
+  manta,
   eywa,
 } as {
   [bridge: string]: BridgeAdapter;
