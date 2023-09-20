@@ -447,9 +447,10 @@ export default [
     iconLink: "icons:meson",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "BSC"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "Aurora", "BSC", "zkSync Era"],
     chainMapping: {
       avalanche: "avax",
+      "zksync era": "era",
     },
   },
   {
@@ -474,12 +475,27 @@ export default [
   },
   {
     id: 34,
-    displayName: "Axelar (Satellite)",
+    displayName: "Satellite (Powered by Axelar)",
     bridgeDbName: "axelarsatellite",
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chains: [
+      "Ethereum",
+      "BSC",
+      "Polygon",
+      "Avalanche",
+      "Fantom",
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Linea",
+      "Moonbeam",
+      "Celo",
+      "Kava",
+      "Filecoin",
+      "Mantle",
+    ],
     chainMapping: {
       avalanche: "avax",
     },
@@ -506,7 +522,7 @@ export default [
   // },
   {
     id: 32,
-    displayName: "Squid",
+    displayName: "Squid (Powered by Axelar)",
     bridgeDbName: "squidrouter",
     iconLink: "icons:squid",
     largeTxThreshold: 10000,
@@ -515,7 +531,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      "BSC",
+      // "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
@@ -523,9 +539,23 @@ export default [
       "Celo",
       "Moonbeam",
       "Kava",
+      "Optimism",
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
+  {
+    id: 35,
+    displayName: "Eywa",
+    bridgeDbName: "eywa",
+    iconLink: "icons:eywa",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chainMapping: {
+      avalanche: "avax",
     },
   },
 ] as BridgeNetwork[];

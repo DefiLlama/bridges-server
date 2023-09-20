@@ -220,7 +220,8 @@ const adapter: BridgeAdapter = {
   filecoin: constructParams("filecoin"),
   polygon: constructParams("polygon"),
   bsc: constructParams("bsc"),
-  // celo: constructParams("celo"),
+  celo: constructParams("celo"),
+  mantle: constructParams("mantle"),
 };
 
 export default adapter;
