@@ -504,7 +504,7 @@ export default [
     id: 37,
     displayName: "Manta Pacific Bridge",
     bridgeDbName: "manta",
-    iconLink: "chain:manta",
+    iconLink: "icons:manta-pacific-bridge",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Manta Pacific"],
