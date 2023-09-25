@@ -141,13 +141,16 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
           }
           const transfer = tryParseLog(previousLog, transferIface);
           // lock or burn
+          let to = "";
           if (transfer && (transfer.args.to === tokenBridge || transfer.args.to === ethers.constants.AddressZero)) {
             amount = transfer.args.value;
+            to = transfer.args.to;
           } else {
             const deposit = tryParseLog(previousLog, depositIface);
             // lock
             if (deposit && deposit.args.dst === tokenBridge) {
               amount = deposit.args.wad;
+              to = deposit.args.dst;
             }
           }
           if (amount) {
@@ -155,7 +158,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
               blockNumber: tx.blockNumber!,
               txHash: hash,
               from: tx.from,
-              to: tx.to || "",
+              to,
               token: previousLog.address,
               amount,
               isDeposit: true,
@@ -168,23 +171,26 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
         if (completeTransferSigs.includes(functionSignature)) {
           const transfer = tryParseLog(log, transferIface);
           // unlock or mint
+          let from = "";
           if (transfer && (transfer.args.from === tokenBridge || transfer.args.from === ethers.constants.AddressZero)) {
             amount = transfer.args.value;
+            from = transfer.args.from;
           } else {
             const withdrawal = tryParseLog(log, withdrawalIface);
             // unlock
             if (withdrawal && withdrawal.args.src === tokenBridge) {
               amount = withdrawal.args.wad;
+              from = withdrawal.args.src;
             }
           }
           if (amount) {
             results.push({
               blockNumber: tx.blockNumber!,
               txHash: hash,
-              // switch to and from for withdrawals
-              // TODO: not sure how to get where native tokens were transferred to when the tx sender isn't the receiver
+              // TODO: not sure how to get the token recipient when the tx sender isn't the recipient
+              // (e.g. contract controlled transfers)
               to: transfer?.args.to || tx.from,
-              from: tx.to || "",
+              from,
               token: log.address,
               amount,
               isDeposit: false,
