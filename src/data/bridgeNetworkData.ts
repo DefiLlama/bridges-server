@@ -559,29 +559,17 @@ export default [
     },
   },
   {
-    id: 36,
+    id: 39,
     displayName: "rhino.fi",
     bridgeDbName: "rhinofi",
     iconLink: "icons:rhinofi",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Arbitrum",
-      "Arbitrum Nova",
-      "BSC",
-      "Polygon",
-      "Optimism",
-      "Base",
-      "zkSync Era",
-      "Polygon zkEVM",
-      "Linea",
-      "Manta Pacific"
-    ],
+    chains: ["Arbitrum", "Arbitrum Nova", "BSC", "Polygon", "Optimism", "Base", "zkSync Era", "Polygon zkEVM", "Linea"],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
-      "manta pacific": "manta"
-    }
+    },
   },
 ] as BridgeNetwork[];
