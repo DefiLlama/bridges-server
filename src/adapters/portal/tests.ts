@@ -75,7 +75,7 @@ const testWrapAndTransferEthWithPayload = async () => {
       blockNumber,
       txHash: "0xd22e5849c63b4e17ec48aefbdbb4a659a6a516fa73f603c6791ec4780e23782e",
       from: "0x072AFd05d41A2a9Ca0fa1755d7B79f861eDb04F3",
-      to: "0xCafd2f0A35A4459fA40C0517e17e6fA2939441CA",
+      to: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
       token: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       amount: ethers.BigNumber.from("3600000000000000000"),
       isDeposit: true,
@@ -110,7 +110,7 @@ const testTransferTokens = async () => {
       blockNumber,
       txHash: "0x98ca80f521957c47dc70565c2760e2696edef9fc7e1c78b5a1ed39e4beabece9",
       from: "0xC8d5CF84E1aA38fFa9E5E532fc97b2F6e1C4740c",
-      to: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+      to: "0x0000000000000000000000000000000000000000",
       token: "0xE28027c99C7746fFb56B0113e5d9708aC86fAE8f",
       amount: ethers.BigNumber.from("1428672071062310"),
       isDeposit: true,
@@ -145,7 +145,7 @@ const testTransferTokensWithPayload = async () => {
       blockNumber,
       txHash: "0x14aaac892b3d9cf9d95b1542861ce753213d1b602d4dadfd642687fad6226cdd",
       from: "0xdC382CDF2a25790F535a518EC26958c227e9DCF2",
-      to: "0xCafd2f0A35A4459fA40C0517e17e6fA2939441CA",
+      to: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
       token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       amount: ethers.BigNumber.from("9468893553"),
       isDeposit: true,
@@ -192,14 +192,14 @@ const testCompleteTransferAndUnwrapEthWithPayload = async () => {
 
 const testCompleteTransfer = async () => {
   // https://etherscan.io/tx/0x75e84975dde7458034da40a3ab56984c85724b5418cc46d98c92f55d124321f5
-  // native tokens
+  // wrapped tokens
   let blockNumber = 18115863;
   let event = await getEvent(blockNumber);
   assertEqual(
     {
       blockNumber,
       txHash: "0x75e84975dde7458034da40a3ab56984c85724b5418cc46d98c92f55d124321f5",
-      from: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
+      from: "0x0000000000000000000000000000000000000000",
       to: "0xe69c250a7D8a2e92b0f1fc3FB29FC64188aA1765",
       token: "0x41f7B8b9b897276b7AAE926a9016935280b44E97",
       amount: ethers.BigNumber.from("59522773"),
@@ -209,7 +209,7 @@ const testCompleteTransfer = async () => {
   );
 
   // https://etherscan.io/tx/0x9fe8bf8ae01790317b92d7bfdb11e735d3db95322129b23f15e1c7f286b8d26a
-  // wrapped tokens
+  // native tokens
   blockNumber = 18136907;
   event = await getEvent(blockNumber);
   assertEqual(
@@ -275,7 +275,7 @@ const testAvalanche = async () => {
       blockNumber,
       txHash: "0x3841246c0c1f4aa9190cdacddcd3eac6d8bf10562fc2e2b4615484e0694394e6",
       from: "0x31eeE3D36b30E26e733B9e11f112c2cb87AbF618",
-      to: "0x0e082F06FF657D94310cB8cE8B0D9a04541d8052",
+      to: "0x0000000000000000000000000000000000000000",
       token: "0xDfDA518A1612030536bD77Fd67eAcbe90dDC52Ab",
       amount: ethers.BigNumber.from("14000000000000000000"),
       isDeposit: true,
@@ -308,7 +308,7 @@ const testAvalanche = async () => {
     {
       blockNumber,
       txHash: "0x6e39e433bc5c52f15eda43d88d31532ce5c26ad78b592b313892898ce8e22427",
-      from: "0x0e082F06FF657D94310cB8cE8B0D9a04541d8052",
+      from: "0x0000000000000000000000000000000000000000",
       to: "0x301371F30d45127E08d0BbE83b870D042089d3e8",
       token: "0x0950Fc1AD509358dAeaD5eB8020a3c7d8b43b9DA",
       amount: ethers.BigNumber.from("7000011"),
@@ -345,7 +345,7 @@ const testOptimism = async () => {
       blockNumber,
       txHash: "0x0aceb4cdce1024236a0cce3ea7632dd26317fec421a3b6ca6baf398c46da79b2",
       from: "0xbC631Fe26bF28fCcb65f72914cEE92fCEbfBdc23",
-      to: "0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b",
+      to: "0x0000000000000000000000000000000000000000",
       token: "0xb4B9EEa94D20E8623CC2fb85661E7C94505D3490",
       amount: ethers.BigNumber.from("225000"),
       isDeposit: true,
@@ -378,7 +378,7 @@ const testOptimism = async () => {
     {
       blockNumber,
       txHash: "0x1eb1c5d1be5d110fc8a171ddaed8a2daf87a267dda38464555244d871affcf88",
-      from: "0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b",
+      from: "0x0000000000000000000000000000000000000000",
       to: "0x9631288F4050F7CFbf77B77f8540DeCF6cfC7012",
       token: "0x8418C1d909842f458c9394886b83F19d62bF1A0D",
       amount: ethers.BigNumber.from("10000000000000000"),
