@@ -573,7 +573,7 @@ export default [
     id: 39,
     displayName: "rhino.fi",
     bridgeDbName: "rhinofi",
-    iconLink: "icons:rhinofi",
+    iconLink: "icons:rhino.fi",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Arbitrum", "Arbitrum Nova", "BSC", "Polygon", "Optimism", "Base", "zkSync Era", "Polygon zkEVM", "Linea"],
