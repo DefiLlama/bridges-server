@@ -1,4 +1,4 @@
-import { getLatestBlock, getTimestamp } from "@defillama/sdk/build/util";
+import { getLatestBlockNumber } from "./blocks";
 import { Chain, getProvider } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -12,10 +12,8 @@ import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
 import { lookupBlock } from "@defillama/sdk/build/util";
-import { tronGetLatestBlock } from "../helpers/tron";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
-import { getBlock } from "@defillama/sdk/build/computeTVL/blocks";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -37,13 +35,7 @@ const getBlocksForRunningAdapter = async (
   let useRecordedBlocks = undefined;
   if (useChainBlocks) {
     // probably need timeouts here
-    if (chainContractsAreOn === "tron") {
-      const { number } = await tronGetLatestBlock();
-      endBlock = number;
-    } else {
-      const { number } = await getLatestBlock(chainContractsAreOn);
-      endBlock = number;
-    }
+    endBlock = await getLatestBlockNumber(chainContractsAreOn);
     if (!endBlock) {
       const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
       await insertErrorRow({
@@ -296,8 +288,8 @@ export const runAllAdaptersTimestampRange = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-        if (chainContractsAreOn === "tron") {
-          console.info(`Skipping running adapter ${bridgeDbName} on chain Tron.`);
+        if (chainContractsAreOn === "tron" || chainContractsAreOn === "solana") {
+          console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
           return;
         }
         const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));

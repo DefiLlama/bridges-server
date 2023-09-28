@@ -1117,6 +1117,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Axelar";
     case "zkSync Era":
       return "zkSync Era";
+    case "solana":
+      return "Solana";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
