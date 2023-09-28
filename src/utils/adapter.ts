@@ -289,7 +289,7 @@ export const runAllAdaptersTimestampRange = async (
         const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
           ? bridgeNetwork.chainMapping?.[chain as Chain]
           : chain;
-        if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui") {
+        if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui" || chainContractsAreOn === "solana") {
           console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
           return;
         }

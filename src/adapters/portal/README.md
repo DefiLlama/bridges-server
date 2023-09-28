@@ -1,0 +1,3 @@
+## Portal Bridge Adapter
+
+The Portal bridge adapter returns `EventData` for transactions involving token locking, unlocking, minting, or burning. In the case of burning and minting, the `to` and `from` addresses are set to the Ethereum zero-address to exclude wormhole-wrapped assets from the volume calculation. However, if a wormhole-wrapped asset is burned without being transferred to its origin chain, the `to` address is set to the token bridge address to include it in the volume calculation. This is consistent with DefiLlama's methodology of not double-counting transfers in the volume calculation.

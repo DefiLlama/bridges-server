@@ -4,8 +4,8 @@ import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
 import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
-import { getProvider } from "@defillama/sdk/build/general";
 import { PromisePool } from "@supercharge/promise-pool";
+import { getProvider } from "../utils/provider";
 
 const EventKeyTypes = {
   blockNumber: "number",
