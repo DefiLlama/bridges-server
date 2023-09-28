@@ -17,6 +17,7 @@ export const maxBlocksToQueryByChain = {
   aurora: 5400,
   celo: 1200,
   klaytn: 6000,
+  solana: 18000, // solana produces slots every 400ms, so 2 hours is 18000 slots
 } as { [chain: string]: number };
 
 export const nonBlocksChains = [
