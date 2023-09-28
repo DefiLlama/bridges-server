@@ -275,10 +275,10 @@ const testAvalanche = async () => {
       blockNumber,
       txHash: "0x3841246c0c1f4aa9190cdacddcd3eac6d8bf10562fc2e2b4615484e0694394e6",
       from: "0x31eeE3D36b30E26e733B9e11f112c2cb87AbF618",
-      to: "0x0000000000000000000000000000000000000000",
+      to: "0x0e082F06FF657D94310cB8cE8B0D9a04541d8052",
       token: "0xDfDA518A1612030536bD77Fd67eAcbe90dDC52Ab",
       amount: ethers.BigNumber.from("14000000000000000000"),
-      isDeposit: true,
+      isDeposit: false,
     },
     event
   );
