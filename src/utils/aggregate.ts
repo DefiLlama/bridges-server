@@ -1,5 +1,7 @@
 import { sql } from "./db";
 import BigNumber from "bignumber.js";
+import { PromisePool } from "@supercharge/promise-pool";
+
 import { queryTransactionsTimestampRangeByBridge } from "./wrappa/postgres/query";
 import {
   getTimestampAtStartOfHour,
@@ -25,7 +27,7 @@ import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
-import { transformTokens } from "../helpers/tokenMappings";
+import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
 import { blacklist } from "../data/blacklist";
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
@@ -55,6 +57,7 @@ export const runAggregateDataHistorical = async (
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
+
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -71,8 +74,8 @@ export const runAggregateDataHistorical = async (
     if (chainToRestrictTo) {
       try {
         await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
-      } catch (e) {
-        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping.`;
+      } catch (e: any) {
+        const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -86,8 +89,8 @@ export const runAggregateDataHistorical = async (
         chains.map(async (chain) => {
           try {
             await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
-          } catch (e) {
-            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.`;
+          } catch (e: any) {
+            const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.${e?.message}`;
             await insertErrorRow({
               ts: currentTimestamp,
               target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
@@ -106,8 +109,9 @@ export const runAggregateDataHistorical = async (
 };
 
 export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boolean = false) => {
-  const bridgeNetworksPromises = Promise.all(
-    bridgeNetworks.map(async (bridgeNetwork) => {
+  await PromisePool.withConcurrency(2)
+    .for(bridgeNetworks)
+    .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
       const adapter = adapters[bridgeDbName];
       const chains = Object.keys(adapter);
@@ -128,9 +132,9 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
         })
       );
       await chainsPromises;
-    })
-  );
-  await bridgeNetworksPromises;
+    });
+
+  await sql.end();
   console.log("Finished aggregating job.");
 };
 
@@ -208,8 +212,8 @@ export const aggregateData = async (
             total_address_withdrawn: null,
           });
         });
-      } catch (e) {
-        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+      } catch (e: any) {
+        const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "daily_aggregated",
@@ -241,9 +245,9 @@ export const aggregateData = async (
     txs.map(async (tx) => {
       const { token, chain, is_usd_volume } = tx;
       if (!is_usd_volume) {
+        if (!token || !chain) return;
         const tokenL = token.toLowerCase();
-        const tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
-        uniqueTokens[tokenKey.toLowerCase()] = true;
+        uniqueTokens[transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`] = true;
       }
     })
   );
@@ -265,14 +269,24 @@ export const aggregateData = async (
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume, txs_counted_as } = tx;
+      if (
+        tx_from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+        tx_to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
+      )
+        return;
       const rawBnAmount = BigNumber(amount);
+      if (rawBnAmount.isEqualTo(0)) {
+        // console.log(`Skipping tx with 0 amount`);
+        return;
+      }
       let usdValue = null;
       let tokenKey = null;
       if (is_usd_volume) {
         usdValue = rawBnAmount.toNumber();
       } else {
         const tokenL = token.toLowerCase();
-        tokenKey = transformTokens[chain][tokenL] ?? `${chain}:${tokenL}`;
+        const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
+        tokenKey = transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
@@ -282,9 +296,15 @@ export const aggregateData = async (
           console.log(`No price data for ${tokenKey}`);
           tokensWithNullPrices.add(tokenKey);
         }
-        if (priceData && (priceData.confidence === undefined || priceData.confidence > defaultConfidenceThreshold)) {
+        if (priceData && (priceData.confidence === undefined || priceData.confidence >= defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
-          const bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+          let bnAmount = null;
+          if (transformedDecimals) {
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
+          } else {
+            bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+          }
+
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
           if (usdValue > 10 ** 9) {
             const errString = `USD value of tx id ${id} is ${usdValue}.`;
@@ -411,16 +431,14 @@ export const aggregateData = async (
     );
   }
 
-  /*
-  console.log(totalTokensDeposited);
-  console.log(totalTokensWithdrawn);
-  console.log(totalAddressDeposited);
-  console.log(totalAddressWithdrawn);
-  console.log(totalDepositedUsd);
-  console.log(totalWithdrawnUsd);
-  console.log(totalDepositTxs);
-  console.log(totalWithdrawalTxs);
-  */
+  // console.log(totalTokensDeposited);
+  // console.log(totalTokensWithdrawn);
+  // console.log(totalAddressDeposited);
+  // console.log(totalAddressWithdrawn);
+  // console.log(totalDepositedUsd);
+  // console.log(totalWithdrawnUsd);
+  // console.log(totalDepositTxs);
+  // console.log(totalWithdrawalTxs);
 
   if (hourly) {
     try {

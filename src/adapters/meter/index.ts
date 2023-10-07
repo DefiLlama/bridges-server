@@ -5,8 +5,7 @@ import { ethers } from "ethers";
 import { constructTransferParams } from "../../helpers/eventParams";
 
 const nullAddress = "0x0000000000000000000000000000000000000000";
-const amplVault = "0x805c7Ecba41f9321bb098ec1cf31d86d9407de2F"
-
+const amplVault = "0x805c7Ecba41f9321bb098ec1cf31d86d9407de2F";
 
 const contractAddresses = {
   ethereum: {
@@ -23,7 +22,7 @@ const contractAddresses = {
       "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
       "0xabe580e7ee158da464b51ee1a83ac0289622e6be",
       "0xa58a4f5c4Bb043d2CC1E170613B74e767c94189B",
-      "0x0Def8d8addE14c9eF7c2a986dF3eA4Bd65826767"
+      "0x0Def8d8addE14c9eF7c2a986dF3eA4Bd65826767",
     ],
   },
   bsc: {
@@ -35,7 +34,7 @@ const contractAddresses = {
       "0xbcf39F0EDDa668C58371E519AF37CA705f2bFcbd",
       "0x27d72484f1910F5d0226aFA4E03742c9cd2B297a",
       "0xBd2949F67DcdC549c6Ebe98696449Fa79D988A9F",
-      "0xe138c66982Fd5c890c60b94FDBa1747faF092c20"
+      "0xe138c66982Fd5c890c60b94FDBa1747faF092c20",
     ],
   },
   moonriver: {
@@ -56,7 +55,7 @@ const contractAddresses = {
       "0x3674D64AaB971aB974B2035667a4B3d09B5ec2B3",
       "0xff0bb979035Bc622f01062F37E2BaD4a05B31D83",
       "0xE6a991Ffa8CfE62B0bf6BF72959A3d4f11B2E0f5",
-      "0x6b35140fcc6e502a7e1edAC6E740513f41c4b5ec"
+      "0x6b35140fcc6e502a7e1edAC6E740513f41c4b5ec",
     ],
   },
   meter: {
@@ -74,7 +73,7 @@ const contractAddresses = {
       "0xd86e243fc0007e6226b07c9a50c9d70d78299eb5",
       "0x5Fa41671c48e3C951AfC30816947126CCC8C162e",
       "0x8Df95e66Cb0eF38F91D2776DA3c921768982fBa0",
-      "0xc1f6C86ABEe8e2e0B6fd5BD80F0b51fef783635C"
+      "0xc1f6C86ABEe8e2e0B6fd5BD80F0b51fef783635C",
     ],
   },
   theta: {
@@ -87,14 +86,12 @@ const contractAddresses = {
       "0x3c751Feb00364CA9e2d0105c40F0b423abf1DEE3",
       "0xE6a991Ffa8CfE62B0bf6BF72959A3d4f11B2E0f5",
       "0xae6f0539e33f624ac685cce9ba57cc1d948d909d",
-      "0xf64FA5155D8cc578D473A21FB67507DDCbB80D21"
+      "0xf64FA5155D8cc578D473A21FB67507DDCbB80D21",
     ],
   },
   avax: {
     ERC20Handler: "0xeB06fa7e1d400caa3D369776Da45EbB5EbDF9b5B",
-    tokens: [
-      "0x027dbcA046ca156De9622cD1e2D907d375e53aa7"
-    ],
+    tokens: ["0x027dbcA046ca156De9622cD1e2D907d375e53aa7"],
   },
   moonbeam: {
     ERC20Handler: "0x766E33b910Cd6329a0cBD5F72e48Ec162E38A25D",
@@ -110,15 +107,12 @@ const contractAddresses = {
       "0x89C36bB2E30efCA78bDEB99101C1Ac1FfcB6a30e",
       "0x3c751Feb00364CA9e2d0105c40F0b423abf1DEE3",
       "0xE6a991Ffa8CfE62B0bf6BF72959A3d4f11B2E0f5",
-      "0xf64FA5155D8cc578D473A21FB67507DDCbB80D21"
+      "0xf64FA5155D8cc578D473A21FB67507DDCbB80D21",
     ],
   },
   polygon: {
     ERC20Handler: "0xeB06fa7e1d400caa3D369776Da45EbB5EbDF9b5B",
-    tokens: [
-      "0xf305012ea754252184f1071c86ae99fac5b40320",
-      "0x3Ca3fEFA944753b43c751336A5dF531bDD6598B6"
-    ],
+    tokens: ["0xf305012ea754252184f1071c86ae99fac5b40320", "0x3Ca3fEFA944753b43c751336A5dF531bDD6598B6"],
   },
 } as {
   [chain: string]: {
@@ -203,8 +197,8 @@ const constructParams = (chain: string) => {
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   });
   if (chain === "ethereum") {
-    const amplDepositParams = constructTransferParams(amplVault, true)
-    const amplWithdrawalParams = constructTransferParams(amplVault, false)
+    const amplDepositParams = constructTransferParams(amplVault, true);
+    const amplWithdrawalParams = constructTransferParams(amplVault, false);
     eventParams.push(amplDepositParams, amplWithdrawalParams);
   }
   const underlyingDepositParams = constructTransferParams(gateway, true);
@@ -213,16 +207,16 @@ const constructParams = (chain: string) => {
 
   return async (fromBlock: number, toBlock: number) => {
     const eventData = await getTxDataFromEVMEventLogs("meter", chain as Chain, fromBlock, toBlock, eventParams);
-    const uniqueHashesEventData = makeTxHashesUnique(eventData)
-    return uniqueHashesEventData
-  }
+    const uniqueHashesEventData = makeTxHashesUnique(eventData);
+    return uniqueHashesEventData;
+  };
 };
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   bsc: constructParams("bsc"),
-  // polygon: constructParams("polygon"), only has 2 tokens, but they do not have prices
-  // avalanche: constructParams("avax"), has no transactions
+  polygon: constructParams("polygon"),
+  avalanche: constructParams("avax"),
   // the following chains are not yet supported
   /*
   moonriver: constructParams("moonriver"),

@@ -185,6 +185,11 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const timestamp = event.pathParameters?.timestamp;
+  if(Number(timestamp) % 3600 !== 0){
+    return errorResponse({
+      message: "timestamp must be divible by 3600"
+    })
+  }
   const chain = event.pathParameters?.chain?.toLowerCase() ?? "";
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeStatsOnDay(timestamp, chain, bridgeNetworkId);

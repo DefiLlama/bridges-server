@@ -1,7 +1,29 @@
-import { aggregateData, runAggregateDataAllAdapters, runAggregateDataHistorical } from "./aggregate";
+import bridgeNetworkData from "../data/bridgeNetworkData";
+import { runAggregateDataHistorical } from "./aggregate";
 
 //aggregateData(1663762030, 'b6e8234f-4f4c-472d-8e21-aec331b28308', 10000)
 
-//runAggregateDataAllAdapters(1663762030)
+// runAggregateDataAllAdapters(1680220800)
 
-runAggregateDataHistorical(1662073200, 1662086800, 7, false)
+// runAggregateDataHistorical(1661990400, 1681257600, 11, false);
+// runAggregateDataHistorical(1680220800 - 68400, 1680220800, 12, false);
+
+async function aggregateHistorical(
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeDbName: string,
+  restrictChain?: string[]
+) {
+  const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
+  if (!adapter) throw new Error("Invalid adapter");
+  console.log(`Found ${bridgeDbName}`);
+  if (restrictChain) {
+    restrictChain.forEach(async (chain: string) => {
+      await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, chain);
+    });
+  } else {
+    await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false, restrictChain);
+  }
+}
+
+aggregateHistorical(1661990400, 1681719878, "allbridge", ["ethereum", "bsc"]);

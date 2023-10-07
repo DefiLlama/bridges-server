@@ -3,7 +3,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { runAdapterToCurrentBlock } from "../utils/adapter";
 
 const handler = async (event: any) => {
-    await runAdapterToCurrentBlock(bridgeNetworks[event.bridgeIndex], false, "upsert")
+  await runAdapterToCurrentBlock(bridgeNetworks[event.bridgeIndex], false, "ignore", event.lastRecordedBlocks);
 };
 
 export default wrapScheduledLambda(handler);

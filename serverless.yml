@@ -125,13 +125,13 @@ functions:
     timeout: 900
     memorySize: 250
     events:
-      - schedule: cron(2,17,32,47 * * * ? *)
+      - schedule: cron(2,17,47 * * * ? *)
   runAggregateAllAdapters:
     handler: src/handlers/runAggregateAllAdapters.default
     timeout: 900
     memorySize: 10240
     events:
-      - schedule: cron(18 * * * ? *)
+      - schedule: cron(32 * * * ? *)
   checkDbEntries:
     handler: src/handlers/checkDbEntries.default
     timeout: 600

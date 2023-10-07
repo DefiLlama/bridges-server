@@ -110,13 +110,10 @@ export const insertConfigRow = async (
       destination_chain: params.destination_chain,
     };
   }
-  const sqlStatement = `
-      insert into bridges.config ${sql(paramsToAvoidTsError)}
-    `;
   for (let i = 0; i < 5; i++) {
     try {
-      await sqlStatement;
-      return;
+      console.log(`inserting into bridges.config`);
+      return sql`insert into bridges.config ${sql(paramsToAvoidTsError)}`;
     } catch (e) {
       if (i >= 4) {
         throw new Error(`Could not insert config row for ${params.bridge_name} on ${params.chain}`);
@@ -260,6 +257,8 @@ export const insertErrorRow = async (params: {
     try {
       await sql`
           insert into bridges.errors ${sql(params)}
+          ON CONFLICT (ts,error)
+          DO UPDATE SET ${sql(params)}
         `;
       return;
     } catch (e) {

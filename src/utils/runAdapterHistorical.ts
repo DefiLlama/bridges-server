@@ -4,7 +4,12 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
 
-async function fillAdapterHistorical(startTimestamp: number, endTimestamp: number, bridgeDbName: string) {
+async function fillAdapterHistorical(
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeDbName: string,
+  restrictChainTo?: string
+) {
   const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
   console.log(`Found ${bridgeDbName}`);
@@ -16,6 +21,7 @@ async function fillAdapterHistorical(startTimestamp: number, endTimestamp: numbe
       } else {
         nChain = chain.toLowerCase();
       }
+      if (restrictChainTo && nChain !== restrictChainTo) return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
       const startBlock = await lookupBlock(startTimestamp, { chain: nChain as Chain });
@@ -32,6 +38,8 @@ async function fillAdapterHistorical(startTimestamp: number, endTimestamp: numbe
     })
   );
   await promises;
+  console.log(`Finished running adapter from ${startTimestamp} to ${endTimestamp} for ${bridgeDbName}`);
 }
 
-fillAdapterHistorical(1662073200, 1677110400, "portal");
+fillAdapterHistorical(1661990400, 1681719878, "allbridge");
+

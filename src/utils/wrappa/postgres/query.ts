@@ -94,7 +94,11 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
 };
 
 // need to FIX 'to_timestamp' throughout so I can pass already formatted timestamps**********************
-const queryTransactionsTimestampRangeByBridge = async (startTimestamp: number, endTimestamp: number, bridgeID: string) => {
+const queryTransactionsTimestampRangeByBridge = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeID: string
+) => {
   return await sql<ITransaction[]>`
   SELECT * FROM 
     bridges.transactions
@@ -124,17 +128,33 @@ const queryAggregatedDailyTimestampRange = async (
     chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
   }
   return await sql<IAggregatedData[]>`
-  SELECT bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs FROM 
-    bridges.daily_aggregated
+  SELECT 
+    bridge_id, 
+    date_trunc('day', ts) AS ts, 
+    CAST(SUM(total_deposited_usd) AS INTEGER) AS total_deposited_usd, 
+    CAST(SUM(total_withdrawn_usd) AS INTEGER) AS total_withdrawn_usd, 
+    CAST(SUM(total_deposit_txs) AS INTEGER) AS total_deposit_txs, 
+    CAST(SUM(total_withdrawal_txs) AS INTEGER) AS total_withdrawal_txs 
+  FROM 
+    bridges.hourly_aggregated
   WHERE
   ts >= to_timestamp(${startTimestamp}) AND 
   ts <= to_timestamp(${endTimestamp}) AND 
+   ts < DATE_TRUNC('day', NOW()) AND
     bridge_id IN (
       SELECT id FROM
         bridges.config
       ${bridgeNetworkNameEqual}
       ${chainEqual}
     )
+    AND
+    (total_deposited_usd IS NOT NULL AND total_deposited_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
+    (total_withdrawn_usd IS NOT NULL AND total_withdrawn_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
+    (total_deposit_txs IS NOT NULL AND total_deposit_txs::text ~ '^[0-9]+$') AND 
+    (total_withdrawal_txs IS NOT NULL AND total_withdrawal_txs::text ~ '^[0-9]+$')
+    GROUP BY 
+       bridge_id, 
+       date_trunc('day', ts)
     ORDER BY ts;
   `;
 };
@@ -205,34 +225,24 @@ const queryAggregatedHourlyDataAtTimestamp = async (timestamp: number, chain?: s
 };
 
 const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: string, bridgeNetworkName?: string) => {
-  let bridgNetworkNameEqual = sql``;
-  let chainEqual = sql``;
-  let bridgeIdIn = sql``;
-  if (bridgeNetworkName && chain) {
-    bridgNetworkNameEqual = sql`
-    WHERE bridge_name = ${bridgeNetworkName} AND
-    chain = ${chain}
-    `;
-  } else {
-    bridgNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
-    chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
-  }
-  if (bridgeNetworkName || chain) {
-    bridgeIdIn = sql`AND
-    bridge_id IN (
-      SELECT id FROM
-        bridges.config
-      ${bridgNetworkNameEqual}
-      ${chainEqual}
-    );`;
-  }
+  let bridgeNetworkCondition = bridgeNetworkName ? sql`AND bc.bridge_name = ${bridgeNetworkName}` : sql``;
+  let chainCondition = chain ? sql`AND bc.chain = ${chain}` : sql``;
+  let dateStr = new Date(timestamp * 1000).toISOString().split("T")[0];
+
   return await sql<IAggregatedData[]>`
-  SELECT * FROM 
-    bridges.daily_aggregated
-  WHERE 
-    ts = to_timestamp(${timestamp}) 
-    ${bridgeIdIn}
-  `;
+    SELECT ha.ts::date as ts, ha.* 
+    FROM bridges.hourly_aggregated ha
+    JOIN (
+        SELECT id 
+        FROM bridges.config bc
+        WHERE 1 = 1 
+        ${bridgeNetworkCondition}
+        ${chainCondition}
+    ) AS subq
+    ON ha.bridge_id = subq.id
+    WHERE 
+        ha.ts::date = ${dateStr}
+    `;
 };
 
 const queryLargeTransactionsTimestampRange = async (
@@ -273,7 +283,7 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   let chainEqual = chain ? sql`WHERE (chain = ${chain} OR destination_chain = ${chain})` : sql``;
   let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : chainEqual;
   if (bridgeNetworkName && chain) {
-    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`
+    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`;
   }
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,

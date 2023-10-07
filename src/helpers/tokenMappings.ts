@@ -61,3 +61,67 @@ export const transformTokens = {
     [token: string]: string;
   };
 };
+
+export const transformTokenDecimals = {
+  ethereum: {
+    "0xdf0770df86a8034b3efef0a1bb3c889b8332ff56": 6,
+    "0x38ea452219524bb87e18de1c24d3bb59510bd783": 6,
+    "0x101816545f6bd2b1076434b54383a1e633390a2e": 18,
+    "0x72e2f4830b9e45d52f80ac08cb2bec0fef72ed9c": 18,
+    "0x692953e758c3669290cb1677180c64183cee374e": 18,
+    "0x0faf1d2d3ced330824de3b8200fc8dc6e397850d": 6,
+    "0xfa0f307783ac21c39e939acff795e27b650f6e68": 6,
+    "0x590d4f8a68583639f215f675f3a259ed84790580": 6,
+    "0xe8f55368c82d38bbbbdb5533e7f56afc2e978cc2": 6,
+    "0x9cef9a0b1be0d289ac9f4a98ff317c33eaa84eb8": 6,
+    "0xd8772edbf88bba2667ed011542343b0eddacda47": 18,
+    "0x430ebff5e3e80a6c58e7e6ada1d90f5c28aa116d": 6,
+  },
+  bsc: {
+    "0x98a5737749490856b401db5dc27f522fc314a4e1": 6,
+    "0x9aa83081aa06af7208dcc7a4cb72c94d057d2cda": 6,
+    "0x4e145a589e4c03cbe3d28520e4bf3089834289df": 18,
+    "0x7bfd7f2498c4796f10b6c611d9db393d3052510c": 6,
+    "0xd4cec732b3b135ec52a3c0bc8ce4b8cfb9dace46": 18,
+    "0x68c6c27fb0e02285829e69240be16f32c5f8befe": 6,
+  },
+  avax: {
+    "0x1205f31718499dbf1fca446663b532ef87481fe1": 6,
+    "0x29e38769f23701a2e4a8ef0492e19da4604be62c": 6,
+    "0x1c272232df0bb6225da87f4decd9d37c32f63eea": 6,
+    "0x8736f92646b2542b3e5f3c63590ca7fe313e283b": 6,
+    "0xeae5c2f6b25933deb62f754f239111413a0a25ef": 6,
+  },
+  polygon: {
+    "0x1205f31718499dbf1fca446663b532ef87481fe1": 6,
+    "0x29e38769f23701a2e4a8ef0492e19da4604be62c": 6,
+    "0x1c272232df0bb6225da87f4decd9d37c32f63eea": 6,
+    "0x8736f92646b2542b3e5f3c63590ca7fe313e283b": 6,
+  },
+  arbitrum: {
+    "0x892785f33cdee22a30aef750f285e18c18040c3e": 6,
+    "0xb6cfcf89a7b22988bfc96632ac2a9d6dab60d641": 6,
+    "0x915a55e36a01285a14f05de6e81ed9ce89772f8e": 18,
+    "0x82cbecf39bee528b5476fe6d1550af59a9db6fc0": 18,
+    "0xaa4bf442f024820b2c28cd0fd72b82c63e66f56c": 6,
+    "0xf39b7be294cb36de8c510e267b82bb588705d977": 6,
+    "0x600e576f9d853c95d58029093a16ee49646f3ca5": 6,
+  },
+  optimism: {
+    "0xdecc0c09c3b5f6e92ef4184125d5648a66e35298": 6,
+    "0xd22363e3762ca7339569f3d33eade20127d5f98c": 18,
+    "0xb69c8cbcd90a39d8d3d3ccf0a3e968511c3856a0": 18,
+    "0x165137624f1f692e69659f944bf69de02874ee27": 6,
+    "0x368605d9c6243a80903b9e326f1cddde088b8924": 6,
+    "0x2f8bc9081c7fcfec25b9f41a50d97eaa592058ae": 6,
+    "0x3533f5e279bdbf550272a199a223da798d9eff78": 6,
+    "0x5421fa1a48f9ff81e4580557e86c7c0d24c18036": 6,
+  },
+  fantom: {
+    "0x12edea9cd262006cc3c4e77c90d2cd2dd4b1eb97": 6,
+  },
+} as {
+  [chain: string]: {
+    [token: string]: number;
+  };
+};

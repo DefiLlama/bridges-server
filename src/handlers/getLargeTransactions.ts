@@ -15,18 +15,18 @@ const getLargeTransactions = async (
   const queryStartTimestamp = parseInt(startTimestamp);
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
   const queryChain = chain === "all" ? null : normalizeChain(chain);
-  
-  const configs = await queryConfig()
-  let configMapping = {} as any
+
+  const configs = await queryConfig();
+  let configMapping = {} as any;
   configs.map((config) => {
-    const id = config.id
-    const name = config.bridge_name
+    const id = config.id;
+    const name = config.bridge_name;
     const bridgeNetwork = importBridgeNetwork(name);
     if (bridgeNetwork) {
-    const {displayName} = bridgeNetwork 
-    configMapping[id] = displayName
+      const { displayName } = bridgeNetwork;
+      configMapping[id] = displayName;
     }
-  })
+  });
 
   const largeTransactions = await queryLargeTransactionsTimestampRange(
     queryChain,
@@ -44,7 +44,7 @@ const getLargeTransactions = async (
   const prices = await getLlamaPrices(Array.from(tokenSet));
   const response = largeTransactions.map((tx) => {
     const bridgeID = tx.bridge_id;
-    const bridgeName = configMapping[bridgeID] ?? "unknown"
+    const bridgeName = configMapping[bridgeID] ?? "unknown";
     const transformedToken = transformTokens[tx.chain]?.[tx.token]
       ? transformTokens[tx.chain]?.[tx.token]
       : `${tx.chain}:${tx.token}`;
@@ -63,8 +63,7 @@ const getLargeTransactions = async (
       usdValue: tx.usd_value,
     };
   });
-
-  return response;
+  return response.slice(0, 2000);
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {

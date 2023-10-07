@@ -1,87 +1,88 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxsBlockRangeEtherscan, getLock } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
-import { PromisePool } from '@supercharge/promise-pool'
+import { PromisePool } from "@supercharge/promise-pool";
 
-/*
-Contracts: https://book.wormhole.com/reference/contracts.html
-
-***Ethereum***
-0x3ee18B2214AFF97000D974cf647E7C347E8fa585 is Wormhole: Portal Token Bridge
-
-***Polygon***
-0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE is Wormhole: Portal Token Bridge
-
-***BSC***
-0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7 is Wormhole: Portal Token Bridge
-
-***Fantom***
-0x7C9Fc5741288cDFdD83CeB07f3ea7e22618D79D2 is Wormhole: Portal Token Bridge
-
-***Avalanche***
-0x0e082F06FF657D94310cB8cE8B0D9a04541d8052 is Wormhole: Portal Token Bridge
-
-***Aurora***
-0x51b5123a7b0F9b2bA265f9c4C8de7D78D52f510F is Wormhole: Portal Token Bridge
-
-***Celo***
-0x796Dff6D74F3E27060B71255Fe517BFb23C93eed is Wormhole: Portal Token Bridge
-
-***Klaytn***
-0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F is Wormhole: Portal Token Bridge
-*/
-
+// Wormhole: Portal core and token bridge contract addresses
+// https://docs.wormhole.com/wormhole/blockchain-environments/environments
 const contractAddresses = {
   ethereum: {
     tokenBridge: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
-    nativeToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    coreBridge: "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
   },
   polygon: {
     tokenBridge: "0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE",
-    nativeToken: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    coreBridge: "0x7A4B5a56256163F07b2C80A7cA55aBE66c4ec4d7",
   },
   fantom: {
     tokenBridge: "0x7C9Fc5741288cDFdD83CeB07f3ea7e22618D79D2",
-    nativeToken: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+    coreBridge: "0x126783A6Cb203a3E35344528B26ca3a0489a1485",
   },
   avax: {
     tokenBridge: "0x0e082F06FF657D94310cB8cE8B0D9a04541d8052",
-    nativeToken: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+    coreBridge: "0x54a8e5f9c4CbA08F9943965859F6c34eAF03E26c",
   },
   bsc: {
     tokenBridge: "0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7",
-    nativeToken: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    coreBridge: "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
   },
   aurora: {
     tokenBridge: "0x51b5123a7b0F9b2bA265f9c4C8de7D78D52f510F",
-    nativeToken: "0xC9BdeEd33CD01541e1eeD10f90519d2C06Fe3feB",
+    coreBridge: "0xa321448d90d4e5b0A732867c18eA198e75CAC48E",
   },
   celo: {
     tokenBridge: "0x796Dff6D74F3E27060B71255Fe517BFb23C93eed",
-    nativeToken: "0x471EcE3750Da237f93B8E339c536989b8978a438",
+    coreBridge: "0xa321448d90d4e5b0A732867c18eA198e75CAC48E",
   },
   klaytn: {
     tokenBridge: "0x5b08ac39EAED75c0439FC750d9FE7E1F9dD0193F",
-    nativeToken: "0xe4f05a66ec68b54a58b17c22107b02e0232cc817",
+    coreBridge: "0x0C21603c4f3a6387e241c0091A7EA39E43E90bb7",
+  },
+  moonbeam: {
+    tokenBridge: "0xb1731c586ca89a23809861c6103f0b96b3f57d92",
+    coreBridge: "0xC8e2b0cD52Cf01b0Ce87d389Daa3d414d4cE29f3",
+  },
+  optimism: {
+    tokenBridge: "0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b",
+    coreBridge: "0xEe91C335eab126dF5fDB3797EA9d6aD93aeC9722",
+  },
+  arbitrum: {
+    tokenBridge: "0x0b2402144Bb366A632D14B83F244D2e0e21bD39c",
+    coreBridge: "0xa5f208e072434bC67592E4C49C1B991BA79BCA46",
+  },
+  base: {
+    tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
+    coreBridge: "0xbebdb6C8ddC678FfA9f8748f85C815C556Dd8ac6",
   },
 } as {
   [chain: string]: {
     tokenBridge: string;
-    nativeToken: string;
+    coreBridge: string;
   };
 };
 
-const nativeAndWrappedTokenTransferSignatures = [
-  "0x998150", // native token xfers
-  "0xff200c",
-  "0xc68785", // wrapped token xfers
-  "0x0f5287",
-];
+const completeTransferSigs = [
+  ethers.utils.id("completeTransferAndUnwrapETH(bytes)"),
+  ethers.utils.id("completeTransferAndUnwrapETHWithPayload(bytes)"),
+  ethers.utils.id("completeTransfer(bytes)"),
+  ethers.utils.id("completeTransferWithPayload(bytes)"),
+].map((s) => s.slice(0, 8));
+
+const logMessagePublishedAbi =
+  "event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel)";
+const logMessagePublishedIface = new ethers.utils.Interface([logMessagePublishedAbi]);
+const approvalIface = new ethers.utils.Interface([
+  "event Approval(address indexed owner, address indexed spender, uint256 value)",
+]);
+const transferIface = new ethers.utils.Interface([
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+]);
+const depositIface = new ethers.utils.Interface(["event Deposit(address indexed dst, uint256 wad)"]);
+const withdrawalIface = new ethers.utils.Interface(["event Withdrawal(address indexed src, uint256 wad)"]);
 
 const depositInputDataExtraction = {
   inputDataABI: [
@@ -97,135 +98,144 @@ const nativeDepositInputDataExtraction = {
   inputDataFnName: "wrapAndTransferETH",
 };
 
-const portalNativeAndWrappedTransfersFromHashes = async (
-  chain: Chain,
-  hashes: string[],
-  address: string,
-  nativeToken: string
-) => {
-  const provider = getProvider(chain) as any;
-
-  const { results, errors } = await PromisePool
-  .withConcurrency(20)
-  .for(hashes)
-  .process(async (hash) => {
-        // TODO: add timeout
-        const tx = await provider.getTransaction(hash);
-        const receipt = await provider.getTransactionReceipt(hash);
-        if (!tx) {
-          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
-          return;
-        }
-        if (!receipt) {
-          console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
-          return;
-        }
-        const functionSignature = tx.data.slice(0, 8);
-        let isDeposit, token, value;
-        let { blockNumber, from, to } = tx;
-        // ***NATIVE TOKENS***
-        // if it is a deposit, can directly get all needed info from tx
-        if (functionSignature === "0x998150") {
-          if (!(address === from || address === to)) {
-            console.error(
-              `WARNING: Address given for native transfer on chain ${chain} not present in tx, SKIPPING tx.`
-            );
-            return;
-          }
-          token = nativeToken;
-          value = tx.value;
-          isDeposit = true;
-        }
-        // if it is a withdrawal, attempts to get total amount of WETH sent to contract for withdrawal
-        else if (functionSignature === "0xff200c") {
-          const logs = receipt.logs;
-          const filteredLogs = logs.filter((log: any) => {
-            const topics = log.topics;
-            const address = log.address;
-            let isTransfer = false;
-            topics.map((topic: string) => {
-              if (topic.slice(0, 8) === "0x7fcf53" && address === nativeToken) {
-                // this is sig for WETH withdrawal fn
-                isTransfer = true;
-              }
-            });
-            return isTransfer;
-          });
-          if (filteredLogs.length === 0) {
-            // console.error(`Warning: Transaction receipt on chain ${chain} contained no token transfers, SKIPPING tx.`);
-            return;
-          } else {
-            let bnAmountSum = ethers.BigNumber.from(0);
-            for (const log of filteredLogs) {
-              const value = ethers.BigNumber.from(log.data);
-              bnAmountSum = bnAmountSum.add(value);
-            }
-            token = nativeToken;
-            value = bnAmountSum;
-            isDeposit = false;
-            // switch "from" and "to" when it is a withdrawal
-            const a = from;
-            from = to;
-            to = a;
-          }
-        }
-        // ***WRAPPED TOKENS***
-        // if it is a deposit, it is already caught by 'depositEventParams'
-        // if it is a withdrawal, attempt to get the token minted from tx receipt
-        else if (functionSignature === "0xc68785") {
-          const logs = receipt.logs;
-          const filteredLogs = logs.filter((log: any) => {
-            const topics = log.topics;
-            let isTransfer = false;
-            topics.map((topic: string) => {
-              if (topic.slice(0, 8) === "0xddf252") {
-                isTransfer = true;
-              }
-            });
-            return isTransfer;
-          });
-          if (filteredLogs.length === 0) {
-            // console.error(`Warning: Transaction receipt on chain ${chain} contained no token transfers, SKIPPING tx.`);
-          } else {
-            const firstLog = filteredLogs[0];
-            const address = firstLog.address;
-            let bnAmount = ethers.BigNumber.from(0);
-            for (const log of filteredLogs) {
-              if (address === log.address) {
-                bnAmount = bnAmount.add(ethers.BigNumber.from(log.data));
-              }
-            }
-            token = address;
-            value = bnAmount;
-            isDeposit = false;
-          }
-          if (filteredLogs.length > 1) {
-            // console.error(`Warning: Transaction receipt on chain ${chain} contained multiple token transfers.`);
-          }
-          // switch "from" and "to" when it is a withdrawal
-          const a = from;
-          from = to;
-          to = a;
-        }
-        // this could be a deposit tx already covered, or a reverted tx
-        if (!token) {
-          return null;
-        }
-
-        return {
-          blockNumber: blockNumber,
-          txHash: hash,
-          from: from,
-          to: to,
-          token: token,
-          amount: value,
-          isDeposit: isDeposit,
-        } as EventData;
-      })
-  if(errors.length>0){
-    console.error("Errors in Portal's portalNativeAndWrappedTransfersFromHashes", errors)
+const tryParseLog = (log: ethers.providers.Log, parser: ethers.utils.Interface) => {
+  if (!log) return null;
+  try {
+    return parser.parseLog(log);
+  } catch {
+    return null;
   }
-  return results.filter((tx) => tx) as EventData[];
+};
+
+const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: string[], tokenBridge: string) => {
+  const provider = getProvider(chain);
+
+  const { results, errors } = await PromisePool.withConcurrency(20)
+    .for(hashes)
+    .process(async (hash) => {
+      // TODO: add timeout
+      const tx = await provider.getTransaction(hash);
+      const receipt = await provider.getTransactionReceipt(hash);
+      if (!tx || !tx.blockNumber || !receipt) {
+        console.error(`WARNING: Unable to get transaction data on chain ${chain}, SKIPPING tx.`);
+        return;
+      }
+      // make sure that the logs are sorted in ascending order
+      const logs = receipt.logs.sort((a, b) => a.logIndex - b.logIndex);
+      const results = logs.reduce((results, log, i) => {
+        let amount: ethers.BigNumber | undefined;
+        // for deposits there will be a `LogMessagePublished` event
+        const logMessagePublished = tryParseLog(log, logMessagePublishedIface);
+        if (logMessagePublished) {
+          const payload = Buffer.from(logMessagePublished.args.payload.slice(2), "hex");
+          // only care about token transfer message types (payload ID = 1 or 3)
+          const payloadID = payload.readUint8(0);
+          if (!(payloadID === 1 || payloadID === 3)) {
+            return results;
+          }
+          // the `Transfer` event will precede the `LogMessagePublished` event
+          // some token implementations may also emit an `Approval` event
+          // See https://docs.openzeppelin.com/contracts/2.x/api/token/erc20#ERC20-transferFrom-address-address-uint256-
+          let previousLog = logs[i - 1];
+          if (tryParseLog(previousLog, approvalIface)) {
+            previousLog = logs[i - 2];
+          }
+          const transfer = tryParseLog(previousLog, transferIface);
+          // lock or burn
+          let to = "";
+          let isDeposit = true;
+          if (transfer && (transfer.args.to === tokenBridge || transfer.args.to === ethers.constants.AddressZero)) {
+            amount = transfer.args.value;
+            to = transfer.args.to;
+            if (to === ethers.constants.AddressZero) {
+              // if this is a wrapped token being burned and not being sent to its origin chain,
+              // then it should be included in the volume by fixing the to address
+              // https://docs.wormhole.com/wormhole/explore-wormhole/vaa#token-transfer
+              const originChain = payload.readUint16BE(65);
+              const toChain = payload.readUInt16BE(99);
+              if (toChain !== originChain) {
+                to = tokenBridge;
+                isDeposit = false;
+              }
+            }
+          } else {
+            const deposit = tryParseLog(previousLog, depositIface);
+            // lock
+            if (deposit && deposit.args.dst === tokenBridge) {
+              amount = deposit.args.wad;
+              to = deposit.args.dst;
+            }
+          }
+          if (amount) {
+            results.push({
+              blockNumber: tx.blockNumber!,
+              txHash: hash,
+              from: tx.from,
+              to,
+              token: previousLog.address,
+              amount,
+              isDeposit,
+            });
+            return results;
+          }
+        }
+        // TODO: change this if the token bridge is upgraded to emit a `TransferRedeemed` event
+        const functionSignature = tx.data.slice(0, 8);
+        if (completeTransferSigs.includes(functionSignature)) {
+          const transfer = tryParseLog(log, transferIface);
+          // unlock or mint
+          let from = "";
+          if (transfer && (transfer.args.from === tokenBridge || transfer.args.from === ethers.constants.AddressZero)) {
+            amount = transfer.args.value;
+            from = transfer.args.from;
+          } else {
+            const withdrawal = tryParseLog(log, withdrawalIface);
+            // unlock
+            if (withdrawal && withdrawal.args.src === tokenBridge) {
+              amount = withdrawal.args.wad;
+              from = withdrawal.args.src;
+            }
+          }
+          if (amount) {
+            results.push({
+              blockNumber: tx.blockNumber!,
+              txHash: hash,
+              // TODO: not sure how to get the token recipient when the tx sender isn't the recipient
+              // (e.g. contract controlled transfers)
+              to: transfer?.args.to || tx.from,
+              from,
+              token: log.address,
+              amount,
+              isDeposit: false,
+            });
+            return results;
+          }
+        }
+        return results;
+      }, [] as EventData[]);
+      return results;
+    });
+  if (errors.length > 0) {
+    console.error("Errors in Portal's portalNativeAndWrappedTransfersFromHashes", errors);
+  }
+  // aggregate transfers where the token, to, and from values match
+  const aggregated = results.reduce<EventData[]>((aggregated, events) => {
+    if (events) {
+      events.forEach((event) => {
+        const { txHash, token, from, to, amount } = event;
+        const other = aggregated.find(
+          (e) => e.txHash === txHash && e.token === token && e.to === to && e.from === from
+        );
+        if (other) {
+          other.amount.add(amount);
+        } else {
+          aggregated.push(event);
+        }
+      });
+    }
+    return aggregated;
+  }, []);
+  return aggregated;
 };
 
 // checks deposits for Solana as receipient chain, withdrawals for Solana as source chain and returns only those txs
@@ -273,46 +283,43 @@ const processLogsForSolana = async (logs: EventData[], chain: Chain) => {
 };
 
 const constructParams = (chain: string) => {
-  let eventParams = [] as any;
-  const chainAddresses = contractAddresses[chain];
-  const address = chainAddresses.tokenBridge;
-  const nativeToken = chainAddresses.nativeToken;
-  const depositEventParams: PartialContractEventParams = constructTransferParams(address, true);
-  const withdrawalEventParams: PartialContractEventParams = constructTransferParams(address, false, {
-    excludeTo: ["0x0000000000000000000000000000000000000000"],
-  });
-  eventParams.push(depositEventParams, withdrawalEventParams);
+  const { coreBridge, tokenBridge } = contractAddresses[chain];
+  // The token bridge doesn't emit events on deposits/outbound token transfers,
+  // but it calls the core bridge which emits a `LogMessagePublished` event
+  const logMessagePublishedTopic = logMessagePublishedIface.getEventTopic("LogMessagePublished");
+  const logMessagePublishedEventParams: PartialContractEventParams = {
+    target: coreBridge,
+    topic: logMessagePublishedTopic,
+    topics: [logMessagePublishedTopic, ethers.utils.hexZeroPad(tokenBridge, 32)],
+    abi: [logMessagePublishedAbi],
+    isDeposit: true,
+  };
 
   return async (fromBlock: number, toBlock: number) => {
-    const eventLogData = await getTxDataFromEVMEventLogs("portal", chain as Chain, fromBlock, toBlock, eventParams);
-
-    // for native token transfers, only able to get from subgraph, Etherscan API, etc.
+    const events = await getTxDataFromEVMEventLogs("portal", chain as Chain, fromBlock, toBlock, [
+      logMessagePublishedEventParams,
+    ]);
+    let hashes = events.map((e) => e.txHash);
+    // The token bridge doesn't emit events on withdrawals/inbound token transfers,
+    // only able to get from subgraph, Etherscan API, etc.
     // skipped for chains without available API
-    let nativeTokenData = [] as EventData[];
-    if (["ethereum", "polygon", "fantom", "avalanche", "bsc", "aurora", "celo"].includes(chain)) {
-      if (!nativeToken) {
-        throw new Error(`Chain ${chain} is missing native token address.`);
-      }
+    // TODO: change this when the token bridge emits the `TransferRedeemed` event
+    if (chain !== "klaytn" && chain !== "base" && chain !== "moonbeam") {
       await getLock();
-      const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-        includeSignatures: nativeAndWrappedTokenTransferSignatures,
+      const txs = await getTxsBlockRangeEtherscan(chain, tokenBridge, fromBlock, toBlock, {
+        includeSignatures: completeTransferSigs,
       });
       if (txs.length) {
-        const hashes = txs.map((tx: any) => tx.hash);
-        const nativeTokenTransfers = await portalNativeAndWrappedTransfersFromHashes(
-          chain as Chain,
-          hashes,
-          address,
-          nativeToken
-        );
-        nativeTokenData = [...nativeTokenTransfers, ...nativeTokenData];
+        hashes = [...hashes, ...txs.map((tx: any) => tx.hash)];
       }
     }
 
     // every chain also checks for and inserts logs for solana txs
     // const solanaLogs = await processLogsForSolana([...eventLogData, ...nativeTokenData], chain as Chain);
 
-    return [...eventLogData, ...nativeTokenData];
+    const transfers = await portalNativeAndWrappedTransfersFromHashes(chain, hashes, tokenBridge);
+    // console.log(`transfers: ${JSON.stringify(transfers, null, 2)}`);
+    return transfers;
   };
 };
 
@@ -325,6 +332,10 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
   klaytn: constructParams("klaytn"),
+  moonbeam: constructParams("moonbeam"),
+  optimism: constructParams("optimism"),
+  arbitrum: constructParams("arbitrum"),
+  base: constructParams("base"),
 };
 
 export default adapter;
