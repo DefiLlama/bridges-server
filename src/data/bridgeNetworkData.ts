@@ -196,7 +196,7 @@ export default [
       // "Dogechain",
       "DFK Chain",
       // "Cronos",
-      "Base,
+      "Base",
     ],
     chainMapping: {
       avalanche: "avax",
