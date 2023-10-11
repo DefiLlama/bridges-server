@@ -143,7 +143,7 @@ const constructParams = (chain: Chains) => {
     },
   ];
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("eywa", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("wanbridge", chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
@@ -163,11 +163,11 @@ const adapter: BridgeAdapter = {
   metis: constructParams(Chains.metis),
   wan: constructParams(Chains.wanchain),
 
-  // vinuchain: constructParams(Chains.vinuchain),
-  // functionX: constructParams(Chains.functionX),
-  // horizen: constructParams(Chains.horizen),
-  // clover: constructParams(Chains.clover),
-  // gather: constructParams(Chains.gather),
+  vinu: constructParams(Chains.vinuchain),
+  // functionx: constructParams(Chains.functionX),
+  eon: constructParams(Chains.horizen),
+  clv: constructParams(Chains.clover),
+  gth: constructParams(Chains.gather),
 
   // tron: constructParams(Chains.tron),
 };
