@@ -24,6 +24,7 @@ import allbridge from "./allbridge";
 import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
+import wanbridge from './wanbridge';
 import beamer from "./beamer";
 import zksync from "./zksync";
 import polygon_zkevm from "./polygon_zkevm";
@@ -63,6 +64,7 @@ export default {
   allbridge,
   ibc,
   meter,
+  wanbridge,
   beamer,
   zksync,
   polygon_zkevm,
