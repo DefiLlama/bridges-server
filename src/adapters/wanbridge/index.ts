@@ -164,7 +164,7 @@ const adapter: BridgeAdapter = {
   wan: constructParams(Chains.wanchain),
 
   vinu: constructParams(Chains.vinuchain),
-  // functionx: constructParams(Chains.functionX),
+  functionx: constructParams(Chains.functionX),
   eon: constructParams(Chains.horizen),
   clv: constructParams(Chains.clover),
   gth: constructParams(Chains.gather),
