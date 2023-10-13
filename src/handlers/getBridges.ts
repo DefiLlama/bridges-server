@@ -50,10 +50,10 @@ const getBridges = async () => {
         const lastDayHourlyVolume = await getHourlyBridgeVolume(hourlyStartTimestamp, currentTimestamp, undefined, id);
         if (lastDayHourlyVolume?.length) {
           const lastHourlyVolumeRecord = lastDayHourlyVolume[lastDayHourlyVolume.length - 1];
-          lastHourlyVolume = (lastHourlyVolumeRecord.depositUSD + lastHourlyVolumeRecord.withdrawUSD) / 2;
+          lastHourlyVolume = (lastHourlyVolumeRecord.depositUSD + lastHourlyVolumeRecord.withdrawUSD) / 2 || 0;
 
           lastDayHourlyVolume.map((entry) => {
-            const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
+            const volume = (entry.depositUSD + entry.withdrawUSD) / 2 || 0;
 
             currentDayVolume += volume;
           });
