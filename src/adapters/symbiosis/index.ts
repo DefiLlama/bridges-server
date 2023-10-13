@@ -52,6 +52,7 @@ const adapter: BridgeAdapter = {
   linea: constructParams("linea"),
   base: constructParams("base"),
   mantle: constructParams("mantle"),
+  tron: constructParams("tron"),
 };
 
 export default adapter;
