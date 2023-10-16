@@ -144,7 +144,7 @@ function constructWithdrawAddressTransfers(
     const isNativeChain = asset.native_chain === _chain;
 
     if (isNativeChain) {
-      // token will be transfered from gateway contract.
+      // token will be transferred from gateway contract.
       const param = {
         ...withdrawParams(gateway, normalizeAddress(withdraw.recipient)),
         target: token,
