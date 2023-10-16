@@ -519,8 +519,8 @@ export default [
     iconLink: "icons:manta-pacific-bridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Manta Pacific"],
-    destinationChain: "Manta Pacific",
+    chains: ["Ethereum", "Manta"],
+    destinationChain: "Manta",
   },
 
   // {
