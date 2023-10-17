@@ -577,7 +577,7 @@ export default [
     iconLink: "icons:rhino.fi",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Arbitrum", "Arbitrum Nova", "BSC", "Polygon", "Optimism", "Base", "zkSync Era", "Polygon zkEVM", "Linea"],
+    chains: ["Arbitrum", "Arbitrum Nova", "BSC", "Polygon", "Optimism", "Base", "zkSync Era", "Polygon zkEVM", "Linea", "Scroll"],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
