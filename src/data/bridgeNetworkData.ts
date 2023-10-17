@@ -140,6 +140,7 @@ export default [
       "Optimism",
       "Arbitrum",
       "Base",
+      "Sui"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
