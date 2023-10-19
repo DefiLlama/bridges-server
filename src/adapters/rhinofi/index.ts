@@ -12,6 +12,7 @@ export const bridgesAddress = {
   polygon_zkevm: "0x65a4b8a0927c7fd899aed24356bf83810f7b9a3f",
   linea: "0xcf68a2721394dcf5dcf66f6265c1819720f24528",
   manta: "0x2b4553122d960ca98075028d68735cc6b15deeb5",
+  scroll: "0x87627c7e586441eef9ee3c28b66662e897513f33"
 } as const;
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -79,6 +80,7 @@ const adapter: BridgeAdapter = {
   "zksync era": constructParams("era"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   linea: constructParams("linea"),
+  scroll: constructParams("scroll")
   // 'manta pacific': constructParams('manta')
 };
 
