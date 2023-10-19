@@ -50,11 +50,11 @@ export const getSolanaEvents = async (fromSlot: number, toSlot: number) => {
       return acc;
     }
     // handle the case where the token bridge instruction is a top-level instruction
-    tx.transaction.message.instructions.forEach((ix, index) => {
+    tx.transaction.message.instructions.forEach((ix: any, index: any) => {
       if (!isTokenBridgeIx(ix)) {
         return;
       }
-      const innerIx = tx.meta?.innerInstructions?.find((innerIx) => innerIx.index === index);
+      const innerIx = tx.meta?.innerInstructions?.find((innerIx: any) => innerIx.index === index);
       if (!innerIx || innerIx.instructions.length === 0) {
         return;
       }
@@ -64,8 +64,8 @@ export const getSolanaEvents = async (fromSlot: number, toSlot: number) => {
       }
     });
     // handle the case where the token bridge instruction is an inner instruction
-    tx.meta?.innerInstructions?.forEach((innerIx) => {
-      innerIx.instructions.forEach((ix, index) => {
+    tx.meta?.innerInstructions?.forEach((innerIx: any) => {
+      innerIx.instructions.forEach((ix: any, index: any) => {
         if (isTokenBridgeIx(ix)) {
           const event = getEventData(tx, ix, innerIx.instructions.slice(index + 1));
           if (event) {
