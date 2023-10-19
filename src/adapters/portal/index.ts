@@ -3,11 +3,11 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { getTxsBlockRangeEtherscan, getLock } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
-import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 import { PromisePool } from "@supercharge/promise-pool";
 import { contractAddresses } from "./consts";
 import { getSolanaEvents } from "./solana";
+import { getProvider } from "../../utils/provider";
 
 const completeTransferSigs = [
   ethers.utils.id("completeTransferAndUnwrapETH(bytes)"),

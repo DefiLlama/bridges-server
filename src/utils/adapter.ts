@@ -1,5 +1,5 @@
 import { getLatestBlockNumber } from "./blocks";
-import { Chain, getProvider } from "@defillama/sdk/build/general";
+import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
 import { insertTransactionRow, insertConfigRow, insertErrorRow } from "./wrappa/postgres/write";
@@ -14,6 +14,7 @@ import { wait } from "../helpers/etherscan";
 import { lookupBlock } from "@defillama/sdk/build/util";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
+import { getProvider } from "./provider";
 const axios = require("axios");
 const retry = require("async-retry");
 
