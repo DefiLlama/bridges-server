@@ -17,6 +17,7 @@ export const maxBlocksToQueryByChain = {
   aurora: 5400,
   celo: 1200,
   klaytn: 6000,
+  sui: 2400, // sui creates a checkpoint about every 3 seconds
 } as { [chain: string]: number };
 
 export const nonBlocksChains = [

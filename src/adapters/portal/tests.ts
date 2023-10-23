@@ -443,6 +443,98 @@ const testKlaytn = async () => {
   //);
 };
 
+const testSui = async () => {
+  // const events = await adapter["sui"](14_992_284, 16_081_978)
+  // console.log(events.length)
+
+  // complete_transfer_with_payload (wrapped)
+  // https://suiexplorer.com/txblock/GWgFCab4BqtxXV2mFvMdM5deAkpKUPSqapT1AreoBh4Y
+  let checkpoint = 15736900;
+  let event = await getEvent(checkpoint, "sui");
+  assertEqual(
+    {
+      blockNumber: checkpoint,
+      txHash: "GWgFCab4BqtxXV2mFvMdM5deAkpKUPSqapT1AreoBh4Y",
+      from: ethers.constants.AddressZero,
+      to: "0xc4c610707eab9b222996b075f7d07c7d9b07766ab7bcafef621fd53bbf089f4e",
+      token: "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN",
+      amount: ethers.BigNumber.from("34389000000"),
+      isDeposit: false,
+    },
+    event
+  );
+
+  // complete_transfer (native)
+  // https://suiexplorer.com/txblock/2XrjjNwGXPzEDdHztJ7kG6E9wijiWK8sfQczhoT1V38Q
+  checkpoint = 16007453;
+  event = await getEvent(checkpoint, "sui");
+  assertEqual(
+    {
+      blockNumber: checkpoint,
+      txHash: "2XrjjNwGXPzEDdHztJ7kG6E9wijiWK8sfQczhoT1V38Q",
+      from: "0xc57508ee0d4595e5a8728974a4a93a787d38f339757230d441e895422c07aba9",
+      to: "0xd5c67d73166147f6fec91717187651966cc15c5caec2462dbbe380f44b21e87f",
+      token: "0x2::sui::SUI",
+      amount: ethers.BigNumber.from("10000000"),
+      isDeposit: false,
+    },
+    event
+  );
+
+  // transfer_tokens_with_payload (wrapped - not sent to origin chain)
+  // https://suiexplorer.com/txblock/EqSqsc9pbo6hRgAhUyjn3nsKU51k6kEHd1v4DVBdvkyz
+  checkpoint = 15827121;
+  event = await getEvent(checkpoint, "sui");
+  assertEqual(
+    {
+      blockNumber: checkpoint,
+      txHash: "EqSqsc9pbo6hRgAhUyjn3nsKU51k6kEHd1v4DVBdvkyz",
+      from: "0x161a9493ce468ee0fe56be02fe086eb47b650f76cbc8f7030a8f9b2bbcc7f3ac",
+      to: "0xc57508ee0d4595e5a8728974a4a93a787d38f339757230d441e895422c07aba9",
+      token: "0xaf8cd5edc19c4512f4259f0bee101a40d41ebed738ade5874359610ef8eeced5::coin::COIN",
+      amount: ethers.BigNumber.from("1000000"),
+      isDeposit: false,
+    },
+    event
+  );
+
+  // transfer_tokens (wrapped - sent to origin chain)
+  // https://suiexplorer.com/txblock/2Dc96jf7PSJeA9kcLxUyTZMsSwsEtTDMrYdabqDpuZAS
+  checkpoint = 16005422;
+  event = await getEvent(checkpoint, "sui");
+  assertEqual(
+    {
+      blockNumber: checkpoint,
+      txHash: "2Dc96jf7PSJeA9kcLxUyTZMsSwsEtTDMrYdabqDpuZAS",
+      from: "0xd5c67d73166147f6fec91717187651966cc15c5caec2462dbbe380f44b21e87f",
+      to: ethers.constants.AddressZero,
+      token: "0xb7844e289a8410e50fb3ca48d69eb9cf29e27d223ef90353fe1bd8e27ff8f3f8::coin::COIN",
+      amount: ethers.BigNumber.from("1000000"),
+      isDeposit: false,
+    },
+    event
+  );
+
+  // transfer_tokens (native)
+  // https://suiexplorer.com/txblock/9ePHxgVdKFoYGnE4nMg3bxiShmYq9yuYKdENEtwDKVwm
+  checkpoint = 15991909;
+  event = await getEvent(checkpoint, "sui");
+  assertEqual(
+    {
+      blockNumber: checkpoint,
+      txHash: "9ePHxgVdKFoYGnE4nMg3bxiShmYq9yuYKdENEtwDKVwm",
+      from: "0xbda9efe864e492f5921f30287a10f60287eafdcc82f259a39bb2335fb069a948",
+      to: "0xc57508ee0d4595e5a8728974a4a93a787d38f339757230d441e895422c07aba9",
+      token: "0x2::sui::SUI",
+      amount: ethers.BigNumber.from("2100000000"),
+      isDeposit: true,
+    },
+    event
+  );
+
+  console.log("sui tests passed");
+};
+
 (async () => {
   await Promise.all([
     testNoEventsFound(),
@@ -457,5 +549,6 @@ const testKlaytn = async () => {
     testAvalanche(),
     testOptimism(),
     testKlaytn(),
+    testSui(),
   ]);
 })();
