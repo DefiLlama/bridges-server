@@ -21,5 +21,5 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
   } else if (chain === "tron") {
     return await tronGetLatestBlock();
   }
-  return await getLatestBlock(chain);
+  return await getLatestBlockSdk(chain);
 }
