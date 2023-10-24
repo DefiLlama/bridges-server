@@ -627,5 +627,6 @@ export default [
     largeTxThreshold: 10000,
     url: "https://bridge.pepe.team",
     chains: ["Ethereum", "BSC", "Polygon"],
+    destinationChain:  "Waves",
   },
 ] as BridgeNetwork[];
