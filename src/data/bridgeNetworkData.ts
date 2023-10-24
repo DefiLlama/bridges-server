@@ -619,4 +619,13 @@ export default [
   //     avalanche: "avax",
   //   },
   // },
+  {
+    id: 41,
+    displayName: "PepeTeam Bridge",
+    bridgeDbName: "pepeteam_bridge",
+    iconLink: "protocols:pepeteam-bridge",
+    largeTxThreshold: 10000,
+    url: "https://bridge.pepe.team",
+    chains: ["Ethereum", "BSC", "Polygon"],
+  },
 ] as BridgeNetwork[];
