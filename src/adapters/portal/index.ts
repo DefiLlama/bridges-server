@@ -6,7 +6,6 @@ import { EventData } from "../../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import { ethers } from "ethers";
 import { PromisePool } from "@supercharge/promise-pool";
-import { getSuiEvents } from "./sui";
 
 // Wormhole: Portal core and token bridge contract addresses
 // https://docs.wormhole.com/wormhole/blockchain-environments/environments
@@ -341,7 +340,6 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
-  sui: getSuiEvents,
 };
 
 export default adapter;
