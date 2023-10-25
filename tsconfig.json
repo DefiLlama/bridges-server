@@ -1,12 +1,13 @@
 {
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "commonjs",
+      "skipLibCheck": true
     }
   },
   "compilerOptions": {
     "target": "es2019",
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -22,5 +23,5 @@
     "noUnusedParameters": true,
     "lib": ["ES2019"]
   },
-  "include": ["src"],
+  "include": ["src"]
 }

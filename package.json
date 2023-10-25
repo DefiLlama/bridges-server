@@ -17,7 +17,7 @@
     "serverless": "^3.21.0",
     "serverless-offline": "^9.1.6",
     "serverless-prune-plugin": "^2.0.1",
-    "ts-loader": "^9.3.1"
+    "ts-loader": "^9.5.0"
   },
   "dependencies": {
     "@defillama/sdk": "^4.0.43",
@@ -30,6 +30,7 @@
     "graphql-request": "^4.0.0",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
-    "serverless-webpack": "^5.8.0"
+    "serverless-webpack": "^5.8.0",
+    "typescript": "^5.2.2"
   }
 }
