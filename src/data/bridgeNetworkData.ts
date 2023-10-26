@@ -620,7 +620,7 @@ export default [
   //   },
   // },
   {
-    id: 41,
+    id: 42,
     displayName: "PepeTeam Bridge",
     bridgeDbName: "pepeteam_bridge",
     iconLink: "protocols:pepeteam-bridge",
