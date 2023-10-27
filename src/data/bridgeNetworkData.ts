@@ -632,4 +632,16 @@ export default [
       gather: "gth",
     },
   },
+  {
+    id: 42,
+    displayName: "pNetwork",
+    bridgeDbName: "pnetwork",
+    iconLink: "icons:pnetwork",
+    largeTxThreshold: 10000,
+    url: "https://p.network",
+    chains: [
+      "Ethereum",
+      "BSC"
+    ]
+  },
 ] as BridgeNetwork[];
