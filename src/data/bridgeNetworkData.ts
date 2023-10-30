@@ -595,7 +595,7 @@ export default [
       "polygon zkevm": "polygon_zkevm",
     },
   },
-  {
+   {
     id: 41,
     displayName: "WanBridge",
     bridgeDbName: "wanbridge",
@@ -643,5 +643,15 @@ export default [
       "Ethereum",
       "BSC"
     ]
+  },
+   {
+    id: 43,
+    displayName: "PepeTeam Bridge",
+    bridgeDbName: "pepeteam_bridge",
+    iconLink: "protocols:pepeteam-bridge",
+    largeTxThreshold: 10000,
+    url: "https://bridge.pepe.team",
+    chains: ["Ethereum", "BSC", "Polygon"],
+    destinationChain: "Waves",
   },
 ] as BridgeNetwork[];
