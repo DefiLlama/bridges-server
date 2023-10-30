@@ -6,7 +6,7 @@
   },
   "compilerOptions": {
     "target": "es2019",
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
