@@ -58,6 +58,10 @@ const contractAddresses = {
     tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
     coreBridge: "0xbebdb6C8ddC678FfA9f8748f85C815C556Dd8ac6",
   },
+  sui: {
+    tokenBridge: "0xc57508ee0d4595e5a8728974a4a93a787d38f339757230d441e895422c07aba9", // object ID
+    coreBridge: "0xaeab97f96cf9877fee2883315d459552b2b921edc16d7ceac6eab944dd88919c", // object ID
+  },
 } as {
   [chain: string]: {
     tokenBridge: string;

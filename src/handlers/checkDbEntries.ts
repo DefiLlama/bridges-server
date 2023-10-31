@@ -1,5 +1,5 @@
 import { wrapScheduledLambda } from "../utils/wrap";
-import { getLatestBlock } from "@defillama/sdk/build/util";
+import { getLatestBlockNumber } from "../utils/blocks";
 import {
   queryAggregatedHourlyTimestampRange,
   queryAggregatedDailyTimestampRange,
@@ -73,7 +73,7 @@ export default wrapScheduledLambda(async (_event) => {
     Object.keys(recordedBlocks).map(async (adapter: any) => {
       const chain = adapter.split(":")[1];
       if (!latestChainBlocks[chain]) {
-        latestChainBlocks[chain] = (await getLatestBlock(chain)).number;
+        latestChainBlocks[chain] = await getLatestBlockNumber(chain);
       }
     })
   );

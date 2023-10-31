@@ -38,6 +38,8 @@ import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
 import rhinofi from './rhinofi';
+import pepeteam_bridge from './pepeteam-bridge';
+import pnetwork from './pnetwork';
 
 export default {
   polygon,
@@ -78,6 +80,8 @@ export default {
   manta,
   eywa,
   rhinofi,
+  pepeteam_bridge,
+  pnetwork,
 } as {
   [bridge: string]: BridgeAdapter;
 };

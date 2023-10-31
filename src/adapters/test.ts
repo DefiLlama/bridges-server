@@ -1,4 +1,4 @@
-import { getLatestBlock } from "@defillama/sdk/build/util";
+import { getLatestBlock } from "../utils/blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import adapters from "./";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";

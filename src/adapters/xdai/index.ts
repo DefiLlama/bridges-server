@@ -6,7 +6,13 @@ import { constructTransferParams } from "../../helpers/eventParams";
 // 0x88ad09518695c6c3712AC10a214bE5109a655671 is Gnosis Chain: Omni Bridge
 
 const daiDepositParams = constructTransferParams("0x4aa42145Aa6Ebf72e164C9bBC74fbD3788045016", true);
-const daiWithdrawalParams = constructTransferParams("0x4aa42145Aa6Ebf72e164C9bBC74fbD3788045016", false);
+const daiWithdrawalParams: PartialContractEventParams = constructTransferParams(
+  "0x4aa42145Aa6Ebf72e164C9bBC74fbD3788045016",
+  false,
+  {
+    excludeTo: ["0x83F20F44975D03b1b09e64809B757c47f942BEeA"], //sDAI
+  }
+);
 
 const omniDepositEventParams: ContractEventParams = {
   target: "0x88ad09518695c6c3712AC10a214bE5109a655671",
