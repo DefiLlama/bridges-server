@@ -58,6 +58,10 @@ const contractAddresses = {
     tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
     coreBridge: "0xbebdb6C8ddC678FfA9f8748f85C815C556Dd8ac6",
   },
+  sui: {
+    tokenBridge: "0xc57508ee0d4595e5a8728974a4a93a787d38f339757230d441e895422c07aba9", // object ID
+    coreBridge: "0xaeab97f96cf9877fee2883315d459552b2b921edc16d7ceac6eab944dd88919c", // object ID
+  },
 } as {
   [chain: string]: {
     tokenBridge: string;
@@ -127,8 +131,9 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
         // for deposits there will be a `LogMessagePublished` event
         const logMessagePublished = tryParseLog(log, logMessagePublishedIface);
         if (logMessagePublished) {
+          const payload = Buffer.from(logMessagePublished.args.payload.slice(2), "hex");
           // only care about token transfer message types (payload ID = 1 or 3)
-          const payloadID = parseInt(logMessagePublished.args.payload.slice(0, 4));
+          const payloadID = payload.readUint8(0);
           if (!(payloadID === 1 || payloadID === 3)) {
             return results;
           }
@@ -142,9 +147,21 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
           const transfer = tryParseLog(previousLog, transferIface);
           // lock or burn
           let to = "";
+          let isDeposit = true;
           if (transfer && (transfer.args.to === tokenBridge || transfer.args.to === ethers.constants.AddressZero)) {
             amount = transfer.args.value;
             to = transfer.args.to;
+            if (to === ethers.constants.AddressZero) {
+              // if this is a wrapped token being burned and not being sent to its origin chain,
+              // then it should be included in the volume by fixing the to address
+              // https://docs.wormhole.com/wormhole/explore-wormhole/vaa#token-transfer
+              const originChain = payload.readUint16BE(65);
+              const toChain = payload.readUInt16BE(99);
+              if (toChain !== originChain) {
+                to = tokenBridge;
+                isDeposit = false;
+              }
+            }
           } else {
             const deposit = tryParseLog(previousLog, depositIface);
             // lock
@@ -161,7 +178,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
               to,
               token: previousLog.address,
               amount,
-              isDeposit: true,
+              isDeposit,
             });
             return results;
           }
@@ -291,7 +308,7 @@ const constructParams = (chain: string) => {
     // only able to get from subgraph, Etherscan API, etc.
     // skipped for chains without available API
     // TODO: change this when the token bridge emits the `TransferRedeemed` event
-    if (chain !== "klaytn") {
+    if (chain !== "klaytn" && chain !== "base" && chain !== "moonbeam") {
       await getLock();
       const txs = await getTxsBlockRangeEtherscan(chain, tokenBridge, fromBlock, toBlock, {
         includeSignatures: completeTransferSigs,

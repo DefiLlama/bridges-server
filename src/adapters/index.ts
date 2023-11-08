@@ -24,6 +24,7 @@ import allbridge from "./allbridge";
 import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
+import wanbridge from './wanbridge';
 import beamer from "./beamer";
 import zksync from "./zksync";
 import polygon_zkevm from "./polygon_zkevm";
@@ -37,6 +38,8 @@ import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
 import rhinofi from './rhinofi';
+import pepeteam_bridge from './pepeteam-bridge';
+import pnetwork from './pnetwork';
 
 export default {
   polygon,
@@ -63,6 +66,7 @@ export default {
   allbridge,
   ibc,
   meter,
+  wanbridge,
   beamer,
   zksync,
   polygon_zkevm,
@@ -76,6 +80,8 @@ export default {
   manta,
   eywa,
   rhinofi,
+  pepeteam_bridge,
+  pnetwork,
 } as {
   [bridge: string]: BridgeAdapter;
 };

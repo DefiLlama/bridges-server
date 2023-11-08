@@ -3,12 +3,11 @@ import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
-const nullAddress = "0x0000000000000000000000000000000000000000";
-
 //Synapse Bridge Contracts on all supported chains
 const contractAddresses = {
   arbitrum: {
       synapseBridge: "0x6F4e8eBa4D337f874Ab57478AcC2Cb5BACdc19c9",
+      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
   },
   aurora: {
       synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
@@ -36,6 +35,7 @@ const contractAddresses = {
   },
   ethereum: {
       synapseBridge: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
+      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
   },
   fantom: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
@@ -51,6 +51,7 @@ const contractAddresses = {
   },
   optimism: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
+      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
   },
   polygon: {
       synapseBridge: "0x8F5BBB2BB8c2Ee94639E55d5F41de9b4839C1280",
@@ -67,6 +68,7 @@ const contractAddresses = {
 } as {
     [chain: string]: {
         synapseBridge: string;
+        synapseCCTP?: string;
     };
   };
 
@@ -261,52 +263,99 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     },
     isDeposit: false,
   };
+  //CCTP Deposit 
+  const CircleRequestSentParams: PartialContractEventParams = {
+    target: "",
+    topic: "CircleRequestSent(uint256,address,uint64,address,uint256,uint32,bytes,bytes32)",
+    abi: [
+      "event CircleRequestSent(uint256 chainId, address indexed sender, uint64 nonce, address token, uint256 amount, uint32 requestVersion, bytes formattedRequest, bytes32 requestID)",
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+      from: "address",
+    },
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "sender",
+    },
+    isDeposit: true,
+  };
+// CCTP Withdraw
+  const CircleRequestFulfilledParams: PartialContractEventParams = {
+    target: "",
+    topic: "CircleRequestFulfilled(uint32,address,address,uint256,address,uint256,bytes32)",
+    abi: [
+      "event CircleRequestFulfilled(uint32 originDomain, address indexed recipient, address mintToken, uint256 fee, address token, uint256 amount, bytes32 requestID)",
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+      from: "address",
+    },
+    argKeys: {
+      amount: "amount",
+      token: "token",
+      to: "recipient",
+    },
+    isDeposit: false, 
+  };
 
 //Add all partial events to eventParams
 
 const constructParams = (chain:string) => {
+    const { synapseBridge = '', synapseCCTP = null } = contractAddresses[chain];
     //Deposits:
     const finalTokenDepositDepositParams = {
         ...TokenDepositDepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenDepositAndSwapDepositParams = {
         ...TokenDepositAndSwapDepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenRedeemDepositParams = {
         ...TokenRedeemDepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenRedeemAndSwapDepositParams = {
         ...TokenRedeemAndSwapDepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenRedeemAndRemoveDepositParams = {
         ...TokenRedeemAndRemoveDepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenRedeemV2DepositParams = {
         ...TokenRedeemV2DepositParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
+    }
+    const finalCircleRequestSentParams = {
+      ...CircleRequestSentParams,
+      target: synapseCCTP || synapseBridge
     }
     
     // Withdraws
     const finalTokenWithdrawWithdrawParams = {
         ...TokenWithdrawWithdrawParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenWithdrawAndRemoveWithdrawParams = {
         ...TokenWithdrawAndRemoveWithdrawParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenMintWithdrawParams = {
         ...TokenMintWithdrawParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
     }
     const finalTokenMintAndSwapWithdrawParams = {
         ...TokenMintAndSwapWithdrawParams,
-        target:contractAddresses[chain].synapseBridge
+        target: synapseBridge
+    }
+    const finalCircleRequestFulfilledParams = {
+      ...CircleRequestFulfilledParams,
+      target: synapseCCTP || synapseBridge
     }
 
 
@@ -322,7 +371,10 @@ const constructParams = (chain:string) => {
         finalTokenWithdrawAndRemoveWithdrawParams,
         finalTokenMintWithdrawParams,
         finalTokenMintAndSwapWithdrawParams,
+        finalCircleRequestSentParams,
+        finalCircleRequestFulfilledParams,
     ]
+
 
     return async (fromBlock: number, toBlock: number) =>
         getTxDataFromEVMEventLogs("synapse", chain, fromBlock, toBlock, eventParams);
@@ -335,12 +387,7 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   aurora: constructParams("aurora"),
   avalanche: constructParams("avax"),
-  // boba: constructParams("boba"),
   bsc: constructParams("bsc"),
-  // canto: constructParams("canto"),
-  // cronos: constructParams("cronos"),
-  dfk: constructParams("dfk"),
-  // dogechain: constructParams("dogechain"),
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
   harmony: constructParams("harmony"),
@@ -348,9 +395,15 @@ const adapter: BridgeAdapter = {
   moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
-  // metis: constructParams("metis"),
   klaytn: constructParams("klaytn"),
   base: constructParams("base"),
+  metis: constructParams("metis"),
+  // dfk: constructParams("dfk"),
+  // boba: constructParams("boba"),
+  // canto: constructParams("canto"),
+  // cronos: constructParams("cronos"),
+  // dogechain: constructParams("dogechain"),
+  
 };
 
 
@@ -365,5 +418,3 @@ const adapter: BridgeAdapter = {
 //  Using bridge Zap contract : https://polygonscan.com/tx/0x2cec1d015aef431b5363e7e68afc3c7bd9eecb17a7ea997dc7b5067ecb2167dc
 // Using Router Contract: https://polygonscan.com/tx/0xf94193d101fdc9240aafd6069b3e02397a8bc5aff3c2e2f08b969689c7d9f290
 // Using regular Bridge Contract: https://polygonscan.com/tx/0x3ffe45b68bb42661b0081b76fc04699ca76944e3113f1c10a397ec0fc5e16f2b
-
-
