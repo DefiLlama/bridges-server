@@ -304,7 +304,7 @@ export default [
       "zksync era": "era",
     },
   },
-  /*
+  
   {
     id: 20,
     displayName: "deBridge",
@@ -312,18 +312,12 @@ export default [
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Arbitrum",
-      "Avalanche",
-      //BSC
-    ],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
-  */
+
   // {
   //   id: 21,
   //   displayName: "Optics",

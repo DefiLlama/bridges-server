@@ -1,255 +1,108 @@
-import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { Chain } from "@defillama/sdk/build/general";
+import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
-import { ethers } from "ethers";
 
-/*
-Contracts: https://docs.debridge.finance/contracts/mainnet-addresses
-Analytics: https://explorer.debridge.finance/analytics
+/**
+ * deBridge is a messaging infrastructure. DLN is a cross-chain trading infrastructure
+ * DLN Contracts: https://docs.dln.trade/the-core-protocol/trusted-smart-contracts
+ * For all evm chains have same contract address
+ * - deposits via CreatedOrder event
+ * - withdraws via FulfilledOrder event
+ * 
+ */
 
-debridgeGate contract emits the following events, however, I had difficulty getting the token sent from them:
-MonitoringSendEvent (bytes32 submissionId, uint256 nonce, uint256 lockedOrMintedAmount, uint256 totalSupply)
-MonitoringClaimEvent (bytes32 submissionId, uint256 lockedOrMintedAmount, uint256 totalSupply)
-Claimed (bytes32 submissionId, index_topic_1 bytes32 debridgeId, uint256 amount, index_topic_2 address receiver, uint256 nonce, index_topic_3 uint256 chainIdFrom, bytes autoParams, bool isNativeToken)
+const evmContracts = {
+  dlnSource: "0xeF4fB24aD0916217251F553c0596F8Edc630EB66",
+  dlnDestination: "0xe7351fd770a37282b91d153ee690b63579d6dd7f",
+} as const;
 
-For deposits/withdrawals (except native ETH), tokens are swapped to/from USDC or WETH and xfer'd to debridgeGate.
-So it is possible to get all the txs and volume easily just looking at debridgeGate xfers (just need to filter out fee txs when doing so).
-However, it's more difficult to get the initial/final token if using this approach:
--can get it from input data for txs that are via deSwapSender
--for txs that are via 0x6d7a3177f3500bea64914642a49d0b5c0a7dae6d (first, token is swapped through deSwapReceiver),
-  contract is not verified, so can't get input data, no simple way to get output token.
-*/
-
-const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-
-const contractAddresses = {
-  ethereum: {
-    debridgeGate: "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
-  },
-} as {
-  [chain: string]: {
-    debridgeGate: string;
-  };
+const nativeTokenAddress = {
+  ethereum: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
+  arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", // WETH
+  avax: "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7", // avax
+  polygon: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270", // matic
+  fantom: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83", // ftm
+  linea: "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f", // WETH
+  optimism: "0x4200000000000000000000000000000000000006", // WETH
+  base: "0x4200000000000000000000000000000000000006", // WETH
+  bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // BNB
 };
 
-const testDepositParams: PartialContractEventParams = constructTransferParams(
-  "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
-  true
-);
-const testWithdrawalParams: PartialContractEventParams = constructTransferParams(
-  "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
-  false,
-  { excludeTo: ["0x6D7A3177f3500BEA64914642a49D0B5C0a7Dae6D"] }
-);
+type SupportedChains = keyof typeof nativeTokenAddress;
 
-// routerCallNative
-const routerCalldepositParams: ContractEventParams = {
-  target: null,
-  topic: "Transfer(address,address,uint256)",
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    from: "from",
-    to: "to",
-  },
-  txKeys: {
-    amount: "value",
-  },
-  fixedEventData: {
-    token: WETH,
-  },
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  topics: [
-    ethers.utils.id("Transfer(address,address,uint256)"),
-    null,
-    ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
-  ],
-  functionSignatureFilter: {
-    includeSignatures: ["0x060203"],
-  },
-  isDeposit: true,
-};
-
-// swapAndSendV2
-const swapV2DepositParams: ContractEventParams = {
-  target: null,
-  topic: "Transfer(address,address,uint256)",
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  txKeys: {
-    from: "from",
-    to: "to",
-  },
-  inputDataExtraction: {
-    inputDataABI: [
-      "function swapAndSendV2(address _srcTokenIn, uint256 _srcAmountIn, bytes _srcTokenInPermit, address _srcSwapRouter, bytes _srcSwapCalldata, address _srcTokenOut, tuple(uint256 chainId, address receiver, bool useAssetFee, uint32 referralCode, bytes autoParams) _gateParams) payable",
-    ],
-    inputDataFnName: "swapAndSendV2",
-    inputDataKeys: {
-      token: "_srcTokenIn",
-      amount: "_srcAmountIn",
-    },
-  },
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  topics: [
-    ethers.utils.id("Transfer(address,address,uint256)"),
-    null,
-    ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
-  ],
-  functionSignatureFilter: {
-    includeSignatures: ["0x5dfd9b"],
-  },
-  isDeposit: true,
-};
-
-// swapAndSendV3
-const swapV3DepositParams: ContractEventParams = {
-  target: null,
-  topic: "Transfer(address,address,uint256)",
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  txKeys: {
-    from: "from",
-    to: "to",
-  },
-  inputDataExtraction: {
-    inputDataABI: [
-      "function swapAndSendV3(address _srcTokenIn, uint256 _srcAmountIn, bytes _srcTokenInPermit, uint256 _affiliateFeeAmount, address _affiliateFeeRecipient, address _srcSwapRouter, bytes _srcSwapCalldata, address _srcTokenOut, tuple(uint256 chainId, address receiver, bool useAssetFee, uint32 referralCode, bytes autoParams) _gateParams) payable",
-    ],
-    inputDataFnName: "swapAndSendV3",
-    inputDataKeys: {
-      token: "_srcTokenIn",
-      amount: "_srcAmountIn",
-    },
-  },
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  topics: [
-    ethers.utils.id("Transfer(address,address,uint256)"),
-    null,
-    ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
-  ],
-  functionSignatureFilter: {
-    includeSignatures: ["0x5c5c57"],
-  },
-  isDeposit: true,
-};
-
-// sendV2
-const sendV2DepositParams: ContractEventParams = {
-  target: "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
-  topic: "MonitoringSendEvent(bytes32,uint256,uint256,uint256)",
+const depositPrarms: PartialContractEventParams = {
+  target: evmContracts.dlnSource,
+  topic:
+    "CreatedOrder((uint64,bytes,uint256,bytes,uint256,uint256,bytes,uint256,bytes,bytes,bytes,bytes,bytes,bytes),bytes32,bytes,uint256,uint256,uint32,bytes)",
   abi: [
-    "event MonitoringSendEvent(bytes32 submissionId, uint256 nonce, uint256 lockedOrMintedAmount, uint256 totalSupply)",
+    "event CreatedOrder((uint64 makerOrderNonce, bytes makerSrc, uint256 giveChainId, bytes giveTokenAddress, uint256 giveAmount, uint256 takeChainId, bytes takeTokenAddress, uint256 takeAmount, bytes receiverDst, bytes givePatchAuthoritySrc, bytes orderAuthorityAddressDst, bytes allowedTakerDst, bytes allowedCancelBeneficiarySrc, bytes externalCall) order, bytes32 orderId, bytes affiliateFee, uint256 nativeFixFee, uint256 percentFee, uint32 referralCode, bytes metadata)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
-  txKeys: {
-    from: "from",
-  },
-  inputDataExtraction: {
-    inputDataABI: [
-      "function sendV2(address _srcTokenIn, uint256 _srcAmountIn, bytes _srcTokenInPermit, tuple(uint256 chainId, address receiver, bool useAssetFee, uint32 referralCode, bytes autoParams) _gateParams) payable",
-    ],
-    inputDataFnName: "sendV2",
-    inputDataKeys: {
-      token: "_srcTokenIn",
-      amount: "_srcAmountIn",
-    },
-  },
-  mapTokens: {
-    "0x0000000000000000000000000000000000000000": WETH,
-  },
-  functionSignatureFilter: {
-    includeSignatures: ["0x1624ea"],
-  },
-  fixedEventData: {
-    to: "0x43dE2d77BF8027e25dBD179B491e8d64f38398aA",
+  argKeys: {
+    amount: "order.giveAmount",
+    to: "order.receiverDst",
+    from: "order.makerSrc",
+    token: "order.giveTokenAddress",
   },
   isDeposit: true,
 };
 
-// need to separate by fn and extract "token" and "to" from input data
-// and should probably use swapWithdrawalParams, not this
-const withdrawalParams: ContractEventParams = {
-  target: null,
-  topic: "Transfer(address,address,uint256)",
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-    token: "address",
-  },
-  argKeys: {
-    from: "from",
-    to: "to",
-    amount: "value",
-  },
-  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
-  topics: [
-    ethers.utils.id("Transfer(address,address,uint256)"),
-    ethers.utils.hexZeroPad("0x43dE2d77BF8027e25dBD179B491e8d64f38398aA", 32),
+const withdrawParams: PartialContractEventParams = {
+  target: evmContracts.dlnDestination,
+  topic:
+    "FulfilledOrder((uint64,bytes,uint256,bytes,uint256,uint256,bytes,uint256,bytes,bytes,bytes,bytes,bytes,bytes),bytes32,address,address)",
+  abi: [
+    "event FulfilledOrder((uint64 makerOrderNonce, bytes makerSrc, uint256 giveChainId, bytes giveTokenAddress, uint256 giveAmount, uint256 takeChainId, bytes takeTokenAddress, uint256 takeAmount, bytes receiverDst, bytes givePatchAuthoritySrc, bytes orderAuthorityAddressDst, bytes allowedTakerDst, bytes allowedCancelBeneficiarySrc, bytes externalCall) order, bytes32 orderId, address sender, address unlockAuthority)",
   ],
-  filter: { excludeTo: ["0x6D7A3177f3500BEA64914642a49D0B5C0a7Dae6D", "0x122fc7945dAd90144cba1f3f83cBeE912c0595D6"] },
-  isDeposit: false,
-};
-
-/*
-const swapWithdrawalParams: ContractEventParams = {
-  target: "",
-  topic: "MonitoringClaimEvent(bytes32,uint256,uint256)",
-  abi: ["event MonitoringClaimEvent(bytes32 submissionId, uint256 lockedOrMintedAmount, uint256 totalSupply)"],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "lockedOrMintedAmount",
+    amount: "order.takeAmount",
+    token: "order.takeTokenAddress",
+    to: "order.receiverDst",
+    from: "order.makerSrc",
   },
-  fixedEventData: {
-    from: "",
-  },
+  mapTokens: {},
   isDeposit: false,
 };
-*/
 
-const constructParams = (chain: string) => {
-  let eventParams = [] as any;
-  const chainAddresses = contractAddresses[chain];
-  const debridgeGate = chainAddresses.debridgeGate;
+const constructParams = (chain: SupportedChains) => {
+  const eventParams: PartialContractEventParams[] = [];
 
-  /*
-  const finalSwapWithdrawalParams = {
-    ...swapWithdrawalParams,
-    target: debridgeGate,
-    fixedEventData: {
-      from: debridgeGate,
-    },
+  const token = nativeTokenAddress[chain];
+
+  const finalDepositParams = {
+    ...depositPrarms,
+    mapTokens: { "0x0000000000000000000000000000000000000000": token },
   };
-  */
 
-  eventParams.push(withdrawalParams);
+  const finalWithdrawParams = {
+    ...withdrawParams,
+    mapTokens: { "0x0000000000000000000000000000000000000000": token },
+  };
+
+  eventParams.push(finalDepositParams, finalWithdrawParams);
 
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("debridge", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("debridge", chain, fromBlock, toBlock, eventParams);
 };
+
+// need add solana and heco
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  /*
+  bsc: constructParams("bsc"), 
   polygon: constructParams("polygon"),
-  fantom: constructParams("fantom"),
+  arbitrum: constructParams("arbitrum"),
   avalanche: constructParams("avax"),
-  bsc: constructParams("bsc"),
-  aurora: constructParams("aurora"),
-  */
+  fantom: constructParams("fantom"),
+  linea: constructParams("linea"),
+  optimism: constructParams("optimism"), 
+  base: constructParams("base"),
 };
 
 export default adapter;
