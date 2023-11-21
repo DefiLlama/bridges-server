@@ -14,6 +14,7 @@ const contractAddresses = {
   },
   avax: {
       synapseBridge: "0xC05e61d0E7a63D27546389B7aD62FdFf5A91aACE",
+      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
   },
   boba: {
       synapseBridge: "0x432036208d2717394d2614d6697c46DF3Ed69540",
@@ -64,6 +65,7 @@ const contractAddresses = {
   },
   base: {
     synapseBridge: "0xf07d1C752fAb503E47FEF309bf14fbDD3E867089",
+    synapseCCTP:"0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
 }
 } as {
     [chain: string]: {
