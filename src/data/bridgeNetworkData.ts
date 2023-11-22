@@ -307,9 +307,9 @@ export default [
   
   {
     id: 20,
-    displayName: "deBridge",
-    bridgeDbName: "debridge",
-    iconLink: "icons:debridge",
+    displayName: "DLN (Powered by deBridge)",
+    bridgeDbName: "debridgedln",
+    iconLink: "icons:debridgedln",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],

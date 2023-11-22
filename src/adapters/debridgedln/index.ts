@@ -18,9 +18,9 @@ const evmContracts = {
 const nativeTokenAddress = {
   ethereum: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
   arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", // WETH
-  avax: "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7", // avax
-  polygon: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270", // matic
-  fantom: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83", // ftm
+  avax: "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7", // AVAX
+  polygon: "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270", // Matic
+  fantom: "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83", // FTM
   linea: "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f", // WETH
   optimism: "0x4200000000000000000000000000000000000006", // WETH
   base: "0x4200000000000000000000000000000000000006", // WETH
@@ -88,7 +88,7 @@ const constructParams = (chain: SupportedChains) => {
   eventParams.push(finalDepositParams, finalWithdrawParams);
 
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("debridge", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("debridgedln", chain, fromBlock, toBlock, eventParams);
 };
 
 // need add solana and heco

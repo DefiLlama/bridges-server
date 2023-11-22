@@ -18,7 +18,7 @@ import avalanchebtc from "./avalanche-btc";
 import axelar from "./axelar";
 import rainbowbridge from "./rainbowbridge";
 import across from "./across";
-import debridge from "./debridge";
+import debridgedln from "./debridgedln";
 import optics from "./optics";
 import allbridge from "./allbridge";
 import ibc from "./ibc";
@@ -61,7 +61,7 @@ export default {
   axelar,
   rainbowbridge,
   across,
-  debridge,
+  debridgedln,
   optics,
   allbridge,
   ibc,
