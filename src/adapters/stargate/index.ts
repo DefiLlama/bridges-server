@@ -137,6 +137,13 @@ const contractAddresses = {
     ],
     nativeToken: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000",
   },
+  kava: {
+    stg: "0x83c30eb8bc9ad7C56532895840039E62659896ea",
+    ercs: [
+      "0xAad094F6A75A14417d39f04E690fC216f080A41a", // USDT
+    ],
+  },
+
 } as {
   [chain: string]: {
     stg?: string;
@@ -435,6 +442,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  kava: constructParams("kava"),
   // metis: constructParams("metis"),
 };
 

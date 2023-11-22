@@ -44,7 +44,7 @@ const contractAddresses = {
 
 const depositPortalEventParams: ContractEventParams = {
   target: "",
-  topic: "Locked(address,uint256,uint256,address)",
+  topic: "Locked(address,uint256,address,address)",
   abi: ["event Locked(address token, uint256 amount, address from, address to)"],
   logKeys: {
     blockNumber: "blockNumber",
