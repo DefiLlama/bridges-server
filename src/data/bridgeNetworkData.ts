@@ -304,26 +304,20 @@ export default [
       "zksync era": "era",
     },
   },
-  /*
+  
   {
-    id: 20,
-    displayName: "deBridge",
-    bridgeDbName: "debridge",
-    iconLink: "icons:debridge",
+    id: 43,
+    displayName: "DLN (Powered by deBridge)",
+    bridgeDbName: "debridgedln",
+    iconLink: "icons:debridgedln",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Arbitrum",
-      "Avalanche",
-      //BSC
-    ],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
-  */
+
   // {
   //   id: 21,
   //   displayName: "Optics",
