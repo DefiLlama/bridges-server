@@ -306,7 +306,7 @@ export default [
   },
   
   {
-    id: 20,
+    id: 43,
     displayName: "DLN (Powered by deBridge)",
     bridgeDbName: "debridgedln",
     iconLink: "icons:debridgedln",
