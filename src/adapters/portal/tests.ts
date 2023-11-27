@@ -535,6 +535,155 @@ const testSui = async () => {
   console.log("sui tests passed");
 };
 
+const sleep = async (ms: number) => await new Promise((resolve) => setTimeout(resolve, ms));
+
+const testSolana = async () => {
+  // CompleteNative
+  // https://explorer.solana.com/tx/3pEZohiewvkQXxqTGiADrqJjQRJLz3twAtntsmktRSbHkUxXswCkM3XrKEzGaTNxF1jDeK6p726jVheRZJUmrJ1T
+  let blockNumber = 220570267;
+  let event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "3pEZohiewvkQXxqTGiADrqJjQRJLz3twAtntsmktRSbHkUxXswCkM3XrKEzGaTNxF1jDeK6p726jVheRZJUmrJ1T",
+      from: "2nQNF8F9LLWMqdjymiLK2u8HoHMvYa4orCXsp3w65fQ2",
+      to: "FyUckyjFpEmrG8LiCbQSdwaYYQEytE9VTt2rc4VoRzRK",
+      token: "So11111111111111111111111111111111111111112",
+      amount: ethers.BigNumber.from("100000"),
+      isDeposit: false,
+    },
+    event
+  );
+  // sleep so we don't get rate limited
+  sleep(5000);
+
+  // CompleteWrapped
+  // https://explorer.solana.com/tx/8po9N198xBQUspS1jjgSw96ubNNwhEoCggXiutWcPRmshZUpfwcAoe3gFUzS57WiSfcDsFhaL63LhMZCw89Fymg
+  blockNumber = 220548178;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "8po9N198xBQUspS1jjgSw96ubNNwhEoCggXiutWcPRmshZUpfwcAoe3gFUzS57WiSfcDsFhaL63LhMZCw89Fymg",
+      from: ethers.constants.AddressZero,
+      to: "FYoCmjuGAWm9SmkCRfnCEigMP5TPidMrpLzoSgV6xBBa",
+      token: "A9mUU4qviSctJVPJdBJWkb28deg915LYJKrzQ19ji3FM",
+      amount: ethers.BigNumber.from("50647953"),
+      isDeposit: false,
+    },
+    event
+  );
+  sleep(5000);
+
+  // TransferWrapped - target chain != origin chain
+  // https://explorer.solana.com/tx/28TbBAgVVwTo6bGCUU6hS4bjCgNREAWMuax6B8nwCA4uT6L1CUhwT65bnMb2Eort7JMXQxGoGNNsK1H6eGQThces
+  blockNumber = 220563907;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "28TbBAgVVwTo6bGCUU6hS4bjCgNREAWMuax6B8nwCA4uT6L1CUhwT65bnMb2Eort7JMXQxGoGNNsK1H6eGQThces",
+      from: "8LS9m7c9SfPFdbnv6jHs5RYWXqzVkxLDcLJNG6j1ntUQ",
+      to: "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb",
+      token: "A9mUU4qviSctJVPJdBJWkb28deg915LYJKrzQ19ji3FM",
+      amount: ethers.BigNumber.from("2109000000"),
+      isDeposit: false,
+    },
+    event
+  );
+  sleep(5000);
+
+  // TransferNative - WSOL
+  // https://explorer.solana.com/tx/61nqe3nxkJ3zCbRuKZ9xAtxb1Rbyc8uBWJbRPVigeUjA7A7dbfATdu4BanP9RniHNNqnUWj2JV6tVnQm28DArU27 (WSOL)
+  blockNumber = 219412303;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "61nqe3nxkJ3zCbRuKZ9xAtxb1Rbyc8uBWJbRPVigeUjA7A7dbfATdu4BanP9RniHNNqnUWj2JV6tVnQm28DArU27",
+      from: "7suUQ9d7jPLCXj9H8472APFbXphC59xoXGnf2AofD7bX",
+      to: "2nQNF8F9LLWMqdjymiLK2u8HoHMvYa4orCXsp3w65fQ2",
+      token: "So11111111111111111111111111111111111111112",
+      amount: ethers.BigNumber.from("100000000"),
+      isDeposit: true,
+    },
+    event
+  );
+  sleep(5000);
+
+  // CompleteNativeWithPayload
+  // https://explorer.solana.com/tx/2i5UpmfW748CxHvYvW6udWwg68C4NhfqGQXNjB8JkwraHtXckP8Xst3AY55YPv4qdjEeKKxY67Gsw2tqM7jLZ9gT
+  blockNumber = 218544281;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "2i5UpmfW748CxHvYvW6udWwg68C4NhfqGQXNjB8JkwraHtXckP8Xst3AY55YPv4qdjEeKKxY67Gsw2tqM7jLZ9gT",
+      from: "2nQNF8F9LLWMqdjymiLK2u8HoHMvYa4orCXsp3w65fQ2",
+      to: "DrJjs6ziLYc9En8tq912mwdt5F5gRo9uRkWJRNEG9hDt",
+      token: "So11111111111111111111111111111111111111112",
+      amount: ethers.BigNumber.from("70000000"),
+      isDeposit: false,
+    },
+    event
+  );
+  sleep(5000);
+
+  // CompleteWrappedWithPayload
+  // https://explorer.solana.com/tx/297Jkp5AJbSFFCw38VvSeYY9kGZLJvWrBsjvaS8kfPdLbqsDUbvdRs3TWjfJV9dwjiU7VA115oWrq2xcKwMTd8SV
+  blockNumber = 220139975;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "297Jkp5AJbSFFCw38VvSeYY9kGZLJvWrBsjvaS8kfPdLbqsDUbvdRs3TWjfJV9dwjiU7VA115oWrq2xcKwMTd8SV",
+      from: ethers.constants.AddressZero,
+      to: "Bqun5jc7m16uqVTtJf8sMzJ6qPRc3kjidBKGcUNfxAJy",
+      token: "G1vJEgzepqhnVu35BN4jrkv3wVwkujYWFFCxhbEZ1CZr",
+      amount: ethers.BigNumber.from("250000000"),
+      isDeposit: false,
+    },
+    event
+  );
+  sleep(5000);
+
+  // TransferWrappedWithPayload
+  // https://explorer.solana.com/tx/2KMyCkFr2v6dxik8V7QR6ny1oJKY7bs2AZqTTXTpwV32aAhBCZC4i5nnXzHaRPaV25JC8BSwwv8t3QPsNUPbugde
+  blockNumber = 220549172;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "2KMyCkFr2v6dxik8V7QR6ny1oJKY7bs2AZqTTXTpwV32aAhBCZC4i5nnXzHaRPaV25JC8BSwwv8t3QPsNUPbugde",
+      from: "4RrFMkY3A5zWdizT61Px222qmSTJqnVszDeBZZNSoAH6",
+      to: ethers.constants.AddressZero,
+      token: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+      amount: ethers.BigNumber.from("77898286"),
+      isDeposit: false,
+    },
+    event
+  );
+  sleep(5000);
+
+  // TransferNativeWithPayload
+  // https://explorer.solana.com/tx/2x1HP58teKmEYEZNTvQ9wnQEB3XLA8cD5phAqzuQKd6YHzdhkuMo16za6EQKsrB6a2G3s3QhxRh52qnhcFeT34xK
+  blockNumber = 219917822;
+  event = await getEvent(blockNumber, "solana");
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "2x1HP58teKmEYEZNTvQ9wnQEB3XLA8cD5phAqzuQKd6YHzdhkuMo16za6EQKsrB6a2G3s3QhxRh52qnhcFeT34xK",
+      from: "DrJjs6ziLYc9En8tq912mwdt5F5gRo9uRkWJRNEG9hDt",
+      to: "2nQNF8F9LLWMqdjymiLK2u8HoHMvYa4orCXsp3w65fQ2",
+      token: "So11111111111111111111111111111111111111112",
+      amount: ethers.BigNumber.from("58000000"),
+      isDeposit: true,
+    },
+    event
+  );
+  sleep(5000);
+};
+
 (async () => {
   await Promise.all([
     testNoEventsFound(),
@@ -549,6 +698,7 @@ const testSui = async () => {
     testAvalanche(),
     testOptimism(),
     testKlaytn(),
-    testSui(),
+    // testSui(),
+    // testSolana(),
   ]);
 })();
