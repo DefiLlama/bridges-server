@@ -80,12 +80,12 @@ const constructParams = (chain: SupportedChains) => {
     mapTokens: { "0x0000000000000000000000000000000000000000": token },
   };
 
-  const finalWithdrawParams = {
-    ...withdrawParams,
-    mapTokens: { "0x0000000000000000000000000000000000000000": token },
-  };
+  // const finalWithdrawParams = {
+  //   ...withdrawParams,
+  //   mapTokens: { "0x0000000000000000000000000000000000000000": token },
+  // };
 
-  eventParams.push(finalDepositParams, finalWithdrawParams);
+  eventParams.push(finalDepositParams);
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("debridgedln", chain, fromBlock, toBlock, eventParams);
