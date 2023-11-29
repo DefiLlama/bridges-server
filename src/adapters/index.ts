@@ -40,6 +40,7 @@ import eywa from "./eywa";
 import rhinofi from './rhinofi';
 import pepeteam_bridge from './pepeteam-bridge';
 import pnetwork from './pnetwork';
+import interport from './interport-finance';
 
 export default {
   polygon,
@@ -82,6 +83,7 @@ export default {
   rhinofi,
   pepeteam_bridge,
   pnetwork,
+  interport,
 } as {
   [bridge: string]: BridgeAdapter;
 };
