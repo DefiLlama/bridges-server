@@ -649,4 +649,13 @@ export default [
     chains: ["Ethereum", "BSC", "Polygon"],
     destinationChain: "Waves",
   },
+  {
+    id: 44,
+    displayName: "Pheasant Network",
+    bridgeDbName: "pheasant_network",
+    iconLink: "protocols:pheasant_network",
+    largeTxThreshold: 10000,
+    url: "https://pheasant.network",
+    chains: ["Ethereum", "Polygon", "Optimism", "Arbitrum", "Scroll", "zkSync Era", "Base", "Polygon zkEVM", "Linea"],
+  },
 ] as BridgeNetwork[];
