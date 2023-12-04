@@ -278,6 +278,10 @@ interface SolanaEvent {
 }
 
 const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
+  // Old blocks may have been pruned by the RPC
+  if (fromSlot < 233000000) {
+    return [];
+  }
   const response = await axios.get<SolanaEvent[]>(
     `https://europe-west3-wormhole-message-db-mainnet.cloudfunctions.net/get-solana-events?fromSlot=${fromSlot}&toSlot=${toSlot}`
   );
