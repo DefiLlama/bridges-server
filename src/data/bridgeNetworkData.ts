@@ -305,7 +305,7 @@ export default [
       "zksync era": "era",
     },
   },
-  
+
   {
     id: 43,
     displayName: "DLN (Powered by deBridge)",
@@ -590,7 +590,7 @@ export default [
       "polygon zkevm": "polygon_zkevm",
     },
   },
-   {
+  {
     id: 41,
     displayName: "WanBridge",
     bridgeDbName: "wanbridge",
@@ -634,12 +634,9 @@ export default [
     iconLink: "icons:pnetwork",
     largeTxThreshold: 10000,
     url: "https://p.network",
-    chains: [
-      "Ethereum",
-      "BSC"
-    ]
+    chains: ["Ethereum", "BSC"],
   },
-   {
+  {
     id: 43,
     displayName: "PepeTeam Bridge",
     bridgeDbName: "pepeteam_bridge",
@@ -648,5 +645,35 @@ export default [
     url: "https://bridge.pepe.team",
     chains: ["Ethereum", "BSC", "Polygon"],
     destinationChain: "Waves",
+  },
+  {
+    id: 44,
+    displayName: "Interport Finance",
+    bridgeDbName: "interport",
+    iconLink: "icons:interport",
+    largeTxThreshold: 10000,
+    url: "https://app.interport.fi",
+    chains: [
+      "Ethereum",
+      "Arbitrum",
+      "BSC",
+      "zkSync Era",
+      "Base",
+      "Scroll",
+      "Linea",
+      "Polygon",
+      "Polygon zkEVM",
+      "Optimism",
+      "opBNB",
+      "Avalanche",
+      "EON",
+      "Fantom",
+    ],
+    chainMapping: {
+      "zksync era": "era",
+      "polygon zkevm": "polygon_zkevm",
+      avalanche: "avax",
+      opbnb: "op_bnb",
+    },
   },
 ] as BridgeNetwork[];
