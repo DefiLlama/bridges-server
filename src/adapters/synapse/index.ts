@@ -7,14 +7,14 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 const contractAddresses = {
   arbitrum: {
       synapseBridge: "0x6F4e8eBa4D337f874Ab57478AcC2Cb5BACdc19c9",
-      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
+      synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E",
   },
   aurora: {
       synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
   },
   avax: {
       synapseBridge: "0xC05e61d0E7a63D27546389B7aD62FdFf5A91aACE",
-      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
+      synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E"
   },
   boba: {
       synapseBridge: "0x432036208d2717394d2614d6697c46DF3Ed69540",
@@ -36,7 +36,7 @@ const contractAddresses = {
   },
   ethereum: {
       synapseBridge: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
-      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
+      synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E",
   },
   fantom: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
@@ -52,10 +52,11 @@ const contractAddresses = {
   },
   optimism: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
-      synapseCCTP: "0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
+      synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E",
   },
   polygon: {
       synapseBridge: "0x8F5BBB2BB8c2Ee94639E55d5F41de9b4839C1280",
+      synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E",
   },
   metis: {
       synapseBridge: "0x06Fea8513FF03a0d3f61324da709D4cf06F42A5c",
@@ -65,7 +66,7 @@ const contractAddresses = {
   },
   base: {
     synapseBridge: "0xf07d1C752fAb503E47FEF309bf14fbDD3E867089",
-    synapseCCTP:"0xfb2bfc368a7edfd51aa2cbec513ad50edea74e84",
+    synapseCCTP: "0x12715a66773BD9C54534a01aBF01d05F6B4Bd35E"
 }
 } as {
     [chain: string]: {
@@ -360,8 +361,6 @@ const constructParams = (chain:string) => {
       target: synapseCCTP || synapseBridge
     }
 
-
-
     const eventParams = [
         finalTokenDepositDepositParams,
         finalTokenDepositAndSwapDepositParams,
@@ -377,13 +376,10 @@ const constructParams = (chain:string) => {
         finalCircleRequestFulfilledParams,
     ]
 
-
     return async (fromBlock: number, toBlock: number) =>
-        getTxDataFromEVMEventLogs("synapse", chain, fromBlock, toBlock, eventParams);
+        getTxDataFromEVMEventLogs("synapse", chain as Chain, fromBlock, toBlock, eventParams);
 
 }
-
-
 
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
@@ -392,20 +388,19 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
-  harmony: constructParams("harmony"),
+  // harmony: constructParams("harmony"),
   moonriver: constructParams("moonriver"),
   moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
-  klaytn: constructParams("klaytn"),
+  // // klaytn: constructParams("klaytn"),
   base: constructParams("base"),
   metis: constructParams("metis"),
   // dfk: constructParams("dfk"),
   // boba: constructParams("boba"),
-  // canto: constructParams("canto"),
+  // // canto: constructParams("canto"),
   // cronos: constructParams("cronos"),
   // dogechain: constructParams("dogechain"),
-  
 };
 
 
@@ -413,10 +408,3 @@ const adapter: BridgeAdapter = {
 
 
 
-
-
-  
-  // Example contracts: 
-//  Using bridge Zap contract : https://polygonscan.com/tx/0x2cec1d015aef431b5363e7e68afc3c7bd9eecb17a7ea997dc7b5067ecb2167dc
-// Using Router Contract: https://polygonscan.com/tx/0xf94193d101fdc9240aafd6069b3e02397a8bc5aff3c2e2f08b969689c7d9f290
-// Using regular Bridge Contract: https://polygonscan.com/tx/0x3ffe45b68bb42661b0081b76fc04699ca76944e3113f1c10a397ec0fc5e16f2b
