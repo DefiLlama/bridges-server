@@ -66,6 +66,18 @@ import { constructTransferParams } from "../../helpers/eventParams";
 ***Klaytn***
 0x4c882ec256823ee773b25b414d36f92ef58a7c0c is Celer Network: cBridge 2.0 (pool-based)
 0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56 is PeggedTokenBridgeV2
+
+***zkSync Era***
+0x54069e96C4247b37C2fbd9559CA99f08CD1CD66c is Celer Network: cBridge 2.0 (pool-based)
+
+***Polygon zkEVM***
+0xD46F8E428A06789B5884df54E029e738277388D1 is Celer Network: cBridge 2.0 (pool-based)
+
+***Linea***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
+
+***Scroll***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
 */
 
 const contractAddresses = {
@@ -132,6 +144,18 @@ const contractAddresses = {
     poolV2: ["0x4c882ec256823ee773b25b414d36f92ef58a7c0c"],
     peggedV2: ["0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56"],
   },
+  era: {
+    poolV2: ["0x54069e96C4247b37C2fbd9559CA99f08CD1CD66c"],
+  },
+  polygon_zkevm: {
+    poolV2: ["0xD46F8E428A06789B5884df54E029e738277388D1"],
+  },
+  linea: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  },
+  scroll: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  }
 } as {
   [chain: string]: {
     poolV1?: string[];
@@ -464,6 +488,10 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
   klaytn: constructParams("klaytn"),
+  era: constructParams("era"),
+  polygon_zkevm: constructParams("polygon_zkevm"),
+  linea: constructParams("linea"),
+  scroll: constructParams("scroll"),
 };
 
 export default adapter;
