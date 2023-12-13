@@ -119,6 +119,11 @@ export const chainCoingeckoIds = {
     symbol: "SOL",
     cmcId: "5426",
   },
+  Sui: {
+    geckoId: "sui",
+    symbol: "SUI",
+    cmcId: "20947",
+  },
   Polygon: {
     geckoId: "matic-network",
     symbol: "MATIC",
@@ -1117,6 +1122,10 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Axelar";
     case "zkSync Era":
       return "zkSync Era";
+    case "sui":
+      return "Sui";
+    case "solana":
+      return "Solana";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

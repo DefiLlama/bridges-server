@@ -140,6 +140,7 @@ export default [
       "Optimism",
       "Arbitrum",
       "Base",
+      "Solana"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -304,26 +305,20 @@ export default [
       "zksync era": "era",
     },
   },
-  /*
+  
   {
-    id: 20,
-    displayName: "deBridge",
-    bridgeDbName: "debridge",
-    iconLink: "icons:debridge",
+    id: 43,
+    displayName: "DLN (Powered by deBridge)",
+    bridgeDbName: "debridgedln",
+    iconLink: "icons:debridgedln",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Arbitrum",
-      "Avalanche",
-      //BSC
-    ],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
   },
-  */
+
   // {
   //   id: 21,
   //   displayName: "Optics",
@@ -519,8 +514,8 @@ export default [
     iconLink: "icons:manta-pacific-bridge",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Manta Pacific"],
-    destinationChain: "Manta Pacific",
+    chains: ["Ethereum", "Manta"],
+    destinationChain: "Manta",
   },
 
   // {
@@ -577,45 +572,81 @@ export default [
     iconLink: "icons:rhino.fi",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Arbitrum", "Arbitrum Nova", "BSC", "Polygon", "Optimism", "Base", "zkSync Era", "Polygon zkEVM", "Linea"],
+    chains: [
+      "Arbitrum",
+      "Arbitrum Nova",
+      "BSC",
+      "Polygon",
+      "Optimism",
+      "Base",
+      "zkSync Era",
+      "Polygon zkEVM",
+      "Linea",
+      "Scroll",
+    ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
     },
   },
-  {
-    id: 40,
+   {
+    id: 41,
     displayName: "WanBridge",
     bridgeDbName: "wanbridge",
     iconLink: "icons:wanbridge",
     largeTxThreshold: 10000,
     url: "https://bridge.wanchain.org",
     chains: [
-      "Ethereum", 
-      "Polygon", 
-      "Fantom", 
-      "Avalanche", 
-      "Arbitrum", 
-      "Optimism", 
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
       "BSC",
       "Moonbeam",
       "Moonriver",
-      "FunctionX",
+      // "FunctionX",
       "Telos",
-      "Okexchain",
-      "Horizen",
+      // "Okexchain",
+      // "Horizen",
       "Metis",
       "Astar",
       "Vinuchain",
-      "Tron",
-      "Wanchain",
-      "Clover",
+      // "Tron",
+      // "Wanchain",
+      // "Clover",
       "Gather",
       "XDC",
     ],
     chainMapping: {
       avalanche: "avax",
+      vinuchain: "vinu",
+      // clover: "clv",
+      gather: "gth",
     },
+  },
+  {
+    id: 42,
+    displayName: "pNetwork",
+    bridgeDbName: "pnetwork",
+    iconLink: "icons:pnetwork",
+    largeTxThreshold: 10000,
+    url: "https://p.network",
+    chains: [
+      "Ethereum",
+      "BSC"
+    ]
+  },
+   {
+    id: 43,
+    displayName: "PepeTeam Bridge",
+    bridgeDbName: "pepeteam_bridge",
+    iconLink: "protocols:pepeteam-bridge",
+    largeTxThreshold: 10000,
+    url: "https://bridge.pepe.team",
+    chains: ["Ethereum", "BSC", "Polygon"],
+    destinationChain: "Waves",
   },
 ] as BridgeNetwork[];

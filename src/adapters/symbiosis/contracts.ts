@@ -63,4 +63,16 @@ export const contracts = {
         portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
         synthesis: null,
     },
+    tron: {
+        portal: "0x4badeb0ca175da3ac6a4c886ca31990688d2a260",
+        synthesis: null,
+    },
+    scroll: {
+        portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+        synthesis: null,
+    },
+    manta: {
+        portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+        synthesis: null,
+    },
 } as const;

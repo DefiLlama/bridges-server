@@ -18,7 +18,7 @@ import avalanchebtc from "./avalanche-btc";
 import axelar from "./axelar";
 import rainbowbridge from "./rainbowbridge";
 import across from "./across";
-import debridge from "./debridge";
+import debridgedln from "./debridgedln";
 import optics from "./optics";
 import allbridge from "./allbridge";
 import ibc from "./ibc";
@@ -37,7 +37,13 @@ import axelarsatellite from "./axelar-satellite";
 import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
+<<<<<<< HEAD
 import rhinofi from "./rhinofi";
+=======
+import rhinofi from './rhinofi';
+import pepeteam_bridge from './pepeteam-bridge';
+import pnetwork from './pnetwork';
+>>>>>>> origin
 
 export default {
   polygon,
@@ -59,7 +65,7 @@ export default {
   axelar,
   rainbowbridge,
   across,
-  debridge,
+  debridgedln,
   optics,
   allbridge,
   ibc,
@@ -78,6 +84,8 @@ export default {
   manta,
   eywa,
   rhinofi,
+  pepeteam_bridge,
+  pnetwork,
 } as {
   [bridge: string]: BridgeAdapter;
 };
