@@ -650,7 +650,7 @@ export default [
     id: 44,
     displayName: "Interport Finance",
     bridgeDbName: "interport",
-    iconLink: "icons:interport",
+    iconLink: "icons:interport-finance",
     largeTxThreshold: 10000,
     url: "https://app.interport.fi",
     chains: [
