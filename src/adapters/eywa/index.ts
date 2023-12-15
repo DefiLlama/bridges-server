@@ -13,32 +13,32 @@ enum Chains {
 
 const contractAddresses = {
   [Chains.arbitrum]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.bsc]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.polygon]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.avax]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.fantom]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.ethereum]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.optimism]: {
-    portal: "0xBf0b5D561b986809924f88099c4FF0e6BccE60c9",
-    synthesis: "0x530aF883f135F135BE12A69DC33296fb8149f593",
+    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
+    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
 };
 
