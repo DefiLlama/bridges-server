@@ -423,7 +423,8 @@ export const runAdapterHistorical = async (
           const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
           for (let j = 0; j < 4; j++) {
             try {
-              if (useChainBlocks) {
+              // solana public rpc nodes have very low rate limits, so just use the current timestamp
+              if (useChainBlocks && chain !== "solana") {
                 // add timeout?
                 await wait(100);
                 block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
