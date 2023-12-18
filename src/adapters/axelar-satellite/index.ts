@@ -202,6 +202,7 @@ const constructParams = (chain: string) => {
     ];
 
     // console.log("Total listened events:", eventParams.length);
+
     return getTxDataFromEVMEventLogs("axelar-satellite", chain as Chain, fromBlock, toBlock, eventParams);
   };
 };
