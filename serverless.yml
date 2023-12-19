@@ -66,6 +66,7 @@ provider:
     OPTIMISM_RPC: ${env:OPTIMISM_RPC}
     AURORA_RPC: ${env:AURORA_RPC}
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
+    SOLANA_RPC: ${env:SOLANA_RPC}
 
 functions:
   bridgeDayStats:
