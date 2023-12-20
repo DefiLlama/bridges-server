@@ -1,5 +1,6 @@
 export const VAULT_TYPE_USDC = 1;
 export const VAULT_TYPE_USDT = 2;
+export const VAULT_TYPE_CIRCLE_CCTP = 4;
 
 export const ACTION_EXECUTOR_ADDRESSES = {
     ethereum: "0x7b2E3FC7510D1A51b3bef735F985446589219354",
@@ -16,6 +17,23 @@ export const ACTION_EXECUTOR_ADDRESSES = {
     avax: "0x7b2E3FC7510D1A51b3bef735F985446589219354",
     eon: "0x7b2E3FC7510D1A51b3bef735F985446589219354",
     fantom: "0x7b2E3FC7510D1A51b3bef735F985446589219354",
+} as const;
+
+export const ACTION_EXECUTOR_CCTP_ADDRESSES = {
+    ethereum: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    arbitrum: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    bsc: "",
+    era: "",
+    base: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    scroll: "",
+    linea: "",
+    polygon: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    polygon_zkevm: "",
+    optimism: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    opbnb: "",
+    avax: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    eon: "",
+    fantom: "",
 } as const;
 
 export const VAULT_ASSET_ADDRESSES = {
@@ -50,5 +68,21 @@ export const VAULT_ASSET_ADDRESSES = {
         avax: '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7',
         eon: '0xA167bcAb6791304EDa9B636C8beEC75b3D2829E6',
         fantom: '0xcc1b99dDAc1a33c201a742A1851662E87BC7f22C',
+    },
+    [VAULT_TYPE_CIRCLE_CCTP] : {
+        ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        arbitrum: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+        bsc: undefined,
+        era: undefined,
+        base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        scroll: undefined,
+        linea: undefined,
+        polygon: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        polygon_zkevm: undefined,
+        optimism: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+        opbnb: undefined,
+        avax: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
+        eon: undefined,
+        fantom: undefined,
     },
 };
