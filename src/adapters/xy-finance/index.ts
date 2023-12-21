@@ -1,6 +1,11 @@
 import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { Chain, YBridgeContractAddress } from './constants'
+import {
+  Chain,
+  VAULTS_TOKEN,
+  YBridgeContractAddress,
+  YBridgeVaultsTokenContractAddress
+} from './constants'
 
 const getYBridgeSwapRequestedEventParams = (chain: Chain) => {
   const contractAddress = YBridgeContractAddress[chain]
@@ -20,6 +25,11 @@ const getYBridgeSwapRequestedEventParams = (chain: Chain) => {
       from: "_receiver",
       to: "_referrer",
     },
+    mapTokens: {
+      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.ETH]]: 'YBRIDGE_VAULTS_ETH',
+      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.USDT]]: 'YBRIDGE_VAULTS_USDT',
+      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.USDC]]: 'YBRIDGE_VAULTS_USDC',
+    },
     isDeposit: false,
   }
 }
@@ -34,20 +44,25 @@ const constructParams = (chain: Chain) => {
 };
 
 const adapter: BridgeAdapter = {
-    ethereum: constructParams(Chain.Ethereum),
-    // arbitrum: constructParams("arbitrum"),
-    // bsc: constructParams("bsc"),
-    // "zksync era": constructParams("era"),
-    // base: constructParams("base"),
-    // scroll: constructParams("scroll"),
-    // linea: constructParams("linea"),
-    // polygon: constructParams("polygon"),
-    // "polygon zkevm": constructParams("polygon_zkevm"),
-    // optimism: constructParams("optimism"),
-    // opbnb: constructParams("opbnb"),
-    // avalanche: constructParams("avax"),
-    // eon: constructParams("eon"),
-    // fantom: constructParams("fantom"),
+  ethereum: constructParams(Chain.Ethereum),
+  scroll: constructParams(Chain.Scroll),
+  mantle: constructParams(Chain.Mantle),
+  linea: constructParams(Chain.Linea),
+  base: constructParams(Chain.Base),
+  arbitrum: constructParams(Chain.Arbitrum),
+  'zksync era': constructParams(Chain.ZkSync),
+  bsc: constructParams(Chain.Bsc),
+  polygon: constructParams(Chain.Polygon),
+  klaytn: constructParams(Chain.Klaytn),
+  'polygon zkevm': constructParams(Chain.PolygonZkevm),
+  avax: constructParams(Chain.Avalanche),
+  optimism: constructParams(Chain.Optimism),
+  cronos: constructParams(Chain.Cronos),
+  fantom: constructParams(Chain.Fantom),
+  astar: constructParams(Chain.Astar),
+  kcc: constructParams(Chain.Kcc),
+  moonriver: constructParams(Chain.Moonriver),
+  thundercore: constructParams(Chain.ThunderCore),
 };
 
 export default adapter;
