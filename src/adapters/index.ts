@@ -42,6 +42,8 @@ import pepeteam_bridge from './pepeteam-bridge';
 import pnetwork from './pnetwork';
 import interport from './interport-finance';
 import shimmerbridge from "./shimmerbridge";
+import xy from './xy-finance'
+
 
 export default {
   polygon,
@@ -86,6 +88,7 @@ export default {
   pnetwork,
   interport,
   shimmerbridge,
+  xy,
 } as {
   [bridge: string]: BridgeAdapter;
 };
