@@ -82,12 +82,12 @@ export const getXYRouterRequestedEventParams = (chain: Chain) => {
     argGetters: {
       amount: (log: any) => {
         const bridgeAddress = log.bridgeAddress?.toLowerCase()
-        const yBridgeCOntractAddress = chain !== Chain.Numbers ? YBridgeContractAddress[chain]?.toLowerCase() : ''
+        const yBridgeContractAddress = chain !== Chain.Numbers ? YBridgeContractAddress[chain]?.toLowerCase() : ''
         /**
          * Filter the duplicated amount:
          * If the yBridge is used, return with amount 0, since getYBridgeSwapRequestedEventParams will get the event.
          */
-        if (bridgeAddress === yBridgeCOntractAddress) {
+        if (bridgeAddress === yBridgeContractAddress) {
           return ethers.BigNumber.from(0)
         }
         return log?.bridgeAmount
