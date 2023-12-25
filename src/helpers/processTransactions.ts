@@ -189,7 +189,7 @@ export const getTxDataFromEVMEventLogs = async (
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
-                const value = argGetters?.[eventKey](args) || get(args, argKey);
+                const value = argGetters?.[eventKey]?.(args) || get(args, argKey);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${

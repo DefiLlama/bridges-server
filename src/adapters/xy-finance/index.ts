@@ -1,13 +1,13 @@
-import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import find from 'lodash/find'
+import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import {
   Chain,
-  VAULTS_TOKEN,
   YBridgeContractAddress,
   YBridgeVaultsTokenContractAddress
 } from './constants'
 
-const getYBridgeSwapRequestedEventParams = (chain: Chain) => {
+const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>) => {
   const contractAddress = YBridgeContractAddress[chain]
   return {
     target: contractAddress,
@@ -25,19 +25,23 @@ const getYBridgeSwapRequestedEventParams = (chain: Chain) => {
       from: "_receiver",
       to: "_referrer",
     },
-    mapTokens: {
-      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.ETH]]: 'YBRIDGE_VAULTS_ETH',
-      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.USDT]]: 'YBRIDGE_VAULTS_USDT',
-      [YBridgeVaultsTokenContractAddress[VAULTS_TOKEN.USDC]]: 'YBRIDGE_VAULTS_USDC',
+    argGetters: {
+      to: (log: any) => {
+        const vaultToken = log?._vaultToken
+        const toVaultContract = find(YBridgeVaultsTokenContractAddress[chain], { tokenAddress: vaultToken })?.contractAddress
+        return toVaultContract ?? YBridgeContractAddress[chain]
+      }
     },
     isDeposit: false,
   }
 }
 
 const constructParams = (chain: Chain) => {
-  const eventParams = [
-    getYBridgeSwapRequestedEventParams(chain)
-  ]
+  const eventParams: (ContractEventParams | PartialContractEventParams)[] = []
+  
+  if (chain !== Chain.Numbers) {
+    eventParams.push(getYBridgeSwapRequestedEventParams(chain))
+  }
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("xy", chain, fromBlock, toBlock, eventParams);
