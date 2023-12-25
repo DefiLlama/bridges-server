@@ -1,8 +1,10 @@
+import { ethers } from "ethers";
 import find from 'lodash/find'
 import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import {
   Chain,
+  XYRouterContractAddress,
   YBridgeContractAddress,
   YBridgeVaultsTokenContractAddress
 } from './constants'
@@ -36,8 +38,67 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
   }
 }
 
+export const getXYRouterRequestedEventParams = (chain: Chain) => {
+  const contractAddress = XYRouterContractAddress[chain]
+  return {
+    target: contractAddress,
+    topic: 'XYRouterRequested(uint256,address,address,uint256,address,address,uint256,uint256,bytes,((bool,address),(bool,((address,address,uint256,address),address,address,bytes)),(bool,address,address,bytes)),address)',
+    abi: [
+      `event XYRouterRequested(
+        uint256 xyRouterRequestId,
+        address indexed sender,
+        address srcToken,
+        uint256 amountIn,
+        address indexed bridgeAddress,
+        address bridgeToken,
+        uint256 bridgeAmount,
+        uint256 dstChainId,
+        bytes bridgeAssetReceiver,
+        tuple(
+          tuple(bool hasTip, address tipReceiver) tipInfo,
+          tuple(
+            bool hasDstChainSwap,
+            tuple(
+              tuple(address srcToken, address dstToken, uint256 minReturnAmount, address receiver) swapRequest,
+              address dexAddress,
+              address approveToAddress,
+              bytes dexCalldata
+            ) swapAction
+          ) dstChainSwapInfo,
+          tuple(bool hasIM, address xApp, address refundReceiver, bytes message) imInfo
+        ) dstChainAction,
+        address indexed affiliate)`,
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    argKeys: {
+      token: "bridgeToken",
+      amount: "bridgeAmount",
+      from: "sender",
+      to: "bridgeAddress",
+    },
+    argGetters: {
+      amount: (log: any) => {
+        const bridgeAddress = log.bridgeAddress?.toLowerCase()
+        const yBridgeCOntractAddress = chain !== Chain.Numbers ? YBridgeContractAddress[chain]?.toLowerCase() : ''
+        /**
+         * Filter the duplicated amount:
+         * If the yBridge is used, return with amount 0, since getYBridgeSwapRequestedEventParams will get the event.
+         */
+        if (bridgeAddress === yBridgeCOntractAddress) {
+          return ethers.BigNumber.from(0)
+        }
+        return log?.bridgeAmount
+      }
+    },
+    isDeposit: false,
+  }
+}
+
 const constructParams = (chain: Chain) => {
-  const eventParams: (ContractEventParams | PartialContractEventParams)[] = []
+  const eventParams: (ContractEventParams | PartialContractEventParams)[] = [getXYRouterRequestedEventParams(chain)]
   
   if (chain !== Chain.Numbers) {
     eventParams.push(getYBridgeSwapRequestedEventParams(chain))

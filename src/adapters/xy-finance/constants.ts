@@ -339,7 +339,7 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Contr
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
 }
 
-export const XYRouterCOntractAddress: Record<Chain, ContractAddress> = {
+export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
   [Chain.Ethereum]: "0xFfB9faf89165585Ad4b25F81332Ead96986a2681",
   [Chain.Scroll]: "0x22bf2A9fcAab9dc96526097318f459eF74277042",
   [Chain.Mantle]: "0x52075Fd1fF67f03beABCb5AcdA9679b02d98cA37",
