@@ -67,6 +67,7 @@ const adapter: BridgeAdapter = {
   kcc: constructParams(Chain.Kcc),
   moonriver: constructParams(Chain.Moonriver),
   thundercore: constructParams(Chain.ThunderCore),
+  wemix: constructParams(Chain.Wemix),
 };
 
 export default adapter;
