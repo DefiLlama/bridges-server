@@ -28,3 +28,4 @@ jobs:
         OPTIMISM_RPC: ${{ secrets.OPTIMISM_RPC }}
         AURORA_RPC: ${{ secrets.AURORA_RPC }}
         ARBITRUM_RPC: ${{ secrets.ARBITRUM_RPC }}
+        SOLANA_RPC: ${{ secrets.SOLANA_RPC }}
