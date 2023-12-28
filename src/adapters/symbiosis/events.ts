@@ -27,9 +27,9 @@ export const events: Events = {
     },
     synthesizeCompletedParams: {
         target: "",
-        topic: "SynthesizeCompleted(bytes32,address,uint256,uint256,address)",
+        topic: "SynthesizeCompleted(bytes32,address,bytes32,uint256,uint256,address)",
         abi: [
-            "event SynthesizeCompleted(bytes32 indexed id,address indexed to,uint256 amount,uint256 bridgingFee,address token)",
+            "event SynthesizeCompleted(bytes32 indexed id,address indexed to,bytes32 indexed crossChainID,uint256 amount,uint256 bridgingFee,address token)",
         ],
         logKeys: {
             blockNumber: "blockNumber",
@@ -63,9 +63,9 @@ export const events: Events = {
     },
     burnCompletedParams: {
         target: "",
-        topic: "BurnCompleted(bytes32,address,uint256,uint256,address)",
+        topic: "BurnCompleted(bytes32,bytes32,address,uint256,uint256,address)",
         abi: [
-            "event BurnCompleted(bytes32 indexed id,address indexed to,uint256 amount,uint256 bridgingFee,address token)",
+            "event BurnCompleted(bytes32 indexed id,bytes32 indexed crossChainID,address indexed to,uint256 amount,uint256 bridgingFee,address token)",
         ],
         logKeys: {
             blockNumber: "blockNumber",
