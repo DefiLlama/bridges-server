@@ -114,7 +114,7 @@ export const runAdapterToCurrentBlock = async (
     });
     throw new Error(errString);
   }
-  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
   console.log("Inserted or skipped config");
 
   const adapterPromises = Promise.all(
@@ -228,7 +228,7 @@ export const runAllAdaptersToCurrentBlock = async (
       });
       throw new Error(errString);
     }
-    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
@@ -282,7 +282,7 @@ export const runAllAdaptersTimestampRange = async (
       });
       throw new Error(errString);
     }
-    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
@@ -334,7 +334,10 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
-  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase()) {
+    console.log(`Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
+    return;
+  }
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -345,8 +348,11 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
+
   const adapterChainEventsFn = adapter[chain];
-  if (!adapterChainEventsFn) {
+
+  if (!adapterChainEventsFn && chain?.toLowerCase() !== bridgeNetwork.destinationChain?.toLowerCase()) {
     const errString = `Chain ${chain} not found on adapter ${bridgeDbName}.`;
     await insertErrorRow({
       ts: getCurrentUnixTimestamp() * 1000,

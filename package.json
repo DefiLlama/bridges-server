@@ -5,7 +5,10 @@
     "build": "sls webpack",
     "test": "ts-node ./src/adapters/test.ts",
     "test-txs": "ts-node ./src/utils/testAdapterHistorical.ts",
-    "ts": "tsc --noEmit"
+    "ts": "tsc --noEmit",
+    "adapter": "export $(cat .env.test | xargs) && ts-node ./src/utils/runAdapterHistorical.ts",
+    "aggregate": "export $(cat .env.test | xargs) && ts-node ./src/utils/testaggregate.ts",
+    "daily-volume": "export $(cat .env.test | xargs) && ts-node ./src/utils/testDailyVolume.ts"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.101",
