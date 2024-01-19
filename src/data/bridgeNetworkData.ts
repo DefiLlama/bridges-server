@@ -694,7 +694,7 @@ export default [
     id: 45,
     displayName: "Shimmer Bridge",
     bridgeDbName: "shimmerbridge",
-    iconLink: "chain:shimmer_evm",
+    iconLink: "chain:shimmerevm",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "BSC", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base", "Fantom"],
