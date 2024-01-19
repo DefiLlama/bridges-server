@@ -1,8 +1,8 @@
 import { Chain } from "@defillama/sdk/build/general";
-import { lookupBlock } from "@defillama/sdk/build/util";
 import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
+import { getBlockByTimestamp } from "./blocks";
 
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
@@ -35,8 +35,8 @@ async function fillAdapterHistorical(
       if (restrictChainTo && nChain !== restrictChainTo) return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
-      const startBlock = await lookupBlock(startTimestamp, { chain: nChain as Chain });
-      const endBlock = await lookupBlock(endTimestamp, { chain: nChain as Chain });
+      const startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain);
+      const endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain);
       await runAdapterHistorical(
         startBlock.block,
         endBlock.block,

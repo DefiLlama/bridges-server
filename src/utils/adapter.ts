@@ -1,4 +1,4 @@
-import { getLatestBlockNumber } from "./blocks";
+import { getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -438,6 +438,9 @@ export const runAdapterHistorical = async (
                   blockTimestamps[i] = block.timestamp;
                   break;
                 }
+              } else if (chain === "solana") {
+                blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber);
+                break;
               } else {
                 blockTimestamps[i] = currentTimestamp;
                 break;
