@@ -676,4 +676,17 @@ export default [
       opbnb: "op_bnb",
     },
   },
+  {
+    id: 45,
+    displayName: "Shimmer Bridge",
+    bridgeDbName: "shimmerbridge",
+    iconLink: "chain:shimmer_evm",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "BSC", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base", "Fantom"],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+    destinationChain: "ShimmerEVM",
+  },
 ] as BridgeNetwork[];
