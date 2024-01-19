@@ -52,3 +52,11 @@ export async function getBlockByTimestamp(timestamp: number, chain: Chain) {
   }
   throw new Error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
 }
+
+export async function getTimestampBySolanaSlot(slot: number) {
+  const { timestamp: latestTimestamp, number } = await getLatestBlock("solana");
+
+  const timestamp = latestTimestamp - ((number - slot) * 400) / 1000;
+
+  return timestamp;
+}
