@@ -703,4 +703,14 @@ export default [
     },
     destinationChain: "ShimmerEVM",
   },
+  {
+    id: 46,
+    displayName: "Butter Network",
+    bridgeDbName: "butternetwork",
+    iconLink: "icons:butternetwork",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+    destinationChain: "MAP Relay Chain"
+  },
 ] as BridgeNetwork[];
