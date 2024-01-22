@@ -738,4 +738,17 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 47,
+    displayName: "Butter Network",
+    bridgeDbName: "butternetwork",
+    iconLink: "icons:butternetwork",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+    chainMapping: {
+      "map relay chain": "map",
+    },
+    destinationChain: "MAP Relay Chain",
+  },
 ] as BridgeNetwork[];
