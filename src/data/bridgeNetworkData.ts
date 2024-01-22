@@ -697,7 +697,7 @@ export default [
     iconLink: "chain:shimmerevm",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "BSC", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base", "Fantom"],
+    chains: ["Ethereum", "BSC", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base", "Fantom", "ShimmerEVM"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
