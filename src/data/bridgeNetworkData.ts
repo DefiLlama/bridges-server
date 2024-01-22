@@ -751,4 +751,12 @@ export default [
     },
     destinationChain: "MAP Relay Chain",
   },
+  {
+    id: 48,
+    displayName: "Garden Finance",
+    bridgeDbName: "garden",
+    largeTxThreshold: 10000,
+    url: "https://garden.finance",
+    chains: ["Ethereum", "Arbitrum"],
+  },
 ] as BridgeNetwork[];
