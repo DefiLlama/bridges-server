@@ -8,6 +8,7 @@ export const normalizedChainReplacements = {
   "arbitrum%20nova": "arbitrum_nova",
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
+  shimmerevm: "shimmer_evm",
 } as {
   [chain: string]: string;
 };
