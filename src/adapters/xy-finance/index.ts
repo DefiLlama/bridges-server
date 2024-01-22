@@ -120,7 +120,7 @@ const adapter: BridgeAdapter = {
   polygon: constructParams(Chain.Polygon),
   klaytn: constructParams(Chain.Klaytn),
   'polygon zkevm': constructParams(Chain.PolygonZkevm),
-  avax: constructParams(Chain.Avalanche),
+  avalanche: constructParams(Chain.Avalanche),
   optimism: constructParams(Chain.Optimism),
   cronos: constructParams(Chain.Cronos),
   fantom: constructParams(Chain.Fantom),

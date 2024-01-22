@@ -718,7 +718,7 @@ export default [
       "Base",
       "Arbitrum",
       "zkSync Era",
-      "BNB",
+      "BSC",
       "Polygon",
       "Klaytn",
       "Polygon zkEVM",
@@ -730,11 +730,12 @@ export default [
       "KCC",
       "Moonriver",
       "ThunderCore",
-      "Numbers",
+      // "Numbers",
     ],
     chainMapping: {
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
+      avalanche: "avax",
     },
   },
 ] as BridgeNetwork[];
