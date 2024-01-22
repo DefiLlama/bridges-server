@@ -34,7 +34,7 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
         return toVaultContract ?? YBridgeContractAddress[chain]
       }
     },
-    isDeposit: false,
+    isDeposit: true,
   }
 }
 
@@ -93,7 +93,7 @@ export const getXYRouterRequestedEventParams = (chain: Chain) => {
         return log?.bridgeAmount
       }
     },
-    isDeposit: false,
+    isDeposit: true,
   }
 }
 
