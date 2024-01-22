@@ -260,7 +260,7 @@ export default [
   },
   {
     id: 16,
-    displayName: "xDai Bridge",
+    displayName: "Gnosis Bridge",
     bridgeDbName: "xdai",
     iconLink: "chain:xdai",
     largeTxThreshold: 10000,
