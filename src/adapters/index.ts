@@ -43,6 +43,7 @@ import pnetwork from './pnetwork';
 import interport from './interport-finance';
 import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
+import xy from './xy-finance'
 
 export default {
   polygon,
@@ -88,6 +89,7 @@ export default {
   interport,
   shimmerbridge,
   butternetwork,
+  xy,
 } as {
   [bridge: string]: BridgeAdapter;
 };
