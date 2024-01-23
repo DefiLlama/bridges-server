@@ -28,7 +28,29 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   aurora: constructParams("aurora"),
   "zksync era": constructParams("era"),
-  kava: constructParams("kava")
+  kava: constructParams("kava"),
+  moonbeam: constructParams("moonbeam"),
+  moonriver: constructParams("moonriver"),
+  cronos: constructParams("cronos"),
+  "polygon zkevm": constructParams("polygon_zkevm"),
+  linea: constructParams("linea"),
+  base: constructParams("base"),
+  metis: constructParams("metis"),
+  manta: constructParams("manta"),
+  mantle: constructParams("mantle"),
+  scroll: constructParams("scroll"),
+  celo: constructParams("celo"),
+  gnosis: constructParams("xdai")
+  // conflux-espace
+  // eos-evm
+  // tron
+  // solana
+  // aptos
+  // sui
+  // SKALE Europa
+  // SKALE Nebula
+  // Nautilus
+  // opbnb
 };
 
 export default adapter;

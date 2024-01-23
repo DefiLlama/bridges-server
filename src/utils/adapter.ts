@@ -1,4 +1,4 @@
-import { getLatestBlockNumber } from "./blocks";
+import { getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -334,7 +334,8 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
-  if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase()) {
+  const adapterChainEventsFn = adapter[chain];
+  if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
     console.log(`Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
     return;
   }
@@ -349,8 +350,6 @@ export const runAdapterHistorical = async (
     throw new Error(errString);
   }
   await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
-
-  const adapterChainEventsFn = adapter[chain];
 
   if (!adapterChainEventsFn && chain?.toLowerCase() !== bridgeNetwork.destinationChain?.toLowerCase()) {
     const errString = `Chain ${chain} not found on adapter ${bridgeDbName}.`;
@@ -438,6 +437,9 @@ export const runAdapterHistorical = async (
                   blockTimestamps[i] = block.timestamp;
                   break;
                 }
+              } else if (chain === "solana") {
+                blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber);
+                break;
               } else {
                 blockTimestamps[i] = currentTimestamp;
                 break;

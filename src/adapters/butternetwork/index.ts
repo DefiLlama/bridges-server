@@ -136,7 +136,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
   ethereum: constructParams("ethereum"),
-  map: constructParams("map")
+  'map relay chain': constructParams("map")
 };
 
 export default adapter;
