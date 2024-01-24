@@ -742,7 +742,7 @@ export default [
     id: 47,
     displayName: "Butter Network",
     bridgeDbName: "butternetwork",
-    iconLink: "icons:butternetwork",
+    iconLink: "icons:butter-network",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],

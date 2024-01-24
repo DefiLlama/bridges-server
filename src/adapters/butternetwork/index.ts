@@ -110,7 +110,7 @@ const constructParams = (chain: string) => {
   for (let token of Object.values(tokens)) {
     const finalTokenDepositParams = {
       ...tokenDepositParams,
-      target: token,
+      target: mos,
       fixedEventData: {
         to: mos,
         token: token
@@ -118,7 +118,7 @@ const constructParams = (chain: string) => {
     };
     const finalTokenWithdrawalParams = {
       ...tokenWithdrawalParams,
-      target: token,
+      target: mos,
       fixedEventData: {
         from: mos,
         token: token
