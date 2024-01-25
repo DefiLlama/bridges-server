@@ -53,7 +53,7 @@ export const contractAddresses = {
   base: {
     tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
     coreBridge: "0xbebdb6C8ddC678FfA9f8748f85C815C556Dd8ac6",
-    base: "0x03faBB06Fa052557143dC28eFCFc63FC12843f1D",
+    circle: "0x03faBB06Fa052557143dC28eFCFc63FC12843f1D",
   },
   solana: {
     tokenBridge: "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb",
