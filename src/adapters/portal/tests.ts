@@ -684,6 +684,24 @@ const testSolana = async () => {
   sleep(5000);
 };
 
+const testCircleIntegration = async () => {
+  // https://etherscan.io/tx/0x6e75d43dea678b6c2b3ddf7fe50ff1f0c99f57e82705fbb1fc205c9c050fbb0c
+  let blockNumber = 19077764;
+  let event = await getEvent(blockNumber);
+  assertEqual(
+    {
+      blockNumber,
+      txHash: "0x6e75d43dea678b6c2b3ddf7fe50ff1f0c99f57e82705fbb1fc205c9c050fbb0c",
+      from: "0xF899d8871174C080A288C1516bc9363571B13162",
+      to: "0x4cb69FaE7e7Af841e44E1A1c30Af640739378bb2",
+      token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      amount: ethers.BigNumber.from("258538932900"),
+      isDeposit: true,
+    },
+    event
+  );
+};
+
 (async () => {
   await Promise.all([
     testNoEventsFound(),
@@ -698,7 +716,9 @@ const testSolana = async () => {
     testAvalanche(),
     testOptimism(),
     testKlaytn(),
+    testCircleIntegration(),
     // testSui(),
     // testSolana(),
   ]);
+  console.log("All tests passed");
 })();

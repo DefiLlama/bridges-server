@@ -4,10 +4,12 @@ export const contractAddresses = {
   ethereum: {
     tokenBridge: "0x3ee18B2214AFF97000D974cf647E7C347E8fa585",
     coreBridge: "0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B",
+    circle: "0xAaDA05BD399372f0b0463744C09113c137636f6a",
   },
   polygon: {
     tokenBridge: "0x5a58505a96D1dbf8dF91cB21B54419FC36e93fdE",
     coreBridge: "0x7A4B5a56256163F07b2C80A7cA55aBE66c4ec4d7",
+    circle: "0x0FF28217dCc90372345954563486528aa865cDd6",
   },
   fantom: {
     tokenBridge: "0x7C9Fc5741288cDFdD83CeB07f3ea7e22618D79D2",
@@ -16,6 +18,7 @@ export const contractAddresses = {
   avax: {
     tokenBridge: "0x0e082F06FF657D94310cB8cE8B0D9a04541d8052",
     coreBridge: "0x54a8e5f9c4CbA08F9943965859F6c34eAF03E26c",
+    circle: "0x09Fb06A271faFf70A651047395AaEb6265265F13",
   },
   bsc: {
     tokenBridge: "0xB6F6D86a8f9879A9c87f643768d9efc38c1Da6E7",
@@ -40,14 +43,17 @@ export const contractAddresses = {
   optimism: {
     tokenBridge: "0x1D68124e65faFC907325e3EDbF8c4d84499DAa8b",
     coreBridge: "0xEe91C335eab126dF5fDB3797EA9d6aD93aeC9722",
+    circle: "0x2703483B1a5a7c577e8680de9Df8Be03c6f30e3c",
   },
   arbitrum: {
     tokenBridge: "0x0b2402144Bb366A632D14B83F244D2e0e21bD39c",
     coreBridge: "0xa5f208e072434bC67592E4C49C1B991BA79BCA46",
+    circle: "0x2703483B1a5a7c577e8680de9Df8Be03c6f30e3c",
   },
   base: {
     tokenBridge: "0x8d2de8d2f73F1F4cAB472AC9A881C9b123C79627",
     coreBridge: "0xbebdb6C8ddC678FfA9f8748f85C815C556Dd8ac6",
+    base: "0x03faBB06Fa052557143dC28eFCFc63FC12843f1D",
   },
   solana: {
     tokenBridge: "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb",
@@ -57,5 +63,6 @@ export const contractAddresses = {
   [chain: string]: {
     tokenBridge: string;
     coreBridge: string;
+    circle?: string;
   };
 };
