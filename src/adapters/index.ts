@@ -44,6 +44,8 @@ import interport from './interport-finance';
 import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
 import xy from './xy-finance'
+import rootstock from './rootstock-bridge'
+
 
 export default {
   polygon,
@@ -90,6 +92,7 @@ export default {
   shimmerbridge,
   butternetwork,
   xy,
+  rootstock,
 } as {
   [bridge: string]: BridgeAdapter;
 };

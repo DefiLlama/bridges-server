@@ -751,4 +751,17 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 48,
+    displayName: "Rootstock Bridge",
+    bridgeDbName: "rootstock",
+    iconLink: "chain:rsk",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["rsk"],
+    chainMapping: {
+      rsk: "rsk", // this is needed temporarily, need to fix and remove
+    },
+    destinationChain: "-", // not sure the effect this will have, need to double-check everything works
+  },
 ] as BridgeNetwork[];
