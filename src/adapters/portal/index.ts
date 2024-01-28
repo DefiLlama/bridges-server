@@ -55,7 +55,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (
   chain: Chain,
   hashes: string[],
   tokenBridge: string,
-  circle: string
+  circle?: string
 ) => {
   const provider = getProvider(chain);
 
