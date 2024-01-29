@@ -4,7 +4,6 @@ import {
   } from "../../helpers/bridgeAdapter.type";
   import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
   
-  // 0x0000000000000000000000000000000001000006 bridge
   const bridge = "0x0000000000000000000000000000000001000006"
   
   const peginEventParams: ContractEventParams = {
@@ -33,16 +32,19 @@ import {
     target: bridge,
     topic: "release_request_received(address,string,uint256)",
     abi: [
-      "event release_request_received(address sender, string btcDestinationAddress, uint256 amount)",
+      "event release_request_received(address indexed sender, string btcDestinationAddress, uint256 amount)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
     },
-    argKeys: {
-      from: "from",
+    fixedEventData: {
       to: bridge,
+      token: "RBTC",      
+    },
+    argKeys: {      
       amount: "amount",
+      from: "sender"
     },
     isDeposit: false,
   };
