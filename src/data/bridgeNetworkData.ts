@@ -260,7 +260,7 @@ export default [
   },
   {
     id: 16,
-    displayName: "xDai Bridge",
+    displayName: "Gnosis Bridge",
     bridgeDbName: "xdai",
     iconLink: "chain:xdai",
     largeTxThreshold: 10000,
@@ -759,4 +759,17 @@ export default [
     url: "https://garden.finance",
     chains: ["Ethereum", "Arbitrum"],
   },
+  // {
+  //   id: 47,
+  //   displayName: "Butter Network",
+  //   bridgeDbName: "butternetwork",
+  //   iconLink: "icons:butter-network",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+  //   chainMapping: {
+  //     "map relay chain": "map",
+  //   },
+  //   destinationChain: "MAP Relay Chain",
+  // },
 ] as BridgeNetwork[];
