@@ -751,4 +751,13 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 48,
+    displayName: "Circle CCTP",
+    bridgeDbName: "circle",
+    // iconLink: "protocols:circle",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
+  }
 ] as BridgeNetwork[];
