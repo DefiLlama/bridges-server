@@ -902,6 +902,12 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["Cosmos"],
   },
+  ShimmerEVM: {
+    geckoId: "shimmer",
+    symbol: "SMR",
+    cmcId: null,
+    categories: ["EVM"],
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
