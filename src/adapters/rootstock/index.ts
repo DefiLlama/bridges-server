@@ -28,7 +28,29 @@ import {
   };
   
   
-  const pegOutEventParams: ContractEventParams = {
+  const pegOutEventBeforeFingerrootsParams: ContractEventParams = {
+    target: bridge,
+    topic: "release_request_received(address,string,uint256)",
+    topics: ["0x8e04e2f2c246a91202761c435d6a4971bdc7af0617f0c739d900ecd12a6d7266"],
+    abi: [
+      "event release_request_received(address indexed sender, bytes btcDestinationAddress, uint256 amount)",
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    fixedEventData: {
+      to: bridge,
+      token: "RBTC",      
+    },
+    argKeys: {      
+      amount: "amount",
+      from: "sender"
+    },
+    isDeposit: false,
+  };
+
+  const pegOutEventAfterFingerrootsParams: ContractEventParams = {
     target: bridge,
     topic: "release_request_received(address,string,uint256)",
     abi: [
@@ -52,10 +74,11 @@ import {
   const constructParams = () => {
     const eventParams = [
         peginEventParams,
-        pegOutEventParams
+        pegOutEventBeforeFingerrootsParams,
+        pegOutEventAfterFingerrootsParams
     ];
-    return async (fromBlock: number, toBlock: number) =>
-      getTxDataFromEVMEventLogs("rootstock-bridge", "rsk", fromBlock, toBlock, eventParams);
+    return async (fromBlock: number, toBlock: number) =>        
+      getTxDataFromEVMEventLogs("rootstock", "rsk", fromBlock, toBlock, eventParams);
   };
   
   const adapter: BridgeAdapter = {

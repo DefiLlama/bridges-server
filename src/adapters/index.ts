@@ -44,7 +44,7 @@ import interport from './interport-finance';
 import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
 import xy from './xy-finance'
-import rootstock from './rootstock-bridge'
+import rootstock from './rootstock'
 
 
 export default {

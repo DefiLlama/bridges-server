@@ -758,7 +758,7 @@ export default [
     iconLink: "chain:rsk",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["rsk"],
+    chains: ["RSK"],    
     chainMapping: {
       rsk: "rsk", // this is needed temporarily, need to fix and remove
     },
