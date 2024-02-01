@@ -5,6 +5,7 @@ import {
   import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
   
   const bridge = "0x0000000000000000000000000000000001000006"
+  const rbtc = '0x542fDA317318eBF1d3DEAf76E0b632741A7e677d'
   
   const peginEventParams: ContractEventParams = {
     target: bridge,
@@ -18,7 +19,7 @@ import {
     },
     fixedEventData: {
       from: bridge,
-      token: "RBTC",
+      token: rbtc,
     },
     argKeys: {      
       to: "receiver",
@@ -41,7 +42,7 @@ import {
     },
     fixedEventData: {
       to: bridge,
-      token: "RBTC",      
+      token: rbtc,      
     },
     argKeys: {      
       amount: "amount",
@@ -62,7 +63,7 @@ import {
     },
     fixedEventData: {
       to: bridge,
-      token: "RBTC",      
+      token: rbtc,      
     },
     argKeys: {      
       amount: "amount",
@@ -82,7 +83,7 @@ import {
   };
   
   const adapter: BridgeAdapter = {
-    rsk: constructParams(),
+    rootstock: constructParams(),
   };
   
   export default adapter;

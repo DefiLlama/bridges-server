@@ -755,13 +755,13 @@ export default [
     id: 48,
     displayName: "Rootstock Bridge",
     bridgeDbName: "rootstock",
-    iconLink: "chain:rsk",
+    iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["RSK"],    
+    chains: ["Rootstock", "Bitcoin"],
     chainMapping: {
-      rsk: "rsk", // this is needed temporarily, need to fix and remove
+      rootstock: "rsk",
     },
-    destinationChain: "-", // not sure the effect this will have, need to double-check everything works
+    destinationChain: "Bitcoin",
   },
 ] as BridgeNetwork[];
