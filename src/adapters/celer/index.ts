@@ -86,7 +86,19 @@ import { constructTransferParams } from "../../helpers/eventParams";
 
 ***Base***
 0x243b40e96c6bF21511E53d85c86F6Ec982f9a879 is CircleBridgeProxy
+
+***Manta Pacific***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
+
+***Moonbeam***
+0x841ce48F9446C8E281D3F1444cB859b4A6D0738C is Celer Network: cBridge 2.0 (pool-based)
+
+***Base Mainnet**
+0x7d43AABC515C356145049227CeE54B608342c0ad is Celer Network: cBridge 2.0 (pool-based)
 */
+
+
+
 
 const contractAddresses = {
   ethereum: {
@@ -170,8 +182,15 @@ const contractAddresses = {
     poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
   },
   base: {
+    poolV2: ["0x7d43AABC515C356145049227CeE54B608342c0ad"],
     celerCCTP: ["0x243b40e96c6bF21511E53d85c86F6Ec982f9a879"],
-  }
+  },
+  manta: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  },
+  moonbeam: {
+    poolV2: ["0x841ce48F9446C8E281D3F1444cB859b4A6D0738C"],
+  },
 } as {
   [chain: string]: {
     poolV1?: string[];
@@ -552,6 +571,8 @@ const adapter: BridgeAdapter = {
   linea: constructParams("linea"),
   scroll: constructParams("scroll"),
   base: constructParams("base"),
+  manta: constructParams("manta"),
+  moonbeam: constructParams("moonbeam"),
 };
 
 export default adapter;

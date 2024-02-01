@@ -45,6 +45,7 @@ import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
 import xy from "./xy-finance";
 import garden from "./garden";
+import rootstock from './rootstock'
 
 export default {
   polygon,
@@ -92,6 +93,7 @@ export default {
   butternetwork,
   xy,
   garden,
+  rootstock,
 } as {
   [bridge: string]: BridgeAdapter;
 };

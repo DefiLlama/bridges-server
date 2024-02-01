@@ -222,15 +222,11 @@ export default [
     iconLink: "icons:hop-protocol",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Arbitrum",
-      "Optimism",
-      // "Gnosis"
-    ],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Gnosis", "Base", "Arbitrum Nova", "Polygon zkEVM"],
     chainMapping: {
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
+      "arbitrum nova": "arbitrum_nova",
+      "polygon zkevm": "polygon_zkevm",
     },
   },
   /* breaking running adapters, disable temporarily
@@ -772,4 +768,17 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 48,
+    displayName: "Rootstock Bridge",
+    bridgeDbName: "rootstock",
+    iconLink: "chain:rootstock",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Rootstock", "Bitcoin"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Bitcoin",
+  },
 ] as BridgeNetwork[];
