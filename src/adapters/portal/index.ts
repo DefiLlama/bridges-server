@@ -282,16 +282,18 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
   if (fromSlot < 233000000) {
     return [];
   }
-  const response = await axios.get<SolanaEvent[]>(
-    `https://europe-west3-wormhole-message-db-mainnet.cloudfunctions.net/get-solana-events?fromSlot=${fromSlot}&toSlot=${toSlot}`
-  );
-  if (response.status !== 200) {
-    throw new Error(`Failed to fetch Solana events: ${response.statusText}`);
+  try {
+    const response = await axios.get<SolanaEvent[]>(
+      `https://europe-west3-wormhole-message-db-mainnet.cloudfunctions.net/get-solana-events?fromSlot=${fromSlot}&toSlot=${toSlot}`
+    );
+    return response.data.map((event) => ({
+      ...event,
+      amount: ethers.BigNumber.from(event.amount),
+    }));
+  } catch (e) {
+    console.error("Error fetching Solana events", e);
+    return [];
   }
-  return response.data.map((event) => ({
-    ...event,
-    amount: ethers.BigNumber.from(event.amount),
-  }));
 };
 
 const adapter: BridgeAdapter = {

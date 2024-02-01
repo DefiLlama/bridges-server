@@ -701,4 +701,5 @@ const testSolana = async () => {
     // testSui(),
     // testSolana(),
   ]);
+  console.log("All tests passed!");
 })();
