@@ -46,6 +46,7 @@ import butternetwork from "./butternetwork";
 import xy from "./xy-finance";
 import garden from "./garden";
 import rootstock from './rootstock'
+import mode from './mode'
 
 export default {
   polygon,
@@ -94,6 +95,7 @@ export default {
   xy,
   garden,
   rootstock,
+  mode,
 } as {
   [bridge: string]: BridgeAdapter;
 };
