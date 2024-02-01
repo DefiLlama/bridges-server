@@ -752,8 +752,8 @@ export default [
     destinationChain: "MAP Relay Chain",
   },
   {
-    id: 48,
-    displayName: "Garden Finance",
+    id: 4086,
+    displayName: "Garden",
     bridgeDbName: "garden",
     largeTxThreshold: 10000,
     url: "https://garden.finance",
