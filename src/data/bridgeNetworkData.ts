@@ -759,9 +759,6 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["RSK"],    
-    chainMapping: {
-      rsk: "rsk", // this is needed temporarily, need to fix and remove
-    },
-    destinationChain: "-", // not sure the effect this will have, need to double-check everything works
+    destinationChain: "BTC",
   },
 ] as BridgeNetwork[];
