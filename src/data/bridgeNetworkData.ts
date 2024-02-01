@@ -747,4 +747,17 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 48,
+    displayName: "Rootstock Bridge",
+    bridgeDbName: "rootstock",
+    iconLink: "chain:rootstock",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Rootstock", "Bitcoin"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Bitcoin",
+  },
 ] as BridgeNetwork[];

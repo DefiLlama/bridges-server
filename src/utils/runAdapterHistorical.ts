@@ -33,6 +33,7 @@ async function fillAdapterHistorical(
         nChain = chain.toLowerCase();
       }
       if (restrictChainTo && nChain !== restrictChainTo) return;
+      if (nChain === adapter?.destinationChain?.toLowerCase()) return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
       const startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain);
