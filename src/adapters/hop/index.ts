@@ -27,7 +27,7 @@ const contractAddresses = {
     MATIC: "0x22B1Cbb8D98a01a3B71D034BB899775A76Eb1cc2",
     HOP: "0x914f986a44AcB623A277d6Bd17368171FCbe4273",
     MAGIC: "0xf074540eb83c86211F305E145eB31743E228E57d",
-    rETH: "0x87269B23e73305117D0404557bAdc459CEd0dbEc"
+    rETH: "0x87269B23e73305117D0404557bAdc459CEd0dbEc",
   },
   polygon: {
     ETH: "0xb98454270065A31D71Bf635F6F7Ee6A518dFb849",
@@ -44,7 +44,7 @@ const contractAddresses = {
     USDT: "0x72209Fe68386b37A40d6bCA04f78356fd342491f",
     HOP: "0x25FB92E505F752F730cAD0Bd4fa17ecE4A384266",
     MAGIC: "0xEa5abf2C909169823d939de377Ef2Bf897A6CE98",
-    rETH: "0xc315239cFb05F1E130E7E28E603CEa4C014c57f0"
+    rETH: "0xc315239cFb05F1E130E7E28E603CEa4C014c57f0",
   },
   optimism: {
     ETH: "0x83f6244Bd87662118d96D9a6D44f09dffF14b30E",
@@ -52,7 +52,7 @@ const contractAddresses = {
     USDC: "0xa81D244A1814468C734E5b4101F7b9c0c577a8fC",
     USDT: "0x46ae9BaB8CEA96610807a275EBD36f8e916b5C61",
     HOP: "0x03D7f750777eC48d39D080b020D83Eb2CB4e3547",
-    rETH: "0xA0075E8cE43dcB9970cB7709b9526c1232cc39c2"
+    rETH: "0xA0075E8cE43dcB9970cB7709b9526c1232cc39c2",
   },
   xdai: {
     ETH: "0xD8926c12C0B2E5Cd40cFdA49eCaFf40252Af491B",
@@ -62,10 +62,10 @@ const contractAddresses = {
     MATIC: "0x7ac71c29fEdF94BAc5A5C9aB76E1Dd12Ea885CCC",
     HOP: "0x6F03052743CD99ce1b29265E377e320CD24Eb632",
   },
-  nova: {
+  arbitrum_nova: {
     ETH: "0x8796860ca1677Bf5d54cE5A348Fe4b779a8212f3",
     HOP: "0x02D47f76523d2f059b617E4346de67482792eB83",
-    MAGIC: "0xE638433e2C1dF5f7a3a21b0a6b5c4b37278e55DC"
+    MAGIC: "0xE638433e2C1dF5f7a3a21b0a6b5c4b37278e55DC",
   },
   base: {
     ETH: "0x3666f603Cc164936C1b87e207F36BEBa4AC5f18a",
@@ -76,7 +76,7 @@ const contractAddresses = {
     ETH: "0xCbb852A6274e03fA00fb4895dE0463f66dF27a11",
     HOP: "0x0a6b1904369fE59E002ad0713ae89d4E3dF5A7Cf",
   },
-  polygonZkevm: {
+  polygon_zkevm: {
     ETH: "0x0ce6c85cF43553DE10FC56cecA0aef6Ff0DD444d",
     HOP: "0x9ec9551d4A1a1593b0ee8124D98590CC71b3B09D",
   },
@@ -92,7 +92,7 @@ const tokenAddresses = {
     MATIC: "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     MAGIC: "0xB0c7a3Ba49C7a6EaBa6cD4a96C55a1391070Ac9A",
-    rETH: "0xae78736Cd615f374D3085123A210448E74Fc6393"
+    rETH: "0xae78736Cd615f374D3085123A210448E74Fc6393",
   },
   polygon: {
     ETH: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
@@ -109,7 +109,7 @@ const tokenAddresses = {
     USDT: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     MAGIC: "0x539bdE0d7Dbd336b79148AA742883198BBF60342",
-    rETH: "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8"
+    rETH: "0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8",
   },
   optimism: {
     ETH: "0x4200000000000000000000000000000000000006",
@@ -117,7 +117,7 @@ const tokenAddresses = {
     USDC: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
     USDT: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
-    rETH: "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"
+    rETH: "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D",
   },
   xdai: {
     ETH: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1",
@@ -127,10 +127,10 @@ const tokenAddresses = {
     MATIC: "0x7122d7661c4564b7C6Cd4878B06766489a6028A2",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
   },
-  nova: {
+  arbitrum_nova: {
     ETH: "0x722E8BdD2ce80A4422E880164f2079488e115365",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
-    MAGIC: "0xe8936ac97A85d708d5312D52C30c18d4533b8A9c"
+    MAGIC: "0xe8936ac97A85d708d5312D52C30c18d4533b8A9c",
   },
   base: {
     ETH: "0x4200000000000000000000000000000000000006",
@@ -141,7 +141,7 @@ const tokenAddresses = {
     ETH: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
   },
-  polygonZkevm: {
+  polygon_zkevm: {
     ETH: "0x4F9A0e7FD2Bf6067db6994CF12E4495Df938E6e9",
     HOP: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
   },
@@ -309,10 +309,10 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   gnosis: constructParams("xdai"),
-  nova: constructParams("nova"),
   base: constructParams("base"),
   linea: constructParams("linea"),
-  polygonZkevm: constructParams("polygonZkevm")
+  "arbitrum nova": constructParams("arbitrum_nova"),
+  "polygon zkevm": constructParams("polygon_zkevm"),
 };
 
 export default adapter;
