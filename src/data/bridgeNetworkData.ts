@@ -738,6 +738,20 @@ export default [
   //   id: 47,
   //   displayName: "Butter Network",
   //   bridgeDbName: "butternetwork",
+  //   iconLink: "icons:butternetwork",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+  //   chainMapping: {
+  //     "map relay chain": "map",
+  //   },
+  //   destinationChain: "MAP Relay Chain",
+  // },
+
+  // {
+  //   id: 47,
+  //   displayName: "Butter Network",
+  //   bridgeDbName: "butternetwork",
   //   iconLink: "icons:butter-network",
   //   largeTxThreshold: 10000,
   //   url: "",
@@ -759,5 +773,13 @@ export default [
       rootstock: "rsk",
     },
     destinationChain: "Bitcoin",
+  },
+  {
+    id: 49,
+    displayName: "Garden",
+    bridgeDbName: "garden",
+    largeTxThreshold: 10000,
+    url: "https://garden.finance",
+    chains: ["Ethereum", "Arbitrum"],
   },
 ] as BridgeNetwork[];
