@@ -778,6 +778,7 @@ export default [
     id: 49,
     displayName: "Garden",
     bridgeDbName: "garden",
+    iconLink: "protocols:garden",
     largeTxThreshold: 10000,
     url: "https://garden.finance",
     chains: ["Ethereum", "Arbitrum"],
