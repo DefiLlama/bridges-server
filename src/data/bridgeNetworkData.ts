@@ -787,7 +787,7 @@ export default [
     id: 50,
     displayName: "Mode Network",
     bridgeDbName: "mode",
-    iconLink: "icons:mode",
+    iconLink: "chain:mode",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Mode"],
