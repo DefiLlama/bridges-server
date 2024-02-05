@@ -797,7 +797,7 @@ export default [
     id: 51,
     displayName: "Circle CCTP",
     bridgeDbName: "circle",
-    // iconLink: "protocols:circle",
+    iconLink: "protocols:circle_cctp",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
