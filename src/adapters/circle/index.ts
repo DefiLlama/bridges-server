@@ -12,7 +12,7 @@ const contracts = {
   polygon: { TokenMessenger: "0x9daF8c91AEFAE50b9c0E69629D3F6Ca40cA3B3FE" },
   base: { TokenMessenger: "0x1682Ae6375C4E4A97e4B583BC394c861A46D8962" },
   arbitrum: { TokenMessenger: "0x19330d10D9Cc8751218eaf51E8885D058642E08A" },
-  avalanche: { TokenMessenger: "0x6B25532e1060CE10cc3B0A99e5683b91BFDe6982" },
+  avax: { TokenMessenger: "0x6B25532e1060CE10cc3B0A99e5683b91BFDe6982" },
 } as const;
 type SupportedChains = keyof typeof contracts;
 
@@ -73,7 +73,7 @@ const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   base: constructParams("base"),
   arbitrum: constructParams("arbitrum"),
-  avalanche: constructParams("avalanche")
+  avalanche: constructParams("avax")
 };
 
 export default adapter;

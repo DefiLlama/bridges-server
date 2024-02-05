@@ -801,5 +801,8 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
+    chainMapping: {
+      avalanche: "avax",
+    },
   },
 ] as BridgeNetwork[];
