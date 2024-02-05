@@ -44,9 +44,10 @@ import interport from "./interport-finance";
 import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
 import xy from "./xy-finance";
+import circle from "./circle";
 import garden from "./garden";
-import rootstock from './rootstock'
-import mode from './mode'
+import rootstock from "./rootstock";
+import mode from "./mode";
 
 export default {
   polygon,
@@ -96,6 +97,7 @@ export default {
   garden,
   rootstock,
   mode,
+  circle,
 } as {
   [bridge: string]: BridgeAdapter;
 };
