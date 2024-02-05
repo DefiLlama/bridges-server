@@ -127,14 +127,15 @@ const queryAggregatedDailyTimestampRange = async (
     bridgeNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
     chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
   }
+
   return await sql<IAggregatedData[]>`
   SELECT 
     bridge_id, 
     date_trunc('day', ts) AS ts, 
-    CAST(SUM(total_deposited_usd) AS INTEGER) AS total_deposited_usd, 
-    CAST(SUM(total_withdrawn_usd) AS INTEGER) AS total_withdrawn_usd, 
-    CAST(SUM(total_deposit_txs) AS INTEGER) AS total_deposit_txs, 
-    CAST(SUM(total_withdrawal_txs) AS INTEGER) AS total_withdrawal_txs 
+    CAST(SUM(total_deposited_usd) AS BIGINT) AS total_deposited_usd, 
+    CAST(SUM(total_withdrawn_usd) AS BIGINT) AS total_withdrawn_usd, 
+    CAST(SUM(total_deposit_txs) AS INT) AS total_deposit_txs, 
+    CAST(SUM(total_withdrawal_txs) AS INT) AS total_withdrawal_txs 
   FROM 
     bridges.hourly_aggregated
   WHERE

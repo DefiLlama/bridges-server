@@ -222,15 +222,11 @@ export default [
     iconLink: "icons:hop-protocol",
     largeTxThreshold: 10000,
     url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Arbitrum",
-      "Optimism",
-      // "Gnosis"
-    ],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Gnosis", "Base", "Arbitrum Nova", "Polygon zkEVM"],
     chainMapping: {
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
+      "arbitrum nova": "arbitrum_nova",
+      "polygon zkevm": "polygon_zkevm",
     },
   },
   /* breaking running adapters, disable temporarily
@@ -742,6 +738,20 @@ export default [
   //   id: 47,
   //   displayName: "Butter Network",
   //   bridgeDbName: "butternetwork",
+  //   iconLink: "icons:butternetwork",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+  //   chainMapping: {
+  //     "map relay chain": "map",
+  //   },
+  //   destinationChain: "MAP Relay Chain",
+  // },
+
+  // {
+  //   id: 47,
+  //   displayName: "Butter Network",
+  //   bridgeDbName: "butternetwork",
   //   iconLink: "icons:butter-network",
   //   largeTxThreshold: 10000,
   //   url: "",
@@ -753,11 +763,43 @@ export default [
   // },
   {
     id: 48,
+    displayName: "Rootstock Bridge",
+    bridgeDbName: "rootstock",
+    iconLink: "chain:rootstock",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Rootstock", "Bitcoin"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Bitcoin",
+  },
+  {
+    id: 49,
+    displayName: "Garden",
+    bridgeDbName: "garden",
+    iconLink: "protocols:garden",
+    largeTxThreshold: 10000,
+    url: "https://garden.finance",
+    chains: ["Ethereum", "Arbitrum"],
+  },
+  {
+    id: 50,
+    displayName: "Mode Network",
+    bridgeDbName: "mode",
+    iconLink: "chain:mode",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Mode"],
+    destinationChain: "Mode",
+  },
+  {
+    id: 51,
     displayName: "Circle CCTP",
     bridgeDbName: "circle",
     // iconLink: "protocols:circle",
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
-  }
+  },
 ] as BridgeNetwork[];

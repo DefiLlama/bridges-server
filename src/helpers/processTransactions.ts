@@ -339,7 +339,6 @@ export const getTxDataFromEVMEventLogs = async (
                 functionSignatureFilter.includeSignatures &&
                 !functionSignatureFilter.includeSignatures.includes(signature)
               ) {
-                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }
@@ -347,7 +346,6 @@ export const getTxDataFromEVMEventLogs = async (
                 functionSignatureFilter.excludeSignatures &&
                 functionSignatureFilter.excludeSignatures.includes(signature)
               ) {
-                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }

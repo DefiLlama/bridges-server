@@ -381,7 +381,7 @@ export const runAdapterHistorical = async (
     : maxBlocksToQueryByChain.default;
   const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
   let block = startBlock;
-  console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
+  console.log(`Searching for transactions for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
@@ -499,13 +499,12 @@ export const runAdapterHistorical = async (
               }
             }
           }
-          if (!from || !to) return;
+          if (!from || !to) continue;
           if (
             from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
             to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
           )
-            return;
-
+            continue;
           try {
             await insertTransactionRow(
               sql,
@@ -562,7 +561,6 @@ export const insertConfigEntriesForAdapter = async (
     Object.keys(adapter).map(async (chain) => {
       const existingEntry = await getBridgeID(bridgeDbName, chain);
       if (existingEntry) {
-        console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
         return;
       }
       return sql.begin(async (sql) => {
