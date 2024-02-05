@@ -97,9 +97,6 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0x7d43AABC515C356145049227CeE54B608342c0ad is Celer Network: cBridge 2.0 (pool-based)
 */
 
-
-
-
 const contractAddresses = {
   ethereum: {
     poolV2: ["0x5427FEFA711Eff984124bFBB1AB6fbf5E3DA1820"],
@@ -390,7 +387,7 @@ const peggedV2DepositParams: PartialContractEventParams = {
   isDeposit: true,
 };
 
-// CCTP Deposit 
+// CCTP Deposit
 const cctpDepositParams: PartialContractEventParams = {
   target: "",
   topic: "Deposited(address,bytes32,uint64,uint256,uint256,uint256,uint64)",
@@ -566,8 +563,8 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
   klaytn: constructParams("klaytn"),
-  era: constructParams("era"),
-  polygon_zkevm: constructParams("polygon_zkevm"),
+  "zksync era": constructParams("era"),
+  "polygon zkevm": constructParams("polygon_zkevm"),
   linea: constructParams("linea"),
   scroll: constructParams("scroll"),
   base: constructParams("base"),
