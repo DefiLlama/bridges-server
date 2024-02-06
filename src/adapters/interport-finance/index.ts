@@ -3,20 +3,15 @@ import { BigNumber } from "ethers";
 import { getTxDataFromEVMEventLogsCustom } from "./processTransactionsCustom";
 import {
     ACTION_EXECUTOR_ADDRESSES,
-    ACTION_EXECUTOR_CCTP_ADDRESSES,
     VAULT_TYPE_USDC,
     VAULT_TYPE_USDT,
-    VAULT_TYPE_CIRCLE_CCTP,
     VAULT_ASSET_ADDRESSES
 } from "./constants";
 
 type SupportedChains = keyof typeof ACTION_EXECUTOR_ADDRESSES;
 
-const depositParams = (chain: SupportedChains, isCCTP = false): PartialContractEventParams => {
-    const actionExecutorAddress =
-        isCCTP ?
-            ACTION_EXECUTOR_CCTP_ADDRESSES[chain] :
-            ACTION_EXECUTOR_ADDRESSES[chain];
+const depositParams = (chain: SupportedChains): PartialContractEventParams => {
+    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
 
     return {
         target: actionExecutorAddress,
@@ -43,11 +38,8 @@ const depositParams = (chain: SupportedChains, isCCTP = false): PartialContractE
     };
 };
 
-const withdrawParams = (chain: SupportedChains, isCCTP = false): PartialContractEventParams => {
-    const actionExecutorAddress =
-        isCCTP ?
-            ACTION_EXECUTOR_CCTP_ADDRESSES[chain] :
-            ACTION_EXECUTOR_ADDRESSES[chain];
+const withdrawParams = (chain: SupportedChains): PartialContractEventParams => {
+    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
 
     return {
         target: actionExecutorAddress,
@@ -127,41 +119,9 @@ const variableBalanceUsdtParams = (chain: SupportedChains): PartialContractEvent
     };
 };
 
-const variableBalanceCctpParams = (chain: SupportedChains): PartialContractEventParams => {
-    const actionExecutorAddress = ACTION_EXECUTOR_CCTP_ADDRESSES[chain];
-
-    return {
-        target: actionExecutorAddress,
-        topic: "VariableBalanceAllocated(uint256,address,uint256,uint256)",
-        abi: [
-            "event VariableBalanceAllocated(uint256 indexed actionId, address indexed recipient, uint256 vaultType, uint256 amount)"
-        ],
-        isDeposit: false,
-        logKeys: {
-            blockNumber: "blockNumber",
-            txHash: "transactionHash",
-        },
-        argKeys: {
-            amount: "amount",
-            to: "recipient",
-        },
-        fixedEventData: {
-            token: VAULT_ASSET_ADDRESSES[VAULT_TYPE_CIRCLE_CCTP][chain],
-            from: actionExecutorAddress,
-        },
-        filter: {
-            includeArg: [{ vaultType: BigNumber.from(VAULT_TYPE_CIRCLE_CCTP) as unknown as string }],
-        },
-    };
-};
 
 const constructParams = (chain: SupportedChains) => {
     const eventParams = [depositParams(chain), withdrawParams(chain)];
-
-    if (ACTION_EXECUTOR_CCTP_ADDRESSES[chain]) {
-        eventParams.push(depositParams(chain, true));
-        eventParams.push(withdrawParams(chain, true));
-    }
 
     if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDC][chain]) {
         eventParams.push(variableBalanceUsdcParams(chain));
@@ -169,10 +129,6 @@ const constructParams = (chain: SupportedChains) => {
 
     if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDT][chain]) {
         eventParams.push(variableBalanceUsdtParams(chain));
-    }
-
-    if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_CIRCLE_CCTP][chain]) {
-        eventParams.push(variableBalanceCctpParams(chain));
     }
 
     return async (fromBlock: number, toBlock: number) =>
