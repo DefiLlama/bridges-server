@@ -908,7 +908,7 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  "Mode": {
+  Mode: {
     geckoId: null,
     symbol: null,
     cmcId: null,
@@ -1152,3 +1152,10 @@ export function getDisplayChain(chains: string[]) {
     return chains[0];
   }
 }
+
+export const normlizeTokenSymbol = (symbol: string) => {
+  if (symbol === "WRBTC") {
+    return "RBTC";
+  }
+  return symbol;
+};
