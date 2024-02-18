@@ -815,7 +815,6 @@ export default [
       "Ethereum",
       "Optimism",
       "Metis",
-      "Mode",
       "Polygon",
       "Polygon zkEVM",
       "zkSync Era",

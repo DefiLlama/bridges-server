@@ -115,7 +115,6 @@ const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
     optimism: constructParams("optimism"),
     metis: constructParams("metis"),
-    mode: constructParams("mode"),
     polygon: constructParams("polygon"),
     "polygon zkevm": constructParams("polygon_zkevm"),
     "zksync era": constructParams("era"),
