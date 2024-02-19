@@ -71,5 +71,5 @@
   "rainbowbridge:ethereum": { "startBlock": 15443371, "endBlock": 15887866 },
   "chainport:aurora": { "startBlock": 73145592, "endBlock": 77620017 },
   "rootstock:rsk": { "startBlock": 3616337, "endBlock": 3616337 },
-  "tokenbrige:rsk": { "startBlock": 3616337, "endBlock": 3616337 }
+  "tokenbrige:rsk": { "startBlock": 4089976, "endBlock": 6088951 }
 }

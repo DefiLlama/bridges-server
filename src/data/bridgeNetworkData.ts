@@ -833,7 +833,7 @@ export default [
   },
   {
     id: 53,
-    displayName: "Token Bridge",
+    displayName: "Rootstock Token Bridge",
     bridgeDbName: "tokenbridge",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,    
