@@ -73,7 +73,7 @@ const constructParams = (chain: string) => {
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
-    avalanche: constructParams("avax"),
+    avax: constructParams("avax"),
     bsc: constructParams("bsc"),
     fantom: constructParams("fantom"),
     polygon: constructParams("polygon"),
@@ -83,8 +83,8 @@ const adapter: BridgeAdapter = {
     arbitrum: constructParams("arbitrum"),
     aurora: constructParams("aurora"),
     tron: constructParams("tron"),
-    polygon_zkevm: constructParams("polygonzkevm"),
-    zksync: constructParams("zksync"),
+    "polygon zkevm": constructParams("polygonzkevm"),
+    "zksync era": constructParams("zksync"),
     manta: constructParams("manta"),
     mantle: constructParams("mantle"),
     rootstock: constructParams("rootstock")

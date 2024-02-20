@@ -839,8 +839,13 @@ export default [
     largeTxThreshold: 10000,
     url: "https://www.routerprotocol.com/",
     chains: [
-      "ethereum","avalanche","bsc","fantom","polygon","linea","scroll","base","arbitrum","aurora","tron","polygon_zkevm","zksync","manta","mantle","rootstock"
-    ]
-
+      "ethereum","avax","bsc","fantom","polygon","linea"
+      ,"base","arbitrum","aurora","polygon zkevm","zksync era","manta","mantle","rootstock"
+    ],
+    chainMapping: {
+      "zksync era": "era",
+      "polygon zkevm": "polygon_zkevm",
+      rootstock: "rsk",
+    }
   },
 ] as BridgeNetwork[];
