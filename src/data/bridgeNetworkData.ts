@@ -838,6 +838,9 @@ export default [
     iconLink: "protocols:router",
     largeTxThreshold: 10000,
     url: "https://www.routerprotocol.com/",
-    chains: ["Ethereum", "Arbitrum", "Polygon"]
+    chains: [
+      "ethereum","avalanche","bsc","fantom","polygon","linea","scroll","base","arbitrum","aurora","tron","polygon_zkevm","zksync","manta","mantle","rootstock"
+    ]
+
   },
 ] as BridgeNetwork[];
