@@ -89,3 +89,5 @@ const adapter: BridgeAdapter = {
     mantle: constructParams("mantle"),
     rootstock: constructParams("rootstock")
 };
+
+export default adapter;
