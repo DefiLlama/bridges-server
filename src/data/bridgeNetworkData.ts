@@ -831,4 +831,13 @@ export default [
       "polygon zkevm": "polygon_zkevm",
     },
   },
+  {
+    id: 53,
+    displayName: "Router",
+    bridgeDbName: "router",
+    iconLink: "protocols:router",
+    largeTxThreshold: 10000,
+    url: "https://www.routerprotocol.com/",
+    chains: ["Ethereum", "Arbitrum", "Polygon"]
+  },
 ] as BridgeNetwork[];
