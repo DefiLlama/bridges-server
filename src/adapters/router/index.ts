@@ -26,7 +26,7 @@ const bridgeAddresses = {
 const constructParams = (chain: string) => {
     let eventParams = [] as PartialContractEventParams[];
     const bridgeAddress = bridgeAddresses[chain];
-    const depositParams = {
+    const withdrawParamsTransfer = {
         target: bridgeAddress,
         topic: "FundsPaid(bytes32,address,uint256)",
         abi: [
@@ -41,10 +41,10 @@ const constructParams = (chain: string) => {
         fixedEventData: {
             from: bridgeAddress,
         },
-        isDeposit: true,
+        isDeposit: false,
     };
 
-    const withdrawParams = {
+    const depositParamsTransfer = {
         target: bridgeAddress,
         topic: "FundsDeposited(uint256,uint256,bytes32,uint256,uint256,address,address,bytes,bytes)",
         abi: [
@@ -55,9 +55,27 @@ const constructParams = (chain: string) => {
             txHash: "transactionHash",
         },
         argKeys: {
-            amount: "amount",
+            amount: "destAmount",
             token: "srcToken",
             to: "recipient"
+        },
+        fixedEventData: {
+            from: bridgeAddress,
+        },
+        isDeposit: true,
+    };
+
+    const withdrawParamsSwap = {
+        target: bridgeAddress,
+        topic: "FundsPaidWithMessage(bytes32,address,uint256,bool,bytes)",
+        abi: [
+            "event FundsPaidWithMessage (bytes32 messageHash, address forwarder, uint256 nonce, bool execFlag, bytes execData)",
+        ],
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
         },
         fixedEventData: {
             from: bridgeAddress,
@@ -65,7 +83,29 @@ const constructParams = (chain: string) => {
         isDeposit: false,
     };
 
-    eventParams.push(depositParams, withdrawParams);
+    const depositParamsSwap = {
+        target: bridgeAddress,
+        topic: "FundsDeposited (uint256 partnerId, uint256 amount, bytes32 destChainIdBytes, uint256 destAmount, uint256 depositId, address srcToken, address depositor, bytes recipient, bytes destToken)",
+        abi: [
+            "event FundsDeposited(uint256, uint256, bytes32, uint256, uint256, address, address, bytes, bytes)",
+        ],
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            amount: "destAmount",
+            token: "srcToken",
+            to: "recipient"
+        },
+        fixedEventData: {
+            from: bridgeAddress,
+        },
+        isDeposit: true,
+    };
+
+    eventParams.push(depositParamsTransfer, withdrawParamsTransfer);
+    eventParams.push(depositParamsSwap, withdrawParamsSwap);
 
     return async (fromBlock: number, toBlock: number) =>
         getTxDataFromEVMEventLogs("router", chain as Chain, fromBlock, toBlock, eventParams);
