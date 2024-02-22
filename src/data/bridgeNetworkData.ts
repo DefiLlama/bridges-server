@@ -833,7 +833,7 @@ export default [
   },
   {
     id: 53,
-    displayName: "Router",
+    displayName: "Nitro (by Router)",
     bridgeDbName: "router",
     iconLink: "protocols:router",
     largeTxThreshold: 10000,
