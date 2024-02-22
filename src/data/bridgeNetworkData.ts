@@ -807,7 +807,7 @@ export default [
     displayName: "Owlto",
     bridgeDbName: "owlto",
     iconLink: "icons:owlto",
-    largeTxThreshold: 10000,
+    largeTxThreshold: 0,
     url: "https://owlto.finance",
     chains: [
       "Arbitrum",
