@@ -831,4 +831,17 @@ export default [
       "polygon zkevm": "polygon_zkevm",
     },
   },
+  {
+    id: 53,
+    displayName: "Butter Swap",
+    bridgeDbName: "butterswap",
+    iconLink: "protocols:butter-swap",
+    largeTxThreshold: 10000,
+    url: "https://www.butterswap.io/swap",
+    chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+    chainMapping: {
+      "map relay chain": "map",
+    },
+    destinationChain: "MAP Relay Chain",
+  },
 ] as BridgeNetwork[];

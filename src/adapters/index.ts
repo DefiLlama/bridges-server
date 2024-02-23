@@ -49,6 +49,7 @@ import garden from "./garden";
 import rootstock from "./rootstock";
 import mode from "./mode";
 import owlto from "./owlto"
+import butterswap from "./butterswap";
 
 export default {
   polygon,
@@ -100,6 +101,7 @@ export default {
   mode,
   circle,
   owlto,
+  butterswap,
 } as {
   [bridge: string]: BridgeAdapter;
 };
