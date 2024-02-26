@@ -48,6 +48,7 @@ import circle from "./circle";
 import garden from "./garden";
 import rootstock from "./rootstock";
 import mode from "./mode";
+import router from "./router";
 import tokenbridge from "./rootstock-token-bridge";
 
 export default {
@@ -99,6 +100,7 @@ export default {
   rootstock,
   mode,
   circle,
+  router,
   tokenbridge,
 } as {
   [bridge: string]: BridgeAdapter;
