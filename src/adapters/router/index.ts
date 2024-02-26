@@ -1,6 +1,5 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 const bridgeAddresses = {
@@ -19,7 +18,7 @@ const bridgeAddresses = {
     zksync: "0x8b6f1c18c866f37e6ea98aa539e0c117e70178a2",
     manta: "0x21c1e74caadf990e237920d5515955a024031109",
     mantle: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
-    rootstock: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9"
+    rsk: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9"
   } as { [chain: string]: string };
 
   
@@ -113,7 +112,7 @@ const constructParams = (chain: string) => {
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
-    avax: constructParams("avax"),
+    avalanche: constructParams("avax"),
     bsc: constructParams("bsc"),
     fantom: constructParams("fantom"),
     polygon: constructParams("polygon"),
@@ -127,7 +126,7 @@ const adapter: BridgeAdapter = {
     "zksync era": constructParams("zksync"),
     manta: constructParams("manta"),
     mantle: constructParams("mantle"),
-    rootstock: constructParams("rootstock")
+    rootstock: constructParams("rsk")
 };
 
 export default adapter;

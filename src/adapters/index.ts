@@ -48,8 +48,8 @@ import circle from "./circle";
 import garden from "./garden";
 import rootstock from "./rootstock";
 import mode from "./mode";
-import owlto from "./owlto"
 import router from "./router";
+import tokenbridge from "./rootstock-token-bridge";
 
 export default {
   polygon,
@@ -100,8 +100,8 @@ export default {
   rootstock,
   mode,
   circle,
-  owlto,
-  router
+  router,
+  tokenbridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
