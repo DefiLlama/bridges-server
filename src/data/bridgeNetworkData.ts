@@ -802,4 +802,18 @@ export default [
       avalanche: "avax",
     },
   },
+
+  {
+    id: 53,
+    displayName: "Rootstock Token Bridge",
+    bridgeDbName: "tokenbridge",
+    iconLink: "chain:rootstock",
+    largeTxThreshold: 10000,
+    url: "https://tokenbridge.rsk.co/",
+    chains: ["Rootstock", "Ethereum"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Ethereum",
+  },
 ] as BridgeNetwork[];
