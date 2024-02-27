@@ -38,6 +38,45 @@ const contracts = {
 
 type SupportedChains = keyof typeof contracts;
 
+const depositParamsv3: PartialContractEventParams = {
+  target: "",
+  topic: "V3FundsDeposited(address,address,uint256,uint256,uint256,uint32,uint32,uint32,uint32,address,address,address,bytes)",
+  abi: [
+    "event V3FundsDeposited(address inputToken,address outputToken,uint256 inputAmount,uint256 outputAmount,uint256 indexed destinationChainId,uint32 indexed depositId,uint32 quoteTimestamp,uint32 fillDeadline,uint32 exclusivityDeadline,address indexed depositor,address recipient,address exclusiveRelayer,bytes message)"
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    amount: "inputAmount",
+    to: "recipient",
+    from: "depositor",
+    token: "inputToken",
+  },
+  isDeposit: true,
+};
+
+const relaysParamsv3: PartialContractEventParams = {
+  target: "",
+  topic:
+    "FilledV3Relay(address,address,uint256,uint256,uint256,uint256,uint32,uint32,uint32,address,address,address,address,bytes,(address,bytes,uint256,uint8))",
+  abi: [
+    "event FilledV3Relay(address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint32 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, address exclusiveRelayer, address indexed relayer, address depositor, address recipient, bytes message, tuple(address updatedRecipient, bytes updatedMessage, uint256 updatedOutputAmount, uint8 fillType) relayExecutionInfo)"
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    amount: "outputAmount",
+    to: "recipient",
+    from: "depositor",
+    token: "outputToken",
+  },
+  isDeposit: false,
+};
+
 const depositParamsv2p5: PartialContractEventParams = {
   target: "",
   topic: "FundsDeposited(uint256,uint256,uint256,int64,uint32,uint32,address,address,address,bytes)",
@@ -138,6 +177,7 @@ const constructParams = (chain: SupportedChains) => {
 
   // New Spoke Pools
   if ("spokePoolv2p5" in chainConfig) {
+    // "Version 2.5" events
     const finalDepositParamsv2p5 = {
       ...depositParamsv2p5,
       target: chainConfig.spokePoolv2p5,
@@ -149,6 +189,21 @@ const constructParams = (chain: SupportedChains) => {
       target: chainConfig.spokePoolv2p5,
     };
     eventParams.push(finalRelaysParamsv2p5);
+
+    // "Version 3" events
+    // The v2.5 spoke pools are ProxyContracts that can be upgraded -- Across
+    // reuses these spoke addresses for v3 with the modified events
+    const finalDepositParamsv3 = {
+      ...depositParamsv3,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalDepositParamsv3);
+
+    const finalRelaysParamsv3 = {
+      ...relaysParamsv3,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalRelaysParamsv3);
   }
 
   return async (fromBlock: number, toBlock: number) =>
