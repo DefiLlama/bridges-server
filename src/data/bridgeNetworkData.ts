@@ -820,7 +820,7 @@ export default [
     id: 54,
     displayName: "Nitro (by Router)",
     bridgeDbName: "router",
-    iconLink: "protocols:router",
+    iconLink: "protocols:router-protocol",
     largeTxThreshold: 10000,
     url: "https://www.routerprotocol.com/",
     chains: [
