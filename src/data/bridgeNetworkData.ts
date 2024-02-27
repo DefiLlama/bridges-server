@@ -271,7 +271,7 @@ export default [
     largeTxThreshold: 10000,
     url: "",
     chains: ["Ethereum", "Gnosis"],
-    destinationChain: "Gnosis",
+    // destinationChain: "Gnosis",
     chainMapping: {
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
