@@ -19,6 +19,5 @@ src/utils/filljobs.ts
 src/utils/filljobs2.ts
 
 .env
-.env.test
 
 .idea
