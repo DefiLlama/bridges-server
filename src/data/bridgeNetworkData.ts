@@ -846,4 +846,18 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 55,
+    displayName: "MES Protocol",
+    bridgeDbName: "mesprotocol",
+    iconLink: "icons:mesprotocol",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", 
+    "Arbitrum", 
+    "Optimism", 
+    "Manta", 
+    "zkSync Era", 
+    "Base", "Linea"],
+  },
 ] as BridgeNetwork[];

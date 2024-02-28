@@ -50,6 +50,7 @@ import rootstock from "./rootstock";
 import mode from "./mode";
 import router from "./router";
 import tokenbridge from "./rootstock-token-bridge";
+import mesprotocol from "./mesprotocol"
 
 export default {
   polygon,
@@ -102,6 +103,7 @@ export default {
   circle,
   router,
   tokenbridge,
+  mesprotocol,
 } as {
   [bridge: string]: BridgeAdapter;
 };

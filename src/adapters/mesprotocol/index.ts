@@ -32,12 +32,12 @@ const constructParams = (chain: string) => {
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  manta: constructParams("manta"),
   optimism: constructParams("optimism"),
-  zksync: constructParams("zksync"),
+  zksync: constructParams("zksync era"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
   linea: constructParams("linea"),
+  manta: constructParams("manta"),
 };
 
 export default adapter;
