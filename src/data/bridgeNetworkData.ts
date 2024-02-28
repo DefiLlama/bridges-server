@@ -832,15 +832,28 @@ export default [
     },
   },
   {
-    id: 53,
-    displayName: "Nitro (by Router)",
+    id: 54,
+    displayName: "Nitro (by Router Protocol)",
     bridgeDbName: "router",
-    iconLink: "protocols:router",
+    iconLink: "protocols:nitro",
     largeTxThreshold: 10000,
     url: "https://www.routerprotocol.com/",
     chains: [
-      "ethereum","avax","bsc","fantom","polygon","linea"
-      ,"base","arbitrum","aurora","polygon zkevm","zksync era","manta","mantle","rootstock"
+      "Ethereum",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Linea",
+      "Base",
+      "Polygon",
+      "Arbitrum",
+      "Aurora",
+      "Polygon zkEVM",
+      "zkSync Era",
+      "Manta",
+      "Mantle",
+      "Rootstock",
+      "Scroll"
     ],
     chainMapping: {
       "zksync era": "era",
