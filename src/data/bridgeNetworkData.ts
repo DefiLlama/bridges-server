@@ -759,7 +759,7 @@ export default [
 
   {
     id: 48,
-    displayName: "Rootstock Bridge",
+    displayName: "Rootstock Powpeg Bridge",
     bridgeDbName: "rootstock",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
