@@ -11,7 +11,8 @@ export async function craftBridgeChainsResponse() {
   const currentTimestamp = getCurrentUnixTimestamp();
   await Promise.all(
     bridgeNetworks.map(async (bridgeNetwork) => {
-      const { chains } = bridgeNetwork;
+      const { chains, destinationChain } = bridgeNetwork;
+      if (destinationChain) chainsSet.add(destinationChain);
       chains.map((chain) => chainsSet.add(chain));
     })
   );
