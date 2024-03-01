@@ -192,6 +192,7 @@ export default [
       "Moonbeam",
       "Moonriver",
       "Base",
+      "Blast",
       // "Harmony",
       // "Dogechain",
       // "DFK Chain",
