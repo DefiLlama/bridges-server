@@ -38,6 +38,28 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
   }
 }
 
+const getYBridgeSwappedForUserEventParams = (chain: Exclude<Chain, Chain.Numbers>) => {
+  const contractAddress = YBridgeContractAddress[chain]
+  return {
+    target: contractAddress,
+    topic: 'SwappedForUser(address,address,uint256,address,uint256,address)',
+    abi: [
+      "event SwappedForUser(address indexed _aggregatorAdaptor, address indexed _srcToken, uint256 _srcTokenAmount, address _dstToken, uint256 _dstTokenAmountOut, address _receiver)",
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    argKeys: {
+      token: "_dstToken",
+      amount: "_dstTokenAmountOut",
+      from: "_srcToken",
+      to: "_receiver",
+    },
+    isDeposit: false,
+  }
+}
+
 export const getXYRouterRequestedEventParams = (chain: Chain) => {
   const contractAddress = XYRouterContractAddress[chain]
   return {
@@ -101,7 +123,10 @@ const constructParams = (chain: Chain) => {
   const eventParams: (ContractEventParams | PartialContractEventParams)[] = [getXYRouterRequestedEventParams(chain)]
   
   if (chain !== Chain.Numbers) {
+    /** Deposit */
     eventParams.push(getYBridgeSwapRequestedEventParams(chain))
+    /** Withdrawal */
+    eventParams.push(getYBridgeSwappedForUserEventParams(chain))
   }
 
   return async (fromBlock: number, toBlock: number) =>
