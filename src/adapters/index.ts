@@ -51,6 +51,7 @@ import mode from "./mode";
 import router from "./router";
 import tokenbridge from "./rootstock-token-bridge";
 import mesprotocol from "./mesprotocol"
+import fuse from "./fuse";
 
 export default {
   polygon,
@@ -104,6 +105,7 @@ export default {
   router,
   tokenbridge,
   mesprotocol,
+  fuse
 } as {
   [bridge: string]: BridgeAdapter;
 };
