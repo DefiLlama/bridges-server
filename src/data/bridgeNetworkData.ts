@@ -864,5 +864,8 @@ export default [
     url: "https://www.mesprotocol.com/",
     largeTxThreshold: 10000,
     chains: ["Ethereum", "Arbitrum", "Optimism", "Manta", "zkSync Era", "Base", "Linea"],
+    chainMapping: {
+      "zksync era": "era",
+    },
   },
 ] as BridgeNetwork[];
