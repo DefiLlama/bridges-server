@@ -268,45 +268,8 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     isDeposit: false,
   };
 
-  // RFQ Deposits
-  const RFQBridgeRequestedParams: PartialContractEventParams = {
-    target: "",
-    topic: "BridgeRequested(bytes32,address,bytes,uint32,address,address,uint256,uint256,bool)",
-    abi: [
-      "event BridgeRequested(bytes32 indexed transactionId, address indexed sender, bytes request, uint32 destChainId, address originToken, address destToken, uint256 originAmount, uint256 destAmount, bool sendChainGas)",
-    ],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-      from: "address",
-    },
-    argKeys: {
-      amount: "originAmount",
-      token: "originToken",
-      to: "sender"
-    },
-    isDeposit: true, 
-  };
 
-  // RFQ Withdraws
-  const RFQBridgeRelayedParams: PartialContractEventParams = {
-    target: "",
-    topic: "BridgeRelayed(bytes32,address,address,uint32,address,address,uint256,uint256,uint256)",
-    abi: [
-      "event BridgeRelayed(bytes32 indexed transactionId, address indexed relayer, address indexed to, uint32 originChainId, address originToken, address destToken, uint256 originAmount, uint256 destAmount, uint256 chainGasAmount)",
-    ],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-      from: "address",
-    },
-    argKeys: {
-      amount: "destAmount",
-      token: "destToken",
-      to: "relayer"
-    },
-    isDeposit: false, 
-  };
+
 
   // RFQ Deposits
   const RFQBridgeRequestedParams: PartialContractEventParams = {
