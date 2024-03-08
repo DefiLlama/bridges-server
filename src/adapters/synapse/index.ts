@@ -64,8 +64,12 @@ const contractAddresses = {
   },
   base: {
     synapseBridge: "0xf07d1C752fAb503E47FEF309bf14fbDD3E867089",
-}
-} as {
+
+  },
+  blast: {
+    synapseBridge:"0x55769baf6ec39b3bf4aae948eb890ea33307ef3c",
+  }
+}  as {
     [chain: string]: {
         synapseBridge: string;
         synapseRFQ?: string;
@@ -264,6 +268,9 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
     isDeposit: false,
   };
 
+
+
+
   // RFQ Deposits
   const RFQBridgeRequestedParams: PartialContractEventParams = {
     target: "",
@@ -305,9 +312,11 @@ const TokenWithdrawWithdrawParams: PartialContractEventParams = {
   };
 
 
+
 //Add all partial events to eventParams
 
 const constructParams = (chain:string) => {
+
     const { synapseBridge = '', synapseRFQ = null } = contractAddresses[chain];
     //Deposits:
     const finalTokenDepositDepositParams = {
@@ -338,7 +347,7 @@ const constructParams = (chain:string) => {
       ...RFQBridgeRequestedParams, 
       target: synapseRFQ || synapseBridge
     }
-    
+  
     // Withdraws
     const finalTokenWithdrawWithdrawParams = {
         ...TokenWithdrawWithdrawParams,
@@ -360,6 +369,7 @@ const constructParams = (chain:string) => {
       ...RFQBridgeRelayedParams,
       target: synapseRFQ || synapseBridge
     }
+
 
     const eventParams = [
         finalTokenDepositDepositParams,
@@ -396,6 +406,7 @@ const adapter: BridgeAdapter = {
   // // klaytn: constructParams("klaytn"),
   base: constructParams("base"),
   metis: constructParams("metis"),
+  blast: constructParams("blast"),
   // dfk: constructParams("dfk"),
   // boba: constructParams("boba"),
   // // canto: constructParams("canto"),
