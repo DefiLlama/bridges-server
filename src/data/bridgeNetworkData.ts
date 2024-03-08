@@ -854,14 +854,19 @@ export default [
     iconLink: "chain:fuse",
     largeTxThreshold: 10000,
     url: "https://console.fuse.io/bridge",
-    chains: [
-      "Ethereum",
-      "BSC",
-      "Polygon",
-      "Arbitrum",
-      "Optimism",
-      "Fuse"
-    ],
+    chains: ["Ethereum", "BSC", "Polygon", "Arbitrum", "Optimism", "Fuse"],
     destinationChain: "Fuse",
-  }
+  },
+  {
+    id: 56,
+    displayName: "MES Protocol",
+    bridgeDbName: "mesprotocol",
+    iconLink: "protocols:mesprotocol",
+    url: "https://www.mesprotocol.com/",
+    largeTxThreshold: 10000,
+    chains: ["Ethereum", "Arbitrum", "Optimism", "Manta", "zkSync Era", "Base", "Linea"],
+    chainMapping: {
+      "zksync era": "era",
+    },
+  },
 ] as BridgeNetwork[];
