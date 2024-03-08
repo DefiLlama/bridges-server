@@ -56,14 +56,12 @@ export const getTxsBlockRangeEtherscan = async (
           functionSignatureFilter.includeSignatures &&
           !functionSignatureFilter.includeSignatures.includes(signature)
         ) {
-          console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
           return false;
         }
         if (
           functionSignatureFilter.excludeSignatures &&
           functionSignatureFilter.excludeSignatures.includes(signature)
         ) {
-          console.info(`Tx did not have input data matching given filter for address ${address}, SKIPPING tx.`);
           return false;
         }
       }

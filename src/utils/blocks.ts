@@ -1,7 +1,8 @@
-import { getLatestBlock as getLatestBlockSdk } from "@defillama/sdk/build/util";
+import { getLatestBlock as getLatestBlockSdk, lookupBlock } from "@defillama/sdk/build/util";
 // import { getClient } from "../helpers/sui";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { getConnection } from "../helpers/solana";
+import { Chain } from "@defillama/sdk/build/general";
 
 export async function getLatestBlockNumber(chain: string): Promise<number> {
   if (chain === "sui") {
@@ -34,4 +35,28 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
     return { number, timestamp };
   }
   return await getLatestBlockSdk(chain);
+}
+
+export async function getBlockByTimestamp(timestamp: number, chain: Chain) {
+  if (chain === "solana") {
+    const { timestamp: latestTimestamp, number } = await getLatestBlock(chain);
+    // There is not an easy way to get the slot number from a timestamp on Solana
+    // without hammering the RPC node with requests.
+    // So we estimate it by assuming that a slot is produced every 400ms.
+    if (timestamp <= latestTimestamp) {
+      const slot = number - Math.floor(((latestTimestamp - timestamp) * 1000) / 400);
+      return { block: slot, timestamp };
+    }
+  } else {
+    return await lookupBlock(timestamp, { chain });
+  }
+  throw new Error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
+}
+
+export async function getTimestampBySolanaSlot(slot: number) {
+  const { timestamp: latestTimestamp, number } = await getLatestBlock("solana");
+
+  const timestamp = latestTimestamp - ((number - slot) * 400) / 1000;
+
+  return timestamp;
 }

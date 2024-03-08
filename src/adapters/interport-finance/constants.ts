@@ -18,6 +18,7 @@ export const ACTION_EXECUTOR_ADDRESSES = {
     fantom: "0x7b2E3FC7510D1A51b3bef735F985446589219354",
 } as const;
 
+
 export const VAULT_ASSET_ADDRESSES = {
     [VAULT_TYPE_USDC]: {
         ethereum: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
@@ -33,7 +34,7 @@ export const VAULT_ASSET_ADDRESSES = {
         opbnb: undefined,
         avax: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E',
         eon: '0xCc44eB064CD32AAfEEb2ebb2a47bE0B882383b53',
-        fantom: '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75',
+        fantom: '0x28a92dde19D9989F39A49905d7C9C2FAc7799bDf',
     },
     [VAULT_TYPE_USDT]: {
         ethereum: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -49,6 +50,6 @@ export const VAULT_ASSET_ADDRESSES = {
         opbnb: '0x9e5aac1ba1a2e6aed6b32689dfcf62a509ca96f3',
         avax: '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7',
         eon: '0xA167bcAb6791304EDa9B636C8beEC75b3D2829E6',
-        fantom: '0x049d68029688eAbF473097a2fC38ef61633A3C7A',
+        fantom: '0xcc1b99dDAc1a33c201a742A1851662E87BC7f22C',
     },
 };

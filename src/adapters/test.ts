@@ -70,9 +70,10 @@ const testAdapter = async () => {
               );
             }
           });
-          const tokenKey = transformTokens[contractsChain]?.[log.token]
-            ? transformTokens[contractsChain]?.[log.token]
-            : `${contractsChain}:${log.token}`;
+          const token = log.token.toLowerCase();
+          const tokenKey = transformTokens[contractsChain]?.[token]
+            ? transformTokens[contractsChain]?.[token]
+            : `${contractsChain}:${token}`;
           uniqueTokens[tokenKey] = true;
         })
       );

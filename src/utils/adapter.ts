@@ -1,4 +1,4 @@
-import { getLatestBlockNumber } from "./blocks";
+import { getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -114,7 +114,7 @@ export const runAdapterToCurrentBlock = async (
     });
     throw new Error(errString);
   }
-  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
   console.log("Inserted or skipped config");
 
   const adapterPromises = Promise.all(
@@ -228,7 +228,7 @@ export const runAllAdaptersToCurrentBlock = async (
       });
       throw new Error(errString);
     }
-    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
@@ -282,7 +282,7 @@ export const runAllAdaptersTimestampRange = async (
       });
       throw new Error(errString);
     }
-    await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+    await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
@@ -334,7 +334,11 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
-  await insertConfigEntriesForAdapter(adapter, bridgeDbName);
+  const adapterChainEventsFn = adapter[chain];
+  if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
+    console.log(`Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
+    return;
+  }
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     await insertErrorRow({
@@ -345,8 +349,9 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
-  const adapterChainEventsFn = adapter[chain];
-  if (!adapterChainEventsFn) {
+  await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
+
+  if (!adapterChainEventsFn && chain?.toLowerCase() !== bridgeNetwork.destinationChain?.toLowerCase()) {
     const errString = `Chain ${chain} not found on adapter ${bridgeDbName}.`;
     await insertErrorRow({
       ts: getCurrentUnixTimestamp() * 1000,
@@ -376,7 +381,7 @@ export const runAdapterHistorical = async (
     : maxBlocksToQueryByChain.default;
   const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
   let block = startBlock;
-  console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
+  console.log(`Searching for transactions for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
@@ -423,7 +428,8 @@ export const runAdapterHistorical = async (
           const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
           for (let j = 0; j < 4; j++) {
             try {
-              if (useChainBlocks) {
+              // solana public rpc nodes have very low rate limits, so just use the current timestamp
+              if (useChainBlocks && chain !== "solana") {
                 // add timeout?
                 await wait(100);
                 block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
@@ -431,6 +437,9 @@ export const runAdapterHistorical = async (
                   blockTimestamps[i] = block.timestamp;
                   break;
                 }
+              } else if (chain === "solana") {
+                blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber);
+                break;
               } else {
                 blockTimestamps[i] = currentTimestamp;
                 break;
@@ -490,13 +499,12 @@ export const runAdapterHistorical = async (
               }
             }
           }
-          if (!from || !to) return;
+          if (!from || !to) continue;
           if (
             from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
             to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
           )
-            return;
-
+            continue;
           try {
             await insertTransactionRow(
               sql,
@@ -553,7 +561,6 @@ export const insertConfigEntriesForAdapter = async (
     Object.keys(adapter).map(async (chain) => {
       const existingEntry = await getBridgeID(bridgeDbName, chain);
       if (existingEntry) {
-        console.log(`Config already exists for ${bridgeDbName} on chain ${chain}, skipping.`);
         return;
       }
       return sql.begin(async (sql) => {

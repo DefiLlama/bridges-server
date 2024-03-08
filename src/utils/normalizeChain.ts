@@ -8,6 +8,7 @@ export const normalizedChainReplacements = {
   "arbitrum%20nova": "arbitrum_nova",
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
+  shimmerevm: "shimmer_evm",
 } as {
   [chain: string]: string;
 };
@@ -229,7 +230,7 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 1666600000,
   },
-  RSK: {
+  Rootstock: {
     geckoId: "rootstock",
     symbol: "RBTC",
     cmcId: "3626",
@@ -901,6 +902,19 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["Cosmos"],
   },
+  ShimmerEVM: {
+    geckoId: "shimmer",
+    symbol: "SMR",
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Mode: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    chainId: 34443,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1138,3 +1152,10 @@ export function getDisplayChain(chains: string[]) {
     return chains[0];
   }
 }
+
+export const normlizeTokenSymbol = (symbol: string) => {
+  if (symbol === "WRBTC") {
+    return "RBTC";
+  }
+  return symbol;
+};

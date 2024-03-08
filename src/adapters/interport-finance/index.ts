@@ -1,7 +1,12 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { BigNumber } from "ethers";
 import { getTxDataFromEVMEventLogsCustom } from "./processTransactionsCustom";
-import {ACTION_EXECUTOR_ADDRESSES, VAULT_TYPE_USDC, VAULT_TYPE_USDT, VAULT_ASSET_ADDRESSES} from "./constants";
+import {
+    ACTION_EXECUTOR_ADDRESSES,
+    VAULT_TYPE_USDC,
+    VAULT_TYPE_USDT,
+    VAULT_ASSET_ADDRESSES
+} from "./constants";
 
 type SupportedChains = keyof typeof ACTION_EXECUTOR_ADDRESSES;
 
@@ -113,6 +118,7 @@ const variableBalanceUsdtParams = (chain: SupportedChains): PartialContractEvent
         },
     };
 };
+
 
 const constructParams = (chain: SupportedChains) => {
     const eventParams = [depositParams(chain), withdrawParams(chain)];

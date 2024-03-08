@@ -7,7 +7,7 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
  * For all evm chains have same contract address
  * - deposits via CreatedOrder event
  * - withdraws via FulfilledOrder event
- * 
+ *
  */
 
 const evmContracts = {
@@ -49,6 +49,28 @@ const depositPrarms: PartialContractEventParams = {
   isDeposit: true,
 };
 
+// since doesn't support solana, need set withdraw = deposit
+// after support solana, change to original withdraw
+// const withdrawParams: PartialContractEventParams = {
+//   target: evmContracts.dlnSource,
+//   topic:
+//     "CreatedOrder((uint64,bytes,uint256,bytes,uint256,uint256,bytes,uint256,bytes,bytes,bytes,bytes,bytes,bytes),bytes32,bytes,uint256,uint256,uint32,bytes)",
+//   abi: [
+//     "event CreatedOrder((uint64 makerOrderNonce, bytes makerSrc, uint256 giveChainId, bytes giveTokenAddress, uint256 giveAmount, uint256 takeChainId, bytes takeTokenAddress, uint256 takeAmount, bytes receiverDst, bytes givePatchAuthoritySrc, bytes orderAuthorityAddressDst, bytes allowedTakerDst, bytes allowedCancelBeneficiarySrc, bytes externalCall) order, bytes32 orderId, bytes affiliateFee, uint256 nativeFixFee, uint256 percentFee, uint32 referralCode, bytes metadata)",
+//   ],
+//   logKeys: {
+//     blockNumber: "blockNumber",
+//     txHash: "transactionHash",
+//   },
+//   argKeys: {
+//     amount: "order.giveAmount",
+//     to: "order.receiverDst",
+//     from: "order.makerSrc",
+//     token: "order.giveTokenAddress",
+//   },
+//   isDeposit: false,
+// };
+
 const withdrawParams: PartialContractEventParams = {
   target: evmContracts.dlnDestination,
   topic:
@@ -80,12 +102,12 @@ const constructParams = (chain: SupportedChains) => {
     mapTokens: { "0x0000000000000000000000000000000000000000": token },
   };
 
-  // const finalWithdrawParams = {
-  //   ...withdrawParams,
-  //   mapTokens: { "0x0000000000000000000000000000000000000000": token },
-  // };
+  const finalWithdrawParams = {
+    ...withdrawParams,
+    mapTokens: { "0x0000000000000000000000000000000000000000": token },
+  };
 
-  eventParams.push(finalDepositParams);
+  eventParams.push(finalDepositParams, finalWithdrawParams);
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("debridgedln", chain, fromBlock, toBlock, eventParams);
@@ -95,13 +117,13 @@ const constructParams = (chain: SupportedChains) => {
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  bsc: constructParams("bsc"), 
+  bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
   arbitrum: constructParams("arbitrum"),
   avalanche: constructParams("avax"),
   fantom: constructParams("fantom"),
   linea: constructParams("linea"),
-  optimism: constructParams("optimism"), 
+  optimism: constructParams("optimism"),
   base: constructParams("base"),
 };
 

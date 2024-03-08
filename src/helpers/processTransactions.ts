@@ -189,7 +189,7 @@ export const getTxDataFromEVMEventLogs = async (
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
-                const value = argGetters?.[eventKey](args) || get(args, argKey);
+                const value = argGetters?.[eventKey]?.(args) || get(args, argKey);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
@@ -339,7 +339,6 @@ export const getTxDataFromEVMEventLogs = async (
                 functionSignatureFilter.includeSignatures &&
                 !functionSignatureFilter.includeSignatures.includes(signature)
               ) {
-                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }
@@ -347,7 +346,6 @@ export const getTxDataFromEVMEventLogs = async (
                 functionSignatureFilter.excludeSignatures &&
                 functionSignatureFilter.excludeSignatures.includes(signature)
               ) {
-                console.info(`Tx did not have input data matching given filter for ${adapterName}, SKIPPING tx.`);
                 dataKeysToFilter.push(i);
                 return;
               }

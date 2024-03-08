@@ -10,6 +10,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0x7510792A3B1969F9307F3845CE88e39578f2bAE1 is OriginalTokenVaultV2
 0x16365b45EB269B5B5dACB34B4a15399Ec79b95eB is PeggedTokenBridge
 0x52E4f244f380f8fA51816c8a10A63105dd4De084 is PeggedTokenBridgeV2
+0x6065a982f04f759b7d2d042d2864e569fad84214 is CircleBridgeProxy
 
 ***Polygon***
 0x88DCDC47D2f83a99CF0000FDF667A468bB958a78 is Celer Network: cBridge (pool-based)
@@ -17,6 +18,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0x4C882ec256823eE773B25b414d36F92ef58a7c0C is OriginalTokenVaultV2
 0x4d58FDC7d0Ee9b674F49a0ADE11F26C3c9426F7A is PeggedTokenBridge
 0xb51541df05DE07be38dcfc4a80c05389A54502BB is PeggedTokenBridgeV2
+0xB876cc05c3C3C8ECBA65dAc4CF69CaF871F2e0DD is CircleBridgeProxy
 
 ***Fantom***
 0x374B8a9f3eC5eB2D97ECA84Ea27aCa45aa1C57EF is Celer Network: cBridge (pool-based)
@@ -30,6 +32,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0xb51541df05DE07be38dcfc4a80c05389A54502BB is OriginalTokenVaultV2
 0x88DCDC47D2f83a99CF0000FDF667A468bB958a78 is PeggedTokenBridge
 0xb774C6f82d1d5dBD36894762330809e512feD195 is PeggedTokenBridgeV2
+0x9744ae566c64B6B6f7F9A4dD50f7496Df6Fef990 is CircleBridgeProxy
 
 ***BSC***
 0xdd90E5E87A2081Dcf0391920868eBc2FFB81a1aF is Celer Network: cBridge 2.0 (pool-based)
@@ -43,11 +46,13 @@ import { constructTransferParams } from "../../helpers/eventParams";
 0xFe31bFc4f7C9b69246a6dc0087D91a91Cb040f76 is OriginalTokenVault
 0xEA4B1b0aa3C110c55f650d28159Ce4AD43a4a58b is OriginalTokenVaultV2
 0xbdd2739AE69A054895Be33A22b2D2ed71a1DE778 is PeggedTokenBridge
+0x054B95b60BFFACe948Fa4548DA8eE2e212fb7C0a is CircleBridgeProxy
 
 ***Optimism***
 0x9D39Fc627A6d9d9F8C831c16995b209548cc3401 is Celer Network: cBridge (pool-based)
 0xbCfeF6Bb4597e724D720735d32A9249E0640aA11 is OriginalTokenVault
 0x61f85fF2a2f4289Be4bb9B72Fc7010B3142B5f41 is PeggedTokenBridge
+0x697aC93c9263346c5Ad0412F9356D5789a3AA687 is CircleBridgeProxy
 
 ***Gnosis***
 0x3795C36e7D12A8c252A20C5a7B455f7c57b60283 is Celer Network: cBridge 2.0 (pool-based)
@@ -66,6 +71,30 @@ import { constructTransferParams } from "../../helpers/eventParams";
 ***Klaytn***
 0x4c882ec256823ee773b25b414d36f92ef58a7c0c is Celer Network: cBridge 2.0 (pool-based)
 0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56 is PeggedTokenBridgeV2
+
+***zkSync Era***
+0x54069e96C4247b37C2fbd9559CA99f08CD1CD66c is Celer Network: cBridge 2.0 (pool-based)
+
+***Polygon zkEVM***
+0xD46F8E428A06789B5884df54E029e738277388D1 is Celer Network: cBridge 2.0 (pool-based)
+
+***Linea***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
+
+***Scroll***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
+
+***Base***
+0x243b40e96c6bF21511E53d85c86F6Ec982f9a879 is CircleBridgeProxy
+
+***Manta Pacific***
+0x9B36f165baB9ebe611d491180418d8De4b8f3a1f is Celer Network: cBridge 2.0 (pool-based)
+
+***Moonbeam***
+0x841ce48F9446C8E281D3F1444cB859b4A6D0738C is Celer Network: cBridge 2.0 (pool-based)
+
+***Base Mainnet**
+0x7d43AABC515C356145049227CeE54B608342c0ad is Celer Network: cBridge 2.0 (pool-based)
 */
 
 const contractAddresses = {
@@ -131,6 +160,27 @@ const contractAddresses = {
   klaytn: {
     poolV2: ["0x4c882ec256823ee773b25b414d36f92ef58a7c0c"],
     peggedV2: ["0xb3833Ecd19D4Ff964fA7bc3f8aC070ad5e360E56"],
+  },
+  era: {
+    poolV2: ["0x54069e96C4247b37C2fbd9559CA99f08CD1CD66c"],
+  },
+  polygon_zkevm: {
+    poolV2: ["0xD46F8E428A06789B5884df54E029e738277388D1"],
+  },
+  linea: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  },
+  scroll: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  },
+  base: {
+    poolV2: ["0x7d43AABC515C356145049227CeE54B608342c0ad"],
+  },
+  manta: {
+    poolV2: ["0x9B36f165baB9ebe611d491180418d8De4b8f3a1f"],
+  },
+  moonbeam: {
+    poolV2: ["0x841ce48F9446C8E281D3F1444cB859b4A6D0738C"],
   },
 } as {
   [chain: string]: {
@@ -330,6 +380,7 @@ const peggedV2DepositParams: PartialContractEventParams = {
   isDeposit: true,
 };
 
+
 // TODO: needs refactoring, obviously
 const constructParams = (chain: string) => {
   let eventParams = [] as any;
@@ -448,6 +499,7 @@ const constructParams = (chain: string) => {
       eventParams.push(finalPeggedWithdrawalParams, finalPeggedV2DepositParams);
     });
   }
+ 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("celer", chain as Chain, fromBlock, toBlock, eventParams);
 };
@@ -464,6 +516,13 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   celo: constructParams("celo"),
   klaytn: constructParams("klaytn"),
+  "zksync era": constructParams("era"),
+  "polygon zkevm": constructParams("polygon_zkevm"),
+  linea: constructParams("linea"),
+  scroll: constructParams("scroll"),
+  base: constructParams("base"),
+  manta: constructParams("manta"),
+  moonbeam: constructParams("moonbeam"),
 };
 
 export default adapter;

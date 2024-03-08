@@ -5,7 +5,7 @@ import { queryAggregatedDailyDataAtTimestamp, queryConfig } from "../utils/wrapp
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
-import { normalizeChain } from "../utils/normalizeChain";
+import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
 
 const numberOfTokensToReturn = 30 // also determines # of addresses returned
 
@@ -70,7 +70,7 @@ const sumTokenTxs = async (
 
   Object.entries(dailyTokensRecordBn).map(([token, tokenData]) => {
     dailyTokensRecord[token].amount = tokenData.amountBn?.toFixed() ?? "0";
-    dailyTokensRecord[token].symbol = prices?.[token]?.symbol ?? "";
+    dailyTokensRecord[token].symbol = normlizeTokenSymbol(prices?.[token]?.symbol ?? "");
     dailyTokensRecord[token].decimals = prices?.[token]?.decimals ?? 0;
   });
 };
