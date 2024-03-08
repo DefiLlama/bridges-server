@@ -846,4 +846,21 @@ export default [
   //     avalanche: "avax",
   //   },
   // },
+  {
+    id: 55,
+    displayName: "Fuse Bridge",
+    bridgeDbName: "fuse",
+    iconLink: "chain:fuse",
+    largeTxThreshold: 10000,
+    url: "https://console.fuse.io/bridge",
+    chains: [
+      "Ethereum",
+      "BSC",
+      "Polygon",
+      "Arbitrum",
+      "Optimism",
+      "Fuse"
+    ],
+    destinationChain: "Fuse",
+  }
 ] as BridgeNetwork[];
