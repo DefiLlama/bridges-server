@@ -861,7 +861,7 @@ export default [
     id: 56,
     displayName: "MES Protocol",
     bridgeDbName: "mesprotocol",
-    iconLink: "icons:mesprotocol",
+    iconLink: "icons:mes-protocol",
     url: "https://www.mesprotocol.com/",
     largeTxThreshold: 10000,
     chains: ["Ethereum", "Arbitrum", "Optimism", "Manta", "zkSync Era", "Base", "Linea"],
