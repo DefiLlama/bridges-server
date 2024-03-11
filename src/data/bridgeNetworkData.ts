@@ -736,6 +736,7 @@ export default [
       "KCC",
       "Moonriver",
       "ThunderCore",
+      "Blast",
       // "Numbers",
     ],
     chainMapping: {
