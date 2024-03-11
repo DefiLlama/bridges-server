@@ -20,6 +20,7 @@ export enum Chain {
   ThunderCore = 'thundercore',
   Numbers = 'numbers',
   Wemix = 'wemix',
+  Blast = 'blast',
 }
 
 export enum VAULTS_TOKEN {
@@ -313,6 +314,20 @@ export const YBridgeVaultsTokenContractAddress: Record<Exclude<Chain, Chain.Numb
       contractAddress: '',
       tokenAddress: ''
     },
+  },
+  [Chain.Blast]: {
+    [VAULTS_TOKEN.USDT]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.USDC]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.ETH]: {
+      contractAddress: '0xFa77c2DecCB21ACb9Bf196408Bf6aD5973D07762',
+      tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+    },
   }
 }
 
@@ -337,6 +352,7 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Contr
   [Chain.Moonriver]: "0xc67Dd7054915a2B0aA3e48f35DA714Ff861e71BD",
   [Chain.ThunderCore]: "0xF103b5B479d2A629F422C42bb35E7eEceE1ad55E",
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
+  [Chain.Blast]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
 }
 
 export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
@@ -360,5 +376,6 @@ export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
   [Chain.Moonriver]: "0x64d17beaE666cC435B9d40a21f058b379b2a0194",
   [Chain.ThunderCore]: "0xbF26ca7cf925e9EA0765c737B066253CF80e0E09",
   [Chain.Numbers]: "0x1acCfC3a45313f8F862BE7fbe9aB25f20A93d598",
-  [Chain.Wemix]: "0x6471fAd467ac2854b403e7FE3e95FBbB3287a7ee"
+  [Chain.Wemix]: "0x6471fAd467ac2854b403e7FE3e95FBbB3287a7ee",
+  [Chain.Blast]: "0x43A86823EBBe2ECF9A384aDfD989E26A30626458",
 }
