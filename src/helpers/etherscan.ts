@@ -51,7 +51,8 @@ export const getTxsBlockRangeEtherscan = async (
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (functionSignatureFilter) {
-        const signature = tx.input.slice(0, 8);
+        const signature = tx.input.slice(0, 10); // 0x + 4 bytes of method id @todo bug to be reported
+        // alternatively, we can use the method signature like const signature = tx.methodId;
         if (
           functionSignatureFilter.includeSignatures &&
           !functionSignatureFilter.includeSignatures.includes(signature)

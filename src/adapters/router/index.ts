@@ -2,6 +2,10 @@ import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { ethers } from "ethers";
+import assetForwarderAbi from "./assetForwarder.json"
+import { getTxsBlockRangeEtherscan } from "../../helpers/etherscan";
+import { EventData } from "../../utils/types";
 
 const bridgeAddresses = {
     ethereum: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
@@ -19,30 +23,59 @@ const bridgeAddresses = {
     zksync: "0x8b6f1c18c866f37e6ea98aa539e0c117e70178a2",
     manta: "0x21c1e74caadf990e237920d5515955a024031109",
     mantle: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
-    rootstock: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9"
-  } as { [chain: string]: string };
+    rootstock: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
+    optimism: "0x8201c02d4ab2214471e8c3ad6475c8b0cd9f2d06",
+} as { [chain: string]: string };
 
-  
+
+const signatures: { [key: string]: string } = {
+    "0x64778c1f": "iRelay",
+    "0x6fb003da": "iRelayMessage"
+};
+
+interface Transaction {
+    blockNumber: string;
+    timeStamp: string;
+    hash: string;
+    nonce: string;
+    blockHash: string;
+    transactionIndex: string;
+    from: string;
+    to: string;
+    value: string;
+    gas: string;
+    gasPrice: string;
+    isError: string;
+    txreceipt_status: string;
+    input: string;
+    contractAddress: string;
+    cumulativeGasUsed: string;
+    gasUsed: string;
+    confirmations: string;
+    methodId: string;
+    functionName: string;
+}
+
 const constructParams = (chain: string) => {
     let eventParams = [] as PartialContractEventParams[];
     const bridgeAddress = bridgeAddresses[chain];
-    const withdrawParamsTransfer = {
-        target: bridgeAddress,
-        topic: "FundsPaid(bytes32,address,uint256)",
-        abi: [
-            "event FundsPaid (bytes32 messageHash, address forwarder, uint256 nonce)",
-        ],
-        logKeys: {
-            blockNumber: "blockNumber",
-            txHash: "transactionHash",
-        },
-        argKeys: {
-        },
-        fixedEventData: {
-            from: bridgeAddress,
-        },
-        isDeposit: false,
-    };
+    // const withdrawParamsTransfer = {
+    //     target: bridgeAddress,
+    //     topic: "FundsPaid(bytes32,address,uint256)",
+    //     abi: [
+    //         "event FundsPaid (bytes32 messageHash, address forwarder, uint256 nonce)",
+    //     ],
+    //     logKeys: {
+    //         blockNumber: "blockNumber",
+    //         txHash: "transactionHash",
+    //     },
+    //     argKeys: {
+    //     },
+    //     fixedEventData: {
+    //         from: bridgeAddress,
+    //     },
+    //     isDeposit: false,
+    // };
 
     const depositParamsTransfer = {
         target: bridgeAddress,
@@ -57,7 +90,8 @@ const constructParams = (chain: string) => {
         argKeys: {
             amount: "destAmount",
             token: "srcToken",
-            to: "recipient"
+            to: "recipient",
+            from: "depositor"
         },
         fixedEventData: {
             from: bridgeAddress,
@@ -65,23 +99,23 @@ const constructParams = (chain: string) => {
         isDeposit: true,
     };
 
-    const withdrawParamsSwap = {
-        target: bridgeAddress,
-        topic: "FundsPaidWithMessage(bytes32,address,uint256,bool,bytes)",
-        abi: [
-            "event FundsPaidWithMessage (bytes32 messageHash, address forwarder, uint256 nonce, bool execFlag, bytes execData)",
-        ],
-        logKeys: {
-            blockNumber: "blockNumber",
-            txHash: "transactionHash",
-        },
-        argKeys: {
-        },
-        fixedEventData: {
-            from: bridgeAddress,
-        },
-        isDeposit: false,
-    };
+    // const withdrawParamsSwap = {
+    //     target: bridgeAddress,
+    //     topic: "FundsPaidWithMessage(bytes32,address,uint256,bool,bytes)",
+    //     abi: [
+    //         "event FundsPaidWithMessage (bytes32 messageHash, address forwarder, uint256 nonce, bool execFlag, bytes execData)",
+    //     ],
+    //     logKeys: {
+    //         blockNumber: "blockNumber",
+    //         txHash: "transactionHash",
+    //     },
+    //     argKeys: {
+    //     },
+    //     fixedEventData: {
+    //         from: bridgeAddress,
+    //     },
+    //     isDeposit: false,
+    // };
 
     const depositParamsSwap = {
         target: bridgeAddress,
@@ -104,30 +138,91 @@ const constructParams = (chain: string) => {
         isDeposit: true,
     };
 
-    eventParams.push(depositParamsTransfer, withdrawParamsTransfer);
-    eventParams.push(depositParamsSwap, withdrawParamsSwap);
 
-    return async (fromBlock: number, toBlock: number) =>
-        getTxDataFromEVMEventLogs("router", chain as Chain, fromBlock, toBlock, eventParams);
+
+    eventParams.push(depositParamsTransfer, depositParamsSwap);
+
+    return async (fromBlock: number, toBlock: number) => {
+        const eventLogData = (await getTxDataFromEVMEventLogs(
+            "router",
+            chain as Chain,
+            fromBlock,
+            toBlock,
+            eventParams
+        )) as EventData[];
+        let withdrawalEventData: EventData[] = [];
+        const txs: Transaction[] = await getTxsBlockRangeEtherscan(chain, bridgeAddresses[chain], fromBlock, toBlock, {
+            includeSignatures: Object.keys(signatures),
+        });
+        if (txs.length) {
+            // @todo handle internal txs as well
+            withdrawalEventData = txs.map((tx: any) => txnsDetailsToEventData(tx));
+        }
+        return [...eventLogData, ...withdrawalEventData]; // @todo to be concatenated with txs
+    }
 };
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
+    polygon: constructParams("polygon"),
     avax: constructParams("avax"),
     bsc: constructParams("bsc"),
     fantom: constructParams("fantom"),
-    polygon: constructParams("polygon"),
-    linea: constructParams("linea"),
-    scroll: constructParams("scroll"),
-    base: constructParams("base"),
     arbitrum: constructParams("arbitrum"),
+    optimism: constructParams("optimism"),
     aurora: constructParams("aurora"),
-    tron: constructParams("tron"),
-    "polygon zkevm": constructParams("polygonzkevm"),
-    "zksync era": constructParams("zksync"),
-    manta: constructParams("manta"),
-    mantle: constructParams("mantle"),
-    rootstock: constructParams("rootstock")
+    // linea: constructParams("linea"),
+    // scroll: constructParams("scroll"),
+    // base: constructParams("base"),
+    // tron: constructParams("tron"),
+    // "polygon zkevm": constructParams("polygonzkevm"),
+    // "zksync era": constructParams("zksync"),
+    // manta: constructParams("manta"),
+    // mantle: constructParams("mantle"),
+    // rootstock: constructParams("rootstock")
 };
 
 export default adapter;
+
+
+// const methodId = "iRelay";
+
+// converts calldata string to params using abi
+const txnsDetailsToEventData = (txn: Transaction): EventData => {
+    const abi = assetForwarderAbi;
+    const methodAbi = new ethers.utils.Interface(abi);
+    const methodId = txn.input.slice(0, 10);
+    const decoded = methodAbi.decodeFunctionData(signatures[methodId], txn.input)[0];
+    console.log(decoded["amount"], decoded["recipient"]);
+    return {
+        blockNumber: Number(txn.blockNumber),
+        txHash: txn.hash,
+        from: txn.from,
+        isDeposit: false,
+        amount: decoded["amount"],
+        to: decoded["recipient"],
+        token: decoded["destToken"]
+    };
+}
+
+const tryouts = async () => {
+    console.log("tryouts");
+    const some = await getTxsBlockRangeEtherscan(
+        "optimism",
+        "0x8201c02d4ab2214471e8c3ad6475c8b0cd9f2d06",
+        117402264,
+        117402266,
+        {
+            includeSignatures: Object.keys(signatures),
+        }
+    )
+    console.log(some);
+
+    some.forEach((tx: any) => {
+        txnsDetailsToEventData(tx);
+    });
+}
+
+// tryouts();
+
+
