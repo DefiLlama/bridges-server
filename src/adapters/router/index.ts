@@ -171,14 +171,14 @@ const adapter: BridgeAdapter = {
     arbitrum: constructParams("arbitrum"),
     optimism: constructParams("optimism"),
     aurora: constructParams("aurora"),
-    // linea: constructParams("linea"),
-    // scroll: constructParams("scroll"),
-    // base: constructParams("base"),
-    // tron: constructParams("tron"),
-    // "polygon zkevm": constructParams("polygonzkevm"),
-    // "zksync era": constructParams("zksync"),
+    linea: constructParams("linea"),
+    scroll: constructParams("scroll"),
+    base: constructParams("base"),
+    tron: constructParams("tron"),
+    "polygon zkevm": constructParams("polygonzkevm"),
+    "zksync era": constructParams("era"),
     // manta: constructParams("manta"),
-    // mantle: constructParams("mantle"),
+    mantle: constructParams("mantle"),
     // rootstock: constructParams("rootstock")
 };
 

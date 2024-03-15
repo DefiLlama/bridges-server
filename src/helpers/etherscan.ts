@@ -11,6 +11,12 @@ const endpoints = {
   optimism: "https://api-optimistic.etherscan.io",
   aurora: "https://explorer.mainnet.aurora.dev/api",
   celo: "https://api.celoscan.io",
+  linea: "https://api.lineascan.build/api",
+  scroll: "https://api.scrollscan.com/api",
+  base: "https://api.basescan.org/api",
+  "zksync era": "https://block-explorer-api.mainnet.zksync.io/api",
+  "mantle": "https://explorer.mantle.xyz/api",
+  "polygon zkevm": "https://api-zkevm.polygonscan.com/api"
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -21,8 +27,12 @@ const apiKeys = {
   fantom: "QWYPA9TEQKJVX4MKXVBT9A2SVA1B4F6X44",
   arbitrum: "WH4E9QCMQTMQ9ZT2YEW1FJ3RQ3YUIAK5MA",
   optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
-  aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
+  // aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
   celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI",
+  linea: "GABW9RW3ATKWYSUX7V4M8H7YAFDS4V3BS4",
+  scroll: "UNHBX3FPTBK39SPHNSIR1V62BUUAQAF83J",
+  base: "Q9N8XJNMK6YGZP1P8BT9UVWNZRH3H8C4WG",
+  "polygon zkevm": "8Q8ZC95ZZXC56UHQZE2VPVUYC41G9E2BVZ"
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (
@@ -35,7 +45,7 @@ export const getTxsBlockRangeEtherscan = async (
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
   let res;
-  if (chain === "aurora") {
+  if (!apiKey) {
     res = (
       await axios.get(
         `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
