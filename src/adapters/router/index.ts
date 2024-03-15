@@ -1,6 +1,5 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
 import assetForwarderAbi from "./assetForwarder.json"
@@ -23,7 +22,7 @@ const bridgeAddresses = {
     zksync: "0x8b6f1c18c866f37e6ea98aa539e0c117e70178a2",
     manta: "0x21c1e74caadf990e237920d5515955a024031109",
     mantle: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
-    rootstock: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
+    rsk: "0xc21e4ebd1d92036cb467b53fe3258f219d909eb9",
     optimism: "0x8201c02d4ab2214471e8c3ad6475c8b0cd9f2d06",
 } as { [chain: string]: string };
 
@@ -55,6 +54,7 @@ interface Transaction {
     methodId: string;
     functionName: string;
 }
+
 
 const constructParams = (chain: string) => {
     let eventParams = [] as PartialContractEventParams[];
@@ -165,7 +165,7 @@ const constructParams = (chain: string) => {
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
     polygon: constructParams("polygon"),
-    avax: constructParams("avax"),
+    avalanche: constructParams("avax"),
     bsc: constructParams("bsc"),
     fantom: constructParams("fantom"),
     arbitrum: constructParams("arbitrum"),
@@ -179,7 +179,7 @@ const adapter: BridgeAdapter = {
     "zksync era": constructParams("era"),
     // manta: constructParams("manta"),
     mantle: constructParams("mantle"),
-    // rootstock: constructParams("rootstock")
+    // rootstock: constructParams("rsk")
 };
 
 export default adapter;
