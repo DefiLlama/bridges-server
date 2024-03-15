@@ -42,7 +42,7 @@ const constructParams = (chain: string) => {
   };
   eventParams.push(depositParams, withdrawParams);
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("allbridge", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("allbridge-classic", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
