@@ -818,9 +818,9 @@ export default [
   },
   {
     id: 54,
-    displayName: "Nitro (by Router)",
+    displayName: "Nitro (by Router Protocol)",
     bridgeDbName: "router",
-    iconLink: "protocols:router",
+    iconLink: "protocols:nitro",
     largeTxThreshold: 10000,
     url: "https://www.routerprotocol.com/",
     chains: [
@@ -838,6 +838,7 @@ export default [
       "Manta",
       "Mantle",
       "Rootstock",
+      "Scroll"
     ],
     chainMapping: {
       "zksync era": "era",
