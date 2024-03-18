@@ -883,4 +883,13 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 58,
+    displayName: "Sygma",
+    bridgeDbName: "sygma",
+    iconLink: "icons:sygma",
+    url: "https://buildwithsygma.com/",
+    largeTxThreshold: 10000,
+    chains: ["Ethereum", "Phala", "Khala"],
+  }
 ] as BridgeNetwork[];
