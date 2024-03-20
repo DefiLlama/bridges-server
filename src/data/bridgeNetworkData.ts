@@ -626,19 +626,18 @@ export default [
       "Moonriver",
       "Telos",
       "Metis",
-      "Astar",
+      // "Astar",
       "Vinuchain",
       "XDC",
       "Arbitrum",
       "BSC",
       "Gather",
 
-      
       "Avalanche",
       "FunctionX",
 
       "Okexchain",
-      "Horizen",
+      // "Horizen",
       // "Tron",
       "Clover",
       "Wanchain",
@@ -648,6 +647,7 @@ export default [
       vinuchain: "vinu",
       clover: "clv",
       gather: "gth",
+      wanchain: "wan",
     },
   },
   {

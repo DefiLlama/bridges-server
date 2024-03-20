@@ -3,12 +3,12 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 enum Chains {
   arbitrum = "arbitrum",
-  wanchain = "wanchain",
+  wanchain = "wan",
   ethereum = "ethereum",
-  avalanche = "avalanche",
+  avalanche = "avax",
   moonbeam = "moonbeam",
   moonriver = "moonriver",
-  functionX = "functionX",
+  functionX = "functionx",
   telos = "telos",
   polygon = "polygon",
   okexchain = "okexchain",
@@ -164,7 +164,7 @@ const adapter: BridgeAdapter = {
   xdc: constructParams(Chains.xdc),
   astar: constructParams(Chains.astar),
   metis: constructParams(Chains.metis),
-  wan: constructParams(Chains.wanchain),
+  wanchain: constructParams(Chains.wanchain),
 
   vinuchain: constructParams(Chains.vinuchain),
   functionx: constructParams(Chains.functionX),
