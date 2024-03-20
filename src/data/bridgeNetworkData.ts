@@ -885,7 +885,7 @@ export default [
   // },
   {
     id: 58,
-    displayName: "orbiter",
+    displayName: "Orbiter",
     bridgeDbName: "orbiter",
     iconLink: "icons:orbiter",
     url: "https://www.orbiter.finance/",
