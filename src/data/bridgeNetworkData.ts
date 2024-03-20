@@ -883,4 +883,32 @@ export default [
   //   },
   //   destinationChain: "MAP Relay Chain",
   // },
+  {
+    id: 58,
+    displayName: "orbiter",
+    bridgeDbName: "orbiter",
+    iconLink: "icons:orbiter",
+    url: "https://www.orbiter.finance/",
+    largeTxThreshold: 10000,
+    chains: [
+    "Ethereum",
+    "Arbitrum",
+    "Optimism", 
+    "Base", 
+    "Polygon", 
+    "Linea", 
+    "Blast",
+    "Arbitrum Nova",
+    "Scroll",
+    "Manta", 
+    "Mode",
+    "zkSync Era",
+    "Polygon zkEVM"
+    ],
+    chainMapping: {
+      "arbitrum nova": "arbitrum_nova",
+      "zksync era": "era",
+      "polygon zkevm": "polygon_zkevm",
+    },
+  },
 ] as BridgeNetwork[];
