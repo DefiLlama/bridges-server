@@ -911,4 +911,27 @@ export default [
       "polygon zkevm": "polygon_zkevm",
     },
   },
+  {
+    id: 59,
+    displayName: "Connext",
+    bridgeDbName: "connext",
+    iconLink: "icons:connext",
+    url: "https://connext.network",
+    largeTxThreshold: 10000,
+    chains: [
+      "Ethereum",
+      "Optimism",
+      "Polygon",
+      "Arbitrum",
+      "BSC",
+      "Gnosis",
+      "Linea",
+      "Base",
+      "Metis",
+      "Mode",
+    ],
+    chainMapping: {
+      gnosis: "xdai",
+    },
+  },
 ] as BridgeNetwork[];
