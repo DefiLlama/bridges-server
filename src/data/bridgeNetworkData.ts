@@ -885,10 +885,10 @@ export default [
   // },
   {
     id: 58,
-    displayName: "Orbiter",
+    displayName: "Orbiter Finance",
     bridgeDbName: "orbiter",
     iconLink: "icons:orbiter",
-    url: "https://www.orbiter.finance/",
+    url: "https://www.orbiter.finance/?utm_source=defillama",
     largeTxThreshold: 10000,
     chains: [
       "Ethereum",
