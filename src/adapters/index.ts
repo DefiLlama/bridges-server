@@ -53,6 +53,7 @@ import tokenbridge from "./rootstock-token-bridge";
 import butterswap from "./butterswap";
 import mesprotocol from "./mesprotocol";
 import fuse from "./fuse";
+import sygma from "./sygma";
 
 export default {
   polygon,
@@ -108,6 +109,7 @@ export default {
   butterswap,
   mesprotocol,
   fuse,
+  sygma,
 } as {
   [bridge: string]: BridgeAdapter;
 };

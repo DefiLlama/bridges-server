@@ -12,10 +12,20 @@ const depositEventParams: ContractEventParams = {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
     },
-    argKeys: {
-        to: "user",
+    txKeys: {
+        from: "from",
     },
-    fixedEventData: {},
+    // not sure if "inputDataExtraction" is the right way to go to decode deposit function input data
+    inputDataExtraction: {
+        inputDataABI: [
+            "function deposit(uint8 destinationDomainID, bytes32 resourceID, bytes depositData, bytes feeData)",
+        ],
+        inputDataFnName: "deposit",
+        inputDataKeys: {
+            token: "_token",
+            amount: "_amount",
+        },
+    },
     isDeposit: true
 };
 
@@ -25,8 +35,9 @@ const withdrawalEventParams: ContractEventParams = {
     abi: [
         "event ProposalExecution(uint8 originDomainID, uint64 depositNonce, bytes32 dataHash, bytes handlerResponse)"
     ],
-    argKeys: {},
-    fixedEventData: {},
+    txKeys: {
+        to: "to",
+    },
     isDeposit: false
 };
 
@@ -40,7 +51,6 @@ const constructParams = () => {
 // Define the adapter for each chain your bridge operates on
 const adapter: BridgeAdapter = {
   ethereum: constructParams(),
-  // Add other chains as necessary
 };
 
 export default adapter;
