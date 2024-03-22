@@ -625,7 +625,7 @@ export default [
       "Moonriver",
       "Telos",
       "Metis",
-      "Astar",
+      // "Astar",
       "Vinuchain",
       "XDC",
       "Arbitrum",
@@ -636,10 +636,10 @@ export default [
       "Avalanche",
       "FunctionX",
 
-      "Okexchain",
-      "Horizen",
+      // "Okexchain",
+      // "Horizen",
       // "Tron",
-      "Clover",
+      // "Clover",
       "Wanchain",
     ],
     chainMapping: {
