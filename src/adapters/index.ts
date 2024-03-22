@@ -54,6 +54,7 @@ import tokenbridge from "./rootstock-token-bridge";
 import butterswap from "./butterswap";
 import mesprotocol from "./mesprotocol";
 import fuse from "./fuse";
+import orbiter from "./orbiter";
 
 export default {
   polygon,
@@ -110,6 +111,7 @@ export default {
   butterswap,
   mesprotocol,
   fuse,
+  orbiter,
 } as {
   [bridge: string]: BridgeAdapter;
 };

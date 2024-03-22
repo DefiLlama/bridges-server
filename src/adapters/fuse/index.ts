@@ -31,6 +31,7 @@ const ercDepositEventParams: ContractEventParams = {
         token: "token",
         from: "from",
         amount: "amount",
+        to: 'to'
     },
     isDeposit: true,
 };
@@ -43,7 +44,7 @@ const ercWithdrawalEventParams: ContractEventParams = {
     ],
     argKeys: {
         token: "token",
-        from: "to",
+        to: "to",
         amount: "amount",
     },
     isDeposit: false,
@@ -57,7 +58,7 @@ const nativeWithdrawalEventParams: ContractEventParams = {
     ],
     argKeys: {
         token: "localToken",
-        from: "to",
+        to: "to",
         amount: "amount",
     },
     isDeposit: false,
@@ -71,8 +72,8 @@ const nativeDepositEventParams: ContractEventParams = {
     ],
     argKeys: {
         token: "localToken",
-        from: "from",
         amount: "amount",
+        from: "to",
     },
     isDeposit: true,
 };
@@ -88,16 +89,25 @@ const constructParams = (chain: string) => {
     const ercWithdrawParams = {
         ...ercWithdrawalEventParams,
         target: ercContract,
+        fixedEventData: {
+            from: ercContract,
+        }
     }
     const nativeContract = nativeContracts[chain];
     if (nativeContract !== "") {
         const nativeDepositParams = {
             ...nativeDepositEventParams,
             target: nativeContract,
+            fixedEventData: {
+              to: nativeContract
+            }
         }
         const nativeWithdrawParams = {
             ...nativeWithdrawalEventParams,
             target: nativeContract,
+            fixedEventData: {
+                from: nativeContract,
+            }
         }
         eventParams.push(nativeDepositParams, nativeWithdrawParams);
     }
