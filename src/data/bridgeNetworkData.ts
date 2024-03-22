@@ -636,10 +636,10 @@ export default [
       "Avalanche",
       "FunctionX",
 
-      "Okexchain",
+      //"Okexchain",
       // "Horizen",
       // "Tron",
-      "Clover",
+      //"Clover",
       "Wanchain",
     ],
     chainMapping: {
