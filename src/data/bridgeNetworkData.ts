@@ -643,6 +643,7 @@ export default [
       "Wanchain",
     ],
     chainMapping: {
+      wanchain: "wan",
       avalanche: "avax",
       vinuchain: "vinu",
       clover: "clv",
