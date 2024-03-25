@@ -5,6 +5,14 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 
+const blackListedAddresses = [
+  "0xa7883e0060286b7b9e3a87d8ef9f180a7c2673ce",
+  "0x3f5401a9d0dd2390d1a8c7060672d4b704df6372",
+  "0x0000000000000000000000000000000000008001",
+  "0xd9d74a29307cc6fc8bf424ee4217f1a587fbc8dc",
+  "0xbf3922a0cebbcd718e715e83d9187cc4bba23f11",
+].map((a) => a.toLowerCase());
+
 const eoaAddressErc = [
   "0xd7aa9ba6caac7b0436c91396f22ca5a7f31664fc", // erc
   "0x41d3d33156ae7c62c094aae2995003ae63f587b3", // erc
@@ -68,7 +76,13 @@ const constructParams = (chain: string) => {
         return eventsRes;
       })
     );
-    return [...eventLogData, ...nativeEvents.flat()];
+    const allEvents = [...eventLogData, ...nativeEvents.flat()];
+    const filteredEvents = allEvents.filter(
+      (event) =>
+        !blackListedAddresses.includes(event?.from?.toLowerCase()) ||
+        !blackListedAddresses.includes(event?.to?.toLowerCase())
+    );
+    return filteredEvents;
   };
 };
 
