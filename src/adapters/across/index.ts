@@ -34,9 +34,6 @@ const contracts = {
   base: {
     spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
   },
-  base: {
-    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
   linea: {
     spokePoolv2p5: "0x7E63A5f1a8F0B4d0934B2f2327DAED3F6bb2ee75",
   },
