@@ -220,7 +220,7 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   "zksync era": constructParams("era"),
   base: constructParams("base"),
-  base: constructParams("linea"),
+  linea: constructParams("linea"),
 };
 
 export default adapter;
