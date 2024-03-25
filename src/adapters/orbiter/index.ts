@@ -79,7 +79,7 @@ const constructParams = (chain: string) => {
     const allEvents = [...eventLogData, ...nativeEvents.flat()];
     const filteredEvents = allEvents.filter(
       (event) =>
-        !blackListedAddresses.includes(event?.from?.toLowerCase()) ||
+        !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
         !blackListedAddresses.includes(event?.to?.toLowerCase())
     );
     return filteredEvents;
