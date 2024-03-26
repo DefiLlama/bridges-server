@@ -93,16 +93,16 @@ const contractAddresses = {
 
 const userLockPortalEventParams: ContractEventParams = {
   target: "",
-  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256, bytes)",
+  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256,bytes)",
   abi: [
-    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint serviceFee, bytes userAccount)",
+    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint contractFee, bytes userAccount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "userAccount",
+    from: "userAccount",
     amount: "value",
     token: "tokenAccount",
   },
