@@ -33,8 +33,8 @@ const xcallParams: PartialContractEventParams = {
   argKeys: {
     amount: "amount",
     token: "asset",
-    to: "to",
-    from: "originSender",
+    to: "params.to",
+    from: "params.originSender",
   },
   isDeposit: true,
 };
@@ -53,7 +53,7 @@ const executeParams: PartialContractEventParams = {
     amount: "amount",
     token: "asset",
     to: "to",
-    from: "originSender",
+    from: "args.params.originSender",
   },
   isDeposit: false,
 };
