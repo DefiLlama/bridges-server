@@ -440,6 +440,7 @@ export default [
       "zksync era": "era",
       "arbitrum nova": "arbitrum_nova",
       "polygon zkevm": "polygon_zkevm",
+      rootstock: "rsk",
     },
   },
   {

@@ -55,6 +55,13 @@ const adapter: BridgeAdapter = {
   // tron: constructParams("tron"),
   scroll: constructParams("scroll"),
   manta: constructParams("manta"),
+  metis: constructParams("metis"),
+  mode: constructParams("mode"),
+  // bahamut: constructParams("bahamut"),
+  rootstock: constructParams("rsk"),
+  blast: constructParams("blast"),
+  // merlin: constructParams("merlin"),
+  // zklink: constructParams("zklink"),
 };
 
 export default adapter;
