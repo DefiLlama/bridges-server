@@ -634,7 +634,6 @@ export default [
       "BSC",
       "Gather",
 
-      
       "Avalanche",
       "FunctionX",
 
@@ -923,18 +922,7 @@ export default [
     iconLink: "icons:connext",
     url: "https://connext.network",
     largeTxThreshold: 10000,
-    chains: [
-      "Ethereum",
-      "Optimism",
-      "Polygon",
-      "Arbitrum",
-      "BSC",
-      "Gnosis",
-      "Linea",
-      "Base",
-      "Metis",
-      "Mode",
-    ],
+    chains: ["Ethereum", "Optimism", "Polygon", "Arbitrum", "BSC", "Gnosis", "Linea", "Base", "Metis", "Mode"],
     chainMapping: {
       gnosis: "xdai",
     },
