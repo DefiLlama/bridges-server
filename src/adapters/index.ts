@@ -55,6 +55,7 @@ import butterswap from "./butterswap";
 import mesprotocol from "./mesprotocol";
 import fuse from "./fuse";
 import orbiter from "./orbiter";
+import connext from "./connext";
 
 export default {
   polygon,
@@ -112,6 +113,7 @@ export default {
   mesprotocol,
   fuse,
   orbiter,
+  connext,
 } as {
   [bridge: string]: BridgeAdapter;
 };

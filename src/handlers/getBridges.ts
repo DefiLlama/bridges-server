@@ -2,7 +2,7 @@ import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolume";
 import { craftBridgeChainsResponse } from "./getBridgeChains";
-import { secondsInDay, getCurrentUnixTimestamp, secondsInHour } from "../utils/date";
+import { secondsInDay, getCurrentUnixTimestamp, secondsInHour, getTimestampAtStartOfDay } from "../utils/date";
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
@@ -18,7 +18,7 @@ const getBridges = async () => {
         let currentDayVolume = 0;
         let weeklyVolume = 0;
         let monthlyVolume = 0;
-        const currentTimestamp = getCurrentUnixTimestamp();
+        const currentTimestamp = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
         const dailyStartTimestamp = currentTimestamp - 30 * secondsInDay;
         const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, currentTimestamp, undefined, id);
         let lastDailyTs = 0;
