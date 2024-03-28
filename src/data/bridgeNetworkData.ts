@@ -433,6 +433,10 @@ export default [
       "Linea",
       "Base",
       "Mantle",
+      "Metis", 
+      "Mode",
+      "Rootstock", 
+      "blast"
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
