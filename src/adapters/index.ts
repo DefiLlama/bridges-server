@@ -20,7 +20,8 @@ import rainbowbridge from "./rainbowbridge";
 import across from "./across";
 import debridgedln from "./debridgedln";
 import optics from "./optics";
-import allbridge from "./allbridge";
+import allbridgecore from "./allbridge-core";
+import allbridgeclassic from "./allbridge-classic";
 import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
@@ -78,7 +79,8 @@ export default {
   across,
   debridgedln,
   optics,
-  allbridge,
+  "allbridge-core": allbridgecore,
+  allbridge: allbridgeclassic,
   ibc,
   meter,
   wanbridge,

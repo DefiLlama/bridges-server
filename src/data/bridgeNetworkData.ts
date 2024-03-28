@@ -336,7 +336,7 @@ export default [
   // },
   {
     id: 22,
-    displayName: "Allbridge Core",
+    displayName: "Allbridge Classic",
     bridgeDbName: "allbridge",
     iconLink: "icons:allbridge",
     largeTxThreshold: 10000,
@@ -925,6 +925,18 @@ export default [
     chains: ["Ethereum", "Optimism", "Polygon", "Arbitrum", "BSC", "Gnosis", "Linea", "Base", "Metis", "Mode"],
     chainMapping: {
       gnosis: "xdai",
+    },
+  },
+  {
+    id: 60,
+    displayName: "Allbridge Core",
+    bridgeDbName: "allbridge-core",
+    iconLink: "icons:allbridge-core",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Arbitrum", "Avalanche", "BSC", "Base", "Ethereum", "Optimism", "Polygon", "Solana"],
+    chainMapping: {
+      avalanche: "avax",
     },
   },
 ] as BridgeNetwork[];
