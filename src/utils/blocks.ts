@@ -21,6 +21,11 @@ export async function getLatestBlockNumber(chain: string): Promise<number> {
 
 const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
   try {
+    const block = await retry(() => lookupBlockSdk(timestamp, { chain }), { retries: 3, factor: 1 });
+
+    return block;
+  } catch (e) {
+    console.error(e);
     const block = await retry(
       () => fetch(`https://coins.llama.fi/block/${chain}/${timestamp}`).then((res) => res.json()),
       {
@@ -34,14 +39,10 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
       block: block.height,
     };
     if (!blockRes?.number) {
+      console.error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
       throw new Error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
     }
-
     return blockRes;
-  } catch (e) {
-    console.error(e);
-    const block = await retry(() => lookupBlockSdk(timestamp, { chain }), { retries: 3, factor: 1 });
-    return block;
   }
 };
 
