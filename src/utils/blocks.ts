@@ -62,7 +62,7 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
     } while (timestamp === null);
     return { number, timestamp };
   }
-  const timestamp = Math.floor(Date.now() / 1000) - 60 * 10;
+  const timestamp = Math.floor(Date.now() / 1000) - 60;
   return await lookupBlock(timestamp, { chain });
 }
 
