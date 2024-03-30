@@ -20,7 +20,8 @@ import rainbowbridge from "./rainbowbridge";
 import across from "./across";
 import debridgedln from "./debridgedln";
 import optics from "./optics";
-import allbridge from "./allbridge";
+import allbridgecore from "./allbridge-core";
+import allbridgeclassic from "./allbridge-classic";
 import ibc from "./ibc";
 import meter from "./meter";
 // import tronpeg from "./tronpeg"
@@ -50,6 +51,11 @@ import rootstock from "./rootstock";
 import mode from "./mode";
 import router from "./router";
 import tokenbridge from "./rootstock-token-bridge";
+import butterswap from "./butterswap";
+import mesprotocol from "./mesprotocol";
+import fuse from "./fuse";
+import orbiter from "./orbiter";
+import connext from "./connext";
 
 export default {
   polygon,
@@ -73,7 +79,8 @@ export default {
   across,
   debridgedln,
   optics,
-  allbridge,
+  "allbridge-core": allbridgecore,
+  allbridge: allbridgeclassic,
   ibc,
   meter,
   wanbridge,
@@ -102,6 +109,11 @@ export default {
   circle,
   router,
   tokenbridge,
+  butterswap,
+  mesprotocol,
+  fuse,
+  orbiter,
+  connext,
 } as {
   [bridge: string]: BridgeAdapter;
 };

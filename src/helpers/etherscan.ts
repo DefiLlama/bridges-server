@@ -11,12 +11,15 @@ const endpoints = {
   optimism: "https://api-optimistic.etherscan.io",
   aurora: "https://explorer.mainnet.aurora.dev/api",
   celo: "https://api.celoscan.io",
-  linea: "https://api.lineascan.build/api",
-  scroll: "https://api.scrollscan.com/api",
-  base: "https://api.basescan.org/api",
   "zksync era": "https://block-explorer-api.mainnet.zksync.io/api",
   "mantle": "https://explorer.mantle.xyz/api",
-  "polygon zkevm": "https://api-zkevm.polygonscan.com/api"
+  base: "https://api.basescan.org",
+  linea: "https://api.lineascan.build",
+  scroll: "https://api.scrollscan.com",
+  blast: "https://api.blastscan.io",
+  polygon_zkevm: "https://api-zkevm.polygonscan.com",
+  arbitrum_nova: "https://api-nova.arbiscan.io",
+  era: "https://api-era.zksync.network",
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -29,10 +32,13 @@ const apiKeys = {
   optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
   // aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
   celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI",
-  linea: "GABW9RW3ATKWYSUX7V4M8H7YAFDS4V3BS4",
-  scroll: "UNHBX3FPTBK39SPHNSIR1V62BUUAQAF83J",
-  base: "Q9N8XJNMK6YGZP1P8BT9UVWNZRH3H8C4WG",
-  "polygon zkevm": "8Q8ZC95ZZXC56UHQZE2VPVUYC41G9E2BVZ"
+  base: "9SH8V4KKINTQ1WA6XSGKX34T7CS3VBMEVS",
+  linea: "BHIMJVAKNVNXWFKICD8P93M8CKBQQ8CBU9",
+  blast: "7XS7KGJ5KFK97UW8QEQRFUB5Q7EID5K6JH",
+  scroll: "CG49F8MBGMU9YQF51IU5D1I2PIWZQ2WP4F",
+  arbitrum_nova: "SZZE864TZH3MGRUUDPRPUS7NF8MAFZBDAZ",
+  polygon_zkevm: "XKFP275U27W7AI4NGUIT7VGEQ179P4XA1S",
+  era: "9HJZA6X8DEJ46WHMM2UEJ5WCXPG31C7EWI",
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (

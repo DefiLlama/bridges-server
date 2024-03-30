@@ -3,12 +3,12 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 enum Chains {
   arbitrum = "arbitrum",
-  wanchain = "wanchain",
+  wanchain = "wan",
   ethereum = "ethereum",
-  avalanche = "avalanche",
+  avalanche = "avax",
   moonbeam = "moonbeam",
   moonriver = "moonriver",
-  functionX = "functionX",
+  functionX = "functionx",
   telos = "telos",
   polygon = "polygon",
   okexchain = "okexchain",
@@ -93,16 +93,16 @@ const contractAddresses = {
 
 const userLockPortalEventParams: ContractEventParams = {
   target: "",
-  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256, bytes)",
+  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256,bytes)",
   abi: [
-    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint serviceFee, bytes userAccount)",
+    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint contractFee, bytes userAccount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "userAccount",
+    from: "userAccount",
     amount: "value",
     token: "tokenAccount",
   },
@@ -164,7 +164,7 @@ const adapter: BridgeAdapter = {
   xdc: constructParams(Chains.xdc),
   astar: constructParams(Chains.astar),
   metis: constructParams(Chains.metis),
-  wan: constructParams(Chains.wanchain),
+  wanchain: constructParams(Chains.wanchain),
 
   vinuchain: constructParams(Chains.vinuchain),
   functionx: constructParams(Chains.functionX),

@@ -36,16 +36,21 @@ const getBlocksForRunningAdapter = async (
   let useRecordedBlocks = undefined;
   if (useChainBlocks) {
     // probably need timeouts here
-    endBlock = await getLatestBlockNumber(chainContractsAreOn);
-    if (!endBlock) {
-      const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
-      await insertErrorRow({
-        ts: currentTimestamp,
-        target_table: "transactions",
-        keyword: "data",
-        error: errString,
-      });
-      console.error(errString);
+    try {
+      endBlock = await getLatestBlockNumber(chainContractsAreOn);
+      if (!endBlock) {
+        const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
+        await insertErrorRow({
+          ts: currentTimestamp,
+          target_table: "transactions",
+          keyword: "data",
+          error: errString,
+        });
+        console.error(errString);
+        return { startBlock, endBlock, useRecordedBlocks };
+      }
+    } catch (e) {
+      console.error(`Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter.`);
       return { startBlock, endBlock, useRecordedBlocks };
     }
     const maxBlocksToQuery = (maxBlocksToQueryByChain[chainContractsAreOn] ?? maxBlocksToQueryByChain.default) * 4;
@@ -131,6 +136,10 @@ export const runAdapterToCurrentBlock = async (
         chainContractsAreOn,
         lastRecordedBlocks[bridgeID]
       );
+      if (startBlock === undefined || endBlock === undefined) {
+        console.log(`Skipping ${bridgeDbName} on ${chain} because blocks are undefined.`);
+        return;
+      }
       const step = maxBlocksToQueryByChain[chain] || 400;
 
       console.log(`Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock}`);
@@ -388,7 +397,6 @@ export const runAdapterHistorical = async (
     try {
       const eventLogs = await retry(() => adapterChainEventsFn(block, endBlockForQuery), { retries: 3, factor: 1 });
 
-      // console.log(eventLogs);
       if (eventLogs.length === 0) {
         console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${block} to ${endBlock}.`);
         block = block + maxBlocksToQuery;

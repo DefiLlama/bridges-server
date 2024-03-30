@@ -79,6 +79,7 @@ export const getTxDataFromEVMEventLogs = async (
         getTokenFromReceipt,
         argGetters,
       } = params;
+      const targetValue = target
       // if this is ever used, need to also overwrite fromBlock and toBlock
       const overriddenChain = chain ? chain : chainContractsAreOn;
       if (isTransfer) {
@@ -136,7 +137,8 @@ export const getTxDataFromEVMEventLogs = async (
           ).output;
           //console.log(logs)
           if (logs.length === 0) {
-            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic}.`);
+            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${isDeposit ? 'Deposit': 'Withdrawal'}) for ${targetValue}.`);
+
           }
           break;
         } catch (e) {

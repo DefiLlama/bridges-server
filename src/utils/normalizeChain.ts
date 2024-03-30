@@ -230,7 +230,7 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 1666600000,
   },
-  RSK: {
+  Rootstock: {
     geckoId: "rootstock",
     symbol: "RBTC",
     cmcId: "3626",
