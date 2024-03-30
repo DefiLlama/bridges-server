@@ -41,29 +41,29 @@ export default [
     url: "",
     chains: ["Ethereum", "Optimism"],
   },
-  {
-    id: 5,
-    displayName: "Multichain",
-    bridgeDbName: "multichain",
-    iconLink: "icons:multichain",
-    largeTxThreshold: 10000,
-    url: "",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Fantom",
-      "Avalanche",
-      "Arbitrum",
-      "Optimism",
-      // "Gnosis",
-      // "Celo",
-      "BSC",
-    ],
-    chainMapping: {
-      avalanche: "avax", // this is needed temporarily, need to fix and remove
-      gnosis: "xdai",
-    },
-  },
+  // {
+  //   id: 5,
+  //   displayName: "Multichain",
+  //   bridgeDbName: "multichain",
+  //   iconLink: "icons:multichain",
+  //   largeTxThreshold: 10000,
+  //   url: "",
+  //   chains: [
+  //     "Ethereum",
+  //     "Polygon",
+  //     "Fantom",
+  //     "Avalanche",
+  //     "Arbitrum",
+  //     "Optimism",
+  //     // "Gnosis",
+  //     // "Celo",
+  //     "BSC",
+  //   ],
+  //   chainMapping: {
+  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
+  //     gnosis: "xdai",
+  //   },
+  // },
   // {
   //   id: 6,
   //   displayName: "Poly Network",
@@ -433,10 +433,10 @@ export default [
       "Linea",
       "Base",
       "Mantle",
-      "Metis", 
+      "Metis",
       "Mode",
-      "Rootstock", 
-      "blast"
+      "Rootstock",
+      "Blast",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -664,16 +664,16 @@ export default [
     url: "https://p.network",
     chains: ["Ethereum", "BSC"],
   },
-  {
-    id: 43,
-    displayName: "PepeTeam Bridge",
-    bridgeDbName: "pepeteam_bridge",
-    iconLink: "protocols:pepeteam-bridge",
-    largeTxThreshold: 10000,
-    url: "https://bridge.pepe.team",
-    chains: ["Ethereum", "BSC", "Polygon"],
-    destinationChain: "Waves",
-  },
+  // {
+  //   id: 43,
+  //   displayName: "PepeTeam Bridge",
+  //   bridgeDbName: "pepeteam_bridge",
+  //   iconLink: "protocols:pepeteam-bridge",
+  //   largeTxThreshold: 10000,
+  //   url: "https://bridge.pepe.team",
+  //   chains: ["Ethereum", "BSC", "Polygon"],
+  //   destinationChain: "Waves",
+  // },
   {
     id: 44,
     displayName: "Interport Finance",
