@@ -193,7 +193,7 @@ const txnsDetailsToEventData = (txn: Transaction): EventData => {
     const methodAbi = new ethers.utils.Interface(abi);
     const methodId = txn.input.slice(0, 10);
     const decoded = methodAbi.decodeFunctionData(signatures[methodId], txn.input)[0];
-    console.log(decoded["amount"], decoded["recipient"]);
+    // console.log(decoded["amount"], decoded["recipient"]);
     return {
         blockNumber: Number(txn.blockNumber),
         txHash: txn.hash,
@@ -205,23 +205,23 @@ const txnsDetailsToEventData = (txn: Transaction): EventData => {
     };
 }
 
-const tryouts = async () => {
-    console.log("tryouts");
-    const some = await getTxsBlockRangeEtherscan(
-        "optimism",
-        "0x8201c02d4ab2214471e8c3ad6475c8b0cd9f2d06",
-        117402264,
-        117402266,
-        {
-            includeSignatures: Object.keys(signatures),
-        }
-    )
-    console.log(some);
+// const tryouts = async () => {
+//     console.log("tryouts");
+//     const some = await getTxsBlockRangeEtherscan(
+//         "optimism",
+//         "0x8201c02d4ab2214471e8c3ad6475c8b0cd9f2d06",
+//         117402264,
+//         117402266,
+//         {
+//             includeSignatures: Object.keys(signatures),
+//         }
+//     )
+//     console.log(some);
 
-    some.forEach((tx: any) => {
-        txnsDetailsToEventData(tx);
-    });
-}
+//     some.forEach((tx: any) => {
+//         txnsDetailsToEventData(tx);
+//     });
+// }
 
 // tryouts();
 
