@@ -835,9 +835,9 @@ export default [
       "Aurora",
       "Polygon zkEVM",
       "zkSync Era",
-      "Manta",
+      // "Manta",
       "Mantle",
-      "Rootstock",
+      // "Rootstock",
       "Scroll"
     ],
     chainMapping: {
