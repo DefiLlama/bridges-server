@@ -17,7 +17,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
       bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
   }
   const destinationChain = bridgeNetwork?.destinationChain;
-  if (destinationChain && chain === destinationChain){
+  if (destinationChain && chain === destinationChain?.toLowerCase()){
     chain = "all";
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
