@@ -258,8 +258,8 @@ export default [
     iconLink: "chain:avalanche",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Avalanche"],
-    destinationChain: "-", // not sure the effect this will have, need to double-check everything works
+    chains: ["Avalanche", "Bitcoin"],
+    destinationChain: "Bitcoin", // not sure the effect this will have, need to double-check everything works
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
