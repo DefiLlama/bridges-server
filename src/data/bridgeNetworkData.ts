@@ -306,7 +306,7 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base"],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base", 'Linea'],
     chainMapping: {
       "zksync era": "era",
     },
