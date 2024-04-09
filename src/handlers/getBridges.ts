@@ -99,6 +99,7 @@ const getBridges = async () => {
           monthlyVolume: monthlyVolume ?? 0,
           chains: chains.sort((a, b) => chainDailyVolumes[b] - chainDailyVolumes[a]),
           destinationChain: destinationChain ?? "false",
+          url
         } as any;
         return dataToReturn;
       })

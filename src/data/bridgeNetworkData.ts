@@ -8,7 +8,7 @@ export default [
     bridgeDbName: "polygon",
     iconLink: "chain:polygon",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://portal.polygon.technology/",
     chains: ["Ethereum", "Polygon"],
     destinationChain: "Polygon",
   },
@@ -18,7 +18,7 @@ export default [
     bridgeDbName: "arbitrum",
     iconLink: "chain:arbitrum",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://bridge.arbitrum.io/",
     chains: ["Ethereum", "Arbitrum"],
     destinationChain: "Arbitrum",
   },
@@ -28,7 +28,7 @@ export default [
     bridgeDbName: "avalanche",
     iconLink: "chain:avalanche",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://core.app/",
     chains: ["Ethereum", "Avalanche"],
     destinationChain: "Avalanche",
   },
@@ -38,7 +38,7 @@ export default [
     bridgeDbName: "optimism",
     iconLink: "chain:optimism",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://app.optimism.io/bridge/deposit",
     chains: ["Ethereum", "Optimism"],
   },
   // {
@@ -126,7 +126,7 @@ export default [
     bridgeDbName: "portal",
     iconLink: "icons:portal",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://portalbridge.com/",
     chains: [
       "Ethereum",
       "Polygon",
@@ -152,7 +152,7 @@ export default [
     bridgeDbName: "celer",
     iconLink: "icons:cbridge",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://cbridge.celer.network/",
     chains: [
       "Ethereum",
       "Polygon",
@@ -186,7 +186,7 @@ export default [
     bridgeDbName: "synapse",
     iconLink: "icons:synapse",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://synapseprotocol.com/",
     chains: [
       "Ethereum",
       "Polygon",
@@ -219,7 +219,7 @@ export default [
     bridgeDbName: "stargate",
     iconLink: "icons:stargate",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://stargate.finance/",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -231,7 +231,7 @@ export default [
     bridgeDbName: "hop",
     iconLink: "icons:hop-protocol",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://hop.exchange/",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Gnosis", "Base", "Arbitrum Nova", "Polygon zkEVM"],
     chainMapping: {
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
@@ -257,7 +257,7 @@ export default [
     bridgeDbName: "avalanche-btc",
     iconLink: "chain:avalanche",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://core.app/",
     chains: ["Avalanche", "Bitcoin"],
     destinationChain: "Bitcoin", // not sure the effect this will have, need to double-check everything works
     chainMapping: {
@@ -270,7 +270,7 @@ export default [
     bridgeDbName: "xdai",
     iconLink: "chain:xdai",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://bridge.gnosischain.com/",
     chains: ["Ethereum", "Gnosis"],
     // destinationChain: "Gnosis",
     chainMapping: {
@@ -305,7 +305,7 @@ export default [
     bridgeDbName: "across",
     iconLink: "icons:across",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://across.to/",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base", 'Linea'],
     chainMapping: {
       "zksync era": "era",
@@ -318,7 +318,7 @@ export default [
     bridgeDbName: "debridgedln",
     iconLink: "icons:debridgedln",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://debridge.finance/",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -340,7 +340,7 @@ export default [
     bridgeDbName: "allbridge",
     iconLink: "icons:allbridge",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://app.allbridge.io/bridge",
     chains: ["Ethereum", "BSC", "Avalanche", "Fantom", "Polygon"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -353,7 +353,7 @@ export default [
     bridgeDbName: "polygon_zkevm",
     iconLink: "chain:polygon zkevm",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://portal.polygon.technology/",
     chainMapping: { "polygon zkevm": "polygon_zkevm" },
     chains: ["Ethereum", "Polygon zkEVM"],
     destinationChain: "Polygon zkEVM",
@@ -405,7 +405,7 @@ export default [
     bridgeDbName: "zksync",
     iconLink: "chain:zksync era",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://portal.zksync.io/bridge/",
     chains: ["Ethereum", "zkSync Era"],
     destinationChain: "zkSync Era",
   },
@@ -415,7 +415,7 @@ export default [
     bridgeDbName: "symbiosis",
     iconLink: "icons:symbiosis",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://symbiosis.finance/",
     chains: [
       "Ethereum",
       "BSC",
@@ -453,7 +453,7 @@ export default [
     bridgeDbName: "meson",
     iconLink: "icons:meson",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://meson.fi/",
     chains: [
       "Ethereum",
       "Polygon",
@@ -491,7 +491,7 @@ export default [
     bridgeDbName: "base",
     iconLink: "chain:base",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://bridge.base.org/deposit",
     chains: ["Ethereum", "Base"],
     destinationChain: "Base",
   },
@@ -501,7 +501,7 @@ export default [
     bridgeDbName: "mantle",
     iconLink: "chain:mantle",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://bridge.mantle.xyz/",
     chains: ["Ethereum", "Mantle"],
     destinationChain: "Mantle",
   },
@@ -511,7 +511,7 @@ export default [
     bridgeDbName: "axelarsatellite",
     iconLink: "icons:axelar",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://axelar.network/",
     chains: [
       "Ethereum",
       "BSC",
@@ -538,7 +538,7 @@ export default [
     bridgeDbName: "manta",
     iconLink: "icons:manta-pacific-bridge",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://pacific-bridge.manta.network/",
     chains: ["Ethereum", "Manta"],
     destinationChain: "Manta",
   },
@@ -558,7 +558,7 @@ export default [
     bridgeDbName: "squidrouter",
     iconLink: "icons:squid",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://www.squidrouter.com/",
     chains: [
       "Ethereum",
       "Polygon",
@@ -584,7 +584,7 @@ export default [
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://crosscurve.fi/",
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
     chainMapping: {
       avalanche: "avax",
@@ -596,7 +596,7 @@ export default [
     bridgeDbName: "rhinofi",
     iconLink: "icons:rhino.fi",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://app.rhino.fi/bridge",
     chains: [
       "Arbitrum",
       "Arbitrum Nova",
@@ -710,7 +710,7 @@ export default [
     bridgeDbName: "shimmerbridge",
     iconLink: "chain:shimmerevm",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://shimmerbridge.org/bridge",
     chains: ["Ethereum", "BSC", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base", "Fantom", "ShimmerEVM"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -773,7 +773,7 @@ export default [
     bridgeDbName: "rootstock",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://rootstock.io/",
     chains: ["Rootstock", "Bitcoin"],
     chainMapping: {
       rootstock: "rsk",
@@ -796,7 +796,7 @@ export default [
     bridgeDbName: "mode",
     iconLink: "chain:mode",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://app.mode.network/",
     chains: ["Ethereum", "Mode"],
     destinationChain: "Mode",
   },
@@ -806,7 +806,7 @@ export default [
     bridgeDbName: "circle",
     iconLink: "protocols:circle_cctp",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://www.circle.com/en/cross-chain-transfer-protocol",
     chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
     chainMapping: {
       avalanche: "avax",
@@ -937,7 +937,7 @@ export default [
     bridgeDbName: "allbridge-core",
     iconLink: "icons:allbridge-core",
     largeTxThreshold: 10000,
-    url: "",
+    url: "https://core.allbridge.io/",
     chains: ["Arbitrum", "Avalanche", "BSC", "Base", "Ethereum", "Optimism", "Polygon", "Solana"],
     chainMapping: {
       avalanche: "avax",
