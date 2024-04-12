@@ -50,6 +50,7 @@ const testAdapter = async () => {
       console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
       for (const log of eventLogs) {
         console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);
+        console.log(`From: ${log.from} To: ${log.to} `);
       }
       console.log(`${eventLogs.length} transactions found.`);
       const eventPromises = Promise.all(
@@ -65,7 +66,7 @@ const testAdapter = async () => {
             } else if (!(log[key] !== null && typeof log[key] === logTypes[key])) {
               throw new Error(
                 `${key} is missing, null, or wrong type in log. It is of type ${typeof log[
-                  key
+                key
                 ]} and should be of type ${logTypes[key]}.`
               );
             }
@@ -82,8 +83,7 @@ const testAdapter = async () => {
       tokensForPricing = Object.keys(uniqueTokens);
       const llamaPrices = await getLlamaPrices(tokensForPricing, timestamp);
       console.log(
-        `Over the past ${numberOfBlocks} blocks, ${tokensForPricing.length} unique tokens were transferred and ${
-          Object.keys(llamaPrices).length
+        `Over the past ${numberOfBlocks} blocks, ${tokensForPricing.length} unique tokens were transferred and ${Object.keys(llamaPrices).length
         } prices for them were found on ${chain}.`
       );
       for (const token of tokensForPricing) {
