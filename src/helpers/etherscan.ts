@@ -1,5 +1,6 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 const axios = require("axios");
+const retry = require("async-retry");
 
 const endpoints = {
   ethereum: "https://api.etherscan.io",
@@ -12,7 +13,7 @@ const endpoints = {
   aurora: "https://explorer.mainnet.aurora.dev/api",
   celo: "https://api.celoscan.io",
   "zksync era": "https://block-explorer-api.mainnet.zksync.io/api",
-  "mantle": "https://explorer.mantle.xyz/api",
+  mantle: "https://explorer.mantle.xyz/api",
   base: "https://api.basescan.org",
   linea: "https://api.lineascan.build",
   scroll: "https://api.scrollscan.com",
@@ -53,14 +54,22 @@ export const getTxsBlockRangeEtherscan = async (
   let res;
   if (!apiKey) {
     res = (
-      await axios.get(
-        `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+      await retry(
+        () =>
+          axios.get(
+            `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+          ),
+        { factor: 1, retries: 3 }
       )
     ).data as any;
   } else {
     res = (
-      await axios.get(
-        `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
+      await retry(
+        () =>
+          axios.get(
+            `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
+          ),
+        { factor: 1, retries: 3 }
       )
     ).data as any;
   }
