@@ -623,6 +623,7 @@ export default [
     largeTxThreshold: 10000,
     url: "https://bridge.wanchain.org",
     chains: [
+      "Bitcoin",
       "Ethereum",
       "Polygon",
       "Fantom",
