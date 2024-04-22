@@ -943,4 +943,16 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 61,
+    displayName: "XSwap",
+    bridgeDbName: "xswap",
+    iconLink: "icons:xswap",
+    largeTxThreshold: 10000,
+    url: "https://xswap.link/",
+    chains: ["Ethereum", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base"],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
 ] as BridgeNetwork[];
