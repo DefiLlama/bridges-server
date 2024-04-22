@@ -123,6 +123,10 @@ const getBridge = async (bridgeNetworkId?: number) => {
     weeklyTxs,
     monthlyTxs,
   } = chainBreakdown["all"];
+
+  if (destinationChain){
+    chainBreakdown[destinationChain] = chainBreakdown["all"];
+  }
   delete chainBreakdown["all"];
 
   const response = {

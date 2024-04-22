@@ -1,8 +1,10 @@
-import { getLatestBlock as getLatestBlockSdk, lookupBlock } from "@defillama/sdk/build/util";
+import { getLatestBlock as getLatestBlockSdk, lookupBlock as lookupBlockSdk } from "@defillama/sdk/build/util";
 // import { getClient } from "../helpers/sui";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
+import fetch from "node-fetch";
+const retry = require("async-retry");
 
 export async function getLatestBlockNumber(chain: string): Promise<number> {
   if (chain === "sui") {
@@ -14,8 +16,35 @@ export async function getLatestBlockNumber(chain: string): Promise<number> {
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
   }
-  return (await getLatestBlockSdk(chain)).number;
+  return (await getLatestBlock(chain)).number;
 }
+
+const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
+  try {
+    const block = await retry(() => lookupBlockSdk(timestamp, { chain }), { retries: 3, factor: 1 });
+
+    return block;
+  } catch (e) {
+    console.error(e);
+    const block = await retry(
+      () => fetch(`https://coins.llama.fi/block/${chain}/${timestamp}`).then((res) => res.json()),
+      {
+        retries: 3,
+        factor: 1,
+      }
+    );
+    const blockRes = {
+      number: block.height,
+      timestamp: block.timestamp,
+      block: block.height,
+    };
+    if (!blockRes?.number) {
+      console.error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
+      throw new Error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
+    }
+    return blockRes;
+  }
+};
 
 export async function getLatestBlock(chain: string): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
@@ -34,7 +63,8 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
     } while (timestamp === null);
     return { number, timestamp };
   }
-  return await getLatestBlockSdk(chain);
+  const timestamp = Math.floor(Date.now() / 1000) - 60;
+  return await lookupBlock(timestamp, { chain });
 }
 
 export async function getBlockByTimestamp(timestamp: number, chain: Chain) {

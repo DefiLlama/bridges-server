@@ -3,12 +3,12 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 enum Chains {
   arbitrum = "arbitrum",
-  wanchain = "wanchain",
+  wanchain = "wan",
   ethereum = "ethereum",
-  avalanche = "avalanche",
+  avalanche = "avax",
   moonbeam = "moonbeam",
   moonriver = "moonriver",
-  functionX = "functionX",
+  functionX = "functionx",
   telos = "telos",
   polygon = "polygon",
   okexchain = "okexchain",
@@ -93,16 +93,34 @@ const contractAddresses = {
 
 const userLockPortalEventParams: ContractEventParams = {
   target: "",
-  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256, bytes)",
+  topic: "UserLockLogger(bytes32,uint256,address,uint256,uint256,bytes)",
   abi: [
-    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint serviceFee, bytes userAccount)",
+    "event UserLockLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint contractFee, bytes userAccount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "userAccount",
+    from: "userAccount",
+    amount: "value",
+    token: "tokenAccount",
+  },
+  isDeposit: true,
+};
+
+const userBurnPortalEventParams: ContractEventParams = {
+  target: "",
+  topic: "UserBurnLogger(bytes32,uint256,address,uint256,uint256,uint,bytes)",
+  abi: [
+    "event UserBurnLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint contractFee, uint fee, bytes userAccount)",
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    from: "userAccount",
     amount: "value",
     token: "tokenAccount",
   },
@@ -127,6 +145,24 @@ const smgReleasePortalEventParams: ContractEventParams = {
   isDeposit: false,
 };
 
+const smgMintPortalEventParams: ContractEventParams = {
+  target: "",
+  topic: "SmgMintLogger(bytes32,bytes32,uint256,uint256,address,address)",
+  abi: [
+    "event SmgMintLogger(bytes32 indexed uniqueID, bytes32 indexed smgID, uint indexed tokenPairID, uint value, address tokenAccount, address userAccount)",
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    to: "userAccount",
+    amount: "value",
+    token: "tokenAccount",
+  },
+  isDeposit: false,
+};
+
 const constructParams = (chain: Chains) => {
   const { portal } = contractAddresses[chain];
   const eventParams: ContractEventParams[] = [
@@ -138,7 +174,21 @@ const constructParams = (chain: Chains) => {
       },
     },
     {
+      ...userBurnPortalEventParams,
+      target: portal,
+      fixedEventData: {
+        to: portal,
+      },
+    },
+    {
       ...smgReleasePortalEventParams,
+      target: portal,
+      fixedEventData: {
+        from: portal,
+      },
+    },
+    {
+      ...smgMintPortalEventParams,
       target: portal,
       fixedEventData: {
         from: portal,
@@ -164,7 +214,7 @@ const adapter: BridgeAdapter = {
   xdc: constructParams(Chains.xdc),
   astar: constructParams(Chains.astar),
   metis: constructParams(Chains.metis),
-  wan: constructParams(Chains.wanchain),
+  wanchain: constructParams(Chains.wanchain),
 
   vinuchain: constructParams(Chains.vinuchain),
   functionx: constructParams(Chains.functionX),

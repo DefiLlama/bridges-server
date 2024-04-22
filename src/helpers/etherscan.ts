@@ -1,5 +1,6 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 const axios = require("axios");
+const retry = require("async-retry");
 
 const endpoints = {
   ethereum: "https://api.etherscan.io",
@@ -11,6 +12,8 @@ const endpoints = {
   optimism: "https://api-optimistic.etherscan.io",
   aurora: "https://explorer.mainnet.aurora.dev/api",
   celo: "https://api.celoscan.io",
+  "zksync era": "https://block-explorer-api.mainnet.zksync.io/api",
+  mantle: "https://explorer.mantle.xyz/api",
   base: "https://api.basescan.org",
   linea: "https://api.lineascan.build",
   scroll: "https://api.scrollscan.com",
@@ -49,23 +52,32 @@ export const getTxsBlockRangeEtherscan = async (
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
   let res;
-  if (chain === "aurora") {
+  if (!apiKey) {
     res = (
-      await axios.get(
-        `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+      await retry(
+        () =>
+          axios.get(
+            `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+          ),
+        { factor: 1, retries: 3 }
       )
     ).data as any;
   } else {
     res = (
-      await axios.get(
-        `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
+      await retry(
+        () =>
+          axios.get(
+            `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
+          ),
+        { factor: 1, retries: 3 }
       )
     ).data as any;
   }
   if (res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (functionSignatureFilter) {
-        const signature = tx.input.slice(0, 8);
+        const signature = tx.input.slice(0, 10); // 0x + 4 bytes of method id @todo bug to be reported
+        // alternatively, we can use the method signature like const signature = tx.methodId;
         if (
           functionSignatureFilter.includeSignatures &&
           !functionSignatureFilter.includeSignatures.includes(signature)
