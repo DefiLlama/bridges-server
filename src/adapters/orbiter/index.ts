@@ -81,10 +81,12 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
-  // mode: constructParams("mode"), no etherscan
-  // manta: constructParams("manta"),
+  mode: constructParams("mode"),
+  manta: constructParams("manta"),
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
+  "merlin": constructParams("merlin"),
+  "bsc": constructParams("bsc")
 };
 export default adapter;
