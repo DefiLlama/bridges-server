@@ -66,7 +66,6 @@ export const getDailyBridgeVolume = async (
       return true;
     });
   }
-
   let sourceChainsHistoricalDailyData = [] as IAggregatedData[];
   await Promise.all(
     sourceChainConfigs.map(async (config) => {
@@ -115,7 +114,6 @@ export const getDailyBridgeVolume = async (
     );
   }
   */
-
   let historicalDailySums = {} as { [timestamp: string]: any };
   historicalDailyData.map((dailyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
@@ -130,18 +128,7 @@ export const getDailyBridgeVolume = async (
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
 
-    // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
-    if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
-      historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
-      historicalDailySums[timestamp].depositUSD =
-        (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
-      historicalDailySums[timestamp].withdrawUSD =
-        (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
-      historicalDailySums[timestamp].depositTxs =
-        (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
-      historicalDailySums[timestamp].withdrawTxs =
-        (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
-    }
+   
   });
   // the deposits and withdrawals are swapped here
   sourceChainsHistoricalDailyData.map((dailyData) => {
@@ -293,17 +280,7 @@ export const getHourlyBridgeVolume = async (
       (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
 
     // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
-    if (!chain && chainIdsWithSingleEntry.includes(bridge_id)) {
-      historicalHourlySums[timestamp] = historicalHourlySums[timestamp] || {};
-      historicalHourlySums[timestamp].depositUSD =
-        (historicalHourlySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
-      historicalHourlySums[timestamp].withdrawUSD =
-        (historicalHourlySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
-      historicalHourlySums[timestamp].depositTxs =
-        (historicalHourlySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
-      historicalHourlySums[timestamp].withdrawTxs =
-        (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
-    }
+  
   });
   // the deposits and withdrawals are swapped here
   sourceChainsHourlyData.map((hourlyData) => {

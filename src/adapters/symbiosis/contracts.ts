@@ -32,7 +32,7 @@ export const contracts = {
         synthesis: "0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8",
     },
     era: {
-        portal: "0x39dE19C9fF25693A2311AAD1dc5C790194084A39",
+        portal: "0x4f5456d4d0764473DfCA1ffBB8524C151c4F19b9",
         synthesis: null,
     },
     arbitrum: {
@@ -55,16 +55,16 @@ export const contracts = {
         portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
         synthesis: null,
     },
-    base: {
-        portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
-        synthesis: null,
-    },
     mantle: {
         portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
         synthesis: null,
     },
+    base: {
+        portal: "0xEE981B2459331AD268cc63CE6167b446AF4161f8",
+        synthesis: null,
+    },
     tron: {
-        portal: "0x4badeb0ca175da3ac6a4c886ca31990688d2a260",
+        portal: "0xbacc8e4edfcb33e523ba248fb3ce72c3e5b20c72",
         synthesis: null,
     },
     scroll: {
@@ -73,6 +73,34 @@ export const contracts = {
     },
     manta: {
         portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+        synthesis: null,
+    },
+    metis: {
+        portal: "0xd8db4fb1fEf63045A443202d506Bcf30ef404160",
+        synthesis: null,
+    },
+    mode: {
+        portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+        synthesis: null,
+    },
+    bahamut: {
+        portal: "0x318C2B9a03C37702742C3d40C72e4056e430135A",
+        synthesis: "0xB79A4F5828eb55c10D7abF4bFe9a9f5d11aA84e0",
+    },
+    rsk: {
+        portal: "0x5aa5f7f84ed0e5db0a4a85c3947ea16b53352fd4",
+        synthesis: null,
+    },
+    blast: {
+        portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+        synthesis: null,
+    },
+    merlin: {
+        portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+        synthesis: null,
+    },
+    zklink: {
+        portal: "0x2E818E50b913457015E1277B43E469b63AC5D3d7",
         synthesis: null,
     },
 } as const;
