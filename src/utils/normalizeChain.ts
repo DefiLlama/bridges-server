@@ -915,6 +915,24 @@ export const chainCoingeckoIds = {
     categories: ["EVM", "Rollup"],
     chainId: 34443,
   },
+  Merlin: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Zkfair: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  BSquared: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1140,6 +1158,12 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Sui";
     case "solana":
       return "Solana";
+    case "merlin":
+      return "Merlin";
+    case "zkfair":
+      return "Zkfair";
+    case "bsquared":
+      return "BSquared";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
