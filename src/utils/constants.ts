@@ -26,19 +26,10 @@ export const maxBlocksToQueryByChain = {
   solana: 18000, // solana produces slots every 400ms, so 2 hours is 18000 slots
 } as { [chain: string]: number };
 
-export const nonBlocksChains = [
-  "osmosis",
-  "secret",
-  "injective",
-  "terra",
-  "crescent",
-  "juno",
-  "kujira",
-  "sifchain",
-  "stride",
-  "cosmos",
-  "canto",
-];
+
+// will be handled by the bridge adapter
+export const nonBlocksChains: string[] = [];
+
 /*
 // for slow adapters
 export const maxBlocksToQueryByChain = {

@@ -15,6 +15,7 @@ import { lookupBlock } from "@defillama/sdk/build/util";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
+import { newIBCAdapter } from "../adapters/ibc";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -37,7 +38,7 @@ const getBlocksForRunningAdapter = async (
   if (useChainBlocks) {
     // probably need timeouts here
     try {
-      endBlock = await getLatestBlockNumber(chainContractsAreOn);
+      endBlock = await getLatestBlockNumber(chainContractsAreOn, null);
       if (!endBlock) {
         const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
         await insertErrorRow({
@@ -147,7 +148,7 @@ export const runAdapterToCurrentBlock = async (
       try {
         while (startBlock < endBlock) {
           let toBlock = startBlock + step > endBlock ? endBlock : startBlock + step;
-          await runAdapterHistorical(startBlock, toBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, toBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
           startBlock += step;
         }
       } catch (e) {
@@ -252,7 +253,7 @@ export const runAllAdaptersToCurrentBlock = async (
         );
         if (startBlock == null) return;
         try {
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, endBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
@@ -310,7 +311,7 @@ export const runAllAdaptersTimestampRange = async (
             startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
           }
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, endBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
@@ -333,16 +334,19 @@ export const runAllAdaptersTimestampRange = async (
 export const runAdapterHistorical = async (
   startBlock: number,
   endBlock: number,
-  bridgeNetworkId: number,
+  bridgeNetwork: BridgeNetwork,
   chain: string, // needed because different chains query over different block ranges
   allowNullTxValues: boolean = false,
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
-  const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+
+  if(bridgeNetwork.bridgeDbName === "ibc") {
+    adapter = newIBCAdapter(bridgeNetwork);
+  }
   const adapterChainEventsFn = adapter[chain];
   if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
     console.log(`Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
@@ -385,10 +389,16 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
-  const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
+  let maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
-  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+
+  // to reduce calls to moz api
+  if(bridgeDbName === 'ibc') {
+    maxBlocksToQuery = 5000;
+  }
+
+  const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let block = startBlock;
   console.log(`Searching for transactions for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
   while (block < endBlock) {
@@ -472,7 +482,7 @@ export const runAdapterHistorical = async (
         for (let i = 0; i < filteredEvents?.length; i++) {
           let log = filteredEvents[i];
 
-          const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs } =
+          const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs, timestamp: realBlockTimestamp } =
             log;
           const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
           const timestamp = blockTimestamps[bucket] * 1000;
@@ -521,7 +531,7 @@ export const runAdapterHistorical = async (
                 bridge_id: bridgeIdOverride,
                 chain: chainContractsAreOn,
                 tx_hash: txHash ?? null,
-                ts: timestamp,
+                ts: realBlockTimestamp ?? timestamp,
                 tx_block: blockNumber ?? null,
                 tx_from: from ?? null,
                 tx_to: to ?? null,

@@ -11,9 +11,11 @@
     "daily-volume": "export $(cat .env.test | xargs) &&  tsx ./src/utils/testDailyVolume.ts"
   },
   "devDependencies": {
+    "@types/async-retry": "^1.4.8",
     "@types/aws-lambda": "^8.10.101",
     "@types/node": "^18.6.4",
     "@types/node-fetch": "^2.6.2",
+    "@types/retry": "^0.12.5",
     "babel-loader": "^8.2.5",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
@@ -24,6 +26,7 @@
   },
   "dependencies": {
     "@defillama/sdk": "^5.0.54",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@solana/web3.js": "^1.87.3",
     "async-retry": "^1.3.1",
     "axios": "^0.21.0",
@@ -32,7 +35,7 @@
     "dotenv": "^8.2.0",
     "ethers": "^5",
     "graphql": "^16.0.0",
-    "graphql-request": "^4.0.0",
+    "graphql-request": "^6.1.0",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
     "serverless-webpack": "^5.8.0",
