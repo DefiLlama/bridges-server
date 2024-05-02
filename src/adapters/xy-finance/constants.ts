@@ -21,7 +21,7 @@ export enum Chain {
   Numbers = 'numbers',
   Wemix = 'wemix',
   Blast = 'blast',
-  XLayer = 'xLayer'
+  XLayer = 'xlayer'
 }
 
 export enum VAULTS_TOKEN {
