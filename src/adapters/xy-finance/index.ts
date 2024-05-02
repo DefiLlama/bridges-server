@@ -155,6 +155,7 @@ const adapter: BridgeAdapter = {
   thundercore: constructParams(Chain.ThunderCore),
   wemix: constructParams(Chain.Wemix),
   blast: constructParams(Chain.Blast),
+  'x layer': constructParams(Chain.XLayer),
 };
 
 export default adapter;

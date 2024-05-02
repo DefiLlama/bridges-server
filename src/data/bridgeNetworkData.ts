@@ -746,12 +746,14 @@ export default [
       "Moonriver",
       "ThunderCore",
       "Blast",
+      "X Layer"
       // "Numbers",
     ],
     chainMapping: {
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       avalanche: "avax",
+      "x layer": "xlayer"
     },
   },
   // {
