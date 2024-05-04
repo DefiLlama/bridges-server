@@ -57,6 +57,7 @@ import fuse from "./fuse";
 import orbiter from "./orbiter";
 import connext from "./connext";
 import xswap from "./xswap";
+import owlto from "./owlto"
 
 export default {
   polygon,
@@ -116,6 +117,7 @@ export default {
   orbiter,
   connext,
   xswap,
+  owlto,
 } as {
   [bridge: string]: BridgeAdapter;
 };

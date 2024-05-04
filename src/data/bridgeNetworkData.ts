@@ -306,7 +306,7 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "https://across.to/",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base", 'Linea'],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "zkSync Era", "Base", "Linea"],
     chainMapping: {
       "zksync era": "era",
     },
@@ -850,7 +850,7 @@ export default [
       // "Manta",
       "Mantle",
       // "Rootstock",
-      "Scroll"
+      "Scroll",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -955,6 +955,35 @@ export default [
     chains: ["Ethereum", "Polygon", "Avalanche", "Arbitrum", "Optimism", "Base"],
     chainMapping: {
       avalanche: "avax",
+    },
+  },
+
+  {
+    id: 62,
+    displayName: "Owlto",
+    bridgeDbName: "owlto",
+    iconLink: "icons:owlto",
+    largeTxThreshold: 10000,
+    url: "https://owlto.finance",
+    chains: [
+      "Ethereum",
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Polygon",
+      "Linea",
+      "Blast",
+      "Arbitrum Nova",
+      "Scroll",
+      // "Manta",
+      // "Mode",
+      "zkSync Era",
+      "Polygon zkEVM",
+    ],
+    chainMapping: {
+      "arbitrum nova": "arbitrum_nova",
+      "zksync era": "era",
+      "polygon zkevm": "polygon_zkevm",
     },
   },
 ] as BridgeNetwork[];
