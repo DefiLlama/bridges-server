@@ -40,7 +40,11 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   scroll: constructParams("scroll"),
   celo: constructParams("celo"),
-  gnosis: constructParams("xdai")
+  gnosis: constructParams("xdai"),
+  merlin: constructParams("merlin"),
+  bsquared: constructParams("bsquared"), // problem with this
+  zkfair: constructParams("zkfair")
+
   // conflux-espace
   // eos-evm
   // tron
