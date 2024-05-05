@@ -4,6 +4,7 @@ import { tronGetLatestBlock } from "../helpers/tron";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
+import { checkBsquaredRpc } from "../helpers/bsquared";
 const retry = require("async-retry");
 
 export async function getLatestBlockNumber(chain: string): Promise<number> {
@@ -62,6 +63,8 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
       timestamp = await connection.getBlockTime(number);
     } while (timestamp === null);
     return { number, timestamp };
+  } else if (chain === "bsquared") {
+    checkBsquaredRpc()
   }
   const timestamp = Math.floor(Date.now() / 1000) - 60;
   return await lookupBlock(timestamp, { chain });
