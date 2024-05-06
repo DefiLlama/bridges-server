@@ -477,12 +477,16 @@ export default [
       "Scroll",
       "Celo",
       "Gnosis",
+      "Merlin",
+      "Zkfair",
+      "BSquared",
     ],
     chainMapping: {
       avalanche: "avax",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       gnosis: "xdai",
+      bsquared: "b2-mainnet",
     },
   },
   {
@@ -746,14 +750,14 @@ export default [
       "Moonriver",
       "ThunderCore",
       "Blast",
-      "X Layer"
+      "X Layer",
       // "Numbers",
     ],
     chainMapping: {
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       avalanche: "avax",
-      "x layer": "xlayer"
+      "x layer": "xlayer",
     },
   },
   // {
