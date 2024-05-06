@@ -97,7 +97,7 @@ const constructParams = (chain: SupportedChains) => {
                         to: tx.to,
                         token: nativeTokens[chain],
                         amount: tx.value,
-                        isDeposit: address === tx.to,
+                        isDeposit: address.toLowerCase() === tx.to,
                     };
                     return event;
                 });
@@ -117,7 +117,7 @@ const constructParams = (chain: SupportedChains) => {
                         to: tx.to,
                         token: nativeTokens[chain],
                         amount: tx.value,
-                        isDeposit: address === tx.to,
+                        isDeposit: address.toLowerCase() === tx.to,
                     };
                     return event;
                 });
