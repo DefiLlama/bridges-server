@@ -67,18 +67,14 @@ export type DefillamaTxsFirstBlockQueryVariables = Types.Exact<{
   timestamp: Types.Scalars['timestamp'];
 }>;
 
-export type DefillamaTxsFirstBlockQueryResult = {
-  flat_defillama_txs_aggregate: { aggregate?: { min?: { height?: any | null } | null } | null };
-};
+export type DefillamaTxsFirstBlockQueryResult = { flat_defillama_txs: Array<{ height: any }> };
 
 export type DefillamaTxsLastBlockQueryVariables = Types.Exact<{
   blockchain: Types.Scalars['String'];
   timestamp: Types.Scalars['timestamp'];
 }>;
 
-export type DefillamaTxsLastBlockQueryResult = {
-  flat_defillama_txs_aggregate: { aggregate?: { max?: { height?: any | null } | null } | null };
-};
+export type DefillamaTxsLastBlockQueryResult = { flat_defillama_txs: Array<{ height: any }> };
 
 export const DefillamaLatestBlockForZoneDocument = {
   kind: 'Document',
@@ -529,8 +525,27 @@ export const DefillamaTxsFirstBlockDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs_aggregate' },
+            name: { kind: 'Name', value: 'flat_defillama_txs' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'order_by' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'timestamp' },
+                      value: { kind: 'EnumValue', value: 'asc' },
+                    },
+                  ],
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'IntValue', value: '1' },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'where' },
@@ -574,25 +589,7 @@ export const DefillamaTxsFirstBlockDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'aggregate' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'min' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'height' } }],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'height' } }],
             },
           },
         ],
@@ -633,8 +630,27 @@ export const DefillamaTxsLastBlockDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs_aggregate' },
+            name: { kind: 'Name', value: 'flat_defillama_txs' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'order_by' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'timestamp' },
+                      value: { kind: 'EnumValue', value: 'desc' },
+                    },
+                  ],
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'IntValue', value: '1' },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'where' },
@@ -678,25 +694,7 @@ export const DefillamaTxsLastBlockDocument = {
             ],
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'aggregate' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'max' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'height' } }],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'height' } }],
             },
           },
         ],

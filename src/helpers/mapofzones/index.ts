@@ -123,13 +123,22 @@ export const getBlockFromTimestamp = async (timestamp: number, chainId: string, 
 
   try {
     const block = await retry(async () => {
+      let result: DefillamaTxsFirstBlockQueryResult | DefillamaTxsLastBlockQueryResult | undefined;
       if (position === "First") {
-        const data = await requestWithTimeout<DefillamaTxsFirstBlockQueryResult>(DefillamaTxsFirstBlockDocument, variables);
-        return data.flat_defillama_txs_aggregate.aggregate?.min?.height;
+        result = await requestWithTimeout<DefillamaTxsFirstBlockQueryResult>(DefillamaTxsFirstBlockDocument, variables);
       } else if (position === "Last") {
-        const data = await requestWithTimeout<DefillamaTxsLastBlockQueryResult>(DefillamaTxsLastBlockDocument, variables);
-        return data.flat_defillama_txs_aggregate.aggregate?.max?.height;
+        result = await requestWithTimeout<DefillamaTxsLastBlockQueryResult>(DefillamaTxsLastBlockDocument, variables);
       }
+
+      if(!result) {
+        return undefined;
+      }
+
+      if(result.flat_defillama_txs.length === 0) {
+        return undefined;
+      }
+
+      return result.flat_defillama_txs[0].height;
     }, {
       retries: 5,
       minTimeout: 5000,
@@ -159,7 +168,6 @@ export const getZoneDataByBlock = async (
     from: fromBlock,
     to: toBlock,
   };
-  
   try {
     return await retry(async () => {
       return await requestWithTimeout<DefillamaTxsByBlockQueryResult>(DefillamaTxsByBlockDocument, variables);
