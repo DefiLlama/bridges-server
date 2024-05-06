@@ -3,20 +3,20 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
-const contractAddress = "0x25aB3Efd52e6470681CE037cD546Dc60726948D3"
+const contractAddress = "0x25aB3Efd52e6470681CE037cD546Dc60726948D3";
 
 const constructParams = (chain: string) => {
   let eventParams = [] as PartialContractEventParams[];
   const depositParams = constructTransferParams(contractAddress, true, {
     excludeFrom: [contractAddress],
-  })
+  });
   const withdrawalParams = constructTransferParams(contractAddress, false, {
     excludeTo: [contractAddress],
-  })
-  eventParams.push(depositParams, withdrawalParams)
+  });
+  eventParams.push(depositParams, withdrawalParams);
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("meson", chain as Chain, fromBlock, toBlock, eventParams)
-}
+    getTxDataFromEVMEventLogs("meson", chain as Chain, fromBlock, toBlock, eventParams);
+};
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
@@ -40,7 +40,11 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   scroll: constructParams("scroll"),
   celo: constructParams("celo"),
-  gnosis: constructParams("xdai")
+  gnosis: constructParams("xdai"),
+  merlin: constructParams("merlin"),
+  bsquared: constructParams("b2-mainnet"),
+  zkfair: constructParams("zkfair"),
+
   // conflux-espace
   // eos-evm
   // tron
