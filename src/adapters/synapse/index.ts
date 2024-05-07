@@ -7,7 +7,7 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 const contractAddresses = {
   arbitrum: {
       synapseBridge: "0x6F4e8eBa4D337f874Ab57478AcC2Cb5BACdc19c9",
-      synapseRFQ: "0x1a54fa31cbcad8c1cbc3a47dcd00864eac9ac2b0",
+      synapseRFQ: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E",
   },
   aurora: {
       synapseBridge: "0xaeD5b25BE1c3163c907a471082640450F928DDFE",
@@ -35,7 +35,7 @@ const contractAddresses = {
   },
   ethereum: {
       synapseBridge: "0x2796317b0fF8538F253012862c06787Adfb8cEb6",
-      synapseRFQ: "0x1a54fa31cbcad8c1cbc3a47dcd00864eac9ac2b0",
+      synapseRFQ: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E",
   },
   fantom: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
@@ -51,7 +51,7 @@ const contractAddresses = {
   },
   optimism: {
       synapseBridge: "0xAf41a65F786339e7911F4acDAD6BD49426F2Dc6b",
-      synapseRFQ: "0x1a54fa31cbcad8c1cbc3a47dcd00864eac9ac2b0",
+      synapseRFQ: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E",
   },
   polygon: {
       synapseBridge: "0x8F5BBB2BB8c2Ee94639E55d5F41de9b4839C1280",
@@ -64,7 +64,7 @@ const contractAddresses = {
   },
   base: {
     synapseBridge: "0xf07d1C752fAb503E47FEF309bf14fbDD3E867089",
-
+    synapseRFQ: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E"
   },
   blast: {
     synapseBridge:"0x55769baf6ec39b3bf4aae948eb890ea33307ef3c",
