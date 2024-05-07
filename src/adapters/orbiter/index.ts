@@ -43,7 +43,7 @@ const nativeTokens: Record<string, string> = {
   polygon_zkevm: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
   arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
-  merlin: '0x0000000000000000000000000000000000000000',
+  merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
@@ -56,10 +56,10 @@ const constructParams = (chain: string) => {
     eventParams.push(transferWithdrawalParams, transferDepositParams);
   });
 
-  if(chain == 'merlin') {
+  if (chain == "merlin") {
     return async (fromBlock: number, toBlock: number) => {
       const eventLogData = await getTxDataFromEVMEventLogs("orbiter", chain as Chain, fromBlock, toBlock, eventParams);
-      
+
       const nativeEvents = await Promise.all(
         eoaAddressNative.map(async (address: string, i: number) => {
           await wait(300 * i); // for merlin api
@@ -79,7 +79,7 @@ const constructParams = (chain: string) => {
             };
             return event;
           });
-  
+
           return eventsRes;
         })
       );
@@ -90,11 +90,11 @@ const constructParams = (chain: string) => {
           !blackListedAddresses.includes(event?.to?.toLowerCase())
       );
       return filteredEvents;
-    }
-  }else {
+    };
+  } else {
     return async (fromBlock: number, toBlock: number) => {
       const eventLogData = await getTxDataFromEVMEventLogs("orbiter", chain as Chain, fromBlock, toBlock, eventParams);
-  
+
       const nativeEvents = await Promise.all(
         eoaAddressNative.map(async (address: string, i: number) => {
           await wait(300 * i); // for etherscan
@@ -113,7 +113,7 @@ const constructParams = (chain: string) => {
             };
             return event;
           });
-  
+
           return eventsRes;
         })
       );
@@ -142,6 +142,6 @@ const adapter: BridgeAdapter = {
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
-  merlin: constructParams('merlin')
+  merlin: constructParams("merlin"),
 };
 export default adapter;
