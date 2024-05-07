@@ -1,6 +1,10 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { EventData } from '../../utils/types';
+import axios, { AxiosResponse } from 'axios';
+import { ethers } from 'ethers';
+import { getConnection } from '../../helpers/solana';
 
 const lpAddresses = {
   bsc: [
@@ -87,6 +91,53 @@ const constructParams = (chain: string) => {
     getTxDataFromEVMEventLogs("allbridge-core", chain as Chain, fromBlock, toBlock, eventParams);
 };
 
+interface SolanaEvent {
+  blockTime: number;
+  txHash: string;
+  from: string;
+  to: string;
+  token: string;
+  amount: string;
+  isDeposit: boolean;
+}
+
+function interpolateNumber(x1: number, y1: number, x2: number, y2: number, y: number): number {
+  const x = x1 + (x2 - x1) / (y2 - y1) * (y - y1);
+  return Math.round(x);
+}
+
+const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
+  const connection = getConnection();
+  const timestampFrom = await connection.getBlockTime(fromSlot);
+  const timestampTo = await connection.getBlockTime(toSlot);
+  // Old blocks may have been pruned by the RPC
+  if (!timestampFrom || !timestampTo) {
+    return [];
+  }
+  const from = new Date(timestampFrom * 1000).toISOString();
+  const to = new Date(timestampTo * 1000).toISOString();
+
+  let response: AxiosResponse<SolanaEvent[]>;
+  try {
+    response = await axios.get<SolanaEvent[]>(
+      `https://core.api.allbridgecoreapi.net/analytics/inflows?chain=SOL&from=${from}&to=${to}`
+    );
+  } catch (e) {
+    console.error("Error fetching Solana events", e);
+    return [];
+  }
+
+  return response.data.map((event) => ({
+    blockNumber: interpolateNumber(fromSlot, timestampFrom, toSlot, timestampTo, event.blockTime),
+    txHash: event.txHash,
+    from,
+    to,
+    token: event.token,
+    amount: ethers.BigNumber.from(event.amount),
+    isDeposit: event.isDeposit,
+  }));
+};
+
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
@@ -95,6 +146,7 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
   optimism: constructParams("optimism"),
+  solana: getSolanaEvents,
 };
 
 export default adapter;
