@@ -15,11 +15,7 @@ export const getSingleLlamaPrice = async (
     : PRICES_API + `/current/${chain}:${token}`;
   const res = await retry(async (_bail: any) => await axios.get(url));
   const price = res?.data?.coins?.[`${chain}:${token}`];
-  if (
-    !confidenceThreshold ||
-    !price ||
-    price.confidence > confidenceThreshold
-  ) {
+  if (!confidenceThreshold || !price || price.confidence > confidenceThreshold) {
     return price;
   }
   return null;
@@ -27,7 +23,9 @@ export const getSingleLlamaPrice = async (
 
 export const getLlamaPrices = async (tokens: string[], timestamp?: number) => {
   let finalPrices = {} as any;
-  let remainingTokens = tokens;
+  let remainingTokens = tokens?.map((token) =>
+    token?.includes("b2-mainnet") ? `bsquared:${token?.split(":")[1]}` : token
+  );
   while (remainingTokens.length > 0) {
     const url = timestamp
       ? PRICES_API +
@@ -49,5 +47,9 @@ export const getLlamaPrices = async (tokens: string[], timestamp?: number) => {
     finalPrices = { ...finalPrices, ...prices };
     remainingTokens = remainingTokens.slice(maxNumberOfPrices);
   }
-  return finalPrices;
+  return Object.fromEntries(
+    Object.entries(finalPrices || {}).map(([key, value]) =>
+      key?.includes("bsquared") ? [`b2-mainnet:${key?.split(":")[1]}`, value] : [key, value]
+    )
+  );
 };
