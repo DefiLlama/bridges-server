@@ -42,7 +42,7 @@ const adapter: BridgeAdapter = {
   celo: constructParams("celo"),
   gnosis: constructParams("xdai"),
   merlin: constructParams("merlin"),
-  bsquared: constructParams("b2-mainnet"),
+  bsquared: constructParams("bsquared"),
   zkfair: constructParams("zkfair"),
 
   // conflux-espace
