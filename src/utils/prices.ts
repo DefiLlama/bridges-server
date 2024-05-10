@@ -26,7 +26,7 @@ const NAME_MAPPING: Record<string, string> = {
   xdai: "gnosis",
 };
 
-export const getLlamaPrices = async (tokens: string[], timestamp?: number) => {
+export const getLlamaPrices = async (tokens: string[], timestamp?: number): Promise<Record<string, any>> => {
   const finalPrices: { [key: string]: any } = {};
   let remainingTokens = tokens.map((token) => {
     const [prefix, id] = token.split(":");
