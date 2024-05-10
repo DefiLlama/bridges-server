@@ -486,7 +486,6 @@ export default [
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       gnosis: "xdai",
-      bsquared: "b2-mainnet",
     },
   },
   {
