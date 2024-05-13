@@ -24,6 +24,7 @@ async function fillAdapterHistorical(
 
   let adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
+  console.log(`Found ${bridgeDbName}`);
 
   if(bridgeDbName === "ibc") {
     adapter = await newIBCBridgeNetwork(adapter);
@@ -40,6 +41,8 @@ async function fillAdapterHistorical(
       if (restrictChainTo && nChain !== restrictChainTo) return;
       if (nChain === adapter?.destinationChain?.toLowerCase()) return;
 
+      console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
+      
       await wait(500 * i);
       const startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
       if (!startBlock) {
