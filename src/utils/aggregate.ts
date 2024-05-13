@@ -92,7 +92,7 @@ export const runAggregateDataHistorical = async (
   while (timestamp > startTimestamp) {
     if (chainToRestrictTo) {
       try {
-        await aggregateData(timestamp, bridgeNetwork, chainToRestrictTo, hourly, largeTxThreshold);
+        await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
       } catch (e: any) {
         const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping. ${e?.message}`;
         await insertErrorRow({
@@ -107,7 +107,7 @@ export const runAggregateDataHistorical = async (
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {
-            await aggregateData(timestamp, bridgeNetwork, chain, hourly, largeTxThreshold);
+            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
           } catch (e: any) {
             const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.${e?.message}`;
             await insertErrorRow({
@@ -137,7 +137,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {
-            await aggregateData(timestamp, bridgeNetwork, chain, hourly, largeTxThreshold);
+            await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
           } catch (e) {
             const errString = `Unable to aggregate hourly data for ${bridgeDbName} on chain ${chain}, skipping.`;
             await insertErrorRow({
@@ -165,15 +165,15 @@ Aggregates hourly data for the hour previous to timestamp's current hour, and da
 */
 export const aggregateData = async (
   timestamp: number,
-  bridgeNetwork: BridgeNetwork,
+  bridgeDbName: string,
   chain: string,
   hourly?: boolean,
   largeTxThreshold?: number
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
-  const bridgeID = (await getBridgeID(bridgeNetwork.bridgeDbName, chain))?.id;
+  const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
-    const errString = `Could not find ID for ${bridgeNetwork.bridgeDbName} on chain ${chain}, make sure it is added to config db.`;
+    const errString = `Could not find ID for ${bridgeDbName} on chain ${chain}, make sure it is added to config db.`;
     await insertErrorRow({
       ts: currentTimestamp,
       target_table: hourly ? "hourly_aggregated" : "daily_aggregated",

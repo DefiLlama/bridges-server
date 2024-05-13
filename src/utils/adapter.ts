@@ -15,7 +15,7 @@ import { lookupBlock } from "@defillama/sdk/build/util";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
-import { newIBCAdapter } from "../adapters/ibc";
+import { newIBCAdapter, newIBCBridgeNetwork } from "../adapters/ibc";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -38,7 +38,12 @@ const getBlocksForRunningAdapter = async (
   if (useChainBlocks) {
     // probably need timeouts here
     try {
-      endBlock = await getLatestBlockNumber(chainContractsAreOn, null);
+      if (bridgeDbName === "ibc") {
+        endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName);
+      } else {
+        endBlock = (await getLatestBlockNumber(chainContractsAreOn));
+      }
+
       if (!endBlock) {
         const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
         await insertErrorRow({
@@ -148,7 +153,7 @@ export const runAdapterToCurrentBlock = async (
       try {
         while (startBlock < endBlock) {
           let toBlock = startBlock + step > endBlock ? endBlock : startBlock + step;
-          await runAdapterHistorical(startBlock, toBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, toBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
           startBlock += step;
         }
       } catch (e) {
@@ -253,7 +258,7 @@ export const runAllAdaptersToCurrentBlock = async (
         );
         if (startBlock == null) return;
         try {
-          await runAdapterHistorical(startBlock, endBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
@@ -311,7 +316,7 @@ export const runAllAdaptersTimestampRange = async (
             startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
           }
-          await runAdapterHistorical(startBlock, endBlock, bridgeNetwork, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
           await insertErrorRow({
@@ -334,17 +339,19 @@ export const runAllAdaptersTimestampRange = async (
 export const runAdapterHistorical = async (
   startBlock: number,
   endBlock: number,
-  bridgeNetwork: BridgeNetwork,
+  bridgeNetworkId: number,
   chain: string, // needed because different chains query over different block ranges
   allowNullTxValues: boolean = false,
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
+  let bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
   let adapter = adapters[bridgeDbName];
 
   if(bridgeNetwork.bridgeDbName === "ibc") {
+    bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
     adapter = newIBCAdapter(bridgeNetwork);
   }
   const adapterChainEventsFn = adapter[chain];

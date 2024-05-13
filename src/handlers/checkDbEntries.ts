@@ -80,7 +80,7 @@ export default wrapScheduledLambda(async (_event) => {
     Object.keys(recordedBlocks).map(async (adapter: any) => {
       const chain = adapter.split(":")[1];
       if (!latestChainBlocks[chain]) {
-        latestChainBlocks[chain] = await getLatestBlockNumber(chain, null);
+        latestChainBlocks[chain] = await getLatestBlockNumber(chain);
       }
     })
   );

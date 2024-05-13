@@ -24,6 +24,7 @@ async function fillAdapterHistorical(
 
   let adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
+  console.log(`Found ${bridgeDbName}`);
 
   if(bridgeDbName === "ibc") {
     adapter = await newIBCBridgeNetwork(adapter);
@@ -40,22 +41,31 @@ async function fillAdapterHistorical(
       if (restrictChainTo && nChain !== restrictChainTo) return;
       if (nChain === adapter?.destinationChain?.toLowerCase()) return;
 
+      console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
+
       await wait(500 * i);
-      const startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
-      if (!startBlock) {
-        console.error(`Could not find start block for ${chain} on ${bridgeDbName}`);
-        return;
-      }
-      const endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain, adapter, "Last");
-      if (!endBlock) {
-        console.error(`Could not find end block for ${chain} on ${bridgeDbName}`);
-        return;
+      let startBlock;
+      let endBlock;
+      if(bridgeDbName === "ibc") {
+        startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
+        if (!startBlock) {
+          console.error(`Could not find start block for ${chain} on ${bridgeDbName}`);
+          return;
+        }
+        endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain, adapter, "Last");
+        if (!endBlock) {
+          console.error(`Could not find end block for ${chain} on ${bridgeDbName}`);
+          return;
+        }
+      } else {
+        startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain);
+        endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain);
       }
 
       await runAdapterHistorical(
         startBlock.block,
         endBlock.block,
-        adapter,
+        adapter.id,
         chain.toLowerCase(),
         true,
         false,
