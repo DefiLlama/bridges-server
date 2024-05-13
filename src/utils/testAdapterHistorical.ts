@@ -165,8 +165,16 @@ async function fillAdapterHistorical(
       if (restrictChainTo && nChain !== restrictChainTo) return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
-      const startBlock = await getBlockByTimestamp(startTimestamp, chain as Chain, adapter, "First");
-      const endBlock = await getBlockByTimestamp(endTimestamp, chain as Chain, adapter, "Last");
+      
+      let startBlock, endBlock;
+      if(adapter.bridgeDbName === "ibc") {
+        startBlock = await getBlockByTimestamp(startTimestamp, chain as Chain, adapter, "First");
+        endBlock = await getBlockByTimestamp(endTimestamp, chain as Chain, adapter, "Last");
+      } else {
+        startBlock = await getBlockByTimestamp(startTimestamp, chain as Chain);
+        endBlock = await getBlockByTimestamp(endTimestamp, chain as Chain);
+      }
+
       if(startBlock && endBlock) {
         await runAdapterHistorical(startBlock.block, endBlock.block, adapter.id, chain.toLowerCase(), false);
       }
