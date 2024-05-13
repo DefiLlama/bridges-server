@@ -38,7 +38,7 @@ const getBlocksForRunningAdapter = async (
   if (useChainBlocks) {
     // probably need timeouts here
     try {
-      endBlock = await getLatestBlockNumber(chainContractsAreOn, null);
+      endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName);
       if (!endBlock) {
         const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
         await insertErrorRow({

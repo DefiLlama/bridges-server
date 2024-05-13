@@ -23,6 +23,15 @@ export const getLatestBlockForZoneFromMoz = async (zoneId: string): Promise<{
   };
 }
 
+// this returns height only
+export const getLaestBlockHeightForZoneFromMoz = async (zoneId: string): Promise<number> => {
+  const block = await getLatestBlockForZone(zoneId);
+  if (!block) {
+    throw new Error(`No block found for zone ${zoneId}`);
+  }
+  return block.block;
+}
+
 export const findChainIdFromChainName = (bridgeNetwork: BridgeNetwork, chainName: string) => {
   if (bridgeNetwork.chainMapping === undefined) {
     throw new Error("Chain mapping is undefined for ibc bridge network.");

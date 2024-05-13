@@ -47,7 +47,7 @@ const testAdapter = async () => {
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
       let block = undefined;
-      block = await getLatestBlock(contractsChain, bridgeNetwork);
+      block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
       
       if (!block) {
         throw new Error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`);
