@@ -5,7 +5,7 @@ import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
 import { BridgeNetwork } from "../data/types";
-import { getLaestBlockHeightForZoneFromMoz, getLatestBlockForZoneFromMoz, ibcGetBlockFromTimestamp } from "../adapters/ibc";
+import { getLatestBlockHeightForZoneFromMoz, getLatestBlockForZoneFromMoz, ibcGetBlockFromTimestamp } from "../adapters/ibc";
 const retry = require("async-retry");
 
 export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
@@ -17,6 +17,8 @@ export async function getLatestBlockNumber(chain: string, bridge?: string): Prom
     return await connection.getSlot();
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
+  } else if (bridge && bridge === "ibc") {
+    return await getLatestBlockHeightForZoneFromMoz(chain);
   }
   return (await getLatestBlock(chain, bridge)).number;
 }
