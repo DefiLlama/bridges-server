@@ -55,7 +55,7 @@ async function fillAdapterHistorical(
       await runAdapterHistorical(
         startBlock.block,
         endBlock.block,
-        adapter,
+        adapter.id,
         chain.toLowerCase(),
         true,
         false,
