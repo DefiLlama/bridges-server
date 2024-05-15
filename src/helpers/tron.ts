@@ -52,8 +52,41 @@ export const getAccountTrcTransactions = async (
   return transactions;
 };
 
+export const getTronLogs = async (contractAddress: string, eventName: string, minBlockTimestamp: number, maxBlockTimestamp: number) => {
+  const tronRpc = `https://api.trongrid.io`
+  const tronLogs: any[] = [];
+  let fingerprint = null;
+  do {
+    const url = `${tronRpc}/v1/contracts/${contractAddress}/events?event_name=${eventName}&min_block_timestamp=${minBlockTimestamp}&max_block_timestamp=${maxBlockTimestamp}&limit=200${
+      fingerprint ? `&fingerprint=${fingerprint}` : ""
+    }`;
+    const options = {
+      method: "GET",
+      // headers: { "TRON-PRO-API-KEY": apiKeys[Math.floor(Math.random() * 3)], accept: "application/json" },
+    };
+    const response = await axios.get(url, options);
+    if (response?.status !== 200) {
+      throw new Error(`Tron returned response ${response?.status} with statusText ${response?.statusText}.`);
+    }
+    const body = response?.data;
+    if (!body?.success) {
+      throw new Error(`Error getting Tron events.`);
+    }
+    tronLogs.push(...body?.data);
+    fingerprint = body?.meta?.fingerprint as string | null;
+  } while (fingerprint);
+
+  return tronLogs;
+}
+
 export const tronGetLatestBlock = async () => {
   const response = await axios.post("https://api.trongrid.io/wallet/getblockbylatestnum", { num: 1 });
   const { number, timestamp } = response?.data?.block?.[0]?.block_header?.raw_data;
   return { number: number, timestamp: timestamp };
+};
+
+export const tronGetTimestampByBlockNumber = async (blockNumber: number) => {
+  const response = await axios.post("https://api.trongrid.io/wallet/getblockbynum", { num: blockNumber });
+  const { timestamp } = response?.data?.block_header?.raw_data;
+  return timestamp;
 };

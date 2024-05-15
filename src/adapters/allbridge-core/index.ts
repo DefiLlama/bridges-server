@@ -1,10 +1,14 @@
-import { Chain } from "@defillama/sdk/build/general";
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { EventData } from '../../utils/types';
 import axios, { AxiosResponse } from 'axios';
-import { ethers } from 'ethers';
+import { BigNumber } from 'ethers';
+import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import { Chain } from "@defillama/sdk/build/general";
+import { EventData } from '../../utils/types';
+import { fromHex } from 'tron-format-address';
 import { getConnection } from '../../helpers/solana';
+import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { getTxDataFromTronEventLogs } from './eventParsing';
+
+const adapterName = "allbridge-core";
 
 const lpAddresses = {
   bsc: [
@@ -35,6 +39,9 @@ const lpAddresses = {
     '0x3B96F88b2b9EB87964b852874D41B633e0f1f68F',
     '0xb24A05d54fcAcfe1FC00c59209470d4cafB0deEA',
   ],
+  tron: [
+    'TAC21biCBL9agjuUyzd4gZr356zRgJq61b',
+  ]
 } as {
   [chain: string]: string[];
 };
@@ -88,7 +95,7 @@ const constructParams = (chain: string) => {
     eventParams.push(depositParams, withdrawParams);
   }
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("allbridge-core", chain as Chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs(adapterName, chain as Chain, fromBlock, toBlock, eventParams);
 };
 
 interface SolanaEvent {
@@ -133,10 +140,65 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
     from,
     to,
     token: event.token,
-    amount: ethers.BigNumber.from(event.amount),
+    amount: BigNumber.from(event.amount),
     isDeposit: event.isDeposit,
   }));
 };
+
+function constructTronParams() {
+  const chain = "tron";
+  const eventParams: any[] = [];
+  const lps = lpAddresses[chain];
+  for (const lpAddress of Object.values(lps)) {
+    const depositParams = {
+      target: lpAddress,
+      eventName: "SwappedToVUsd",
+      logKeys: {
+        blockNumber: "block_number",
+        txHash: "transaction_id",
+      },
+      argKeys: {
+        from: "sender",
+        token: "token",
+        amount: "amount"
+      },
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        from: (log: any) => fromHex(log.sender),
+        token: (log: any) => fromHex(log.token),
+      },
+      fixedEventData: {
+        to: lpAddress,
+      },
+      isDeposit: true,
+    }
+    const withdrawParams = {
+      target: lpAddress,
+      eventName: "SwappedFromVUsd",
+      logKeys: {
+        blockNumber: "block_number",
+        txHash: "transaction_id",
+      },
+      argKeys: {
+        amount: "amount",
+        token: "token",
+        to: "recipient",
+      },
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        to: (log: any) => fromHex(log.recipient),
+        token: (log: any) => fromHex(log.token),
+      },
+      fixedEventData: {
+        from: lpAddress,
+      },
+      isDeposit: false,
+    }
+    eventParams.push(depositParams, withdrawParams);
+  }
+  return async (fromBlock: number, toBlock: number) =>
+    getTxDataFromTronEventLogs(adapterName, fromBlock, toBlock, eventParams);
+}
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
@@ -147,6 +209,7 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   optimism: constructParams("optimism"),
   solana: getSolanaEvents,
+  tron: constructTronParams(),
 };
 
 export default adapter;
