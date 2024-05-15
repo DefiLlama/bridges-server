@@ -62,7 +62,7 @@ export const getTronLogs = async (contractAddress: string, eventName: string, mi
     }`;
     const options = {
       method: "GET",
-      // headers: { "TRON-PRO-API-KEY": apiKeys[Math.floor(Math.random() * 3)], accept: "application/json" },
+      headers: { "TRON-PRO-API-KEY": apiKeys[Math.floor(Math.random() * 3)], accept: "application/json" },
     };
     const response = await axios.get(url, options);
     if (response?.status !== 200) {
