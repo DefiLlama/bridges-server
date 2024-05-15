@@ -39,6 +39,9 @@ const lpAddresses = {
     '0x3B96F88b2b9EB87964b852874D41B633e0f1f68F',
     '0xb24A05d54fcAcfe1FC00c59209470d4cafB0deEA',
   ],
+  celo: [
+    '0xfb2C7c10e731EBe96Dabdf4A96D656Bfe8e2b5Af',
+  ],
   tron: [
     'TAC21biCBL9agjuUyzd4gZr356zRgJq61b',
   ]
@@ -208,8 +211,9 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
   optimism: constructParams("optimism"),
-  solana: getSolanaEvents,
+  celo: constructParams("celo"),
   tron: constructTronParams(),
+  solana: getSolanaEvents,
 };
 
 export default adapter;
