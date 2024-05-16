@@ -19,6 +19,7 @@ const constructParams = (chain: string) => {
 };
 
 const adapter: BridgeAdapter = {
+  /*
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
@@ -44,6 +45,8 @@ const adapter: BridgeAdapter = {
   merlin: constructParams("merlin"),
   bsquared: constructParams("b2-mainnet"),
   zkfair: constructParams("zkfair"),
+  */
+  btr: constructParams("btr"),
 
   // conflux-espace
   // eos-evm
