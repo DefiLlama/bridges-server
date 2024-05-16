@@ -44,6 +44,7 @@ const adapter: BridgeAdapter = {
   merlin: constructParams("merlin"),
   bsquared: constructParams("b2-mainnet"),
   zkfair: constructParams("zkfair"),
+  btr: constructParams("btr"),
 
   // conflux-espace
   // eos-evm
