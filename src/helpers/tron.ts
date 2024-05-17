@@ -52,14 +52,19 @@ export const getAccountTrcTransactions = async (
   return transactions;
 };
 
-export const getTronLogs = async (contractAddress: string, eventName: string, minBlockTimestamp: number, maxBlockTimestamp: number) => {
-  const tronRpc = `https://api.trongrid.io`
+export const getTronLogs = async (
+  contractAddress: string,
+  eventName: string,
+  minBlockTimestamp: number,
+  maxBlockTimestamp: number
+) => {
+  const tronRpc = `https://api.trongrid.io`;
   const tronLogs: any[] = [];
   let fingerprint = null;
   do {
-    const url = `${tronRpc}/v1/contracts/${contractAddress}/events?event_name=${eventName}&min_block_timestamp=${minBlockTimestamp}&max_block_timestamp=${maxBlockTimestamp}&limit=200${
-      fingerprint ? `&fingerprint=${fingerprint}` : ""
-    }`;
+    const url = `${tronRpc}/v1/contracts/${contractAddress}/events?event_name=${eventName}&min_block_timestamp=${
+      minBlockTimestamp * 1000
+    }&max_block_timestamp=${maxBlockTimestamp * 1000}&limit=200${fingerprint ? `&fingerprint=${fingerprint}` : ""}`;
     const options = {
       method: "GET",
       headers: { "TRON-PRO-API-KEY": apiKeys[Math.floor(Math.random() * 3)], accept: "application/json" },
@@ -77,16 +82,16 @@ export const getTronLogs = async (contractAddress: string, eventName: string, mi
   } while (fingerprint);
 
   return tronLogs;
-}
+};
 
 export const tronGetLatestBlock = async () => {
   const response = await axios.post("https://api.trongrid.io/wallet/getblockbylatestnum", { num: 1 });
   const { number, timestamp } = response?.data?.block?.[0]?.block_header?.raw_data;
-  return { number: number, timestamp: timestamp };
+  return { number: number, timestamp: Math.floor(timestamp / 1000) };
 };
 
 export const tronGetTimestampByBlockNumber = async (blockNumber: number) => {
   const response = await axios.post("https://api.trongrid.io/wallet/getblockbynum", { num: blockNumber });
   const { timestamp } = response?.data?.block_header?.raw_data;
-  return timestamp;
+  return Math.floor(timestamp / 1000);
 };
