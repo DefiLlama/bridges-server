@@ -254,7 +254,7 @@ export default [
   {
     id: 15,
     displayName: "Core Bitcoin Bridge",
-    bridgeDbName: "avalanche-btc",
+    bridgeDbName: "avalanche-c",
     iconLink: "chain:avalanche",
     largeTxThreshold: 10000,
     url: "https://core.app/",
@@ -480,6 +480,7 @@ export default [
       "Merlin",
       "Zkfair",
       "BSquared",
+      "BTR",
     ],
     chainMapping: {
       avalanche: "avax",
