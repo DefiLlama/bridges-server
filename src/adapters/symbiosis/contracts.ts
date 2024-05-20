@@ -64,7 +64,7 @@ export const contracts = {
         synthesis: null,
     },
     tron: {
-        portal: "0xbacc8e4edfcb33e523ba248fb3ce72c3e5b20c72",
+        portal: "0xd83b5752b42856a08087748de6095af0be52d299",
         synthesis: null,
     },
     scroll: {
@@ -100,7 +100,7 @@ export const contracts = {
         synthesis: null,
     },
     zklink: {
-        portal: "0x2E818E50b913457015E1277B43E469b63AC5D3d7",
+        portal: "0x8Dc71561414CDcA6DcA7C1dED1ABd04AF474D189",
         synthesis: null,
     },
 } as const;
