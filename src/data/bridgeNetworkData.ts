@@ -989,7 +989,8 @@ export default [
       "Zkfair",
       "Merlin",
       "BSquared",
-
+      "BTR",
+      
       "zkSync Era",
       "Polygon zkEVM",
     ],
