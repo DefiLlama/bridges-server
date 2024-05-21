@@ -31,6 +31,8 @@ export const bridgesAddress = {
     merlin: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     zkfair: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     "b2-mainnet": ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    btr: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    xlayer: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
 
 } as const;
 
@@ -57,6 +59,8 @@ export const contractsAddress = {
     merlin: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     zkfair: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     "b2-mainnet": ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    btr: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    xlayer: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
 
 } as const;
 
@@ -213,7 +217,9 @@ const adapter: BridgeAdapter = {
     zkfair: constructParams("zkfair"),
     merlin: constructParams("merlin"),
     bsquared: constructParams("b2-mainnet"),
+    btr: constructParams("btr"),
 
+    'x layer': constructParams("xlayer"),
     "arbitrum nova": constructParams("arbitrum_nova"),
     "polygon zkevm": constructParams("polygon_zkevm"),
     "zksync era": constructParams("era"),

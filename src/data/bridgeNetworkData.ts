@@ -991,6 +991,8 @@ export default [
       "Zkfair",
       "Merlin",
       "BSquared",
+      "BTR",
+      "X Layer",
 
       "zkSync Era",
       "Polygon zkEVM",
@@ -1000,6 +1002,7 @@ export default [
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       bsquared: "b2-mainnet",
+      "x layer": "xlayer",
     },
   },
 ] as BridgeNetwork[];
