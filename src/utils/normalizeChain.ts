@@ -939,6 +939,12 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
+  "zkLink Nova": {
+    geckoId: "zklink",
+    symbol: "ZKL",
+    cmcId: null,
+    categories: ["EVM"],
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1172,6 +1178,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "BSquared";
      case "btr":
       return "Bitlayer"
+    case "zklink":
+      return "zkLink Nova"
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
