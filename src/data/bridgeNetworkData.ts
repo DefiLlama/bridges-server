@@ -437,6 +437,8 @@ export default [
       "Mode",
       "Rootstock",
       "Blast",
+      "Scroll",
+      "ZKLink",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
