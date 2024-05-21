@@ -51,7 +51,7 @@ const nativeTokens: Record<string, string> = {
   arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
   merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
   btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
-  zklink_nova: "0x000000000000000000000000000000000000800A"
+  zklink: "0x000000000000000000000000000000000000800A"
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
@@ -152,6 +152,6 @@ const adapter: BridgeAdapter = {
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
   btr: constructParams('bitlayer'),
-  "zklink nova": constructParams('zklink_nova')
+  zklink: constructParams('zklink')
 };
 export default adapter;
