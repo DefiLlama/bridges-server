@@ -21,7 +21,7 @@ const endpoints = {
   polygon_zkevm: "https://api-zkevm.polygonscan.com",
   arbitrum_nova: "https://api-nova.arbiscan.io",
   era: "https://api-era.zksync.network",
-  bitlayer: "https://rpc.ankr.com/bitlayer",
+  btr: "https://rpc.ankr.com/bitlayer",
   zklink: " https://rpc.zklink.network",
 } as { [chain: string]: string };
 

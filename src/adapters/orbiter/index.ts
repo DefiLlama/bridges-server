@@ -151,7 +151,7 @@ const adapter: BridgeAdapter = {
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
-  btr: constructParams('bitlayer'),
+  btr: constructParams('btr'),
   zklink: constructParams('zklink')
 };
 export default adapter;
