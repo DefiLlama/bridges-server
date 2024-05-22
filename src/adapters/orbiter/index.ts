@@ -50,7 +50,6 @@ const nativeTokens: Record<string, string> = {
   era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
   arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
   merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
-  btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
   zklink: "0x000000000000000000000000000000000000800A"
 };
 
@@ -75,15 +74,14 @@ const constructParams = (chain: string) => {
             includeSignatures: nativeTokenTransferSignature,
           });
           const eventsRes: EventData[] = txs.map((tx: any) => {
-            //TODO:tx sturct maybe diff
             const event: EventData = {
               txHash: tx.hash,
-              blockNumber: +tx.block_number,
-              from: tx.from_address,
-              to: tx.to_address,
+              blockNumber: +tx.blockNumber,
+              from: tx.from,
+              to: tx.to,
               token: nativeTokens[chain],
               amount: tx.value,
-              isDeposit: address === tx.to_address,
+              isDeposit: address === tx.to,
             };
             return event;
           });
@@ -151,7 +149,6 @@ const adapter: BridgeAdapter = {
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
-  btr: constructParams('btr'),
   zklink: constructParams('zklink')
 };
 export default adapter;

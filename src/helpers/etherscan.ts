@@ -12,8 +12,8 @@ const endpoints = {
   optimism: "https://api-optimistic.etherscan.io",
   aurora: "https://explorer.mainnet.aurora.dev/api",
   celo: "https://api.celoscan.io",
-  "zksync era": "https://block-explorer-api.mainnet.zksync.io/api",
-  mantle: "https://explorer.mantle.xyz/api",
+  "zksync era": "https://block-explorer-api.mainnet.zksync.io/",
+  mantle: "https://explorer.mantle.xyz/",
   base: "https://api.basescan.org",
   linea: "https://api.lineascan.build",
   scroll: "https://api.scrollscan.com",
@@ -21,8 +21,7 @@ const endpoints = {
   polygon_zkevm: "https://api-zkevm.polygonscan.com",
   arbitrum_nova: "https://api-nova.arbiscan.io",
   era: "https://api-era.zksync.network",
-  btr: "https://rpc.ankr.com/bitlayer",
-  zklink: " https://rpc.zklink.network",
+  zklink: "https://explorer-api.zklink.io/",
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -59,7 +58,7 @@ export const getTxsBlockRangeEtherscan = async (
       await retry(
         () =>
           axios.get(
-            `${endpoint}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
+            `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
           ),
         { factor: 1, retries: 3 }
       )
