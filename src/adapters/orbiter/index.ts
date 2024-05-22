@@ -50,7 +50,8 @@ const nativeTokens: Record<string, string> = {
   era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
   arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
   merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
-  zklink: "0x000000000000000000000000000000000000800A"
+  zklink: "0x000000000000000000000000000000000000800A",
+  btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
@@ -62,76 +63,46 @@ const constructParams = (chain: string) => {
     const transferDepositParams: PartialContractEventParams = constructTransferParams(address, true);
     eventParams.push(transferWithdrawalParams, transferDepositParams);
   });
+  return async (fromBlock: number, toBlock: number) => {
+    const eventLogData = await getTxDataFromEVMEventLogs("orbiter", chain as Chain, fromBlock, toBlock, eventParams);
 
-  if (chain == "merlin") {
-    return async (fromBlock: number, toBlock: number) => {
-      const eventLogData = await getTxDataFromEVMEventLogs("orbiter", chain as Chain, fromBlock, toBlock, eventParams);
-
-      const nativeEvents = await Promise.all(
-        eoaAddressNative.map(async (address: string, i: number) => {
-          await wait(300 * i); // for merlin api
-          const txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
+    const nativeEvents = await Promise.all(
+      eoaAddressNative.map(async (address: string, i: number) => {
+        await wait(300 * i); // for etherscan
+        let txs: any[] = [];
+        if(chain = 'merlin') {
+          txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
             includeSignatures: nativeTokenTransferSignature,
           });
-          const eventsRes: EventData[] = txs.map((tx: any) => {
-            const event: EventData = {
-              txHash: tx.hash,
-              blockNumber: +tx.blockNumber,
-              from: tx.from,
-              to: tx.to,
-              token: nativeTokens[chain],
-              amount: tx.value,
-              isDeposit: address === tx.to,
-            };
-            return event;
-          });
-
-          return eventsRes;
-        })
-      );
-      const allEvents = [...eventLogData, ...nativeEvents.flat()];
-      const filteredEvents = allEvents.filter(
-        (event) =>
-          !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
-          !blackListedAddresses.includes(event?.to?.toLowerCase())
-      );
-      return filteredEvents;
-    };
-  } else {
-    return async (fromBlock: number, toBlock: number) => {
-      const eventLogData = await getTxDataFromEVMEventLogs("orbiter", chain as Chain, fromBlock, toBlock, eventParams);
-
-      const nativeEvents = await Promise.all(
-        eoaAddressNative.map(async (address: string, i: number) => {
-          await wait(300 * i); // for etherscan
-          const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+        } else {
+          txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
             includeSignatures: nativeTokenTransferSignature,
           });
-          const eventsRes: EventData[] = txs.map((tx: any) => {
-            const event: EventData = {
-              txHash: tx.hash,
-              blockNumber: +tx.blockNumber,
-              from: tx.from,
-              to: tx.to,
-              token: nativeTokens[chain],
-              amount: tx.value,
-              isDeposit: address === tx.to,
-            };
-            return event;
-          });
+        }
+        const eventsRes: EventData[] = txs.map((tx: any) => {
+          const event: EventData = {
+            txHash: tx.hash,
+            blockNumber: +tx.blockNumber,
+            from: tx.from,
+            to: tx.to,
+            token: nativeTokens[chain],
+            amount: tx.value,
+            isDeposit: address === tx.to,
+          };
+          return event;
+        });
 
-          return eventsRes;
-        })
-      );
-      const allEvents = [...eventLogData, ...nativeEvents.flat()];
-      const filteredEvents = allEvents.filter(
-        (event) =>
-          !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
-          !blackListedAddresses.includes(event?.to?.toLowerCase())
-      );
-      return filteredEvents;
-    };
-  }
+        return eventsRes;
+      })
+    );
+    const allEvents = [...eventLogData, ...nativeEvents.flat()];
+    const filteredEvents = allEvents.filter(
+      (event) =>
+        !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
+        !blackListedAddresses.includes(event?.to?.toLowerCase())
+    );
+    return filteredEvents;
+  };
 };
 
 const adapter: BridgeAdapter = {
@@ -149,6 +120,7 @@ const adapter: BridgeAdapter = {
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
-  zklink: constructParams('zklink')
+  zklink: constructParams('zklink'),
+  btr: constructParams('btr')
 };
 export default adapter;
