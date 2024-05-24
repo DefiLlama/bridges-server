@@ -1005,4 +1005,16 @@ export default [
       "x layer": "xlayer",
     },
   },
+  {
+    id: 63,
+    displayName: "zkbridge",
+    bridgeDbName: "zkbridge",
+    iconLink: "icons:zkbridge",
+    largeTxThreshold: 10000,
+    url: "https://www.zkbridge.com/token",
+    chains: ["BSC"],
+    // chainMapping: {
+    //   avalanche: "avax", // this is needed temporarily, need to fix and remove
+    // },
+  },
 ] as BridgeNetwork[];
