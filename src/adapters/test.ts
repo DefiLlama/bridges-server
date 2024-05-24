@@ -45,7 +45,7 @@ const testAdapter = async () => {
       try {
         block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
         if (!block) {
-          throw new Error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`);
+          throw new Error(`Block not found for ${adapterName} adapter on chain ${contractsChain}`);
         }
       } catch(e) {
         // in case thrown internally from the bridge adapter
