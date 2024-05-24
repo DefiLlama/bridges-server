@@ -11,9 +11,7 @@ export type DefillamaLatestBlockForZoneQueryVariables = Types.Exact<{
 }>;
 
 export type DefillamaLatestBlockForZoneQueryResult = {
-  flat_defillama_txs_aggregate: {
-    aggregate?: { max?: { height?: any | null; timestamp?: any | null } | null } | null;
-  };
+  flat_defillama_txs: Array<{ timestamp: any; height: any }>;
 };
 
 export type DefillamaSupportedZonesQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -98,8 +96,27 @@ export const DefillamaLatestBlockForZoneDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs_aggregate' },
+            name: { kind: 'Name', value: 'flat_defillama_txs' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'order_by' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'timestamp' },
+                      value: { kind: 'EnumValue', value: 'desc' },
+                    },
+                  ],
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'IntValue', value: '1' },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'where' },
@@ -130,26 +147,8 @@ export const DefillamaLatestBlockForZoneDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'aggregate' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'max' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'height' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
+                { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'height' } },
               ],
             },
           },

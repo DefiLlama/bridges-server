@@ -3,7 +3,6 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
 import { getBlockByTimestamp } from "./blocks";
-import { newIBCBridgeNetwork } from "../adapters/ibc";
 
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
@@ -22,13 +21,9 @@ async function fillAdapterHistorical(
     process.exit();
   }
 
-  let adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
+  const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
   console.log(`Found ${bridgeDbName}`);
-
-  if(bridgeDbName === "ibc") {
-    adapter = await newIBCBridgeNetwork(adapter);
-  }
 
   const promises = Promise.all(
     adapter.chains.map(async (chain, i) => {

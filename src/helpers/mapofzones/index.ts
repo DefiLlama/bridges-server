@@ -13,28 +13,21 @@ import {
   DefillamaLatestBlockForZoneDocument,
 } from "./IBCTxsPage/__generated__/IBCTxsTable.query.generated";
 import retry from "async-retry"
-
-import { convertToUnixTimestamp } from "../../utils/date";
 const endpoint = "https://api2.mapofzones.com/v1/graphql";
 const graphQLClient = new GraphQLClient(endpoint);
 
-const requestWithTimeout = async <T>(query: RequestDocument, variables = {}, timeout = 40000): Promise<T> => {
+const requestWithTimeout = async <T>(query: RequestDocument, variables = {}, timeout = 5000): Promise<T> => {
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
       reject(new Error('GraphQL request timed out'));
     }, timeout);
   });
 
-  try {
-    const data = await Promise.race([
-      graphQLClient.request(query, variables) as T,
-      timeoutPromise,
-    ]);
-    return data;
-  } catch (error) {
-    console.error('GraphQL request error:', error);
-    throw error;
-  }
+  const data = await Promise.race([
+    graphQLClient.request(query, variables) as T,
+    timeoutPromise,
+  ]);
+  return data;
 };
 
 
@@ -44,20 +37,42 @@ export type ChainFromMapOfZones = {
   zone_logo?: string | null;
 }
 
+export let supportedChainsCache: {
+  chains: ChainFromMapOfZones[],
+  timestamp: number,
+} = {
+  chains: [],
+  timestamp: 0,
+};
+
+export const loadChainsFromCache = (): boolean => {
+  if(supportedChainsCache.chains.length === 0) {
+    return false;
+  }
+
+  if(supportedChainsCache.timestamp === 0) {
+    return false;
+  }
+
+  if(Date.now() - supportedChainsCache.timestamp > 1000 * 60 * 60) {
+    return false;
+  }
+
+  return true;
+}
+
 export const getSupportedChains = async (): Promise<
   ChainFromMapOfZones[]
 > => {
+  if (loadChainsFromCache()){
+    return supportedChainsCache.chains;
+  }
+
   const data: DefillamaSupportedZonesQueryResult | undefined = await retry(async () => {
     const variables = {};
     return await requestWithTimeout(DefillamaSupportedZonesDocument, variables);
   }, {
     retries: 5,
-    minTimeout: 5000,
-    onRetry: (e, attempt) => {
-      console.log(`Error fetching supported chains`)
-      console.error(e);
-      console.log(`Retrying ${attempt} for fetching supported chains`)
-    }
   });
   
   if (!data) {
@@ -68,11 +83,17 @@ export const getSupportedChains = async (): Promise<
     throw new Error("No zones found");
   }
 
-  return data.flat_blockchains.map((zone) => ({
+  const chains = data.flat_blockchains.map((zone) => ({
     zone_name: zone.name,
     zone_id: zone.network_id,
     zone_logo: zone.logo_url,
   }));
+
+  supportedChainsCache = {
+    chains: chains,
+    timestamp: Date.now(),
+  };
+  return chains;
 }
 
 export const getLatestBlockForZone = async (zoneId: string): Promise<{
@@ -85,23 +106,21 @@ export const getLatestBlockForZone = async (zoneId: string): Promise<{
   try {
     return await retry(async () => {
       const data = await requestWithTimeout<DefillamaLatestBlockForZoneQueryResult>(DefillamaLatestBlockForZoneDocument, variables)
-      const block = {
-        block: data.flat_defillama_txs_aggregate.aggregate?.max?.height,
-        timestamp: data.flat_defillama_txs_aggregate.aggregate?.max?.timestamp,
-      };
 
-      return block ? {
-        block: block.block,
-        timestamp: block.timestamp,
-      } : undefined;
+      if(!data) {
+        return undefined;
+      }
+
+      if(!Array.isArray(data.flat_defillama_txs) || data.flat_defillama_txs.length === 0) {
+        return undefined;
+      }
+
+      return {
+        block: data.flat_defillama_txs[0].height,
+        timestamp: data.flat_defillama_txs[0].timestamp,
+      };
     }, {
       retries: 5,
-      minTimeout: 5000,
-      onRetry: (e, attempt) => {
-        console.log(`Error fetching latest block for ${zoneId}`)
-        console.error(e);
-        console.log(`Retrying ${attempt} for fetching latest block for ${zoneId}`)
-      }
     });
   } catch(e) {
     console.error(`Max attempts reached for fetching latest block for ${zoneId}`);
@@ -141,12 +160,6 @@ export const getBlockFromTimestamp = async (timestamp: number, chainId: string, 
       return result.flat_defillama_txs[0].height;
     }, {
       retries: 5,
-      minTimeout: 5000,
-      onRetry: (e, attempt) => {
-        console.log(`Error fetching data for ${chainId} at ${position} block from ${timestamp}`)
-        console.error(e);
-        console.log(`Retrying ${attempt} for ${chainId} at ${position} block from ${timestamp}`)
-      }
     });
 
     return block ? {
@@ -174,12 +187,6 @@ export const getZoneDataByBlock = async (
     }
     , {
       retries: 5,
-      minTimeout: 5000,
-      onRetry: (e, attempt) => {
-        console.log(`Error fetching data for ${zoneName} from block ${fromBlock} to ${toBlock}`)
-        console.error(e);
-        console.log(`Retrying ${attempt} for ${zoneName} from block ${fromBlock} to ${toBlock}`)
-      }
     });
   }
   catch(e) {
@@ -219,8 +226,9 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
           to = tx.source_address;
         }
 
-        const timestamp = convertToUnixTimestamp(new Date(tx.timestamp)) * 1000; 
-        
+        const date = new Date(tx.timestamp.replace(' ', 'T') + 'Z');
+        const unixTimestamp = Math.floor(date.getTime());
+
         return {  
           blockNumber: tx.height,
           txHash: tx.tx_hash,
@@ -231,7 +239,7 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
           isDeposit,
           isUSDVolume: true,
           txsCountedAs: 1,
-          timestamp,
+          timestamp: unixTimestamp,
         } as EventData;
       }
     );

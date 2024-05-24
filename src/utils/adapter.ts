@@ -15,7 +15,6 @@ import { lookupBlock } from "@defillama/sdk/build/util";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
-import { newIBCAdapter, newIBCBridgeNetwork } from "../adapters/ibc";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -346,14 +345,10 @@ export const runAdapterHistorical = async (
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
-  let bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
+  const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  let adapter = adapters[bridgeDbName];
+  const adapter = adapters[bridgeDbName];
 
-  if(bridgeNetwork.bridgeDbName === "ibc") {
-    bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
-    adapter = newIBCAdapter(bridgeNetwork);
-  }
   const adapterChainEventsFn = adapter[chain];
   if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
     console.log(`Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
@@ -402,7 +397,7 @@ export const runAdapterHistorical = async (
 
   // to reduce calls to moz api
   if(bridgeDbName === 'ibc') {
-    maxBlocksToQuery = 5000;
+    maxBlocksToQuery = 2000;
   }
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));

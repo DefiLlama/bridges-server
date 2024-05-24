@@ -27,8 +27,6 @@ import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
 import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
 import { blacklist } from "../data/blacklist";
-import { newIBCAdapter, newIBCBridgeNetwork } from "../adapters/ibc";
-import { BridgeNetwork } from "../data/types";
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
 
@@ -54,7 +52,7 @@ export const runAggregateDataHistorical = async (
   chainToRestrictTo?: string
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
-  let bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
+  const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
 
   if(!bridgeNetwork) {
     const errString = `Bridge network with id ${bridgeNetworkId} not found.`;
@@ -68,7 +66,7 @@ export const runAggregateDataHistorical = async (
   }
 
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
-  let adapter = adapters[bridgeDbName];
+  const adapter = adapters[bridgeDbName];
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
@@ -81,10 +79,6 @@ export const runAggregateDataHistorical = async (
     throw new Error(errString);
   }
 
-  if(bridgeNetwork.bridgeDbName === "ibc") {
-    bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
-    adapter = newIBCAdapter(bridgeNetwork);
-  }
   
   const chains = Object.keys(adapter);
  

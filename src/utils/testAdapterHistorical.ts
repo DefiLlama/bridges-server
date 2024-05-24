@@ -1,12 +1,10 @@
 import { Chain, getProvider } from "@defillama/sdk/build/general";
 import { groupBy } from "lodash";
-import { lookupBlock } from "@defillama/sdk/build/util";
 import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import adapters from "../adapters";
 import { getCurrentUnixTimestamp } from "./date";
-import { newIBCAdapter, newIBCBridgeNetwork } from "../adapters/ibc";
 import { getBlockByTimestamp } from "./blocks";
 const retry = require("async-retry");
 
@@ -22,19 +20,14 @@ export const runAdapterHistorical = async (
   throwOnFailedInsert: boolean = true
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
-  let bridgeNetwork = bridgeNetworkData.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
+  const bridgeNetwork = bridgeNetworkData.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  let adapter = adapters[bridgeDbName];
+  const adapter = adapters[bridgeDbName];
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
 
     throw new Error(errString);
-  }
-
-  if(bridgeNetwork.bridgeDbName == "ibc") {
-    bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
-    adapter = newIBCAdapter(bridgeNetwork);
   }
 
   const adapterChainEventsFn = adapter[chain];
@@ -58,7 +51,7 @@ export const runAdapterHistorical = async (
     : maxBlocksToQueryByChain.default;
   
   if(bridgeNetwork.bridgeDbName == 'ibc') {
-    maxBlocksToQuery = 5000;
+    maxBlocksToQuery = 2000;
   }
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
@@ -146,13 +139,9 @@ async function fillAdapterHistorical(
   bridgeDbName: string,
   restrictChainTo?: string
 ) {
-  let adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
+  const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
   console.log(`Found ${bridgeDbName}`);
-
-  if(bridgeDbName == "ibc") {
-    adapter = await newIBCBridgeNetwork(adapter);
-  }
 
   const promises = Promise.all(
     adapter.chains.map(async (chain, i) => {

@@ -4,7 +4,6 @@ import adapters from "./";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
-import { newIBCAdapter, newIBCBridgeNetwork } from "./ibc";
 
 const logTypes = {
   txHash: "string",
@@ -25,18 +24,13 @@ const adapterName = process.argv[2];
 const numberOfBlocks = process.argv[3];
 
 const testAdapter = async () => {
-  let adapter = adapters[adapterName];
+  const adapter = adapters[adapterName];
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
-  let bridgeNetwork = importBridgeNetwork(adapterName);
+  const bridgeNetwork = importBridgeNetwork(adapterName);
   if (!bridgeNetwork) {
     throw new Error(`No entry for bridge found in src/data/bridgeNetworkData. Add an entry there before testing.`);
-  }
-
-  if(bridgeNetwork.bridgeDbName === "ibc"){
-    bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
-    adapter = newIBCAdapter(bridgeNetwork);
   }
 
   await Promise.all(
@@ -47,11 +41,18 @@ const testAdapter = async () => {
         ? bridgeNetwork.chainMapping?.[chain as Chain]
         : chain;
       let block = undefined;
-      block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
-      
-      if (!block) {
-        throw new Error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`);
+
+      try {
+        block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
+        if (!block) {
+          throw new Error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`);
+        }
+      } catch(e) {
+        // in case thrown internally from the bridge adapter
+        console.error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`)
+        return ;
       }
+      
       const { number, timestamp } = block;
       if (!(number && timestamp)) {
         console.error(`Missing block number or timestamp for chain ${contractsChain}.`)

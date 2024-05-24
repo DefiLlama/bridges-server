@@ -10,7 +10,6 @@ import adapters from "../adapters";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDayUTC, secondsInDay } from "../utils/date";
 import { maxBlocksToQueryByChain } from "../utils/constants";
 import type { RecordedBlocksFromAWS } from "../utils/types";
-import { newIBCAdapter, newIBCBridgeNetwork } from "../adapters/ibc";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -20,15 +19,10 @@ export default wrapScheduledLambda(async (_event) => {
   const endTimestamp = timestampAtStartOfDay - 1;
   await Promise.all(
     bridgeNetworks.map(async (bridgeNetwork) => {
-      let { bridgeDbName } = bridgeNetwork;
-      let adapter = adapters[bridgeDbName];
+      const { bridgeDbName } = bridgeNetwork;
+      const adapter = adapters[bridgeDbName];
       if (!adapter) {
         throw new Error(`Adapter for ${bridgeDbName} not found, check it is exported correctly.`);
-      }
-
-      if(bridgeNetwork.bridgeDbName == 'ibc') {
-        bridgeNetwork = await newIBCBridgeNetwork(bridgeNetwork);
-        adapter = newIBCAdapter(bridgeNetwork);
       }
 
       await Promise.all(
