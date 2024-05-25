@@ -8148,6 +8148,96 @@ export type Headers_Variance_Order_By = {
   zones_cnt_period?: InputMaybe<Order_By>;
 };
 
+/** columns and relationships of "ibc_transfer_txs" */
+export type Ibc_Transfer_Txs = {
+  base_denom?: Maybe<Scalars['String']>;
+  base_denom_zone?: Maybe<Scalars['String']>;
+  destination_address: Scalars['String'];
+  destination_chain?: Maybe<Scalars['String']>;
+  height: Scalars['bigint'];
+  source_address: Scalars['String'];
+  source_chain?: Maybe<Scalars['String']>;
+  timestamp: Scalars['timestamp'];
+  /** An object relationship */
+  token?: Maybe<Tokens>;
+  tx_hash: Scalars['String'];
+  tx_type: Scalars['String'];
+  usd_value?: Maybe<Scalars['numeric']>;
+  zone: Scalars['String'];
+};
+
+/** Boolean expression to filter rows from the table "ibc_transfer_txs". All fields are combined with a logical 'AND'. */
+export type Ibc_Transfer_Txs_Bool_Exp = {
+  _and?: InputMaybe<Array<InputMaybe<Ibc_Transfer_Txs_Bool_Exp>>>;
+  _not?: InputMaybe<Ibc_Transfer_Txs_Bool_Exp>;
+  _or?: InputMaybe<Array<InputMaybe<Ibc_Transfer_Txs_Bool_Exp>>>;
+  base_denom?: InputMaybe<String_Comparison_Exp>;
+  base_denom_zone?: InputMaybe<String_Comparison_Exp>;
+  destination_address?: InputMaybe<String_Comparison_Exp>;
+  destination_chain?: InputMaybe<String_Comparison_Exp>;
+  height?: InputMaybe<Bigint_Comparison_Exp>;
+  source_address?: InputMaybe<String_Comparison_Exp>;
+  source_chain?: InputMaybe<String_Comparison_Exp>;
+  timestamp?: InputMaybe<Timestamp_Comparison_Exp>;
+  token?: InputMaybe<Tokens_Bool_Exp>;
+  tx_hash?: InputMaybe<String_Comparison_Exp>;
+  tx_type?: InputMaybe<String_Comparison_Exp>;
+  usd_value?: InputMaybe<Numeric_Comparison_Exp>;
+  zone?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** ordering options when selecting data from "ibc_transfer_txs" */
+export type Ibc_Transfer_Txs_Order_By = {
+  base_denom?: InputMaybe<Order_By>;
+  base_denom_zone?: InputMaybe<Order_By>;
+  destination_address?: InputMaybe<Order_By>;
+  destination_chain?: InputMaybe<Order_By>;
+  height?: InputMaybe<Order_By>;
+  source_address?: InputMaybe<Order_By>;
+  source_chain?: InputMaybe<Order_By>;
+  timestamp?: InputMaybe<Order_By>;
+  token?: InputMaybe<Tokens_Order_By>;
+  tx_hash?: InputMaybe<Order_By>;
+  tx_type?: InputMaybe<Order_By>;
+  usd_value?: InputMaybe<Order_By>;
+  zone?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: "ibc_transfer_txs" */
+export type Ibc_Transfer_Txs_Pk_Columns_Input = {
+  denom: Scalars['String'];
+  tx_hash: Scalars['String'];
+  zone: Scalars['String'];
+};
+
+/** select columns of table "ibc_transfer_txs" */
+export const enum Ibc_Transfer_Txs_Select_Column {
+  /** column name */
+  BaseDenom = 'base_denom',
+  /** column name */
+  BaseDenomZone = 'base_denom_zone',
+  /** column name */
+  DestinationAddress = 'destination_address',
+  /** column name */
+  DestinationChain = 'destination_chain',
+  /** column name */
+  Height = 'height',
+  /** column name */
+  SourceAddress = 'source_address',
+  /** column name */
+  SourceChain = 'source_chain',
+  /** column name */
+  Timestamp = 'timestamp',
+  /** column name */
+  TxHash = 'tx_hash',
+  /** column name */
+  TxType = 'tx_type',
+  /** column name */
+  UsdValue = 'usd_value',
+  /** column name */
+  Zone = 'zone',
+}
+
 /** expression to compare columns of type jsonb. All fields are combined with logical 'AND'. */
 export type Jsonb_Comparison_Exp = {
   /** is the column contained in the given json value */
@@ -9272,6 +9362,10 @@ export type Query_Root = {
   headers_aggregate: Headers_Aggregate;
   /** fetch data from the table: "headers" using primary key columns */
   headers_by_pk?: Maybe<Headers>;
+  /** fetch data from the table: "ibc_transfer_txs" */
+  ibc_transfer_txs: Array<Ibc_Transfer_Txs>;
+  /** fetch data from the table: "ibc_transfer_txs" using primary key columns */
+  ibc_transfer_txs_by_pk?: Maybe<Ibc_Transfer_Txs>;
   /** fetch data from the table: "nodes_addrs" */
   nodes_addrs: Array<Nodes_Addrs>;
   /** fetch aggregated fields from the table: "nodes_addrs" */
@@ -9290,6 +9384,10 @@ export type Query_Root = {
   nodes_rpc_addrs_aggregate: Nodes_Rpc_Addrs_Aggregate;
   /** fetch data from the table: "nodes_rpc_addrs" using primary key columns */
   nodes_rpc_addrs_by_pk?: Maybe<Nodes_Rpc_Addrs>;
+  /** fetch data from the table: "tokens" */
+  tokens: Array<Tokens>;
+  /** fetch data from the table: "tokens" using primary key columns */
+  tokens_by_pk?: Maybe<Tokens>;
   /** fetch data from the table: "zone_nodes" */
   zone_nodes: Array<Zone_Nodes>;
   /** fetch aggregated fields from the table: "zone_nodes" */
@@ -9819,6 +9917,22 @@ export type Query_RootHeaders_By_PkArgs = {
 };
 
 /** query root */
+export type Query_RootIbc_Transfer_TxsArgs = {
+  distinct_on?: InputMaybe<Array<Ibc_Transfer_Txs_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  order_by?: InputMaybe<Array<Ibc_Transfer_Txs_Order_By>>;
+  where?: InputMaybe<Ibc_Transfer_Txs_Bool_Exp>;
+};
+
+/** query root */
+export type Query_RootIbc_Transfer_Txs_By_PkArgs = {
+  denom: Scalars['String'];
+  tx_hash: Scalars['String'];
+  zone: Scalars['String'];
+};
+
+/** query root */
 export type Query_RootNodes_AddrsArgs = {
   distinct_on?: InputMaybe<Array<Nodes_Addrs_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']>;
@@ -9885,6 +9999,21 @@ export type Query_RootNodes_Rpc_Addrs_AggregateArgs = {
 /** query root */
 export type Query_RootNodes_Rpc_Addrs_By_PkArgs = {
   rpc_addr: Scalars['String'];
+};
+
+/** query root */
+export type Query_RootTokensArgs = {
+  distinct_on?: InputMaybe<Array<Tokens_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  order_by?: InputMaybe<Array<Tokens_Order_By>>;
+  where?: InputMaybe<Tokens_Bool_Exp>;
+};
+
+/** query root */
+export type Query_RootTokens_By_PkArgs = {
+  base_denom: Scalars['String'];
+  zone: Scalars['String'];
 };
 
 /** query root */
@@ -10085,6 +10214,10 @@ export type Subscription_Root = {
   headers_aggregate: Headers_Aggregate;
   /** fetch data from the table: "headers" using primary key columns */
   headers_by_pk?: Maybe<Headers>;
+  /** fetch data from the table: "ibc_transfer_txs" */
+  ibc_transfer_txs: Array<Ibc_Transfer_Txs>;
+  /** fetch data from the table: "ibc_transfer_txs" using primary key columns */
+  ibc_transfer_txs_by_pk?: Maybe<Ibc_Transfer_Txs>;
   /** fetch data from the table: "nodes_addrs" */
   nodes_addrs: Array<Nodes_Addrs>;
   /** fetch aggregated fields from the table: "nodes_addrs" */
@@ -10103,6 +10236,10 @@ export type Subscription_Root = {
   nodes_rpc_addrs_aggregate: Nodes_Rpc_Addrs_Aggregate;
   /** fetch data from the table: "nodes_rpc_addrs" using primary key columns */
   nodes_rpc_addrs_by_pk?: Maybe<Nodes_Rpc_Addrs>;
+  /** fetch data from the table: "tokens" */
+  tokens: Array<Tokens>;
+  /** fetch data from the table: "tokens" using primary key columns */
+  tokens_by_pk?: Maybe<Tokens>;
   /** fetch data from the table: "zone_nodes" */
   zone_nodes: Array<Zone_Nodes>;
   /** fetch aggregated fields from the table: "zone_nodes" */
@@ -10632,6 +10769,22 @@ export type Subscription_RootHeaders_By_PkArgs = {
 };
 
 /** subscription root */
+export type Subscription_RootIbc_Transfer_TxsArgs = {
+  distinct_on?: InputMaybe<Array<Ibc_Transfer_Txs_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  order_by?: InputMaybe<Array<Ibc_Transfer_Txs_Order_By>>;
+  where?: InputMaybe<Ibc_Transfer_Txs_Bool_Exp>;
+};
+
+/** subscription root */
+export type Subscription_RootIbc_Transfer_Txs_By_PkArgs = {
+  denom: Scalars['String'];
+  tx_hash: Scalars['String'];
+  zone: Scalars['String'];
+};
+
+/** subscription root */
 export type Subscription_RootNodes_AddrsArgs = {
   distinct_on?: InputMaybe<Array<Nodes_Addrs_Select_Column>>;
   limit?: InputMaybe<Scalars['Int']>;
@@ -10698,6 +10851,21 @@ export type Subscription_RootNodes_Rpc_Addrs_AggregateArgs = {
 /** subscription root */
 export type Subscription_RootNodes_Rpc_Addrs_By_PkArgs = {
   rpc_addr: Scalars['String'];
+};
+
+/** subscription root */
+export type Subscription_RootTokensArgs = {
+  distinct_on?: InputMaybe<Array<Tokens_Select_Column>>;
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  order_by?: InputMaybe<Array<Tokens_Order_By>>;
+  where?: InputMaybe<Tokens_Bool_Exp>;
+};
+
+/** subscription root */
+export type Subscription_RootTokens_By_PkArgs = {
+  base_denom: Scalars['String'];
+  zone: Scalars['String'];
 };
 
 /** subscription root */
@@ -10784,6 +10952,46 @@ export type Timestamp_Comparison_Exp = {
   _neq?: InputMaybe<Scalars['timestamp']>;
   _nin?: InputMaybe<Array<Scalars['timestamp']>>;
 };
+
+/** columns and relationships of "tokens" */
+export type Tokens = {
+  base_denom: Scalars['String'];
+  logo_url?: Maybe<Scalars['String']>;
+  symbol?: Maybe<Scalars['String']>;
+};
+
+/** Boolean expression to filter rows from the table "tokens". All fields are combined with a logical 'AND'. */
+export type Tokens_Bool_Exp = {
+  _and?: InputMaybe<Array<InputMaybe<Tokens_Bool_Exp>>>;
+  _not?: InputMaybe<Tokens_Bool_Exp>;
+  _or?: InputMaybe<Array<InputMaybe<Tokens_Bool_Exp>>>;
+  base_denom?: InputMaybe<String_Comparison_Exp>;
+  logo_url?: InputMaybe<String_Comparison_Exp>;
+  symbol?: InputMaybe<String_Comparison_Exp>;
+};
+
+/** ordering options when selecting data from "tokens" */
+export type Tokens_Order_By = {
+  base_denom?: InputMaybe<Order_By>;
+  logo_url?: InputMaybe<Order_By>;
+  symbol?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: "tokens" */
+export type Tokens_Pk_Columns_Input = {
+  base_denom: Scalars['String'];
+  zone: Scalars['String'];
+};
+
+/** select columns of table "tokens" */
+export const enum Tokens_Select_Column {
+  /** column name */
+  BaseDenom = 'base_denom',
+  /** column name */
+  LogoUrl = 'logo_url',
+  /** column name */
+  Symbol = 'symbol',
+}
 
 /** columns and relationships of "zone_nodes" */
 export type Zone_Nodes = {

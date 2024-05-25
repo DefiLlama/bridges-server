@@ -7,28 +7,22 @@ import * as Types from '../../base-types';
 
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type DefillamaLatestBlockForZoneQueryVariables = Types.Exact<{
-  blockchain: Types.Scalars['String'];
+  zone: Types.Scalars['String'];
 }>;
 
 export type DefillamaLatestBlockForZoneQueryResult = {
-  flat_defillama_txs: Array<{ timestamp: any; height: any }>;
-};
-
-export type DefillamaSupportedZonesQueryVariables = Types.Exact<{ [key: string]: never }>;
-
-export type DefillamaSupportedZonesQueryResult = {
-  flat_blockchains: Array<{ name: string; logo_url?: string | null; network_id: string }>;
+  ibc_transfer_txs: Array<{ timestamp: any; height: any }>;
 };
 
 export type DefillamaTxsByBlockQueryVariables = Types.Exact<{
-  blockchain: Types.Scalars['String'];
+  zone: Types.Scalars['String'];
   from: Types.Scalars['bigint'];
   to: Types.Scalars['bigint'];
 }>;
 
 export type DefillamaTxsByBlockQueryResult = {
-  flat_defillama_txs: Array<{
-    blockchain: string;
+  ibc_transfer_txs: Array<{
+    zone: string;
     destination_address: string;
     height: any;
     source_address: string;
@@ -36,19 +30,19 @@ export type DefillamaTxsByBlockQueryResult = {
     tx_hash: string;
     tx_type: string;
     usd_value?: any | null;
-    token?: { denom: string; logo_url?: string | null; symbol?: string | null } | null;
+    token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
   }>;
 };
 
 export type DefillamaTxsByTimestampQueryVariables = Types.Exact<{
-  blockchain: Types.Scalars['String'];
+  zone: Types.Scalars['String'];
   from: Types.Scalars['timestamp'];
   to: Types.Scalars['timestamp'];
 }>;
 
 export type DefillamaTxsByTimestampQueryResult = {
-  flat_defillama_txs: Array<{
-    blockchain: string;
+  ibc_transfer_txs: Array<{
+    zone: string;
     destination_address: string;
     height: any;
     source_address: string;
@@ -56,23 +50,23 @@ export type DefillamaTxsByTimestampQueryResult = {
     tx_hash: string;
     tx_type: string;
     usd_value?: any | null;
-    token?: { denom: string; logo_url?: string | null; symbol?: string | null } | null;
+    token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
   }>;
 };
 
 export type DefillamaTxsFirstBlockQueryVariables = Types.Exact<{
-  blockchain: Types.Scalars['String'];
+  zone: Types.Scalars['String'];
   timestamp: Types.Scalars['timestamp'];
 }>;
 
-export type DefillamaTxsFirstBlockQueryResult = { flat_defillama_txs: Array<{ height: any }> };
+export type DefillamaTxsFirstBlockQueryResult = { ibc_transfer_txs: Array<{ height: any }> };
 
 export type DefillamaTxsLastBlockQueryVariables = Types.Exact<{
-  blockchain: Types.Scalars['String'];
+  zone: Types.Scalars['String'];
   timestamp: Types.Scalars['timestamp'];
 }>;
 
-export type DefillamaTxsLastBlockQueryResult = { flat_defillama_txs: Array<{ height: any }> };
+export type DefillamaTxsLastBlockQueryResult = { ibc_transfer_txs: Array<{ height: any }> };
 
 export const DefillamaLatestBlockForZoneDocument = {
   kind: 'Document',
@@ -84,7 +78,7 @@ export const DefillamaLatestBlockForZoneDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blockchain' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -96,7 +90,7 @@ export const DefillamaLatestBlockForZoneDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs' },
+            name: { kind: 'Name', value: 'ibc_transfer_txs' },
             arguments: [
               {
                 kind: 'Argument',
@@ -125,17 +119,14 @@ export const DefillamaLatestBlockForZoneDocument = {
                   fields: [
                     {
                       kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'blockchain' },
+                      name: { kind: 'Name', value: 'zone' },
                       value: {
                         kind: 'ObjectValue',
                         fields: [
                           {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_eq' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'blockchain' },
-                            },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
                           },
                         ],
                       },
@@ -160,75 +151,6 @@ export const DefillamaLatestBlockForZoneDocument = {
   DefillamaLatestBlockForZoneQueryResult,
   DefillamaLatestBlockForZoneQueryVariables
 >;
-export const DefillamaSupportedZonesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'DefillamaSupportedZones' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'flat_blockchains' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'where' },
-                value: {
-                  kind: 'ObjectValue',
-                  fields: [
-                    {
-                      kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'is_mainnet' },
-                      value: {
-                        kind: 'ObjectValue',
-                        fields: [
-                          {
-                            kind: 'ObjectField',
-                            name: { kind: 'Name', value: '_eq' },
-                            value: { kind: 'BooleanValue', value: true },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'order_by' },
-                value: {
-                  kind: 'ObjectValue',
-                  fields: [
-                    {
-                      kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'name' },
-                      value: { kind: 'EnumValue', value: 'asc' },
-                    },
-                  ],
-                },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'logo_url' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'network_id' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  DefillamaSupportedZonesQueryResult,
-  DefillamaSupportedZonesQueryVariables
->;
 export const DefillamaTxsByBlockDocument = {
   kind: 'Document',
   definitions: [
@@ -239,7 +161,7 @@ export const DefillamaTxsByBlockDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blockchain' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -267,7 +189,7 @@ export const DefillamaTxsByBlockDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs' },
+            name: { kind: 'Name', value: 'ibc_transfer_txs' },
             arguments: [
               {
                 kind: 'Argument',
@@ -277,17 +199,14 @@ export const DefillamaTxsByBlockDocument = {
                   fields: [
                     {
                       kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'blockchain' },
+                      name: { kind: 'Name', value: 'zone' },
                       value: {
                         kind: 'ObjectValue',
                         fields: [
                           {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_eq' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'blockchain' },
-                            },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
                           },
                         ],
                       },
@@ -332,7 +251,7 @@ export const DefillamaTxsByBlockDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'blockchain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'zone' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'destination_address' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'height' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'source_address' } },
@@ -346,7 +265,7 @@ export const DefillamaTxsByBlockDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'denom' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'base_denom' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'logo_url' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
                     ],
@@ -370,7 +289,7 @@ export const DefillamaTxsByTimestampDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blockchain' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -398,7 +317,7 @@ export const DefillamaTxsByTimestampDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs' },
+            name: { kind: 'Name', value: 'ibc_transfer_txs' },
             arguments: [
               {
                 kind: 'Argument',
@@ -408,17 +327,14 @@ export const DefillamaTxsByTimestampDocument = {
                   fields: [
                     {
                       kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'blockchain' },
+                      name: { kind: 'Name', value: 'zone' },
                       value: {
                         kind: 'ObjectValue',
                         fields: [
                           {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_eq' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'blockchain' },
-                            },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
                           },
                         ],
                       },
@@ -463,7 +379,7 @@ export const DefillamaTxsByTimestampDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'blockchain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'zone' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'destination_address' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'height' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'source_address' } },
@@ -477,7 +393,7 @@ export const DefillamaTxsByTimestampDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'denom' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'base_denom' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'logo_url' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
                     ],
@@ -504,7 +420,7 @@ export const DefillamaTxsFirstBlockDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blockchain' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -524,7 +440,7 @@ export const DefillamaTxsFirstBlockDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs' },
+            name: { kind: 'Name', value: 'ibc_transfer_txs' },
             arguments: [
               {
                 kind: 'Argument',
@@ -553,17 +469,14 @@ export const DefillamaTxsFirstBlockDocument = {
                   fields: [
                     {
                       kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'blockchain' },
+                      name: { kind: 'Name', value: 'zone' },
                       value: {
                         kind: 'ObjectValue',
                         fields: [
                           {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_eq' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'blockchain' },
-                            },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
                           },
                         ],
                       },
@@ -609,7 +522,7 @@ export const DefillamaTxsLastBlockDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blockchain' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -629,7 +542,7 @@ export const DefillamaTxsLastBlockDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'flat_defillama_txs' },
+            name: { kind: 'Name', value: 'ibc_transfer_txs' },
             arguments: [
               {
                 kind: 'Argument',
@@ -658,17 +571,14 @@ export const DefillamaTxsLastBlockDocument = {
                   fields: [
                     {
                       kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'blockchain' },
+                      name: { kind: 'Name', value: 'zone' },
                       value: {
                         kind: 'ObjectValue',
                         fields: [
                           {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_eq' },
-                            value: {
-                              kind: 'Variable',
-                              name: { kind: 'Name', value: 'blockchain' },
-                            },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zone' } },
                           },
                         ],
                       },

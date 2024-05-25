@@ -7,8 +7,6 @@ import {
   DefillamaTxsLastBlockQueryResult,
   DefillamaTxsFirstBlockDocument,
   DefillamaTxsFirstBlockQueryResult,
-  DefillamaSupportedZonesQueryResult,
-  DefillamaSupportedZonesDocument,
   DefillamaLatestBlockForZoneQueryResult,
   DefillamaLatestBlockForZoneDocument,
 } from "./IBCTxsPage/__generated__/IBCTxsTable.query.generated";
@@ -35,7 +33,7 @@ export const getLatestBlockForZone = async (zoneId: string): Promise<{
   timestamp: number;
 } | undefined> => {
   const variables = {
-    blockchain: zoneId,
+    zone: zoneId,
   };
   try {
     return await retry(async () => {
@@ -45,13 +43,13 @@ export const getLatestBlockForZone = async (zoneId: string): Promise<{
         return undefined;
       }
 
-      if(!Array.isArray(data.flat_defillama_txs) || data.flat_defillama_txs.length === 0) {
+      if(!Array.isArray(data.ibc_transfer_txs) || data.ibc_transfer_txs.length === 0) {
         return undefined;
       }
 
       return {
-        block: data.flat_defillama_txs[0].height,
-        timestamp: data.flat_defillama_txs[0].timestamp,
+        block: data.ibc_transfer_txs[0].height,
+        timestamp: data.ibc_transfer_txs[0].timestamp,
       };
     }, {
       retries: 5,
@@ -70,7 +68,7 @@ export const getBlockFromTimestamp = async (timestamp: number, chainId: string, 
   }
   const date = new Date(timestamp * 1000);
   const variables = {
-    blockchain: chainId,
+    zone: chainId,
     timestamp: date.toISOString(),
   };
 
@@ -87,11 +85,11 @@ export const getBlockFromTimestamp = async (timestamp: number, chainId: string, 
         return undefined;
       }
 
-      if(result.flat_defillama_txs.length === 0) {
+      if(result.ibc_transfer_txs.length === 0) {
         return undefined;
       }
 
-      return result.flat_defillama_txs[0].height;
+      return result.ibc_transfer_txs[0].height;
     }, {
       retries: 5,
     });
@@ -111,7 +109,7 @@ export const getZoneDataByBlock = async (
   toBlock: number
 ): Promise<DefillamaTxsByBlockQueryResult | undefined> => {
   const variables = {
-    blockchain: zoneName,
+    zone: zoneName,
     from: fromBlock,
     to: toBlock,
   };
@@ -140,7 +138,7 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
       return [];
     }
 
-    return zoneData.flat_defillama_txs.map(
+    return zoneData.ibc_transfer_txs.map(
       (tx: {
         destination_address: string;
         height: any;
@@ -149,7 +147,7 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
         tx_hash: string;
         tx_type: string;
         usd_value?: any | null;
-        token?: { denom: string; logo_url?: string | null; symbol?: string | null } | null;
+        token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
       }) => {
         let from = tx.source_address;
         let to = tx.destination_address;
@@ -168,7 +166,7 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
           txHash: tx.tx_hash,
           from,
           to,
-          token: tx.token?.symbol || tx.token?.denom,
+          token: tx.token?.symbol || tx.token?.base_denom,
           amount: tx.usd_value,
           isDeposit,
           isUSDVolume: true,
