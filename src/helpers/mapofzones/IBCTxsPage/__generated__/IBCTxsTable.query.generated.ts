@@ -131,6 +131,20 @@ export const DefillamaLatestBlockForZoneDocument = {
                         ],
                       },
                     },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: '_eq' },
+                            value: { kind: 'StringValue', value: 'Success', block: false },
+                          },
+                        ],
+                      },
+                    },
                   ],
                 },
               },
@@ -240,6 +254,20 @@ export const DefillamaTxsByBlockDocument = {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_gt' },
                             value: { kind: 'StringValue', value: '0', block: false },
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: '_eq' },
+                            value: { kind: 'StringValue', value: 'Success', block: false },
                           },
                         ],
                       },
@@ -372,6 +400,20 @@ export const DefillamaTxsByTimestampDocument = {
                         ],
                       },
                     },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: '_eq' },
+                            value: { kind: 'StringValue', value: 'Success', block: false },
+                          },
+                        ],
+                      },
+                    },
                   ],
                 },
               },
@@ -495,6 +537,20 @@ export const DefillamaTxsFirstBlockDocument = {
                         ],
                       },
                     },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: '_eq' },
+                            value: { kind: 'StringValue', value: 'Success', block: false },
+                          },
+                        ],
+                      },
+                    },
                   ],
                 },
               },
@@ -593,6 +649,20 @@ export const DefillamaTxsLastBlockDocument = {
                             kind: 'ObjectField',
                             name: { kind: 'Name', value: '_lte' },
                             value: { kind: 'Variable', name: { kind: 'Name', value: 'timestamp' } },
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'status' },
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: { kind: 'Name', value: '_eq' },
+                            value: { kind: 'StringValue', value: 'Success', block: false },
                           },
                         ],
                       },
