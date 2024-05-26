@@ -2,24 +2,14 @@ import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 const axios = require("axios");
 const retry = require("async-retry");
 
-const endpoint = "https://scan.merlinchain.io";
-
-//const apiKey= "96e62071-b858-4046-a483-172ba199347e";
-
 export const getTxsBlockRangeMerlinScan = async (
   address: string,
   startBlock: number,
   endBlock: number,
   functionSignatureFilter?: FunctionSignatureFilter
 ) => {
-  let txList: any[] = []
-  for(startBlock; startBlock <= endBlock; startBlock++ ){
-    const txs: any[] = await getBlockTXbyAddress(address, startBlock);
-    if(txs != null){
-      txList = txList.concat(txs);
-    }
-  }
-  console.log(JSON.stringify(txList));
+  let txList: any[] = await getBlockTXbyAddress(address, startBlock, endBlock);
+  // console.log(JSON.stringify(txList));
   if (txList.length > 0) {
     const filteredResults = txList.filter((tx: any) => {
       if (functionSignatureFilter) {
@@ -48,26 +38,25 @@ export const getTxsBlockRangeMerlinScan = async (
 
 const getBlockTXbyAddress = async (
   address: string,
-  blockNumber: number,
+  startBlock: number,
+  endBlock: number,
 ) => {
-  let res = await axios.get(
-          `${endpoint}/api/trpc/transaction.getTransactions?input={"json":{"take":20,"desc":true,"block_number":${blockNumber},"cursor":null},"meta":{"values":{"cursor":["undefined"]}}}`
-        )
-  const data = res.data
-  if(data.result.data.json?.count > 0) {
-    //filter by address
-    const txList: any[] = data.result.data.json.list.filter((tx: any) => {
-      if(tx.to_address == address || tx.from_address == address) {
-        return true
-      }
-      return false
-    })
-    if(txList.length != 0) {
-      console.log(txList);
-      return txList
+  let txList: any[] = []
+  let page = 0
+  while(true) {
+    let res = await retry(
+      () =>
+        axios.get(
+          `https://scan.merlinchain.io/api?module=account&action=txlist&address=${address}&endblock=${endBlock}&sort=asc&startblock=${startBlock}&offset=1000&page=${page}`
+        ),
+      { factor: 1, retries: 3 }
+    )
+    if (res.data.message == 'OK' && res.data.result.length != 0) {
+      txList = txList.concat(res.data.result)
+    } else {
+      break;
     }
-  }else if(data.includes('error')) {
-    console.error(JSON.stringify(data.error.json.message));
+    page++
   }
-  return [];
+  return txList;
 }
