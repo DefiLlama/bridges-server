@@ -10,7 +10,7 @@ export const getTokenAddress = (symbol: string, chain: string, assets: any[]) =>
 
     // if the token address is not listed, then it means that the token is not that important. 
     // We return some hardcoded address for this token to circumvent the token address not found in defillama bridge server.
-    if (tokenAddress == undefined) tokenAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+    if (tokenAddress == undefined) tokenAddress = "0x000000000000000000000000000000000000dEaD"
 
     return tokenAddress;
 }
