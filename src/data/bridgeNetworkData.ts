@@ -614,12 +614,25 @@ export default [
       "zkSync Era",
       "Polygon zkEVM",
       "Linea",
+      "Manta",
+      "opBNB",
       "Scroll",
+      "Avalanche",
+
+      "Solana",
+      "Mantle",
+      "Mode",
+
+      "Blast",
+      "X Layer",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
+      opbnb: "op_bnb",
+      avalanche: "avax",
+      "x layer": "xlayer",
     },
   },
   {
