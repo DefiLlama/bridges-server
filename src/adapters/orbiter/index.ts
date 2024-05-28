@@ -70,7 +70,7 @@ const constructParams = (chain: string) => {
       eoaAddressNative.map(async (address: string, i: number) => {
         await wait(300 * i); // for etherscan
         let txs: any[] = [];
-        if(chain = 'merlin') {
+        if (chain === "merlin") {
           txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
             includeSignatures: nativeTokenTransferSignature,
           });
@@ -120,7 +120,7 @@ const adapter: BridgeAdapter = {
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
-  zklink: constructParams('zklink'),
-  btr: constructParams('btr')
+  zklink: constructParams("zklink"),
+  btr: constructParams("btr"),
 };
 export default adapter;
