@@ -922,6 +922,8 @@ export default [
       "zkSync Era",
       "Polygon zkEVM",
       "Merlin",
+      "BTR",
+      "ZKLink",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
