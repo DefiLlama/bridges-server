@@ -1,75 +1,179 @@
-import { getLatestBlock } from "@defillama/sdk/build/util";
-import { GraphQLClient, gql } from "graphql-request";
-import { ZonesTableDocument } from "./ZonesTable.query.generated";
-import { ethers } from "ethers";
+import { GraphQLClient, RequestDocument } from "graphql-request";
 import { EventData } from "../../utils/types";
-import { getCurrentUnixTimestamp } from "../../utils/date";
-
+import {
+  DefillamaTxsByBlockDocument,
+  DefillamaTxsByBlockQueryResult,
+  DefillamaTxsLastBlockDocument,
+  DefillamaTxsLastBlockQueryResult,
+  DefillamaTxsFirstBlockDocument,
+  DefillamaTxsFirstBlockQueryResult,
+  DefillamaLatestBlockForZoneQueryResult,
+  DefillamaLatestBlockForZoneDocument,
+} from "./IBCTxsPage/__generated__/IBCTxsTable.query.generated";
+import retry from "async-retry"
 const endpoint = "https://api2.mapofzones.com/v1/graphql";
 const graphQLClient = new GraphQLClient(endpoint);
 
-const useBlocksChains = ["evmos", "cronos"]
+const requestWithTimeout = async <T>(query: RequestDocument, variables = {}, timeout = 5000): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('GraphQL request timed out'));
+    }, timeout);
+  });
 
-export const getLatestMapOfZonesTableData = async () => {
-  const variables = {
-    period: 24,
-    isMainnet: true,
-  };
-  const data = await graphQLClient.request(ZonesTableDocument, variables);
-  return data.zonesTable;
+  const data = await Promise.race([
+    graphQLClient.request(query, variables) as T,
+    timeoutPromise,
+  ]);
+  return data;
 };
 
-export const getIbcVolumeByZoneName = (chainName: string, zoneName: string) => {
+export const getLatestBlockForZone = async (zoneId: string): Promise<{
+  block: number;
+  timestamp: number;
+} | undefined> => {
+  const variables = {
+    zone: zoneId,
+  };
+  try {
+    return await retry(async () => {
+      const data = await requestWithTimeout<DefillamaLatestBlockForZoneQueryResult>(DefillamaLatestBlockForZoneDocument, variables)
+
+      if(!data) {
+        return undefined;
+      }
+
+      if(!Array.isArray(data.ibc_transfer_txs) || data.ibc_transfer_txs.length === 0) {
+        return undefined;
+      }
+
+      return {
+        block: data.ibc_transfer_txs[0].height,
+        timestamp: data.ibc_transfer_txs[0].timestamp,
+      };
+    }, {
+      retries: 5,
+    });
+  } catch(e) {
+    console.error(`Max attempts reached for fetching latest block for ${zoneId}`);
+  }
+
+}
+
+export const getBlockFromTimestamp = async (timestamp: number, chainId: string, position: "First" | "Last"): Promise<{
+  block: number;
+} | undefined> => {
+  if (![ "First", "Last"].includes(position)) {
+    throw new Error("Invalid position of block");
+  }
+  const date = new Date(timestamp * 1000);
+  const variables = {
+    zone: chainId,
+    timestamp: date.toISOString(),
+  };
+
+  try {
+    const block = await retry(async () => {
+      let result: DefillamaTxsFirstBlockQueryResult | DefillamaTxsLastBlockQueryResult | undefined;
+      if (position === "First") {
+        result = await requestWithTimeout<DefillamaTxsFirstBlockQueryResult>(DefillamaTxsFirstBlockDocument, variables);
+      } else if (position === "Last") {
+        result = await requestWithTimeout<DefillamaTxsLastBlockQueryResult>(DefillamaTxsLastBlockDocument, variables);
+      }
+
+      if(!result) {
+        return undefined;
+      }
+
+      if(result.ibc_transfer_txs.length === 0) {
+        return undefined;
+      }
+
+      return result.ibc_transfer_txs[0].height;
+    }, {
+      retries: 5,
+    });
+
+    return block ? {
+      block
+    } :  undefined;
+  } catch(e) {
+    console.error(`Max attempts reached for fetching ${chainId} at ${position} block from ${timestamp}`);
+  }
+
+};
+
+export const getZoneDataByBlock = async (
+  zoneName: string,
+  fromBlock: number,
+  toBlock: number
+): Promise<DefillamaTxsByBlockQueryResult | undefined> => {
+  const variables = {
+    zone: zoneName,
+    from: fromBlock,
+    to: toBlock,
+  };
+  try {
+    return await retry(async () => {
+      return await requestWithTimeout<DefillamaTxsByBlockQueryResult>(DefillamaTxsByBlockDocument, variables);
+    }
+    , {
+      retries: 5,
+    });
+  }
+  catch(e) {
+    console.error(`Max attempts reached for fetching data for ${zoneName} from block ${fromBlock} to ${toBlock}`);
+  }
+}
+
+export const getIbcVolumeByZoneId = (chainId: string) => {
   // @ts-ignore
   return async (fromBlock: number, toBlock: number) => {
-    const timestamp = getCurrentUnixTimestamp();
-    /*
-     *
-     * ***only allows adapters to run this function once per day***
-     *
-     */
-    const currentHour = new Date(timestamp * 1000).getUTCHours();
-    if (!(currentHour === 23)) {
+
+    let zoneData: DefillamaTxsByBlockQueryResult | undefined;
+
+    zoneData = await getZoneDataByBlock(chainId, fromBlock, toBlock);
+
+    if (!zoneData) {
       return [];
     }
-    const tableData = await getLatestMapOfZonesTableData();
 
-    const chainData = tableData.find((chain: any) => {
-      return chain.zone === zoneName;
-    });
-    if (chainData) {
-      const switchedStats = chainData.switchedStats[0];
-      const { ibcVolumeOut, ibcVolumeIn, ibcTransfers } = switchedStats;
-      let block = timestamp
-      if (useBlocksChains.includes(chainName)) {
-        const { number } = await getLatestBlock(chainName);
-        block = number
+    return zoneData.ibc_transfer_txs.map(
+      (tx: {
+        destination_address: string;
+        height: any;
+        source_address: string;
+        timestamp: any;
+        tx_hash: string;
+        tx_type: string;
+        usd_value?: any | null;
+        token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
+      }) => {
+        let from = tx.source_address;
+        let to = tx.destination_address;
+        const isDeposit = tx.tx_type === "Deposit";
+
+        if (isDeposit) {
+          from = tx.destination_address;
+          to = tx.source_address;
+        }
+
+        const date = new Date(tx.timestamp.replace(' ', 'T') + 'Z');
+        const unixTimestamp = Math.floor(date.getTime());
+
+        return {  
+          blockNumber: tx.height,
+          txHash: tx.tx_hash,
+          from,
+          to,
+          token: tx.token?.symbol || tx.token?.base_denom,
+          amount: tx.usd_value,
+          isDeposit,
+          isUSDVolume: true,
+          txsCountedAs: 1,
+          timestamp: unixTimestamp,
+        } as EventData;
       }
-      const depositAmount = ethers.BigNumber.from(ibcVolumeOut);
-      const depositTx = {
-        blockNumber: block,
-        txHash: `flows-${chainName}-${timestamp}-deposit`,
-        from: "null",
-        to: "null",
-        token: "null",
-        amount: depositAmount,
-        isDeposit: true,
-        isUSDVolume: true,
-        txsCountedAs: Math.floor(ibcTransfers / 2)
-      };
-      const withdrawalAmount = ethers.BigNumber.from(ibcVolumeIn);
-      const withdrawTx = {
-        blockNumber: block,
-        txHash: `flows-${chainName}-${timestamp}-withdrawal`,
-        from: "null",
-        to: "null",
-        token: "null",
-        amount: withdrawalAmount,
-        isDeposit: false,
-        isUSDVolume: true,
-        txsCountedAs: Math.floor(ibcTransfers / 2)
-      };
-      return [depositTx, withdrawTx] as EventData[];
-    } else return [];
+    );
   };
 };

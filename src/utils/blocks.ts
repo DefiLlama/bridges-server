@@ -4,9 +4,11 @@ import { tronGetLatestBlock } from "../helpers/tron";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
+import { BridgeNetwork } from "../data/types";
+import { getLatestBlockHeightForZoneFromMoz, getLatestBlockForZoneFromMoz, ibcGetBlockFromTimestamp } from "../adapters/ibc";
 const retry = require("async-retry");
 
-export async function getLatestBlockNumber(chain: string): Promise<number> {
+export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
   if (chain === "sui") {
     // const client = getClient();
     // return Number(await client.getLatestCheckpointSequenceNumber());
@@ -15,8 +17,10 @@ export async function getLatestBlockNumber(chain: string): Promise<number> {
     return await connection.getSlot();
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
+  } else if (bridge && bridge === "ibc") {
+    return await getLatestBlockHeightForZoneFromMoz(chain);
   }
-  return (await getLatestBlock(chain)).number;
+  return (await getLatestBlock(chain, bridge)).number;
 }
 
 const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
@@ -46,7 +50,7 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
   }
 };
 
-export async function getLatestBlock(chain: string): Promise<{ number: number; timestamp: number }> {
+export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
     // const client = getClient();
     // const seqNumber = await client.getLatestCheckpointSequenceNumber();
@@ -62,13 +66,26 @@ export async function getLatestBlock(chain: string): Promise<{ number: number; t
       timestamp = await connection.getBlockTime(number);
     } while (timestamp === null);
     return { number, timestamp };
+  } else if (bridge && bridge === "ibc") {
+    return await getLatestBlockForZoneFromMoz(chain);
   }
+  
   const timestamp = Math.floor(Date.now() / 1000) - 60;
   return await lookupBlock(timestamp, { chain });
 }
 
-export async function getBlockByTimestamp(timestamp: number, chain: Chain) {
-  if (chain === "solana") {
+export async function getBlockByTimestamp(
+  timestamp: number,
+  chain: Chain,
+  bridge?: BridgeNetwork,
+  position?: "First" | "Last"
+) 
+  {
+  if (bridge && bridge.bridgeDbName === "ibc") {
+    return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position);
+  }
+
+  else if (chain === "solana") {
     const { timestamp: latestTimestamp, number } = await getLatestBlock(chain);
     // There is not an easy way to get the slot number from a timestamp on Solana
     // without hammering the RPC node with requests.

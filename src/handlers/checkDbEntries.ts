@@ -24,6 +24,7 @@ export default wrapScheduledLambda(async (_event) => {
       if (!adapter) {
         throw new Error(`Adapter for ${bridgeDbName} not found, check it is exported correctly.`);
       }
+
       await Promise.all(
         Object.keys(adapter).map(async (chain) => {
           const hourlyEntries = await queryAggregatedHourlyTimestampRange(

@@ -1,11 +1,11 @@
 import { Chain, getProvider } from "@defillama/sdk/build/general";
 import { groupBy } from "lodash";
-import { lookupBlock } from "@defillama/sdk/build/util";
 import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import adapters from "../adapters";
 import { getCurrentUnixTimestamp } from "./date";
+import { getBlockByTimestamp } from "./blocks";
 const retry = require("async-retry");
 
 const startTs = Number(process.argv[2]);
@@ -29,6 +29,7 @@ export const runAdapterHistorical = async (
 
     throw new Error(errString);
   }
+
   const adapterChainEventsFn = adapter[chain];
   if (!adapterChainEventsFn) {
     const errString = `Chain ${chain} not found on adapter ${bridgeDbName}.`;
@@ -45,10 +46,15 @@ export const runAdapterHistorical = async (
 
     throw new Error(errString);
   }
-  const maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
+  let maxBlocksToQuery = maxBlocksToQueryByChain[chainContractsAreOn]
     ? maxBlocksToQueryByChain[chainContractsAreOn]
     : maxBlocksToQueryByChain.default;
-  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+  
+  if(bridgeNetwork.bridgeDbName == 'ibc') {
+    maxBlocksToQuery = 2000;
+  }
+
+  const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let block: number = startBlock;
   console.log(`Searching for transactions for ${bridgeID} from ${startBlock} to ${block}.`);
   while (block < endBlock) {
@@ -117,7 +123,6 @@ export const runAdapterHistorical = async (
       const errString = `Adapter for ${bridgeDbName} failed to get and insert logs for chain ${chain} for blocks ${block}-${endBlockForQuery}. ${
         e && e?.message
       }`;
-
       if (throwOnFailedInsert) {
         throw new Error(errString + e);
       }
@@ -137,6 +142,7 @@ async function fillAdapterHistorical(
   const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
   console.log(`Found ${bridgeDbName}`);
+
   const promises = Promise.all(
     adapter.chains.map(async (chain, i) => {
       let nChain;
@@ -148,9 +154,19 @@ async function fillAdapterHistorical(
       if (restrictChainTo && nChain !== restrictChainTo) return;
       console.log(`Running adapter for ${chain} for ${bridgeDbName}`);
       await wait(500 * i);
-      const startBlock = await lookupBlock(startTimestamp, { chain: nChain as Chain });
-      const endBlock = await lookupBlock(endTimestamp, { chain: nChain as Chain });
-      await runAdapterHistorical(startBlock.block, endBlock.block, adapter.id, chain.toLowerCase(), false);
+      
+      let startBlock, endBlock;
+      if(adapter.bridgeDbName === "ibc") {
+        startBlock = await getBlockByTimestamp(startTimestamp, chain as Chain, adapter, "First");
+        endBlock = await getBlockByTimestamp(endTimestamp, chain as Chain, adapter, "Last");
+      } else {
+        startBlock = await getBlockByTimestamp(startTimestamp, chain as Chain);
+        endBlock = await getBlockByTimestamp(endTimestamp, chain as Chain);
+      }
+
+      if(startBlock && endBlock) {
+        await runAdapterHistorical(startBlock.block, endBlock.block, adapter.id, chain.toLowerCase(), false);
+      }
     })
   );
   await promises;
