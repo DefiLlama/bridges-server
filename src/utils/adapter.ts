@@ -40,7 +40,7 @@ const getBlocksForRunningAdapter = async (
       if (bridgeDbName === "ibc") {
         endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName);
       } else {
-        endBlock = (await getLatestBlockNumber(chainContractsAreOn));
+        endBlock = await getLatestBlockNumber(chainContractsAreOn);
       }
 
       if (!endBlock) {
@@ -396,8 +396,8 @@ export const runAdapterHistorical = async (
     : maxBlocksToQueryByChain.default;
 
   // to reduce calls to moz api
-  if(bridgeDbName === 'ibc') {
-    maxBlocksToQuery = 2000;
+  if (bridgeDbName === "ibc") {
+    maxBlocksToQuery = 400;
   }
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
@@ -484,8 +484,19 @@ export const runAdapterHistorical = async (
         for (let i = 0; i < filteredEvents?.length; i++) {
           let log = filteredEvents[i];
 
-          const { txHash, blockNumber, from, to, token, amount, isDeposit, chainOverride, isUSDVolume, txsCountedAs, timestamp: realBlockTimestamp } =
-            log;
+          const {
+            txHash,
+            blockNumber,
+            from,
+            to,
+            token,
+            amount,
+            isDeposit,
+            chainOverride,
+            isUSDVolume,
+            txsCountedAs,
+            timestamp: realBlockTimestamp,
+          } = log;
           const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
           const timestamp = blockTimestamps[bucket] * 1000;
 
