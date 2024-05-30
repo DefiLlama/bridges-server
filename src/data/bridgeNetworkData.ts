@@ -362,7 +362,7 @@ export default [
     id: 24,
     displayName: "IBC",
     bridgeDbName: "ibc",
-    iconLink: "chain:cosmos",
+    iconLink: "icons:ibc",
     largeTxThreshold: 10000,
     url: "https://mapofzones.com/",
     chains: [
