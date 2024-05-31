@@ -30,7 +30,7 @@ const getBlocksForRunningAdapter = async (
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
   // todo: fix this line
-  const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
+  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
   let startBlock = undefined;
   let endBlock = undefined;
   let useRecordedBlocks = undefined;
