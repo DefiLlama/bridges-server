@@ -157,6 +157,13 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
           from = tx.destination_address;
           to = tx.source_address;
         }
+        // handle long addresses
+        if (to?.length > 42) {
+          to = to.slice(0, 42) + '...';
+        }
+        if (from?.length > 42) {
+          from = from.slice(0, 42) + '...';
+        }
 
         const date = new Date(tx.timestamp.replace(' ', 'T') + 'Z');
         const unixTimestamp = Math.floor(date.getTime());
