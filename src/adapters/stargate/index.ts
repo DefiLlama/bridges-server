@@ -143,7 +143,6 @@ const contractAddresses = {
       "0xAad094F6A75A14417d39f04E690fC216f080A41a", // USDT
     ],
   },
-
 } as {
   [chain: string]: {
     stg?: string;
@@ -318,22 +317,63 @@ const ercWithdrawalParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-/*
-These are no longer needed.
+const v2Addresses: Record<string, { token: string; pool: string }[]> = {
+  ethereum: [
+    { token: "0x9E32b13ce7f2E80A01932B42553652E053D6ed8e", pool: "0xcDafB1b2dB43f366E48e6F614b8DCCBFeeFEEcD3" }, // metis
+    { token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", pool: "0xc026395860Db2d07ee33e05fE50ed7bD583189C7" }, // usdc
+    { token: "0xdac17f958d2ee523a2206206994597c13d831ec7", pool: "0x933597a323Eb81cAe705C5bC29985172fd5A3973" }, // usdt
+    { token: "0xd5F7838F5C461fefF7FE49ea5ebaF7728bB0ADfa", pool: "0x268Ca24DAefF1FaC2ed883c598200CcbB79E931D" }, // mEth
+    { token: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", pool: "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931" }, // weth
+  ],
+  arbitrum: [
+    { token: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", pool: "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0" }, // usdt
+    { token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", pool: "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3" }, // usdc
+    { token: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", pool: "0xA45B5130f36CDcA45667738e2a258AB09f4A5f7F" }, // weth
+  ],
+  optimism: [
+    { token: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", pool: "0xcE8CcA271Ebc0533920C83d39F417ED6A0abB7D0" }, // usdc
+    { token: "0x94b008aa00579c1307b0ef2c499ad98a8ce58e58", pool: "0x19cFCE47eD54a88614648DC3f19A5980097007dD" }, // usdt
+    { token: "0x4200000000000000000000000000000000000006", pool: "0xe8CDF27AcD73a434D661C84887215F7598e7d0d3" }, // weth
+  ],
+  polygon: [
+    { token: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", pool: "0x9Aa02D4Fae7F58b8E8f34c66E756cC734DAc7fe4" }, // usdc
+    { token: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f", pool: "0xd47b03ee6d86Cf251ee7860FB2ACf9f91B9fD4d7" }, // usdt
+  ],
+  scroll: [
+    { token: "0x06eFdBFf2a14a7c8E15944D1F4A48F9F95F663A4", pool: "0x3Fc69CC4A842838bCDC9499178740226062b14E4" }, // usdc
+    { token: "0x5300000000000000000000000000000000000004", pool: "0xC2b638Cb5042c1B3c5d5C969361fB50569840583" }, // weth
+  ],
+  mantle: [
+    { token: "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111", pool: "0x4c1d3Fc3fC3c177c3b633427c2F769276c547463" }, // weth
+    { token: "0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9", pool: "0xAc290Ad4e0c891FDc295ca4F0a6214cf6dC6acDC" }, // usdc
+    { token: "0x201eba5cc46d216ce6dc03f6a759e8e766e956ae", pool: "0xB715B85682B731dB9D5063187C450095c91C57FC" }, // usdt
+    { token: "0xcDA86A272531e8640cD7F1a92c01839911B90bb0", pool: "0xF7628d84a2BbD9bb9c8E686AC95BB5d55169F3F1" }, // mEth
+  ],
+  bsc: [{ token: "0x55d398326f99059ff775485246999027b3197955", pool: "0x138EB30f73BC423c6455C53df6D89CB01d9eBc63" }], // usdt
+  avax: [
+    { token: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", pool: "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47" }, // usdc
+    { token: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7", pool: "0x12dC9256Acc9895B076f6638D628382881e62CeE" }, // usdt
+  ],
+  metis: [
+    { token: "0x420000000000000000000000000000000000000A", pool: "0x36ed193dc7160D3858EC250e69D12B03Ca087D08" }, // weth
+    { token: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000", pool: "0xD9050e7043102a0391F81462a3916326F86331F0" }, // metis
+    { token: "0xbB06DCA3AE6887fAbF931640f67cab3e3a16F4dC", pool: "0x4dCBFC0249e8d5032F89D6461218a9D2eFff5125" }, // usdt
+  ],
+};
 
-const stgDepositParams: PartialContractEventParams = {
+const ercV2DepositParams: PartialContractEventParams = {
   target: "",
-  topic: "SendToChain(uint16,bytes,uint256)",
-  abi: ["event SendToChain(uint16 dstChainId, bytes to, uint256 qty)"],
+  topic: "OFTSent(bytes32,uint32,address,uint256,uint256)",
+  abi: [
+    "event OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)",
+  ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "qty",
-  },
-  txKeys: {
-    from: "from",
+    from: "fromAddress",
+    amount: "amountSentLD",
   },
   fixedEventData: {
     token: "",
@@ -342,19 +382,17 @@ const stgDepositParams: PartialContractEventParams = {
   isDeposit: true,
 };
 
-const stgWithdrawalParams: PartialContractEventParams = {
+const ercV2WithdrawalParams: PartialContractEventParams = {
   target: "",
-  topic: "ReceiveFromChain(uint16,uint64,uint256)",
-  abi: ["event ReceiveFromChain(uint16 srcChainId, uint64 nonce, uint256 qty)"],
+  topic: "OFTReceived(bytes32,uint32,address,uint256)",
+  abi: ["event OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)"],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "qty",
-  },
-  txKeys: {
-    to: "to", // This does not give correct address. Cannot find contract containing fn that is called so I can extract the input data. Example contract interacted with: 0x75dC8e5F50C8221a82CA6aF64aF811caA983B65f (Polygon)
+    to: "toAddress",
+    amount: "amountReceivedLD",
   },
   fixedEventData: {
     token: "",
@@ -362,10 +400,35 @@ const stgWithdrawalParams: PartialContractEventParams = {
   },
   isDeposit: false,
 };
-*/
 
 const constructParams = (chain: string) => {
   let eventParams = [] as any;
+
+  const v2Events = (
+    v2Addresses[chain]?.map((address: any) => {
+      return [
+        {
+          ...ercV2DepositParams,
+          target: address.pool,
+          fixedEventData: {
+            token: address.token,
+            to: address.pool,
+          },
+        },
+        {
+          ...ercV2WithdrawalParams,
+          target: address.pool,
+          fixedEventData: {
+            token: address.token,
+            from: address.pool,
+          },
+        },
+      ];
+    }) || []
+  ).flat();
+
+  eventParams.push(...v2Events);
+
   const etherVault = contractAddresses[chain].etherVault;
   const nativeToken = contractAddresses[chain].nativeToken;
   const ercs = contractAddresses[chain].ercs;
