@@ -1110,4 +1110,33 @@ export default [
       "x layer": "xlayer",
     },
   },
+  {
+    id: 63,
+    displayName: "zkbridge",
+    bridgeDbName: "zkbridge",
+    iconLink: "icons:zkbridge",
+    largeTxThreshold: 10000,
+    url: "https://www.zkbridge.com/token",
+    chains: [
+      "Ethereum",
+      "BSC",
+      "Polygon",
+      "Optimism",
+      "Arbitrum",
+      "Linea",
+      "Mantle",
+      "Base",
+      "Scroll",
+      "opBNB",
+      "Combo",
+      "Bouncebit",
+      "Bitlayer"
+    ],
+    chainMapping: {
+      combo: "combo-mainnet",
+      "bouncebit":"bouncebit-mainnet",
+      opbnb: "op_bnb",
+      "bitlayer":"btr",
+    },
+  },
 ] as BridgeNetwork[];
