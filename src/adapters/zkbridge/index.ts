@@ -3,40 +3,42 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { getProvider } from "../../utils/provider";
 import zkbridgeContractes from "./contants";
-import {ethers} from "ethers";
+import { ethers } from "ethers";
 
 const depositParams: PartialContractEventParams = {
   target: "",
   topic: "TransferToken(uint64,uint16,uint256,address,address,uint256)",
-  abi: ["event TransferToken(uint64 indexed sequence, uint16 indexed dstChainId, uint256 indexed poolId, address sender, address recipient, uint256 amount)"],
+  abi: [
+    "event TransferToken(uint64 indexed sequence, uint16 indexed dstChainId, uint256 indexed poolId, address sender, address recipient, uint256 amount)",
+  ],
   logKeys: {
     blockNumber: "blockNumber",
-    txHash: "transactionHash"
+    txHash: "transactionHash",
   },
   argKeys: {
     from: "sender",
     to: "recipient",
     amount: "amount",
   },
-  isDeposit: true
+  isDeposit: true,
 };
 
 const withdrawalParams: PartialContractEventParams = {
   target: "",
   topic: "ReceiveToken(uint64,uint16,uint256,address,uint256)",
-  abi: ["event ReceiveToken(uint64 indexed sequence, uint16 indexed srcChainId, uint256 indexed poolId, address recipient, uint256 amount)"],
+  abi: [
+    "event ReceiveToken(uint64 indexed sequence, uint16 indexed srcChainId, uint256 indexed poolId, address recipient, uint256 amount)",
+  ],
   logKeys: {
     blockNumber: "blockNumber",
-    txHash: "transactionHash"
+    txHash: "transactionHash",
   },
   argKeys: {
     to: "recipient",
     amount: "amount",
-    
   },
-  isDeposit: false
+  isDeposit: false,
 };
-
 
 const wait = (ms: number) =>
   new Promise((resolve, _reject) => {
@@ -46,26 +48,25 @@ const wait = (ms: number) =>
   });
 
 const newConstructParams = (chain: string) => {
-  
   let eventParams = [] as any;
   const bridges = zkbridgeContractes[chain];
   if (!bridges) {
-    return
+    return;
   }
   Object.entries(bridges).map(([address, _]) => {
     const finalDepositParams = {
       ...depositParams,
       target: address,
       fixedEventData: {
-        to: address
-      }
+        to: address,
+      },
     };
     const finalWithdrawalParams = {
       ...withdrawalParams,
       target: address,
       fixedEventData: {
-        from: address
-      }
+        from: address,
+      },
     };
     eventParams.push(finalDepositParams, finalWithdrawalParams);
   });
@@ -75,35 +76,35 @@ const newConstructParams = (chain: string) => {
     let res = [];
     let j = 0;
     for (let eventLogData of eventLogDatas) {
-      const provider = getProvider(chain) as any;  
+      const provider = getProvider(chain) as any;
       let txReceipt;
-      for (let i = 0; i < 5; i ++) {
-        
+      for (let i = 0; i < 5; i++) {
         txReceipt = await provider.getTransactionReceipt(eventLogData.txHash);
         if (txReceipt) {
-          break
+          break;
         }
-        await wait(500)
+        await wait(500);
       }
       if (!txReceipt) {
-        break
+        break;
       }
       let contractAddr;
       if (eventLogData.isDeposit) {
-        contractAddr = eventLogData.to
+        contractAddr = eventLogData.to;
       } else {
-        contractAddr = eventLogData.from
+        contractAddr = eventLogData.from;
       }
-      let bridge = bridges[contractAddr]
+      let bridge = bridges[contractAddr];
 
       for (let log of txReceipt.logs) {
         if (log.topics[0].slice(0, 8) === "0x302b3e" || log.topics[0].slice(0, 8) === "0xe0442d") {
           let poolId = ethers.BigNumber.from(log.topics[3]);
           let poolInfo = bridge[poolId.toNumber()];
           if (!poolInfo) {
-            continue
+            continue;
           }
-          if (poolInfo.isNativeToken) {// native token
+          if (poolInfo.isNativeToken) {
+            // native token
             // @ts-ignore
             eventLogData.token = poolInfo.nativeToken;
             if (eventLogData.isDeposit) {
@@ -111,7 +112,8 @@ const newConstructParams = (chain: string) => {
             } else {
               eventLogData.amount = ethers.BigNumber.from("0x" + log.data.slice(66, 130));
             }
-          } else { // erc20 token
+          } else {
+            // erc20 token
             for (let log of txReceipt.logs) {
               if (log.topics[0].slice(0, 8) === "0xddf252") {
                 eventLogData.token = log.address;
@@ -130,7 +132,7 @@ const newConstructParams = (chain: string) => {
   };
 };
 
-const adapter: BridgeAdapter =  {
+const adapter = {
   ethereum: newConstructParams("ethereum"),
   bsc: newConstructParams("bsc"),
   polygon: newConstructParams("polygon"),
@@ -143,7 +145,7 @@ const adapter: BridgeAdapter =  {
   opbnb: newConstructParams("op_bnb"),
   combo: newConstructParams("combo-mainnet"),
   bouncebit: newConstructParams("bouncebit-mainnet"),
-  bitlayer: newConstructParams("btr")
+  bitlayer: newConstructParams("btr"),
 };
 
 export default adapter;
