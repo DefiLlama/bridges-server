@@ -93,57 +93,7 @@ const constructParams = (chain: SupportedChains) => {
         eventParams.push(transferWithdrawalParams, transferDepositParams);
     });
 
-    if (chain == "merlin") {
-        return async (fromBlock: number, toBlock: number) => {
-            const eventLogData = await getTxDataFromEVMEventLogs("owlto", chain as Chain, fromBlock, toBlock, eventParams);
-
-            const nativeEvents = await Promise.all([
-                ...bridgeAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                        includeSignatures: ["0x"],
-                    });
-                    const eventsRes: EventData[] = txs.map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.block_number,
-                            from: tx.from_address,
-                            to: tx.to_address,
-                            token: nativeTokens[chain],
-                            amount: tx.value,
-                            isDeposit: address.toLowerCase() === tx.to_address,
-                        };
-                        return event;
-                    });
-
-                    return eventsRes;
-                }),
-                ...contractAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                        includeSignatures: ["0xfc180638"],
-                    });
-                    const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.block_number,
-                            from: tx.from_address,
-                            to: tx.to_address,
-                            token: nativeTokens[chain],
-                            amount: tx.value,
-                            isDeposit: address.toLowerCase() === tx.to_address,
-                        };
-                        return event;
-                    });
-
-                    return eventsRes;
-                })
-            ]
-            );
-            const allEvents = [...eventLogData, ...nativeEvents.flat()];
-            return allEvents;
-        };
-    } else if (nativeTokens.hasOwnProperty(chain)) {
+   if (nativeTokens.hasOwnProperty(chain)) {
         return async (fromBlock: number, toBlock: number) => {
             const eventLogData = await getTxDataFromEVMEventLogs("owlto", chain as Chain, fromBlock, toBlock, eventParams);
 

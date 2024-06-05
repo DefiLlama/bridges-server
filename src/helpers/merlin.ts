@@ -42,7 +42,7 @@ const getBlockTXbyAddress = async (
   endBlock: number,
 ) => {
   let txList: any[] = []
-  let page = 0
+  let page = 1
   while(true) {
     let res = await retry(
       () =>
