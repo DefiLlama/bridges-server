@@ -1112,7 +1112,7 @@ export default [
   },
   {
     id: 63,
-    displayName: "zkbridge",
+    displayName: "zkBridge",
     bridgeDbName: "zkbridge",
     iconLink: "icons:zkbridge",
     largeTxThreshold: 10000,
