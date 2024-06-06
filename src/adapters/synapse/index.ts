@@ -68,7 +68,11 @@ const contractAddresses = {
   },
   blast: {
     synapseBridge:"0x55769baf6ec39b3bf4aae948eb890ea33307ef3c",
-  }
+  },
+  scroll: {
+    synapseBridge: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E",
+  },
+
 }  as {
     [chain: string]: {
         synapseBridge: string;
@@ -412,6 +416,7 @@ const adapter: BridgeAdapter = {
   // // canto: constructParams("canto"),
   // cronos: constructParams("cronos"),
   // dogechain: constructParams("dogechain"),
+  scroll: constructParams("scroll"),
 };
 
 
