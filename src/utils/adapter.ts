@@ -407,7 +407,10 @@ export const runAdapterHistorical = async (
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
     try {
-      const eventLogs = await retry(() => adapterChainEventsFn(block, endBlockForQuery), { retries: 3, factor: 1 });
+      const eventLogs = await retry(
+        () => adapterChainEventsFn(block, endBlockForQuery).catch((e) => console.log(e.errors)),
+        { retries: 4, factor: 2 }
+      );
 
       if (eventLogs.length === 0) {
         console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${block} to ${endBlock}.`);
