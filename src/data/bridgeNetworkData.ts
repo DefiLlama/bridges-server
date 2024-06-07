@@ -858,6 +858,7 @@ export default [
       "Blast",
       "X Layer",
       // "Numbers",
+      "Taiko"
     ],
     chainMapping: {
       "zksync era": "era",

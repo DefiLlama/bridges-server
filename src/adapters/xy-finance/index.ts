@@ -156,6 +156,7 @@ const adapter: BridgeAdapter = {
   wemix: constructParams(Chain.Wemix),
   blast: constructParams(Chain.Blast),
   'x layer': constructParams(Chain.XLayer),
+  taiko: constructParams(Chain.Taiko),
 };
 
 export default adapter;
