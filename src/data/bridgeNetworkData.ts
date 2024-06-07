@@ -1237,5 +1237,4 @@ export default [
     },
     remove: true, // this is a temporary bridge
   },
-] as any[];
-// ] as BridgeNetwork[];
+] as BridgeNetwork[];
