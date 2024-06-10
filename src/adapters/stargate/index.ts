@@ -359,6 +359,48 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000", pool: "0xD9050e7043102a0391F81462a3916326F86331F0" }, // metis
     { token: "0xbB06DCA3AE6887fAbF931640f67cab3e3a16F4dC", pool: "0x4dCBFC0249e8d5032F89D6461218a9D2eFff5125" }, // usdt
   ],
+  aurora: [
+    {
+      token: "0x368EBb46ACa6b8D0787C96B2b20bD3CC3F2c45F7",
+      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
+    },
+  ],
+  base: [
+    {
+      token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      pool: "0x27a16dc786820B16E5c9028b75B99F6f604b5d26",
+    },
+    {
+      token: "0x4200000000000000000000000000000000000006",
+      pool: "0xdc181Bd607330aeeBEF6ea62e03e5e1Fb4B6F7C7",
+    },
+  ],
+  kava: [
+    {
+      token: "0x919C1c267BC06a7039e03fcc2eF738525769109c",
+      pool: "0x41A5b0470D96656Fb3e8f68A218b39AdBca3420b",
+    },
+  ],
+  klaytn: [
+    {
+      token: "0xE2053BCf56D2030d2470Fb454574237cF9ee3D4B",
+      pool: "0x01A7c805cc47AbDB254CD8AaD29dE5e447F59224",
+    },
+    {
+      token: "0x9025095263d1E548dc890A7589A4C78038aC40ab",
+      pool: "0x8619bA1B324e099CB2227060c4BC5bDEe14456c6",
+    },
+    {
+      token: "0x55Acee547DF909CF844e32DD66eE55a6F81dC71b",
+      pool: "0xBB4957E44401a31ED81Cab33539d9e8993FA13Ce",
+    },
+  ],
+  linea: [
+    {
+      token: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
+      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
+    },
+  ],
 };
 
 const ercV2DepositParams: PartialContractEventParams = {
@@ -506,7 +548,13 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   kava: constructParams("kava"),
-  // metis: constructParams("metis"),
+  metis: constructParams("metis"),
+  klaytn: constructParams("klaytn"),
+  linea: constructParams("linea"),
+  scroll: constructParams("scroll"),
+  mantle: constructParams("mantle"),
+  base: constructParams("base"),
+  aurora: constructParams("aurora"),
 };
 
 export default adapter;
