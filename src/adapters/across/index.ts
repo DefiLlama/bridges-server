@@ -37,6 +37,9 @@ const contracts = {
   linea: {
     spokePoolv2p5: "0x7E63A5f1a8F0B4d0934B2f2327DAED3F6bb2ee75",
   },
+  mode: {
+    spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
+  },
 } as const;
 
 type SupportedChains = keyof typeof contracts;
@@ -221,6 +224,7 @@ const adapter: BridgeAdapter = {
   "zksync era": constructParams("era"),
   base: constructParams("base"),
   linea: constructParams("linea"),
+  mode: constructParams("mode"),
 };
 
 export default adapter;
