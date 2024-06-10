@@ -220,7 +220,20 @@ export default [
     iconLink: "icons:stargate",
     largeTxThreshold: 10000,
     url: "https://stargate.finance/",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Arbitrum",
+      "Optimism",
+      "BSC",
+      "Aurora",
+      "Base",
+      "Kava",
+      "Klaytn",
+      "Linea",
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
