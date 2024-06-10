@@ -10,7 +10,7 @@ import { normalizeChain } from "../utils/normalizeChain";
 const getBridges = async () => {
   const response = (
     await Promise.all(
-     bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork?.remove !== true) .map(async (bridgeNetwork) => {
+      bridgeNetworks.map(async (bridgeNetwork) => {
         const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain } = bridgeNetwork;
         // can use chains to give chain breakdown, but not needed at this time (put in getBridge to reduce queries?)
 
@@ -99,7 +99,7 @@ const getBridges = async () => {
           monthlyVolume: monthlyVolume ?? 0,
           chains: chains.sort((a, b) => chainDailyVolumes[b] - chainDailyVolumes[a]),
           destinationChain: destinationChain ?? "false",
-          url
+          url,
         } as any;
         return dataToReturn;
       })
