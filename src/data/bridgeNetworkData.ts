@@ -233,6 +233,9 @@ export default [
       "Kava",
       "Klaytn",
       "Linea",
+      "Metis",
+      "Linea",
+      "Mantle",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
