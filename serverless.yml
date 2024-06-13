@@ -124,8 +124,8 @@ functions:
     memorySize: 2000
     events:
       - http:
-        path: lastblocks
-        method: get
+          path: lastblocks
+          method: get
   runAdapter:
     handler: src/handlers/runAdapter.default
     timeout: 900
