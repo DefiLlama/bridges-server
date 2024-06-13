@@ -120,7 +120,7 @@ functions:
           method: get
   lastBlocks:
     handler: src/handlers/getLastBlocks.default
-    timeout: 30
+    timeout: 120
     memorySize: 2000
     events:
       - http:
