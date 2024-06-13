@@ -4,7 +4,7 @@ import { runAdapterToCurrentBlock } from "../utils/adapter";
 import { sql } from "../utils/db";
 import { successResponse } from "../utils/lambda-response";
 
-const handler = async (event: any) => {
+const handler = async () => {
   const lastRecordedBlocks = (
     await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
   FROM (
