@@ -118,6 +118,14 @@ functions:
       - http:
           path: largetransactions/{chain}
           method: get
+  lastBlocks:
+    handler: src/handlers/getLastBlocks.default
+    timeout: 30
+    memorySize: 2000
+    events:
+      - http:
+        path: lastblocks
+        method: get
   runAdapter:
     handler: src/handlers/runAdapter.default
     timeout: 900
