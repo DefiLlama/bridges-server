@@ -57,8 +57,8 @@ import fuse from "./fuse";
 import orbiter from "./orbiter";
 import connext from "./connext";
 import xswap from "./xswap";
-import owlto from "./owlto"
-import zkbridge from "./zkbridge"
+import owlto from "./owlto";
+import zkbridge from "./zkbridge";
 
 export default {
   polygon,
@@ -120,6 +120,7 @@ export default {
   xswap,
   owlto,
   zkbridge,
+  zkbridge111: zkbridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };

@@ -3,65 +3,46 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { events } from "./events";
 import { contracts } from "./contracts";
+import { AddressZero, CHAIN_ADAPTER_MAP, CHAINS_MAP } from "./constants";
 
-type SupportedChains = keyof typeof contracts;
-
-const constructParams = (chain: SupportedChains) => {
+const buildAdapter = (): BridgeAdapter => {
   const eventParams: PartialContractEventParams[] = [];
 
-  if (contracts[chain].portal) {
-    eventParams.push({
-      ...events.synthesizeRequestParams,
-      target: contracts[chain].portal,
-    });
-    eventParams.push({
-      ...events.burnCompletedParams,
-      target: contracts[chain].portal,
-    });
-  }
+  const adapter: BridgeAdapter = {}
 
-  if (contracts[chain].synthesis) {
-    eventParams.push({
-      ...events.burnRequestParams,
-      target: contracts[chain].synthesis,
-    });
-    eventParams.push({
-      ...events.synthesizeCompletedParams,
-      target: contracts[chain].synthesis,
-    });
-  }
+  contracts.forEach(({ chainId, portal, synthesis }) => {
+    if (portal !== AddressZero) {
+      eventParams.push({
+        ...events.synthesizeRequestParams,
+        target: portal,
+      });
+      eventParams.push({
+        ...events.burnCompletedParams,
+        target: portal,
+      });
+    }
 
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("symbiosis", chain as Chain, fromBlock, toBlock, eventParams);
+    if (synthesis !== AddressZero) {
+      eventParams.push({
+        ...events.burnRequestParams,
+        target: synthesis,
+      });
+      eventParams.push({
+        ...events.synthesizeCompletedParams,
+        target: synthesis,
+      });
+    }
+
+    const chainKey = CHAINS_MAP[chainId]
+    const adapterKey = CHAIN_ADAPTER_MAP[chainKey] || chainKey
+    adapter[adapterKey] = async (fromBlock: number, toBlock: number) => {
+      return getTxDataFromEVMEventLogs("symbiosis", chainKey as Chain, fromBlock, toBlock, eventParams);
+    }
+  })
+
+  return adapter
 };
 
-const adapter: BridgeAdapter = {
-  ethereum: constructParams("ethereum"),
-  bsc: constructParams("bsc"),
-  avalanche: constructParams("avax"),
-  polygon: constructParams("polygon"),
-  telos: constructParams("telos"),
-  kava: constructParams("kava"),
-  boba: constructParams("boba"),
-  "boba bnb": constructParams("boba_bnb"),
-  "zksync era": constructParams("era"),
-  arbitrum: constructParams("arbitrum"),
-  optimism: constructParams("optimism"),
-  "arbitrum nova": constructParams("arbitrum_nova"),
-  "polygon zkevm": constructParams("polygon_zkevm"),
-  linea: constructParams("linea"),
-  base: constructParams("base"),
-  mantle: constructParams("mantle"),
-  tron: constructParams("tron"),
-  scroll: constructParams("scroll"),
-  manta: constructParams("manta"),
-  metis: constructParams("metis"),
-  mode: constructParams("mode"),
-  bahamut: constructParams("bahamut"),
-  rootstock: constructParams("rsk"),
-  blast: constructParams("blast"),
-  merlin: constructParams("merlin"),
-  zklink: constructParams("zklink"),
-};
+const adapter: BridgeAdapter = buildAdapter();
 
 export default adapter;

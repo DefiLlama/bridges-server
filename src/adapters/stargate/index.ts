@@ -359,6 +359,48 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000", pool: "0xD9050e7043102a0391F81462a3916326F86331F0" }, // metis
     { token: "0xbB06DCA3AE6887fAbF931640f67cab3e3a16F4dC", pool: "0x4dCBFC0249e8d5032F89D6461218a9D2eFff5125" }, // usdt
   ],
+  aurora: [
+    {
+      token: "0x368EBb46ACa6b8D0787C96B2b20bD3CC3F2c45F7",
+      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
+    },
+  ],
+  base: [
+    {
+      token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      pool: "0x27a16dc786820B16E5c9028b75B99F6f604b5d26",
+    },
+    {
+      token: "0x4200000000000000000000000000000000000006",
+      pool: "0xdc181Bd607330aeeBEF6ea62e03e5e1Fb4B6F7C7",
+    },
+  ],
+  kava: [
+    {
+      token: "0x919C1c267BC06a7039e03fcc2eF738525769109c",
+      pool: "0x41A5b0470D96656Fb3e8f68A218b39AdBca3420b",
+    },
+  ],
+  klaytn: [
+    {
+      token: "0xE2053BCf56D2030d2470Fb454574237cF9ee3D4B",
+      pool: "0x01A7c805cc47AbDB254CD8AaD29dE5e447F59224",
+    },
+    {
+      token: "0x9025095263d1E548dc890A7589A4C78038aC40ab",
+      pool: "0x8619bA1B324e099CB2227060c4BC5bDEe14456c6",
+    },
+    {
+      token: "0x55Acee547DF909CF844e32DD66eE55a6F81dC71b",
+      pool: "0xBB4957E44401a31ED81Cab33539d9e8993FA13Ce",
+    },
+  ],
+  linea: [
+    {
+      token: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
+      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
+    },
+  ],
 };
 
 const ercV2DepositParams: PartialContractEventParams = {
@@ -401,11 +443,30 @@ const ercV2WithdrawalParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-const constructParams = (chain: string) => {
-  let eventParams = [] as any;
+interface V2Address {
+  token: string;
+  pool: string;
+}
 
-  const v2Events = (
-    v2Addresses[chain]?.map((address: any) => {
+interface V2Address {
+  token: string;
+  pool: string;
+}
+
+interface ContractAddresses {
+  [chain: string]: {
+    stg?: string;
+    ercs: string[];
+    nativeToken?: string;
+    etherVault?: string;
+  };
+}
+
+const constructParams = (chain: string) => {
+  let eventParams: PartialContractEventParams[] = [];
+
+  const v2Events: PartialContractEventParams[] = (
+    v2Addresses[chain]?.map((address: V2Address) => {
       return [
         {
           ...ercV2DepositParams,
@@ -429,12 +490,14 @@ const constructParams = (chain: string) => {
 
   eventParams.push(...v2Events);
 
-  const etherVault = contractAddresses[chain].etherVault;
-  const nativeToken = contractAddresses[chain].nativeToken;
-  const ercs = contractAddresses[chain].ercs;
-  const stg = contractAddresses[chain].stg;
+  const contractAddressesForChain = contractAddresses[chain] as ContractAddresses[string] | undefined;
+  const etherVault = contractAddressesForChain?.etherVault;
+  const nativeToken = contractAddressesForChain?.nativeToken;
+  const ercs = contractAddressesForChain?.ercs || [];
+  const stg = contractAddressesForChain?.stg;
+
   if (etherVault) {
-    const finalEthDepositParams = {
+    const finalEthDepositParams: PartialContractEventParams = {
       ...ethDepositParams,
       target: etherVault,
       fixedEventData: {
@@ -442,7 +505,7 @@ const constructParams = (chain: string) => {
         to: etherVault,
       },
     };
-    const finalEthWithdrawalParams = {
+    const finalEthWithdrawalParams: PartialContractEventParams = {
       ...ethWithdrawalParams,
       target: etherVault,
       fixedEventData: {
@@ -452,10 +515,11 @@ const constructParams = (chain: string) => {
     };
     eventParams.push(finalEthDepositParams, finalEthWithdrawalParams);
   }
+
   if (chain === "ethereum") {
     eventParams.push(ethStgDepositParams, ethStgWithdrawalParams);
-  } else {
-    const finalStgDepositParams = {
+  } else if (stg) {
+    const finalStgDepositParams: PartialContractEventParams = {
       ...stgDepositParams,
       target: stg,
       fixedEventData: {
@@ -463,7 +527,7 @@ const constructParams = (chain: string) => {
         to: stg,
       },
     };
-    const finalStgWithdrawalParams = {
+    const finalStgWithdrawalParams: PartialContractEventParams = {
       ...stgWithdrawalParams,
       target: stg,
       fixedEventData: {
@@ -475,7 +539,7 @@ const constructParams = (chain: string) => {
   }
 
   for (let address of ercs) {
-    const finalErcDepositParams = {
+    const finalErcDepositParams: PartialContractEventParams = {
       ...ercDepositParams,
       target: address,
       fixedEventData: {
@@ -483,7 +547,7 @@ const constructParams = (chain: string) => {
         to: address,
       },
     };
-    const finalErcWithdrawalParams = {
+    const finalErcWithdrawalParams: PartialContractEventParams = {
       ...ercWithdrawalParams,
       target: address,
       fixedEventData: {
@@ -493,10 +557,10 @@ const constructParams = (chain: string) => {
     };
     eventParams.push(finalErcDepositParams, finalErcWithdrawalParams);
   }
+
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("stargate", chain as Chain, fromBlock, toBlock, eventParams);
 };
-
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   polygon: constructParams("polygon"),
@@ -506,7 +570,12 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
   kava: constructParams("kava"),
-  // metis: constructParams("metis"),
+  metis: constructParams("metis"),
+  klaytn: constructParams("klaytn"),
+  linea: constructParams("linea"),
+  mantle: constructParams("mantle"),
+  base: constructParams("base"),
+  aurora: constructParams("aurora"),
 };
 
 export default adapter;
