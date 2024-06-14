@@ -32,7 +32,13 @@ const eoaAddressNative = [
   "0x80c67432656d59144ceff962e8faf8926599bcf8", // native
   "0xe4edb277e41dc89ab076a1f049f4a3efa700bce8", // native
   "0xee73323912a4e3772b74ed0ca1595a152b0ef282", // native
-  "0xe01a40a0894970fc4c2b06f36f5eb94e73ea502d", //merlin
+  "0xe01a40a0894970fc4c2b06f36f5eb94e73ea502d", // merlin
+  '0x41d3d33156ae7c62c094aae2995003ae63f587b3',
+  '0xd7aa9ba6caac7b0436c91396f22ca5a7f31664fc',
+  '0x0a88bc5c32b684d467b43c06d9e0899efeaf59df',
+  '0x1c84daa159cf68667a54beb412cdb8b2c193fb32',
+  '0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2',
+  '0x732efacd14b0355999aebb133585787921aba3a9',
 ];
 
 const nativeTokens: Record<string, string> = {
@@ -115,12 +121,18 @@ const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
   // mode: constructParams("mode"), no etherscan
-  // manta: constructParams("manta"),
+  manta: constructParams("manta"),
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
   merlin: constructParams("merlin"),
   zklink: constructParams("zklink"),
-  btr: constructParams("btr"),
+  bitlayer: constructParams("btr"),
+  'x layer': constructParams("xlayer"),
+  opbnb: constructParams("opbnb"),
+  bsc: constructParams("bsc"),
+  mantle: constructParams("mantle"),
+  bouncebit: constructParams("bouncebit-mainnet"),
+  zkfair: constructParams("zkfair"),
 };
 export default adapter;
