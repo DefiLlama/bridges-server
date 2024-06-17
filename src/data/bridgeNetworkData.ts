@@ -1112,7 +1112,7 @@ export default [
       "Bitlayer",
       "ZkLink",
       "X Layer",
-      "Binance",
+      "BSC",
       "Bouncebit",
       "Mantle",
       "Zkfair",
@@ -1124,7 +1124,6 @@ export default [
       "polygon zkevm": "polygon_zkevm",
       "btr": "bitlayer",
       "xlayer": "X Layer",
-      "bsc": "Binance",
     },
   },
   {
