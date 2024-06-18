@@ -2,6 +2,7 @@ import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import aws from "aws-sdk";
 import { sql } from "../utils/db";
+import { store } from "../utils/s3";
 
 async function invokeLambda(functioName: string, event: any) {
   return new Promise((resolve, _reject) => {
@@ -27,6 +28,11 @@ export default wrapScheduledLambda(async (_event) => {
       GROUP BY bridge_id
   ) subquery;
   `;
+  try {
+    await store("lastRecordedBlocks.json", lastRecordedBlocks[0].result);
+  } catch (e) {
+    console.error(e);
+  }
   for (let i = 0; i < bridgeNetworks.length; i++) {
     await invokeLambda(`llama-bridges-prod-runAdapter`, {
       bridgeIndex: i,
