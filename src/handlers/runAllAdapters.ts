@@ -29,8 +29,10 @@ export default wrapScheduledLambda(async (_event) => {
   ) subquery;
   `;
   try {
-    await store("lastRecordedBlocks.json", lastRecordedBlocks[0].result);
+    await store("lastRecordedBlocks.json", JSON.stringify(lastRecordedBlocks[0].result));
+    console.log("Stored last recorded blocks");
   } catch (e) {
+    console.error("Failed to store last recorded blocks");
     console.error(e);
   }
   for (let i = 0; i < bridgeNetworks.length; i++) {
