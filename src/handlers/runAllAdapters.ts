@@ -29,7 +29,19 @@ export default wrapScheduledLambda(async (_event) => {
   ) subquery;
   `;
   try {
-    await store("lastRecordedBlocks.json", JSON.stringify(lastRecordedBlocks[0].result));
+    const bridgeConfig = await sql`SELECT * FROM bridges.config`;
+
+    const bridgeConfigById = bridgeConfig.reduce((acc: any, config: any) => {
+      acc[config.id] = config;
+      return acc;
+    }, {});
+
+    const lastBlocksByName = Object.keys(lastRecordedBlocks).reduce((acc: any, bridgeId: any) => {
+      acc[`${bridgeConfigById[bridgeId].bridge_name}-${bridgeConfigById[bridgeId].chain}`] =
+        lastRecordedBlocks[bridgeId];
+      return acc;
+    }, {});
+    await store("lastRecordedBlocks.json", JSON.stringify(lastBlocksByName));
     console.log("Stored last recorded blocks");
   } catch (e) {
     console.error("Failed to store last recorded blocks");
