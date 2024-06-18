@@ -36,9 +36,9 @@ export default wrapScheduledLambda(async (_event) => {
       return acc;
     }, {});
 
-    const lastBlocksByName = Object.keys(lastRecordedBlocks).reduce((acc: any, bridgeId: any) => {
+    const lastBlocksByName = Object.keys(lastRecordedBlocks[0].result).reduce((acc: any, bridgeId: any) => {
       acc[`${bridgeConfigById[bridgeId].bridge_name}-${bridgeConfigById[bridgeId].chain}`] =
-        lastRecordedBlocks[bridgeId];
+        lastRecordedBlocks[0].result[bridgeId];
       return acc;
     }, {});
     await store("lastRecordedBlocks.json", JSON.stringify(lastBlocksByName));
