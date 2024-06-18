@@ -1200,6 +1200,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "zkLink Nova"
     case "bouncebit":
       return "BounceBit"
+    case "europa":
+      return "SKALE Europa"
     case "xlayer":
       return "X Layer"
     case "opbnb":
