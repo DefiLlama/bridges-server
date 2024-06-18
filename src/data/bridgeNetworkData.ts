@@ -1105,7 +1105,7 @@ export default [
       "Arbitrum Nova",
       "Scroll",
       "Manta",
-      // "Mode",
+      "Mode",
       "zkSync Era",
       "Polygon zkEVM",
       "Merlin",
@@ -1116,7 +1116,8 @@ export default [
       "Bouncebit",
       "Mantle",
       "Zkfair",
-      "opBNB"
+      "opBNB",
+      "fantom",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1124,6 +1125,8 @@ export default [
       "polygon zkevm": "polygon_zkevm",
       "btr": "bitlayer",
       "xlayer": "X Layer",
+      bsquared: "b2-mainnet",
+      avalanche: "avax",
     },
   },
   {

@@ -120,7 +120,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
-  // mode: constructParams("mode"), no etherscan
+  mode: constructParams("mode"),
   manta: constructParams("manta"),
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
@@ -134,5 +134,8 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   bouncebit: constructParams("bouncebit-mainnet"),
   zkfair: constructParams("zkfair"),
+  bsquared: constructParams("b2-mainnet"),
+  avalanche:  constructParams("avax"),
+  fantom: constructParams("fantom"),
 };
 export default adapter;
