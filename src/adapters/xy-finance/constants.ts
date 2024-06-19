@@ -21,7 +21,8 @@ export enum Chain {
   Numbers = 'numbers',
   Wemix = 'wemix',
   Blast = 'blast',
-  XLayer = 'xlayer'
+  XLayer = 'xlayer',
+  Taiko = 'taiko',
 }
 
 export enum VAULTS_TOKEN {
@@ -343,6 +344,20 @@ export const YBridgeVaultsTokenContractAddress: Record<Exclude<Chain, Chain.Numb
       contractAddress: '0xFa77c2DecCB21ACb9Bf196408Bf6aD5973D07762',
       tokenAddress: '0x5A77f1443D16ee5761d310e38b62f77f726bC71c'
     },
+  },
+  [Chain.Taiko]: {
+    [VAULTS_TOKEN.USDT]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.USDC]: {
+      contractAddress: '0x1e4992E1Be86c9d8ed7dcBFcF3665FE568dE98Ab',
+      tokenAddress: '0x07d83526730c7438048D55A4fc0b850e2aaB6f0b'
+    },
+    [VAULTS_TOKEN.ETH]: {
+      contractAddress: '0xFa77c2DecCB21ACb9Bf196408Bf6aD5973D07762',
+      tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+    },
   }
 }
 
@@ -368,7 +383,8 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Contr
   [Chain.ThunderCore]: "0xF103b5B479d2A629F422C42bb35E7eEceE1ad55E",
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.Blast]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
-  [Chain.XLayer]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1"
+  [Chain.XLayer]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
+  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1"
 }
 
 export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
@@ -394,5 +410,6 @@ export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
   [Chain.Numbers]: "0x1acCfC3a45313f8F862BE7fbe9aB25f20A93d598",
   [Chain.Wemix]: "0x6471fAd467ac2854b403e7FE3e95FBbB3287a7ee",
   [Chain.Blast]: "0x43A86823EBBe2ECF9A384aDfD989E26A30626458",
-  [Chain.XLayer]: "0x6A816cEE105a9409D8df0A83d8eeaeD9EB4309fE"
+  [Chain.XLayer]: "0x6A816cEE105a9409D8df0A83d8eeaeD9EB4309fE",
+  [Chain.Taiko]: "0xedC061306A79257f15108200C5B82ACc874C239d"
 }
