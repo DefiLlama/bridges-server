@@ -1117,16 +1117,18 @@ export default [
       "Mantle",
       "Zkfair",
       "opBNB",
-      "fantom",
+      "Fantom",
+      "Bsquared",
+      "Avalanche"
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
-      "btr": "bitlayer",
-      "xlayer": "X Layer",
       bsquared: "b2-mainnet",
-      avalanche: "avax",
+      bitlayer: "btr",
+      "x layer": "xlayer",
+      "avalanche": "avax"
     },
   },
   {
