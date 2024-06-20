@@ -2,6 +2,7 @@ import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import aws from "aws-sdk";
 import { sql } from "../utils/db";
+import { store } from "../utils/s3";
 
 async function invokeLambda(functioName: string, event: any) {
   return new Promise((resolve, _reject) => {
@@ -27,6 +28,25 @@ export default wrapScheduledLambda(async (_event) => {
       GROUP BY bridge_id
   ) subquery;
   `;
+  try {
+    const bridgeConfig = await sql`SELECT * FROM bridges.config`;
+
+    const bridgeConfigById = bridgeConfig.reduce((acc: any, config: any) => {
+      acc[config.id] = config;
+      return acc;
+    }, {});
+
+    const lastBlocksByName = Object.keys(lastRecordedBlocks[0].result).reduce((acc: any, bridgeId: any) => {
+      acc[`${bridgeConfigById[bridgeId].bridge_name}-${bridgeConfigById[bridgeId].chain}`] =
+        lastRecordedBlocks[0].result[bridgeId];
+      return acc;
+    }, {});
+    await store("lastRecordedBlocks.json", JSON.stringify(lastBlocksByName));
+    console.log("Stored last recorded blocks");
+  } catch (e) {
+    console.error("Failed to store last recorded blocks");
+    console.error(e);
+  }
   for (let i = 0; i < bridgeNetworks.length; i++) {
     await invokeLambda(`llama-bridges-prod-runAdapter`, {
       bridgeIndex: i,
