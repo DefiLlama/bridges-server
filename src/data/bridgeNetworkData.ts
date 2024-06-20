@@ -202,6 +202,7 @@ export default [
       "Moonriver",
       "Base",
       "Blast",
+      "Scroll",
       // "Harmony",
       // "Dogechain",
       // "DFK Chain",
