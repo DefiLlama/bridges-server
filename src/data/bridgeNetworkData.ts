@@ -1130,7 +1130,8 @@ export default [
       "Mantle",
       "Zkfair",
       "opBNB",
-      "fantom",
+      "Fantom",
+      "BSquared"
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
