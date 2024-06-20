@@ -618,13 +618,12 @@ export default [
       "opBNB",
       "Scroll",
       "Avalanche",
-
       "Solana",
       "Mantle",
       "Mode",
-
       "Blast",
       "X Layer",
+      "Taiko",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",

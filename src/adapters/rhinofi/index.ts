@@ -19,6 +19,7 @@ export const bridgesAddress = {
   mode: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
   blast: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
   xlayer: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  taiko: "0x1df2de291f909baa50c1456c87c71edf9fb199d5",
 } as const;
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -94,6 +95,7 @@ const adapter: BridgeAdapter = {
   mode: constructParams("mode"),
   blast: constructParams("blast"),
   'x layer': constructParams("xlayer"),
+  taiko: constructParams("taiko"),
 };
 
 export default adapter;
