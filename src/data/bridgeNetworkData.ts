@@ -1205,9 +1205,13 @@ export default [
       "Zkfair",
       "Merlin",
       "BSquared",
-      "BTR",
+      "Bitlayer",
       "X Layer",
-
+      "Taiko",
+      "ZkLink",
+      "Bouncebit",
+      "opBNB",
+  
       "zkSync Era",
       "Polygon zkEVM",
     ],
@@ -1217,6 +1221,9 @@ export default [
       "polygon zkevm": "polygon_zkevm",
       bsquared: "b2-mainnet",
       "x layer": "xlayer",
+      bouncebit: "bouncebit-mainnet",
+      opbnb: "op_bnb",
+      bitlayer: "btr",
     },
   },
   {
