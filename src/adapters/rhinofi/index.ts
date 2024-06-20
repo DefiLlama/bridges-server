@@ -12,7 +12,14 @@ export const bridgesAddress = {
   polygon_zkevm: "0x65a4b8a0927c7fd899aed24356bf83810f7b9a3f",
   linea: "0xcf68a2721394dcf5dcf66f6265c1819720f24528",
   manta: "0x2b4553122d960ca98075028d68735cc6b15deeb5",
-  scroll: "0x87627c7e586441eef9ee3c28b66662e897513f33"
+  opbnb: "0x2b4553122d960ca98075028d68735cc6b15deeb5",
+  scroll: "0x87627c7e586441eef9ee3c28b66662e897513f33",
+  avax: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  mantle: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  mode: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  blast: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  xlayer: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  taiko: "0x1df2de291f909baa50c1456c87c71edf9fb199d5",
 } as const;
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -80,8 +87,15 @@ const adapter: BridgeAdapter = {
   "zksync era": constructParams("era"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   linea: constructParams("linea"),
-  scroll: constructParams("scroll")
-  // 'manta pacific': constructParams('manta')
+  manta: constructParams("manta"),
+  opbnb: constructParams("opbnb"),
+  scroll: constructParams("scroll"),
+  avalanche: constructParams("avax"),
+  mantle: constructParams("mantle"),
+  mode: constructParams("mode"),
+  blast: constructParams("blast"),
+  'x layer': constructParams("xlayer"),
+  taiko: constructParams("taiko"),
 };
 
 export default adapter;

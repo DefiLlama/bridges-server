@@ -17,23 +17,23 @@ export const bridgesAddress = {
     optimism: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     era: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     polygon_zkevm: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
-
     base: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     linea: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     manta: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     scroll: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     mantle: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
-
     metis: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     mode: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     blast: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
-
     merlin: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     zkfair: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     "b2-mainnet": ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     btr: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     xlayer: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
-
+    taiko: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    zklink: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    op_bnb: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    "bouncebit-mainnet": ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
 } as const;
 
 export const contractsAddress = {
@@ -45,23 +45,23 @@ export const contractsAddress = {
     optimism: ["0x0e83DEd9f80e1C92549615D96842F5cB64A08762"],
     era: ["0x95cDd9632C924d2cb5586168Cf0Ba7640dF30598"],
     polygon_zkevm: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
-
     base: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     linea: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     manta: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     scroll: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     mantle: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
-
     metis: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     mode: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     blast: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
-
     merlin: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     zkfair: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     "b2-mainnet": ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     btr: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     xlayer: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
-
+    taiko: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    zklink: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    op_bnb: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    "bouncebit-mainnet": ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
 } as const;
 
 const nativeTokens: Record<string, string> = {
@@ -93,66 +93,23 @@ const constructParams = (chain: SupportedChains) => {
         eventParams.push(transferWithdrawalParams, transferDepositParams);
     });
 
-    if (chain == "merlin") {
+    if (nativeTokens.hasOwnProperty(chain)) {
         return async (fromBlock: number, toBlock: number) => {
             const eventLogData = await getTxDataFromEVMEventLogs("owlto", chain as Chain, fromBlock, toBlock, eventParams);
 
             const nativeEvents = await Promise.all([
                 ...bridgeAddress.map(async (address: string, i: number) => {
                     await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                        includeSignatures: ["0x"],
-                    });
-                    const eventsRes: EventData[] = txs.map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.block_number,
-                            from: tx.from_address,
-                            to: tx.to_address,
-                            token: nativeTokens[chain],
-                            amount: tx.value,
-                            isDeposit: address.toLowerCase() === tx.to_address,
-                        };
-                        return event;
-                    });
-
-                    return eventsRes;
-                }),
-                ...contractAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                        includeSignatures: ["0xfc180638"],
-                    });
-                    const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.block_number,
-                            from: tx.from_address,
-                            to: tx.to_address,
-                            token: nativeTokens[chain],
-                            amount: tx.value,
-                            isDeposit: address.toLowerCase() === tx.to_address,
-                        };
-                        return event;
-                    });
-
-                    return eventsRes;
-                })
-            ]
-            );
-            const allEvents = [...eventLogData, ...nativeEvents.flat()];
-            return allEvents;
-        };
-    } else if (nativeTokens.hasOwnProperty(chain)) {
-        return async (fromBlock: number, toBlock: number) => {
-            const eventLogData = await getTxDataFromEVMEventLogs("owlto", chain as Chain, fromBlock, toBlock, eventParams);
-
-            const nativeEvents = await Promise.all([
-                ...bridgeAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                        includeSignatures: ["0x"],
-                    });
+                    let txs: any[] = [];
+                    if (chain === "merlin") {
+                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
+                            includeSignatures: ["0x"],
+                        });
+                    } else {
+                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+                            includeSignatures: ["0x"],
+                        });
+                    }
                     const eventsRes: EventData[] = txs.map((tx: any) => {
                         const event: EventData = {
                             txHash: tx.hash,
@@ -170,9 +127,16 @@ const constructParams = (chain: SupportedChains) => {
                 }),
                 ...contractAddress.map(async (address: string, i: number) => {
                     await wait(300 * i); // for etherscan
-                    const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                        includeSignatures: ["0xfc180638"],
-                    });
+                    let txs: any[] = [];
+                    if (chain === "merlin") {
+                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
+                            includeSignatures: ["0xfc180638"],
+                        });
+                    } else {
+                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+                            includeSignatures: ["0xfc180638"],
+                        });
+                    }
                     const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
                         const event: EventData = {
                             txHash: tx.hash,
@@ -217,7 +181,11 @@ const adapter: BridgeAdapter = {
     zkfair: constructParams("zkfair"),
     merlin: constructParams("merlin"),
     bsquared: constructParams("b2-mainnet"),
-    btr: constructParams("btr"),
+    bitlayer: constructParams("btr"),
+    taiko: constructParams("taiko"),
+    zklink: constructParams("zklink"),
+    opbnb: constructParams("op_bnb"),
+    bouncebit: constructParams("bouncebit-mainnet"),
 
     'x layer': constructParams("xlayer"),
     "arbitrum nova": constructParams("arbitrum_nova"),

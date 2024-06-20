@@ -801,12 +801,24 @@ export default [
       "zkSync Era",
       "Polygon zkEVM",
       "Linea",
+      "Manta",
+      "opBNB",
       "Scroll",
+      "Avalanche",
+      "Solana",
+      "Mantle",
+      "Mode",
+      "Blast",
+      "X Layer",
+      "Taiko",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
+      opbnb: "op_bnb",
+      avalanche: "avax",
+      "x layer": "xlayer",
     },
   },
   {
@@ -1121,6 +1133,7 @@ export default [
       "Fantom",
       "Bsquared",
       "Avalanche"
+
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1194,9 +1207,13 @@ export default [
       "Zkfair",
       "Merlin",
       "BSquared",
-      "BTR",
+      "Bitlayer",
       "X Layer",
-
+      "Taiko",
+      "ZkLink",
+      "Bouncebit",
+      "opBNB",
+  
       "zkSync Era",
       "Polygon zkEVM",
     ],
@@ -1206,6 +1223,9 @@ export default [
       "polygon zkevm": "polygon_zkevm",
       bsquared: "b2-mainnet",
       "x layer": "xlayer",
+      bouncebit: "bouncebit-mainnet",
+      opbnb: "op_bnb",
+      bitlayer: "btr",
     },
   },
   {
