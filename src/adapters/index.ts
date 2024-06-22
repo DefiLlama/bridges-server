@@ -59,6 +59,7 @@ import connext from "./connext";
 import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
+import helixbridge from "./helixbridge"
 
 export default {
   polygon,
@@ -121,6 +122,7 @@ export default {
   owlto,
   zkbridge,
   zkbridge111: zkbridge,
+  helixbridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };

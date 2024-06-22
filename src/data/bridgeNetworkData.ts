@@ -1258,4 +1258,26 @@ export default [
       bitlayer: "btr",
     },
   },
+  {
+    id: 64,
+    displayName: "helixBridge",
+    bridgeDbName: "helixbridge",
+    iconLink: "icons:helixbridge",
+    largeTxThreshold: 10000,
+    url: "https://helixbridge.app/",
+    chains: [
+      "Arbitrum",
+      "Darwinia",
+      "Polygon",
+      "BSC",
+      "Linea",
+      "Mantle",
+      "Scroll",
+      "Optimism",
+      "Gnosis",
+    ],
+    chainMapping: {
+      gnosis: "xdai",
+    },
+  },
 ] as BridgeNetwork[];
