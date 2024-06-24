@@ -60,6 +60,7 @@ import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
+import hyperlane from "./hyperlane";
 
 export default {
   polygon,
@@ -123,6 +124,7 @@ export default {
   zkbridge,
   zkbridge111: zkbridge,
   helixbridge,
+  hyperlane,
 } as {
   [bridge: string]: BridgeAdapter;
 };
