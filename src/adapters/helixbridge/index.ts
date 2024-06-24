@@ -1,6 +1,6 @@
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import type { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { Chain } from "@defillama/sdk/build/general";
+import type { Chain } from "@defillama/sdk/build/general";
 
 const depositParams = (contractAddress: string): PartialContractEventParams => {
   return {
@@ -77,7 +77,7 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   scroll: constructParams("scroll"),
   optimism: constructParams("optimism"),
-  gnosis: constructParams("gnosis"),
+  gnosis: constructParams("xdai"),
 };
 
 export default adapter;
