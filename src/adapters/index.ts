@@ -60,6 +60,8 @@ import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
+import cetoSwap from "./ceto-swap";
+
 
 export default {
   polygon,
@@ -123,6 +125,7 @@ export default {
   zkbridge,
   zkbridge111: zkbridge,
   helixbridge,
+  "ceto-swap": cetoSwap,
 } as {
   [bridge: string]: BridgeAdapter;
 };
