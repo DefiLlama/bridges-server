@@ -48,16 +48,24 @@ const nativeTokens: Record<string, string> = {
   base: "0x4200000000000000000000000000000000000006",
   linea: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
   blast: "0x4300000000000000000000000000000000000004",
+  polygon: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   scroll: "0x5300000000000000000000000000000000000004",
   mode: "0x4200000000000000000000000000000000000006",
-  polygon: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   manta: "0x0Dc808adcE2099A9F62AA87D9670745AbA741746",
+  arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
   polygon_zkevm: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
   era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
-  arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
   merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
   zklink: "0x000000000000000000000000000000000000800A",
   btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+  xlayer: "0x5a77f1443d16ee5761d310e38b62f77f726bc71c",
+  opbnb: '0xe7798f023fc62146e8aa1b36da45fb70855a77ea',
+  bsc: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
+  mantle: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0',
+  bouncebit: '0x7F150c293c97172C75983BD8ac084c187107eA19',
+  zkfair: '0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b',
+  bsquared: '0x8dbf84c93727c85DB09478C83a8621e765D20eC2',
+  taiko: '0xA51894664A773981C6C112C43ce576f315d5b1B6',
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
@@ -135,7 +143,6 @@ const adapter: BridgeAdapter = {
   bouncebit: constructParams("bouncebit-mainnet"),
   zkfair: constructParams("zkfair"),
   bsquared: constructParams("b2-mainnet"),
-  avalanche:  constructParams("avax"),
-  fantom: constructParams("fantom"),
+  taiko: constructParams("taiko"),
 };
 export default adapter;

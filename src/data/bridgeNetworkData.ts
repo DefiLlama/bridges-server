@@ -1130,10 +1130,8 @@ export default [
       "Mantle",
       "Zkfair",
       "opBNB",
-      "Fantom",
-      "Bsquared",
-      "Avalanche"
-
+      "BSquared",
+      "Taiko",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1142,7 +1140,6 @@ export default [
       bsquared: "b2-mainnet",
       bitlayer: "btr",
       "x layer": "xlayer",
-      "avalanche": "avax"
     },
   },
   {
