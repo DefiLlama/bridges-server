@@ -1280,4 +1280,13 @@ export default [
       gnosis: "xdai",
     },
   },
+  {
+    id: 66,
+    displayName: "CetoSwap Bridge",
+    bridgeDbName: "ceto-swap",
+    iconLink: "chain:cetoswap",
+    largeTxThreshold: 10000,
+    url: "https://cetoswap.com/#/",
+    chains: ["BSC", "Arbitrum", "Manta"],
+  },
 ] as BridgeNetwork[];
