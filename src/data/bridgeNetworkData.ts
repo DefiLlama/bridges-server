@@ -781,7 +781,7 @@ export default [
     iconLink: "icons:eywa",
     largeTxThreshold: 10000,
     url: "https://crosscurve.fi/",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC", "Base", "Gnosis"],
     chainMapping: {
       avalanche: "avax",
     },
