@@ -58,6 +58,14 @@ const nativeTokens: Record<string, string> = {
   merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
   zklink: "0x000000000000000000000000000000000000800A",
   btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+  xlayer: "0x5a77f1443d16ee5761d310e38b62f77f726bc71c",
+  opbnb: '0xe7798f023fc62146e8aa1b36da45fb70855a77ea',
+  bsc: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
+  mantle: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0',
+  bouncebit: '0x7F150c293c97172C75983BD8ac084c187107eA19',
+  zkfair: '0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b',
+  bsquared: '0x8dbf84c93727c85DB09478C83a8621e765D20eC2',
+  taiko: '0xA51894664A773981C6C112C43ce576f315d5b1B6',
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
@@ -135,7 +143,6 @@ const adapter: BridgeAdapter = {
   bouncebit: constructParams("bouncebit-mainnet"),
   zkfair: constructParams("zkfair"),
   bsquared: constructParams("b2-mainnet"),
-  avalanche:  constructParams("avax"),
-  fantom: constructParams("fantom"),
+  taiko: constructParams("taiko"),
 };
 export default adapter;
