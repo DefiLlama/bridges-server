@@ -3,6 +3,7 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
 import { getBlockByTimestamp } from "./blocks";
+import { getBlockToStartFromDefillama } from "../adapters/ibc";
 
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
@@ -42,7 +43,7 @@ async function fillAdapterHistorical(
       let startBlock;
       let endBlock;
       if(bridgeDbName === "ibc") {
-        startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
+        startBlock = await getBlockToStartFromDefillama(adapter, nChain as Chain, startTimestamp);
         if (!startBlock) {
           console.error(`Could not find start block for ${chain} on ${bridgeDbName}`);
           return;
@@ -52,6 +53,11 @@ async function fillAdapterHistorical(
           console.error(`Could not find end block for ${chain} on ${bridgeDbName}`);
           return;
         }
+
+        if (startBlock.block > endBlock.block) {
+          return;
+        }        
+  
       } else {
         startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain);
         endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain);
