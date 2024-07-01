@@ -784,6 +784,7 @@ export default [
     chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC", "Base", "Gnosis"],
     chainMapping: {
       avalanche: "avax",
+      gnosis: "xdai",
     },
   },
   {
