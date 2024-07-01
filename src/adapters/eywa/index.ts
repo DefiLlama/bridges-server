@@ -10,7 +10,7 @@ enum Chains {
   ethereum = "ethereum",
   optimism = "optimism",
   base = "base",
-  gnosis = "gnosis"
+  gnosis = "xdai"
 }
 
 const contractAddresses = {
