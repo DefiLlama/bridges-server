@@ -237,7 +237,6 @@ export default [
       "Metis",
       "Linea",
       "Mantle",
-      "Scroll",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -781,10 +780,9 @@ export default [
     iconLink: "icons:eywa",
     largeTxThreshold: 10000,
     url: "https://crosscurve.fi/",
-    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC", "Base", "Gnosis"],
+    chains: ["Ethereum", "Polygon", "Fantom", "Avalanche", "Arbitrum", "Optimism", "BSC"],
     chainMapping: {
       avalanche: "avax",
-      gnosis: "xdai",
     },
   },
   {
@@ -957,7 +955,7 @@ export default [
       "Blast",
       "X Layer",
       // "Numbers",
-      "Taiko",
+      "Taiko"
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1133,8 +1131,8 @@ export default [
       "Mantle",
       "Zkfair",
       "opBNB",
+      "BSquared",
       "Taiko",
-      "Bsquared",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1213,7 +1211,7 @@ export default [
       "ZkLink",
       "Bouncebit",
       "opBNB",
-
+  
       "zkSync Era",
       "Polygon zkEVM",
     ],
@@ -1264,7 +1262,17 @@ export default [
     iconLink: "icons:helixbridge",
     largeTxThreshold: 10000,
     url: "https://helixbridge.app/",
-    chains: ["Arbitrum", "Darwinia", "Polygon", "BSC", "Linea", "Mantle", "Scroll", "Optimism", "Gnosis"],
+    chains: [
+      "Arbitrum",
+      "Darwinia",
+      "Polygon",
+      "BSC",
+      "Linea",
+      "Mantle",
+      "Scroll",
+      "Optimism",
+      "Gnosis",
+    ],
     chainMapping: {
       gnosis: "xdai",
     },

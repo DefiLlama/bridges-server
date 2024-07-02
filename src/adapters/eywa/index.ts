@@ -9,8 +9,6 @@ enum Chains {
   fantom = "fantom",
   ethereum = "ethereum",
   optimism = "optimism",
-  base = "base",
-  gnosis = "xdai"
 }
 
 const contractAddresses = {
@@ -39,14 +37,6 @@ const contractAddresses = {
     synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
   [Chains.optimism]: {
-    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
-    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
-  },
-  [Chains.base]: {
-    portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
-    synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
-  },
-  [Chains.gnosis]: {
     portal: "0xac8f44ceca92b2a4b30360e5bd3043850a0ffcbe",
     synthesis: "0xf370D9Ed0141207e81321158393Eea5D8a50CC72",
   },
@@ -177,8 +167,6 @@ const adapter: BridgeAdapter = {
   [Chains.ethereum]: constructParams(Chains.ethereum),
   [Chains.optimism]: constructParams(Chains.optimism),
   avalanche: constructParams(Chains.avax),
-  [Chains.base]: constructParams(Chains.base),
-  [Chains.gnosis]: constructParams(Chains.gnosis),
 };
 
 export default adapter;
