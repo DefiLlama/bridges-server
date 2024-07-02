@@ -604,6 +604,7 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   base: constructParams("base"),
   aurora: constructParams("aurora"),
+  scroll: constructParams("scroll"),
 };
 
 export default adapter;
