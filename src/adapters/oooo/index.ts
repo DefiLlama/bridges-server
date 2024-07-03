@@ -19,8 +19,8 @@ const nativeTokens: Record<string, string> = {
     arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
-    "b2-mainnet": "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
-    btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+    // "b2-mainnet": "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
+    // btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
     "rsk": "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d",
 };
 
