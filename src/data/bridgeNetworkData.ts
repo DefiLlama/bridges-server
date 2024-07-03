@@ -1269,4 +1269,25 @@ export default [
       gnosis: "xdai",
     },
   },
+  {
+    id: 66,
+    displayName: "oooo",
+    bridgeDbName: "oooo",
+    iconLink: "icons:oooo",
+    largeTxThreshold: 10000,
+    url: "https://oooo.money",
+    chains: [
+      "Arbitrum",
+      "BSC",
+      "Merlin",
+      "BSquared",
+      "Bitlayer",
+      // "Rootstock",
+    ],
+    chainMapping: {
+      bsquared: "b2-mainnet",
+      bitlayer: "btr",
+      rootstock: "rsk",
+    },
+  },
 ] as BridgeNetwork[];

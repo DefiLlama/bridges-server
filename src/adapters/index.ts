@@ -60,6 +60,7 @@ import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
+import oooo from "./oooo";
 
 export default {
   polygon,
@@ -77,6 +78,7 @@ export default {
   portal,
   binancepeg,
   xdai,
+  oooo,
   "avalanche-btc": avalanchebtc,
   axelar,
   rainbowbridge,
