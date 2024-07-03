@@ -5,6 +5,8 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
 import { EventData } from "../../utils/types";
+import { getPadContractTxValue } from "./processTransaction";
+import { BigNumber } from "ethers";
 
 const blackListedAddresses = [
   "0xa7883e0060286b7b9e3a87d8ef9f180a7c2673ce",
@@ -25,6 +27,8 @@ const eoaAddressErc = [
   "0x41d3d33156ae7c62c094aae2995003ae63f587b3", // erc
   "0x095d2918b03b2e86d68551dcf11302121fb626c9", // ??
   "0xe01a40a0894970fc4c2b06f36f5eb94e73ea502d",
+  "0xe4edb277e41dc89ab076a1f049f4a3efa700bce8",
+  "0x34723b92ae9708ba33843120a86035d049da7dfa"
 ];
 
 const eoaAddressNative = [
@@ -32,13 +36,16 @@ const eoaAddressNative = [
   "0x80c67432656d59144ceff962e8faf8926599bcf8", // native
   "0xe4edb277e41dc89ab076a1f049f4a3efa700bce8", // native
   "0xee73323912a4e3772b74ed0ca1595a152b0ef282", // native
-  "0xe01a40a0894970fc4c2b06f36f5eb94e73ea502d", // merlin
-  '0x41d3d33156ae7c62c094aae2995003ae63f587b3',
-  '0xd7aa9ba6caac7b0436c91396f22ca5a7f31664fc',
-  '0x0a88bc5c32b684d467b43c06d9e0899efeaf59df',
-  '0x1c84daa159cf68667a54beb412cdb8b2c193fb32',
-  '0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2',
-  '0x732efacd14b0355999aebb133585787921aba3a9',
+  "0xe01a40a0894970fc4c2b06f36f5eb94e73ea502d", // btc
+  "0x41d3d33156ae7c62c094aae2995003ae63f587b3",
+  "0xd7aa9ba6caac7b0436c91396f22ca5a7f31664fc",
+  "0x0a88bc5c32b684d467b43c06d9e0899efeaf59df",
+  "0x1c84daa159cf68667a54beb412cdb8b2c193fb32",
+  "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
+  "0x732efacd14b0355999aebb133585787921aba3a9",
+  "0x34723b92ae9708ba33843120a86035d049da7dfa",
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
+  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111"
 ];
 
 const nativeTokens: Record<string, string> = {
@@ -59,18 +66,36 @@ const nativeTokens: Record<string, string> = {
   zklink: "0x000000000000000000000000000000000000800A",
   btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
   xlayer: "0x5a77f1443d16ee5761d310e38b62f77f726bc71c",
-  opbnb: '0xe7798f023fc62146e8aa1b36da45fb70855a77ea',
-  bsc: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
-  mantle: '0xcDA86A272531e8640cD7F1a92c01839911B90bb0',
-  bouncebit: '0x7F150c293c97172C75983BD8ac084c187107eA19',
-  zkfair: '0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b',
-  bsquared: '0x8dbf84c93727c85DB09478C83a8621e765D20eC2',
-  taiko: '0xA51894664A773981C6C112C43ce576f315d5b1B6',
+  opbnb: "0xe7798f023fc62146e8aa1b36da45fb70855a77ea",
+  bsc: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+  mantle: "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+  bouncebit: "0x7F150c293c97172C75983BD8ac084c187107eA19",
+  zkfair: "0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b",
+  bsquared: "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
+  taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+};
+
+const padContractsAddresses:  Record<string, string[]> = {
+  ethereum: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
+  base: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
+  Vizing: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
+  linea: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
+  scroll: ["0x523D8B6893D2D0Ce2B48E7964432ce19A2C641F2"],
+  arbitrum: ["0xD725Bc299a232201984FEcb4FF106d84E894193f"],
+  optimism: ["0x523D8B6893D2D0Ce2B48E7964432ce19A2C641F2"],
+  polygon_zkevm: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
+  blast: ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
+  // "bob": ['0x5D77b0c9855F44a8fbEf34E670e243E988682a82'], not support yet
+  taiko: ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x"];
 
+const padContractSignature = ["0xd443a1f2"];
+
 const constructParams = (chain: string) => {
+  const contractsAddress = padContractsAddresses[chain];
+
   let eventParams = [] as any;
   eoaAddressErc.map((address: string) => {
     const transferWithdrawalParams: PartialContractEventParams = constructTransferParams(address, false);
@@ -109,7 +134,37 @@ const constructParams = (chain: string) => {
         return eventsRes;
       })
     );
-    const allEvents = [...eventLogData, ...nativeEvents.flat()];
+    const contractEvents = await Promise.all(
+      contractsAddress.map(async (address: string, i: number) => {
+        await wait(300 * i); // for etherscan
+        const txs: any[] = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+          includeSignatures: padContractSignature,
+        });
+        const eventsRes: EventData[] = []
+        for( const tx of txs) {
+          let value = BigNumber.from(0);
+          if(tx.value == '0') {
+            value = await getPadContractTxValue(chain, tx.hash);
+          }
+          else {
+            value = tx.value;
+          }
+          const event: EventData = {
+            txHash: tx.hash,
+            blockNumber: +tx.blockNumber,
+            from: tx.from,
+            to: tx.to,
+            token: nativeTokens[chain],
+            amount: value,
+            isDeposit: address === tx.to,
+          };
+          eventsRes.push(event);
+        }
+        return eventsRes;
+      })
+    )
+
+    const allEvents: EventData[] = [...contractEvents.flat(), ...nativeEvents.flat(), ...eventLogData]
     const filteredEvents = allEvents.filter(
       (event) =>
         !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
@@ -137,7 +192,7 @@ const adapter: BridgeAdapter = {
   zklink: constructParams("zklink"),
   bitlayer: constructParams("btr"),
   'x layer': constructParams("xlayer"),
-  opbnb: constructParams("opbnb"),
+  opbnb: constructParams("op_bnb"),
   bsc: constructParams("bsc"),
   mantle: constructParams("mantle"),
   bouncebit: constructParams("bouncebit-mainnet"),
