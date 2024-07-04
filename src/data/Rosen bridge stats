@@ -1,0 +1,120 @@
+Rosen Bridge Watcher Collateral Stats
+
+code we are using for https://rosendash.vercel.app/ for the data
+
+ // Define the addresses for permits
+        const permitAddresses = [
+            { name: "ergo_old_permits", address: "LXwmG9jPiXvYd6Z1DWRazpc2wTdpW2awCB9NV5qjJx4UFoncqYxve6G1gzTVBNCsDwSu5ZPEi6LNLuPdzM1r9DUMgAzEfGghKeoGebPAyLCerZ8Us4ukQSJPj8j3TQY5JLZDqS2BRcPkmovmt7SZCKD95zoNgsitrYdmv2JhoC8Wmq7aM3DpwmhejCZ59n1ZYCAL7LsKw4zX45tH3sGLXxmeBNCCkcT2yxiziEAn2C3ybXqqab7cMhkoNdRMwXpUUpk3489kfyTY7SjbUPqPKhkH9veUS6H4U7a4HaEi7tPyueHTbjjQZjCZd5uGi5tC7jMvrgjYqByUG9PA9oeXHj89RxK5TPbbmkmsZVHVtdBzfHiexJh32LMszDRHuUc6YfisZKx9kNSSzadBdLbJUGHeCd8XaBg6w3e1uUBQDghpx2z44C2GZbAmUQSUQ2jqY8BBwEhtaxzZ69NK3dEjTFgsZ1R3nkbhbAu5Xs5fabBWZo6RvaPf8jTKRwKaNgQZrL93QV2JEZoapbRHCdvzaHHpBLr1p6nkDg2kB3rUTj6kmaabxswG8bSLAA9qYZhDCyh1QdSyUnd9T2o7qHybaoeEuqG1kEWYon4741ut8HCqbwEjKze6rDuEbnPUYzSr7kiwoPeV2GrdsVFRLgxwgHJoENgjUhj1VVKZB2q7n8S6smwf7CJyYZZCZGkg5bLpywJddmegJjk2FuLwA2VEmnrDKRGpFkhxBc2rbj974XgGcBZ66mPTtwrXUwjY9G5hUArtYs8WhsCDAH58yaHFFViaAhBNDQ3HBtFbXwh6b1osdv8zDSvncYXPx2iikhmf6TRC2DE2ENYtzhLHJmgyXmQkm7yXp6nWxJaeLnUuxRaWdxxQSPy1Wnm1GvKJYzRBhv9RdcmDnEgKs21ex5uSSdqJ4H53Qs6StxGyQ4HyjTjEVUxTbUZpnzvECgAufKkuSPyC2mYkKKGrzWmvv5sh6fyo4eAq9QnfXB9YMETMpJbx5dFpc6ZXYimSCfJbJfP1bpCe1hXkhTPWeZJ9aPX6HZEfu89ChZiX32MaSM3QnnUhRbSnzdQ2jVAtqqwjNN5SeNNvXNxS6B1UHj52TGvGrLnNUp4BWgNKAAwpBxAAB7wny9tUSXt6jHVnGHBG1vJWF7S9DeaVjKg3qR8j1bUsGqh9bVkarag4SREopK8cHwFpb2yFcdGERfaKHyekAUjVkhqySH3Vb8GiAdDbRArKV2ip4eveocsFwjoCD5i9rotksNysgi9RDjkApYm7aJegC79omCujHVYFpU6HtV2AhNVFRvVBG2xDW9YEKEm3RxrjoCttM6sFkbNX61CSiQ3LsBPvcd5Aix9NUESjbNxFwARZ75UgquvFddApn13yxSqfzVoE9L3eRnAMxd7KHudBWQsnDK" },
+            { name: "ergo_new_permits", address: "NY4PEzZ7Vfjvo3AYu7dBh4ziatarsMAVPnwtHZL6BfoKeaots7P629HvVAmDZNdiVNUitWMqVJhgphUregwCXnhVNRddztP93qbtSWCMzVk1UQmCVUpvQyb25nyH1PrpRSjpFewJWeN3bjiVF6bTAm2t11X4d2fKGnAo3PX2BFVeyAUre7T5CZs2uikxZisyrJ1djE4UY1uwpTFkJv3RzZ3JMugNDeicf7qWqtCtNH8E9uG56VD2dMvmsr5YHQbrKgxa5foyA4K8cD59o2ub9ezbhjSgfXbc6VLaXmp5SzdP6n61MaePNexedifBWwAsHFcaaVXf7oUkePp5dDpc5mBbaAuidBAwH4SaxnUNjPw2bHVSXEk3ZJwwBrZRG7CYBCvEN6wFuPyzuhGsJQwdCtvUqxViGhxWrhRYKwixLhScVdGwCFCF9HjuCXt92FkEZKRk1kJuNzMUuc9AUbafbwhi8RC96TVQrtnsajhomptLKFmQXg4nZQao3jwHV8kfZeyF9BX5kiWUnC83Wa7X7seGUcECHRPLAapk7Lr1kUQ6Q62RpBKeGUsfmPcyNhaZ2bmdxMxxHAhdZdKVr78R5ch2BvG7ZtV6wkHB1hcVJGJmU4dskPPR5EFd8gED72eeUnNAsTknW7ePfNMj4DYWGqf2QhPHDZXsyRN2Mczv4tgyRsNA2HR3U9oZikejcuYhha9yNsXEdNn23B8wa5aDZwR6hwZ9hQ74yv29sbfBAfe9XWT2UZAVaeZeazQSSrvAhicEKnwmCAvfwcZNS57SHJ1EfZf1oEt66S6mGFdBzcKPLZzmJmCgMiBmMThqMemT1XS1ovES76LVcpXSkyiEdA17htR5HuPWdDVfWNQAK2jAM8BjKGtvsh93oMFGvMaBVBAvj1QcfTr17LdeeT7h78bKzyF5SQWuyu46xtDbmTZVrR1ZSpnffiD8TbWnae85Bw1VfttScQ8yfa26dsc9pwLrHhYhC4XKEVPWYUxLHZd959tLA2kGNkJBJR8PPThR8PugaUTq1sQpLg4ezPPUjYyWFvhFf6Rcw5rcJAwj99AUwoEhPaUnxT3TxiEJBbD3Zsna33mQD9Zg69Zzr9xiLA7GzhhA998dwkpbbgqFxyASwH6yav5qDbXPZH7GPtt3nTjUfRs87SGYgVGHoGhqaVUAfQKW4TtvFicdpvQws5kg1nZthd7WkWcR7HqLc1R4wBPFynFVGc457vhQwaP78yQsQDHq86" },
+            { name: "cardano_old_permits", address: "LXwmG9jPiXvYd6Z1DWRazpc2wTdpW2awCB9NV5qjJx4UFoncqYxve6G1gzTVBNCsDwSu5ZPEi6LNLuPdzM1r9DUMgAzEfGghKeoGebPAyLCerZ8Us4ukQSJPj8j3TQY5JLZBwceKrx1KHjeRRQBwBgxTkfButyeLtHgMELArAC9DDaZbYg7o2t98LMUZyArDzmK5fmhdKgeo6Dw4oZ1ENbepgqG35kR2pS63heXUeEuhH4nvqfLGHwSTanzhsQeBmYH9iqxSFfCvoRFnasoEPkWAv6PwGURqUk23wS5J9CaSadgPYRNdB915Vjf2kvxxmPFwoW9Uq1ZRo5DDS49goU3YbMgDJPnekbGQ9u9jMcwvo8FGRMiJVyEy2zdncnqPUaipekDaDowgf8EKYxBRYPo93DGga9FCVAoMC2PzRXRN1Q4X2zCx9onwMPoTWu2nFjYdx58bqzqs2ToK4S7UXZw4vpt6oSam7XN2miAfSN8WJmYRJ3FSGNfUz1ryo6N8uoecwEGeFksvbkobAvykuDGzeCNgdeNnRnMFZrco3kPvdzMf75tsRJu5ZTpTMW5mJWm6NbPJwxgV5JdxUvHPd8SCCmFKxhFywqVifp6WRMMqfVKaBdmXWG7zzN6hJZhf9EHupjR4KZExmuShvpx5bA1YyMUz1MpE9VP7vkLJWDYXfpJHJEWFRiADfSHt2RE5LzepxScfoHfpE7C6e4TBQBZd3dndxWDRREZSV45A1iXdq14AYqcsoBJ5Y8JCGHzXaGCLiBHvsXFMfUdTHhbPA8cegddhhZ2tK29UhR3veSGcjVZ1YwzVthQeJZK8RMbbbdf2s3f7dr8a7YGLU31T2jjy4tPR26ZFSadcuuMFR6QQisRP7qBKpgmUJc68fWdwNsLr8FLW8q2yipH1YnsWG389BQ9aXM4Zfb2WmXUT6JCpaeABWUFCLv6w3BkuBHyUFmmfiiHNx1E9u1VEuibAJYEkC6BEuoCKDqxMV62wdjbahsAn4fZdpQyVMK6xADbY2FXrREeaq4KDGzY4XYVZxaEZs3CEeedoZjFLbBe7ysm4MWqCiK7tucARTFF4XaxoH1C5JqqiraqRm4HBGVcjfzcyMwMHUC15m2N4AoQycb97Dn8W4Qp7s7gmchThLotvP2E7t7CXDa21cwKdVx9nh2xTJRPaXzMjt49L4AbXqT9RJ9PeRsYzKcQLcgugdDoB3vDtFBTZeoNNvf43JFpapTozoQtSfj7iNrPYfaEkNvCEzLjqJVyMPZ7gt13aySy5jDPp2vF5hGd5f6yv21PAiwQtfV47hn7y5hZfKv4T3gDE4sD6UQ2HFmhrAXmcuZ4AtfZZXpC3vgw6vhraKUFsHKjLZU3WKKAwnPW1HJC61jiutpnaBK1hDhop6FHkjvNtGrSnti" },
+            { name: "cardano_new_permits", address: "NY4PEzZ7VfjqPk9gZSNS6ERoYyYBEBebyeXUPs1sjEfdenV3Kq1QKWBSQ1Gfem47fPVRw5UXcYNXtgXNGqsD4DedukcYv5c5kviu94yWpyrh2tbXHea1tyfuEcb8njgvXkAxrXkjvgcPEQqy7BsR3KQPe8vzSaBG5V8WFHQqvHmpMXXYMvKDZzRbNjZUgYvVinGq6qx9hct1fFG15nFdcWZkzhBcu8ytydt3MmnkYEyL4L2rLD8Jp2Q16DfeaBBqmuyxpMoVxPrQzbPjq5GKTKrqnpisWVrubpAy5dg1oQ6tVZompLpwTWvX1xWspA9tWPmc3MCV2e6y313KzSosGLi2Sdv2ptDgJpKamQv6fNKmj3TWkNbPCDfjp2KXYcfYE1vQ5prRZCPCDhVgWP7bqpF3SeUTMJmvBaXjd1tBavjanquQDkYU4n5XBwJPvUa5kCAP1USTgP4cgPA6SzB8hg2RXmB4PmEWM2RWv2mrirYeTdZrzXCbpGCd9B9GK7bNknnYz1X8wVqyYxxQMZ7Rort4BVRNPNKzEMtdGKSmQpiWitfoAfphXL3SGMfwMT3sspgDcD93Ftiq9gf6kgawpFBKWJmV5jXmfiSCWkPW5x56L5hcc3NwJLYYjcMh81aXQBP4HguyudttZcF8QiDa6Ae3idS1BTegArbhZBFn1TQJGgWtuCubLC5Ja71FadEN1G1s4Uz4BapDu3WpNH4NJn3UeWavLd1EytGjevyJu8XjziAMYr6cPZsyhb95aj7LAHgwJ8YT42zWYoDxqhEzbuderVtfauVJxEo2Rt7p83hMtkFS8Dy3vNbdmGEhWEFfDEyquEHTLsYkehRMWTeTeoDpRhKpeXoDxTNriR6Fz6y3Koxwzg281gYhxxvew7TpvSa3cLvjBpNxuoUfhyT645u51cBsQzden3RB5LjJeToSctrx74nNGCm9sR7fQgzno2pETeit1mykq4eocy93EoTcypKitcbfhgAYwXrGcGUQyhsupFgPZMnms5VnWhCsGKkK93uy7z4BRgi9y2aU7zMUxPJN6q3kYhjcdgYhcgqLLmWo5pBRSxcuq3p3NhPnd2Tps5RztjtUS5ZkbRVsTri8Sy2J5xPLir6VB7uxcPCSYYGJaaVfENJ8tYLYH3m3TUoxRipyjNDDBmsRdujqFQvFoYiCyaPFgu9iqzMvuPDM7FDPAKV8V7A895N9SMMZkG7uAzVvLgrU8Wrxdby2CAX9ttmPJn" },
+            { name: "bitcoin_permits", address: "NY4PEzZ7VfjtnTN697R7my9uAVkCYb6N71J2RSmJCFSdDqVf9aPvFQqKXujYDBtSA8hxYVUgkGgU9SP2Ss7JDUkHkdGLBqZwH4yDcPyVvbVbcre3o7nR59wiFDVtjzCjfZmVvMVJD9HiW4GKqVuZGTQCKns8tDe3sJoDNTL3VmhzRUPZf9JCN4TNji1ruXf5CxqWtDrCfoxE4xfbRWGmtBMdLMoRdL85V7z1fP5KxroWX5YgZQo28nTCU3WjPuY2YrjqYYGNHXvFZ9G8E85kCcseNtRWqViXGFzmwqHWKaYe4AdJzBbMKzJWYszsbiemNvisPtT2Yj3FjAmAErpW3gMeWyH3WtbipaAu9D31ggpLeLkLTGscJ9HB2oExpGWvv6u9mGdkTJMHYUuZJUGrcJPE3m7ZTEFxwkbeR9oD8nHHgW4SB46kHFbxzNoUksGPZQnxf95J3e5PUnhYgg7mrQLNpq6pphgGukFcHDgAN2rgFmUSDVsuzomhP735SMiveXSPzx6PZeP7CmrEHyXN6mFbBJuY17kvzzix1w9eFwryZDuZqnAANkYhF3TLkLyGZfSC4o9iAGynpivuNMUgbKAuj6D116tKoCq9PHELL8eTefmXNLFuhauQuKRjmWQKj9zYSd7qi6Zf49KX25PnWHkC3REc4abYpjtiQFefT2HkWRwneTCkJ8uMvoHs6kJzLg8NVzH8XwEZhTM2tNSDhBKZaURpYiQcHwLDgv5uFiwhasLAdZi2EJywBYX51NKc6m4MEsTiAJC9jkEydWcwyDzSHN18yEr4rvEgMNkUhLHJokgV2v3BNFhUTJqe58e2QXAmx9MytUDqzg3vwexEpMhueC2roYA27P1mmb85HKEz15a8LnuUT8ZjmG8kDbHuPYFyxcATytVuDrFDzqKBt9X36bocip4ZU4RRY8JcWjJvMcrBCjV3EhDVQ4it8bhoZnn79PsXazvDteua1NEYEJniPnNrRaiKTUWrseEUQ2vVjWy134jMxRbeiARhoj7MDxug2kFP8jRGSsxWt3Qqbv2SezT3xZ8jYxTyQ2CiyJ61CvUQwPtmoY3XKjrgrJKwnSzJRs4egKPYZKoSiSy6UdHMKuNDmys8wYo3Gi2EgVdUYRLLWcHh5Z2H91odSbTW2h5e6pZeY4a45TgihE6ZnZBhHGc75zJjukhPgP1wEp8GrreHA7ejvTEmpwNgj571x5JrvRD5TxWaFuZKBonGexovAK2L5v" }
+        ];
+
+        async function fetchCollateralInfo() {
+    try {
+        // Fetch data for main cryptocurrencies
+        const response = await fetch('https://api.ergoplatform.com/api/v1/addresses/ChTbcUHgBNqNMVjzV1dvCb2UDrX9nh6rGGcURCFEYXuH5ykKh7Ea3FvpFhHb9AnxXJkgAZ6WASN7Rdn7VMgkFaqP5Z5RWp84cDTmsZkhYrgAVGN7mjeLs8UxqUvRi2ArZbm35Xqk8Y88Uq2MJzmDVHLHzCYRGym8XPxFM4YEVxqzHSKYYDvaMLgKvoskFXKrvceAqEiyih26hjpekCmefiF1VmrPwwShrYYxgHLFCZdigw5JWKV4DmewuR1FH3oNtGoFok859SXeuRbpQfrTjHhGVfDsbXEo3GYP2imAh1APKyLEsG9LcE5WZnJV8eseQnYA8sACLDKZ8Tbpp9KUE7QZNFpnwGnkYx7eybbrCeFDFjTGpsBzaS6fRKrWj2J4Wy3TTyTU1F8iMCrHBF8inZPw9Kg9YEZuJMdXDFNtuaK15u86mF2s2Z5B1vdL5MtZfWThFLnixKds8ABEmGbe8n75Dym5Wv3pkEXQ6XPpaMjUxHfRJB3EfcoFM5nsZHWSTfbFBcHxSRnEiiU67cgJsBUpQn7FvEvqNLiKM4fL3yyykMtQ6RjAS8rhycszphvQa5qFrDHie4vPuTq8/balance/confirmed');
+        const data = await response.json();
+
+        // Fetch permits data for each address
+        const permitsData = await Promise.all(permitAddresses.map(async (permit) => {
+            const permitResponse = await fetch(`https://api.ergoplatform.com/api/v1/addresses/${permit.address}/balance/confirmed`);
+            return permitResponse.json();
+        }));
+
+        // Calculate total permits for each chain
+        const permitsInfo = {};
+        permitsData.forEach((permitData, index) => {
+            const rsnTokenData = permitData.tokens.find(token => token.tokenId === "8b08cdd5449a9592a9e79711d7d79249d7a03c535d17efaee83e216e80a44c4b");
+            const permitAmount = rsnTokenData ? rsnTokenData.amount / Math.pow(10, rsnTokenData.decimals) : 0;
+            permitsInfo[permitAddresses[index].name] = permitAmount / 3000; // Each permit costs 3000 RSN
+        });
+
+        function updateCard(id, title, logo, amount, rsnLocked, ergLocked, permits) {
+            const card = document.getElementById(id);
+            card.innerHTML = `
+                ${logo ? `<img src="${logo}" alt="${title} logo" class="card-logo">` : ''}
+                <div class="watcher-count">${amount}</div>
+                <h2 class="card-title">${title}</h2>
+                <p>${formatNumber(rsnLocked)} RSN 🔒</p>
+                <p>${formatNumber(ergLocked)} ERG 🔒</p>
+                ${permits.map(permit => `<p>${permit.name}: ${Math.floor(permit.amount)}</p>`).join('')}
+            `;
+        }
+
+        // Update Ergo Watcher
+        const ergoData = data.tokens.find(token => token.name.includes('Ergo'));
+        if (ergoData) {
+            const amount = Math.floor(ergoData.amount);
+            const rsnLocked = ergoData.amount * 30000;
+            const ergLocked = ergoData.amount * 800;
+            const ergoPermits = [
+                { name: 'Permits', amount: permitsInfo.ergo_new_permits },
+                { name: 'Old Permits', amount: permitsInfo.ergo_old_permits }
+            ];
+            updateCard('ergoWatcher', 'Ergo Watchers', logos.ergo, amount, rsnLocked, ergLocked, ergoPermits);
+        }
+
+        // Update Cardano Watcher
+        const cardanoData = data.tokens.find(token => token.name.includes('Cardano'));
+        if (cardanoData) {
+            const amount = Math.floor(cardanoData.amount);
+            const rsnLocked = cardanoData.amount * 30000;
+            const ergLocked = cardanoData.amount * 800;
+            const cardanoPermits = [
+                { name: 'Permits', amount: permitsInfo.cardano_new_permits },
+                { name: 'Old Permits', amount: permitsInfo.cardano_old_permits }
+            ];
+            updateCard('cardanoWatcher', 'Cardano Watchers', logos.cardano, amount, rsnLocked, ergLocked, cardanoPermits);
+        }
+
+        // Update Bitcoin Watcher
+        const bitcoinData = data.tokens.find(token => token.name.includes('Bitcoin'));
+        if (bitcoinData) {
+            const amount = Math.floor(bitcoinData.amount);
+            const rsnLocked = bitcoinData.amount * 30000;
+            const ergLocked = bitcoinData.amount * 800;
+            const bitcoinPermits = [
+                { name: 'Permits', amount: permitsInfo.bitcoin_permits || 0 }
+            ];
+            updateCard('bitcoinWatcher', 'Bitcoin Watchers', logos.bitcoin, amount, rsnLocked, ergLocked, bitcoinPermits);
+        }
+
+        // Update Total Collateral
+        const totalNanoErgs = data.nanoErgs || 0;
+        const totalCollateralErgs = Math.floor(totalNanoErgs / Math.pow(10, 9));
+        // Inside the fetchCollateralInfo function, update the Total Collateral section:
+
+        // Calculate total RSN locked
+        const totalRSNLocked = Object.values(data.tokens).reduce((sum, token) => {
+            if (token.name.includes('Ergo') || token.name.includes('Cardano') || token.name.includes('Bitcoin')) {
+                return sum + (token.amount * 30000);
+            }
+            return sum;
+        }, 0);
+
+        const totalCollateralCard = document.getElementById('totalCollateral');
+        totalCollateralCard.innerHTML = `
+            <h2 class="card-title">Total Collateral Locked</h2>
+            <div class="total-amounts">
+                <div class="total-amount">${formatNumber(totalCollateralErgs)} ERG</div>
+                <div class="total-amount">${formatNumber(totalRSNLocked)} RSN</div>
+            </div>
+        `;
+
+       
+
+        } catch (error) {
+            console.error('Error fetching collateral info:', error);
+        }
+}
+
+function formatNumber(value) {
+    return Math.floor(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchCollateralInfo();
+    setInterval(fetchCollateralInfo, 300000); // Update every 5 minutes
+});
