@@ -771,7 +771,7 @@ export default [
       "Mantle",
       "Scroll",
       "Blast",
-      "Fraxtal"
+      "Fraxtal",
     ],
     chainMapping: {
       avalanche: "avax",
