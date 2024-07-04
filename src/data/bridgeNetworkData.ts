@@ -1145,6 +1145,7 @@ export default [
       "x layer": "xlayer",
       bouncebit: "bouncebit-mainnet",
       opbnb: "op_bnb",
+      taiko: "tko-mainnet"
     },
   },
   {

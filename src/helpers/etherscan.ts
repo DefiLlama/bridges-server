@@ -10,10 +10,9 @@ const endpoints = {
   fantom: "https://api.ftmscan.com",
   arbitrum: "https://api.arbiscan.io",
   optimism: "https://api-optimistic.etherscan.io",
-  aurora: "https://explorer.mainnet.aurora.dev/api",
+  aurora: "https://explorer.mainnet.aurora.dev",
   celo: "https://api.celoscan.io",
-  "zksync era": "https://block-explorer-api.mainnet.zksync.io/",
-  mantle: "https://explorer.mantle.xyz/",
+  "zksync era": "https://block-explorer-api.mainnet.zksync.io",
   base: "https://api.basescan.org",
   linea: "https://api.lineascan.build",
   scroll: "https://api.scrollscan.com",
@@ -21,7 +20,8 @@ const endpoints = {
   polygon_zkevm: "https://api-zkevm.polygonscan.com",
   arbitrum_nova: "https://api-nova.arbiscan.io",
   era: "https://api-era.zksync.network",
-  zklink: "https://explorer-api.zklink.io/",
+  zklink: "https://explorer-api.zklink.io",
+  "tko-mainnet": "https://api.taikoscan.io"
 } as { [chain: string]: string };
 
 const apiKeys = {
@@ -41,6 +41,7 @@ const apiKeys = {
   arbitrum_nova: "SZZE864TZH3MGRUUDPRPUS7NF8MAFZBDAZ",
   polygon_zkevm: "XKFP275U27W7AI4NGUIT7VGEQ179P4XA1S",
   era: "9HJZA6X8DEJ46WHMM2UEJ5WCXPG31C7EWI",
+  "tko-mainnet": "DYUMJ7MP38G6TFY173JA2E9DJ9TXYI1RYD"
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeEtherscan = async (
