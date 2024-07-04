@@ -9,7 +9,7 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
 
   const constructGatewayWithdrawalParams = (assets: any[], chain: string) => {
     let GatewayWithdrawalParams: PartialContractEventParams;
-    
+
     return  GatewayWithdrawalParams = {
       target: "",
       topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
@@ -33,7 +33,7 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
           token: (log: any) => getTokenAddress(log.symbol, chain, assets)
         },
       isDeposit: false,
-  
+
     };
 
   }
@@ -78,7 +78,7 @@ const constructParams = (chain: string) => {
 
     const GatewayDepositParams = constructGatewayDepositParams(assets, chain);
     const deposit = {...GatewayDepositParams, target: axelarGatewayAddresses[chain], };
-    
+
     const GatewayWithdrawalParams = constructGatewayWithdrawalParams(assets, chain);
     const withdraw = {...GatewayWithdrawalParams, target: axelarGatewayAddresses[chain], };
 
@@ -87,14 +87,15 @@ const constructParams = (chain: string) => {
 
     return getTxDataFromEVMEventLogs("squid", chain as Chain, fromBlock, toBlock, eventParams);
   }
-    
+
 };
 
 const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
-  // bsc: constructParams("bsc"),
+  bsc: constructParams("bsc"),
+  scroll: constructParams("scroll"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
