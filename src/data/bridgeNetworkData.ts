@@ -759,7 +759,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      // "BSC",
+      "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
@@ -769,9 +769,13 @@ export default [
       "Kava",
       "Optimism",
       "Mantle",
+      "Scroll",
+      "Blast",
+      "Fraxtal",
     ],
     chainMapping: {
-      avalanche: "avax", // this is needed temporarily, need to fix and remove
+      avalanche: "avax",
+      // Add any other necessary mappings here
     },
   },
   {
