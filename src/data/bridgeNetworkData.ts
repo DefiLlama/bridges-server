@@ -1134,7 +1134,7 @@ export default [
       "Zkfair",
       "opBNB",
       "Taiko",
-      "Bsquared",
+      "BSquared",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1143,6 +1143,9 @@ export default [
       bsquared: "b2-mainnet",
       bitlayer: "btr",
       "x layer": "xlayer",
+      bouncebit: "bouncebit-mainnet",
+      opbnb: "op_bnb",
+      taiko: "tko-mainnet"
     },
   },
   {
