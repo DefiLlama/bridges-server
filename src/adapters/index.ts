@@ -61,6 +61,7 @@ import owlto from "./owlto";
 import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
 import memebridge from "./memebridge"
+import minibridge from "./minibridge"
 
 export default {
   polygon,
@@ -125,6 +126,7 @@ export default {
   zkbridge111: zkbridge,
   helixbridge,
   memebridge,
+  minibridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
