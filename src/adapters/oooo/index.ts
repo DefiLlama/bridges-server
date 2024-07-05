@@ -5,6 +5,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
+import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 
 export const bridgesAddress = {
     arbitrum: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf5e3E5D96a12470b2DAdb91FFBA89fDD6e07907B", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
@@ -19,8 +20,8 @@ const nativeTokens: Record<string, string> = {
     arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
-    // "b2-mainnet": "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
-    // btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+    "b2-mainnet": "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
+    btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
     "rsk": "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d",
 };
 
@@ -45,10 +46,14 @@ const constructParams = (chain: SupportedChains) => {
                 ...bridgeAddress.map(async (address: string, i: number) => {
                     await wait(300 * i); // for etherscan
                     let txs: any[] = [];
-                    if (chain === "merlin") {
+                    if (chain === "merlin" || chain === "b2-mainnet") {
                         txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
                             includeSignatures: ["0x"],
                         });
+                    } else if(chain === "btr") {
+                      txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
+                        includeSignatures: ["0x"],
+                      })
                     } else {
                         txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
                             includeSignatures: ["0x"],
