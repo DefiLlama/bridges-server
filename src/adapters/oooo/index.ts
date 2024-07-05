@@ -4,8 +4,8 @@ import { constructTransferParams } from "../../helpers/eventParams";
 import { Chain } from "@defillama/sdk/build/general";
 import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
-import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
+import { getTxsBlockRangeL2Scan } from "../../helpers/l2scan";
 
 export const bridgesAddress = {
     arbitrum: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf5e3E5D96a12470b2DAdb91FFBA89fDD6e07907B", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
@@ -47,16 +47,16 @@ const constructParams = (chain: SupportedChains) => {
                     await wait(300 * i); // for etherscan
                     let txs: any[] = [];
                     if (chain === "merlin" || chain === "b2-mainnet") {
-                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                            includeSignatures: ["0x"],
+                        txs = await getTxsBlockRangeL2Scan(chain, address, fromBlock, toBlock, {
+                            includeSignatures: ["0x", "0x88d695b2"],
                         });
                     } else if(chain === "btr") {
                       txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
-                        includeSignatures: ["0x"],
+                        includeSignatures: ["0x", "0x88d695b2"],
                       })
                     } else {
                         txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                            includeSignatures: ["0x"],
+                            includeSignatures: ["0x", "0x88d695b2"],
                         });
                     }
                     const eventsRes: EventData[] = txs.map((tx: any) => {
