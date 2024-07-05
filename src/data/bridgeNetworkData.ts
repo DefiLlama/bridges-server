@@ -759,7 +759,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      // "BSC",
+      "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
@@ -769,9 +769,13 @@ export default [
       "Kava",
       "Optimism",
       "Mantle",
+      "Scroll",
+      "Blast",
+      "Fraxtal",
     ],
     chainMapping: {
-      avalanche: "avax", // this is needed temporarily, need to fix and remove
+      avalanche: "avax",
+      // Add any other necessary mappings here
     },
   },
   {
@@ -1134,7 +1138,7 @@ export default [
       "Zkfair",
       "opBNB",
       "Taiko",
-      "Bsquared",
+      "BSquared",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1143,6 +1147,9 @@ export default [
       bsquared: "b2-mainnet",
       bitlayer: "btr",
       "x layer": "xlayer",
+      bouncebit: "bouncebit-mainnet",
+      opbnb: "op_bnb",
+      taiko: "tko-mainnet"
     },
   },
   {
