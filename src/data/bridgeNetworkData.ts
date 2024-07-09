@@ -337,7 +337,7 @@ export default [
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
     url: "https://debridge.finance/",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base", "Solana"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
