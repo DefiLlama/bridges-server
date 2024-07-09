@@ -6,14 +6,15 @@ import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 import { getTxsBlockRangeL2Scan } from "../../helpers/l2scan";
+import { FunctionSignatureFilter } from "../../helpers/bridgeAdapter.type";
 
 export const bridgesAddress = {
-    arbitrum: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf5e3E5D96a12470b2DAdb91FFBA89fDD6e07907B", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
-    bsc: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf5e3E5D96a12470b2DAdb91FFBA89fDD6e07907B", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
-    merlin: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf5e3E5D96a12470b2DAdb91FFBA89fDD6e07907B", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
-    "b2-mainnet": ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xd3be6713f9dfa3cecd6e71aaf69e98977aa3f79b", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
-    btr: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0x44a263c4efec6e4ea38ffb36acc8dc84574c9015", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"],
-    "rsk": ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8", "0xf0d865194a1b6636a4df7a0a2fa58eb03967e29e", "0x09c9df7b4745443422ee0919121a3ab329e03a7a", "0xf793e143f36beb4ed902328484fba5a2630948b3", "0xcd6421ae52eb8c8dc1bf077be5988f7328785df8"]
+    arbitrum: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
+    bsc: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
+    merlin: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
+    "b2-mainnet": ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
+    btr: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
+    "rsk": ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"]
 } as const;
 
 const nativeTokens: Record<string, string> = {
@@ -26,7 +27,6 @@ const nativeTokens: Record<string, string> = {
 };
 
 type SupportedChains = keyof typeof bridgesAddress;
-
 
 const constructParams = (chain: SupportedChains) => {
     const bridgeAddress = bridgesAddress[chain];

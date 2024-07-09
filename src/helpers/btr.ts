@@ -48,7 +48,7 @@ const getBlockTXbyAddress = async (
     //filter by address
     const txList: any[] = data.result;
     return txList;
-  }else if(data.includes('error')) {
+  }else if(data.hasOwnProperty('error')) {
     console.error(JSON.stringify(data.error.json.message));
   }
   return []
