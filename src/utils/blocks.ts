@@ -5,7 +5,11 @@ import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
 import { BridgeNetwork } from "../data/types";
-import { getLatestBlockHeightForZoneFromMoz, getLatestBlockForZoneFromMoz, ibcGetBlockFromTimestamp } from "../adapters/ibc";
+import {
+  getLatestBlockHeightForZoneFromMoz,
+  getLatestBlockForZoneFromMoz,
+  ibcGetBlockFromTimestamp,
+} from "../adapters/ibc";
 const retry = require("async-retry");
 
 export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
@@ -69,7 +73,7 @@ export async function getLatestBlock(chain: string, bridge?: string): Promise<{ 
   } else if (bridge && bridge === "ibc") {
     return await getLatestBlockForZoneFromMoz(chain);
   }
-  
+
   const timestamp = Math.floor(Date.now() / 1000) - 60;
   return await lookupBlock(timestamp, { chain });
 }
@@ -79,13 +83,10 @@ export async function getBlockByTimestamp(
   chain: Chain,
   bridge?: BridgeNetwork,
   position?: "First" | "Last"
-) 
-  {
+) {
   if (bridge && bridge.bridgeDbName === "ibc") {
     return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position);
-  }
-
-  else if (chain === "solana") {
+  } else if (chain === "solana") {
     const { timestamp: latestTimestamp, number } = await getLatestBlock(chain);
     // There is not an easy way to get the slot number from a timestamp on Solana
     // without hammering the RPC node with requests.
@@ -100,8 +101,11 @@ export async function getBlockByTimestamp(
   throw new Error(`Could not find block for timestamp ${timestamp} on chain ${chain}`);
 }
 
-export async function getTimestampBySolanaSlot(slot: number) {
-  const { timestamp: latestTimestamp, number } = await getLatestBlock("solana");
+export async function getTimestampBySolanaSlot(
+  slot: number,
+  latestBlock?: { number: number; timestamp: number } | null
+) {
+  const { timestamp: latestTimestamp, number } = latestBlock ? latestBlock : await getLatestBlock("solana");
 
   const timestamp = latestTimestamp - ((number - slot) * 400) / 1000;
 
