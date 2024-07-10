@@ -416,7 +416,8 @@ export const runAdapterHistorical = async (
       if (!eventLogs || eventLogs?.length === 0) {
         console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${block} to ${endBlock}.`);
         block = block + maxBlocksToQuery;
-        continue;
+        if (block >= endBlock) break;
+        else continue;
       }
       console.log(
         `${eventLogs.length} transactions were found for ${bridgeID} (${bridgeDbName}) on ${chain} from ${block} to ${endBlockForQuery}.`
