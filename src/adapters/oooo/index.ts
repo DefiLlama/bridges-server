@@ -1,3 +1,5 @@
+import { BigNumber } from 'ethers';
+
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
@@ -6,7 +8,6 @@ import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 import { getTxsBlockRangeL2Scan } from "../../helpers/l2scan";
-import { FunctionSignatureFilter } from "../../helpers/bridgeAdapter.type";
 
 export const bridgesAddress = {
     arbitrum: ["0xfe07bc6cb1fc0bf79716ab35c42763e4232e96c8"],
@@ -66,7 +67,7 @@ const constructParams = (chain: SupportedChains) => {
                             from: tx.from,
                             to: tx.to,
                             token: nativeTokens[chain],
-                            amount: tx.value,
+                            amount: BigNumber.from(tx.value),
                             isDeposit: address.toLowerCase() === tx.to,
                         };
                         return event;
@@ -76,7 +77,6 @@ const constructParams = (chain: SupportedChains) => {
                 }),
               ]
             );
-
 
             const allEvents = [...eventLogData, ...nativeEvents.flat()];
             return allEvents;
