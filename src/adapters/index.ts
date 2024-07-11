@@ -60,6 +60,7 @@ import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
+import oooo from "./oooo";
 import memebridge from "./memebridge"
 import cometbridge from "./cometbridge"
 
@@ -79,6 +80,7 @@ export default {
   portal,
   binancepeg,
   xdai,
+  oooo,
   "avalanche-btc": avalanchebtc,
   axelar,
   rainbowbridge,

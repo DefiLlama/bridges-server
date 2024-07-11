@@ -34,85 +34,90 @@ const testAdapter = async () => {
   }
 
   await Promise.all(
-    Object.entries(adapter).map(async ([chain, adapterChainEventsFn]): Promise<void>=> {
-      let uniqueTokens = {} as { [token: string]: boolean };
-      let tokensForPricing = [] as any;
-      const contractsChain = bridgeNetwork.chainMapping?.[chain as Chain]
-        ? bridgeNetwork.chainMapping?.[chain as Chain]
-        : chain;
-      let block = undefined;
-
+    Object.entries(adapter).map(async ([chain, adapterChainEventsFn]): Promise<void> => {
       try {
-        block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
-        if (!block) {
-          throw new Error(`Block not found for ${adapterName} adapter on chain ${contractsChain}`);
-        }
-      } catch(e) {
-        // in case thrown internally from the bridge adapter
-        console.error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`)
-        return ;
-      }
-      
-      const { number, timestamp } = block;
-      if (!(number && timestamp)) {
-        console.error(`Missing block number or timestamp for chain ${contractsChain}.`)
-        return ;
-      }
-      const startBlock = number - parseInt(numberOfBlocks);
-      console.log(`Getting event logs on chain ${contractsChain} from block ${startBlock} to ${number}.`);
-      const eventLogs = await adapterChainEventsFn(startBlock, number);
-      // console.log(eventLogs)
-      console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
-      for (const log of eventLogs) {
-        console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);
-        console.log(`From: ${log.from} To: ${log.to} `);
-      }
-      console.log(`${eventLogs.length} transactions found.`);
-      const eventPromises = Promise.all(
-        eventLogs.map(async (log: any) => {
-          ["txHash", "blockNumber", "from", "to", "token", "isDeposit"].map((key) => {
-            if (!(log[key] !== null && typeof log[key] === logTypes[key])) {
-              console.log("Yes it is missing", key)
-              throw new Error(
-                `${key} is missing, null, or wrong type in log. It is of type ${typeof log[
-                key
-                ]} and should be of type ${logTypes[key]}.`
-              );
-            }
-          });
+        let uniqueTokens = {} as { [token: string]: boolean };
+        let tokensForPricing = [] as any;
+        const contractsChain = bridgeNetwork.chainMapping?.[chain as Chain]
+          ? bridgeNetwork.chainMapping?.[chain as Chain]
+          : chain;
+        let block = undefined;
 
-          const { amount , isUSDVolume } = log;
-
-          if(!isUSDVolume) {
-            if(!amount._isBigNumber) {
-              throw new Error(
-                `Amount type ${typeof amount} and should be of type BigNumber.`
-              );
-            }
-            const token = log.token.toLowerCase();
-            const tokenKey = transformTokens[contractsChain]?.[token]
-              ? transformTokens[contractsChain]?.[token]
-              : `${contractsChain}:${token}`;
-            uniqueTokens[tokenKey] = true;
+        try {
+          block = await getLatestBlock(contractsChain, bridgeNetwork.bridgeDbName);
+          if (!block) {
+            throw new Error(`Block not found for ${adapterName} adapter on chain ${contractsChain}`);
           }
-        })
-      );
-      await eventPromises;
-      console.log(`Values for event logs have correct types on chain ${chain}.`);
-
-      tokensForPricing = Object.keys(uniqueTokens);
-      const llamaPrices = await getLlamaPrices(tokensForPricing, timestamp);
-      console.log(
-        `Over the past ${numberOfBlocks} blocks, ${tokensForPricing.length} unique tokens were transferred and ${Object.keys(llamaPrices).length
-        } prices for them were found on ${chain}.`
-      );
-      for (const token of tokensForPricing) {
-        if (!llamaPrices?.[token]) {
-          console.log(`token ${token} is missing price.`);
+        } catch (e) {
+          // in case thrown internally from the bridge adapter
+          console.error(`Unable to get latest block for ${adapterName} adapter on chain ${contractsChain}.`);
+          return;
         }
-      }
 
-      console.log("Done!", contractsChain);
+        const { number, timestamp } = block;
+        if (!(number && timestamp)) {
+          console.error(`Missing block number or timestamp for chain ${contractsChain}.`);
+          return;
+        }
+        const startBlock = number - parseInt(numberOfBlocks);
+        console.log(`Getting event logs on chain ${contractsChain} from block ${startBlock} to ${number}.`);
+        const eventLogs = await adapterChainEventsFn(startBlock, number);
+        // console.log(eventLogs)
+        console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
+        for (const log of eventLogs) {
+          console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);
+          console.log(`From: ${log.from} To: ${log.to} `);
+        }
+        console.log(`${eventLogs.length} transactions found.`);
+        const eventPromises = Promise.all(
+          eventLogs.map(async (log: any) => {
+            ["txHash", "blockNumber", "from", "to", "token", "isDeposit"].map((key) => {
+              if (!(log[key] !== null && typeof log[key] === logTypes[key])) {
+                console.log("Yes it is missing", key);
+                throw new Error(
+                  `${key} is missing, null, or wrong type in log. It is of type ${typeof log[
+                    key
+                  ]} and should be of type ${logTypes[key]}.`
+                );
+              }
+            });
+
+            const { amount, isUSDVolume } = log;
+
+            if (!isUSDVolume) {
+              if (!amount._isBigNumber) {
+                throw new Error(`Amount type ${typeof amount} and should be of type BigNumber.`);
+              }
+              const token = log.token.toLowerCase();
+              const tokenKey = transformTokens[contractsChain]?.[token]
+                ? transformTokens[contractsChain]?.[token]
+                : `${contractsChain}:${token}`;
+              uniqueTokens[tokenKey] = true;
+            }
+          })
+        );
+        await eventPromises;
+        console.log(`Values for event logs have correct types on chain ${chain}.`);
+
+        tokensForPricing = Object.keys(uniqueTokens);
+        const llamaPrices = await getLlamaPrices(tokensForPricing, timestamp);
+        console.log(
+          `Over the past ${numberOfBlocks} blocks, ${tokensForPricing.length} unique tokens were transferred and ${
+            Object.keys(llamaPrices).length
+          } prices for them were found on ${chain}.`
+        );
+        for (const token of tokensForPricing) {
+          if (!llamaPrices?.[token]) {
+            console.log(`token ${token} is missing price.`);
+          }
+        }
+
+        console.log("Done!", contractsChain);
+      } catch (e) {
+        console.error(`Error on chain ${chain}`);
+        console.error(e);
+        process.exit();
+      }
     })
   );
   process.exit();

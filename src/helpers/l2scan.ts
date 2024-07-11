@@ -1,14 +1,21 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 const axios = require("axios");
-const retry = require('retry')
+const retry = require("async-retry");
 
-export const getTxsBlockRangeBtrScan = async (
+const endpoints = {
+  merlin: "https://scan.merlinchain.io",
+  "b2-mainnet": "https://explorer.bsquared.network",
+} as { [chain: string]: string };
+
+export const getTxsBlockRangeL2Scan = async (
+  chain: string,
   address: string,
   startBlock: number,
   endBlock: number,
   functionSignatureFilter?: FunctionSignatureFilter
 ) => {
-  let txList: any[] = await getBlockTXbyAddress(address, startBlock, endBlock);
+  let txList: any[] = await getBlockTXbyAddress(chain, address, startBlock, endBlock);
+  // console.log(JSON.stringify(txList));
   if (txList.length > 0) {
     const filteredResults = txList.filter((tx: any) => {
       if (functionSignatureFilter) {
@@ -36,20 +43,28 @@ export const getTxsBlockRangeBtrScan = async (
 };
 
 const getBlockTXbyAddress = async (
+  chain: string,
   address: string,
   startBlock: number,
   endBlock: number,
 ) => {
-  let res = await axios.get(
-    `https://api.btrscan.com/scan/api?module=account&action=txlist&address=${address}&startBlock=${startBlock}&endBlock=${endBlock}&sort=asc`
-  )
-  const data = res.data
-  if(data.message == 'OK' && data.result.length != 0) {
-    //filter by address
-    const txList: any[] = data.result;
-    return txList;
-  }else if(data.hasOwnProperty('error')) {
-    console.error(JSON.stringify(data.error.json.message));
+  const endpoint = endpoints[chain];
+  let txList: any[] = []
+  let page = 1
+  while(true) {
+    let res = await retry(
+      () =>
+        axios.get(
+          `${endpoint}/api?module=account&action=txlist&address=${address}&endblock=${endBlock}&sort=asc&startblock=${startBlock}&offset=1000&page=${page}`
+        ),
+      { factor: 1, retries: 3 }
+    )
+    if (res.data.message == 'OK' && res.data.result.length != 0) {
+      txList = txList.concat(res.data.result)
+    } else {
+      break;
+    }
+    page++
   }
-  return []
+  return txList;
 }
