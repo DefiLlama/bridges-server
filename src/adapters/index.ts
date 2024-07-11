@@ -64,6 +64,7 @@ import oooo from "./oooo";
 import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
 import minibridge from "./minibridge";
+import cometbridge from "./cometbridge";
 
 export default {
   polygon,
@@ -131,6 +132,7 @@ export default {
   memebridge,
   bunnyfi,
   minibridge,
+  cometbridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
