@@ -1308,4 +1308,34 @@ export default [
       bitlayer: "btr",
     },
   },
+  {
+    id: 999,
+    displayName: "CometBridge",
+    bridgeDbName: "cometbridge",
+    iconLink: "icons:comet",
+    largeTxThreshold: 10000,
+    url: "https://cometbridge.app",
+    chains: [
+      "Ethereum",
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Linea",
+      "Blast",
+      "Scroll",
+      "BSC",
+      "X Layer",
+      "Taiko",
+      "ZkLink",
+      "zkSync Era",
+      "Merlin",
+      "BSquared",
+      "Bitlayer",
+      "Mode"
+    ],
+    chainMapping: {
+      "zksync era": "era",
+      "x layer": "xlayer",
+    },
+  }
 ] as BridgeNetwork[];
