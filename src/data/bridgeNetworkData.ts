@@ -337,7 +337,7 @@ export default [
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
     url: "https://debridge.finance/",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base"],
+    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base", "Solana"],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -759,7 +759,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Avalanche",
-      // "BSC",
+      "BSC",
       "Fantom",
       "Arbitrum",
       "Base",
@@ -769,9 +769,13 @@ export default [
       "Kava",
       "Optimism",
       "Mantle",
+      "Scroll",
+      "Blast",
+      "Fraxtal",
     ],
     chainMapping: {
-      avalanche: "avax", // this is needed temporarily, need to fix and remove
+      avalanche: "avax",
+      // Add any other necessary mappings here
     },
   },
   {
@@ -1302,6 +1306,27 @@ export default [
       "x layer": "xlayer",
       opbnb: "op_bnb",
       bitlayer: "btr",
+    },
+  },
+  {
+    id: 66,
+    displayName: "oooo",
+    bridgeDbName: "oooo",
+    iconLink: "icons:oooo",
+    largeTxThreshold: 10000,
+    url: "https://oooo.money",
+    chains: [
+      "Arbitrum",
+      "BSC",
+      "Merlin",
+      "BSquared",
+      "Bitlayer",
+      // "Rootstock",
+    ],
+    chainMapping: {
+      bsquared: "b2-mainnet",
+      bitlayer: "btr",
+      rootstock: "rsk",
     },
   },
 ] as BridgeNetwork[];

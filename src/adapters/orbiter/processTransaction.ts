@@ -21,7 +21,7 @@ export async function getPadContractTxValue(chain: string, txHash: string, ): Pr
       console.error("parse log fail:", e.message);
       return null;
     }
-  }).filter(log => log != null);
+  }).filter(log => log != null) as ethers.utils.LogDescription[];
 
   let totalValue = BigNumber.from(0);
   let isDeposit = true;
