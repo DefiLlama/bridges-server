@@ -44,12 +44,10 @@ const getBlockTXbyAddress = async (
     `https://api.btrscan.com/scan/api?module=account&action=txlist&address=${address}&startBlock=${startBlock}&endBlock=${endBlock}&sort=asc`
   )
   const data = res.data
-  if(data.message == 'OK' && data.result.length != 0) {
+  if(data.message == 'OK' && data.status == 1 &&data.result.length != 0 ) {
     //filter by address
     const txList: any[] = data.result;
     return txList;
-  }else if(data.includes('error')) {
-    console.error(JSON.stringify(data.error.json.message));
   }
   return []
 }

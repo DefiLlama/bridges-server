@@ -115,7 +115,7 @@ const constructParams = (chain: string) => {
 
     const nativeEvents = await Promise.all(
       eoaAddressNative.map(async (address: string, i: number) => {
-        await wait(300 * i); // for etherscan
+        await wait(500 * i); // for etherscan
         let txs: any[] = [];
         if (chain === "merlin") {
           txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
@@ -149,7 +149,6 @@ const constructParams = (chain: string) => {
     );
     const contractEvents = await Promise.all(
       contractsAddress.map(async (address: string, i: number) => {
-        console.log(address);
         await wait(300 * i); // for etherscan
         const txs: any[] = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
           includeSignatures: padContractSignature,
@@ -157,16 +156,14 @@ const constructParams = (chain: string) => {
         const eventsRes: EventData[] = []
         for( const tx of txs) {
           let value = BigNumber.from(0);
+          let isDepositTemp = true;
           if(tx.value == '0') {
-            value = await getPadContractTxValue(chain, tx.hash);
+            const {internalValue, isDeposit} = await getPadContractTxValue(chain, tx.hash);
+            value = internalValue;
+            isDepositTemp = isDeposit;
           }
           else {
-            value = tx.value;
-          }
-          let isDeposit = true;
-          if(value.isNegative()){
-            value.mul(-1)
-            isDeposit = false;
+            value = BigNumber.from(tx.value);
           }
           const event: EventData = {
             txHash: tx.hash,
@@ -175,7 +172,7 @@ const constructParams = (chain: string) => {
             to: tx.to,
             token: nativeTokens[chain],
             amount: value,
-            isDeposit,
+            isDeposit: isDepositTemp,
           };
           eventsRes.push(event);
         }
