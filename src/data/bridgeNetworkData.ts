@@ -1266,7 +1266,7 @@ export default [
   },
   {
     id: 64,
-    displayName: "helixBridge",
+    displayName: "HelixBridge",
     bridgeDbName: "helixbridge",
     iconLink: "icons:helixbridge",
     largeTxThreshold: 10000,
