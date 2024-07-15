@@ -97,7 +97,7 @@ const padContractsAddresses:  Record<string, string[]> = {
   "tko-mainnet": ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
 };
 
-const nativeTokenTransferSignature = ["0x535741", "0x", "0x52346412"];
+const nativeTokenTransferSignature = ["0x535741", "0x", "0x52346412", "0xf9c028ec"];
 
 const padContractSignature = ["0xd443a1f2"];
 
@@ -138,7 +138,7 @@ const constructParams = (chain: string) => {
             from: tx.from,
             to: tx.to,
             token: nativeTokens[chain],
-            amount: tx.value,
+            amount: BigNumber.from(tx.value),
             isDeposit: address === tx.to,
           };
           return event;
