@@ -1,4 +1,4 @@
-import { getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
+import { getLatestBlock, getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -403,6 +403,7 @@ export const runAdapterHistorical = async (
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let block = startBlock;
   console.log(`Searching for transactions for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
+
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
@@ -412,10 +413,11 @@ export const runAdapterHistorical = async (
         { retries: 4, factor: 2 }
       );
 
-      if (eventLogs.length === 0) {
+      if (!eventLogs || eventLogs?.length === 0) {
         console.log(`No transactions found for ${bridgeID} (${bridgeDbName}-${chain}) from ${block} to ${endBlock}.`);
         block = block + maxBlocksToQuery;
-        continue;
+        if (block >= endBlock) break;
+        else continue;
       }
       console.log(
         `${eventLogs.length} transactions were found for ${bridgeID} (${bridgeDbName}) on ${chain} from ${block} to ${endBlockForQuery}.`
@@ -447,6 +449,12 @@ export const runAdapterHistorical = async (
         // in order to reduce number of getBlock calls
         let blockTimestamps = {} as { [bucket: number]: number };
         let block = {} as { timestamp: number; number: number };
+
+        let latestSolanaBlock = null;
+        if (chain === "solana") {
+          latestSolanaBlock = await getLatestBlock("solana");
+        }
+        console.log(2);
         for (let i = 0; i < 10; i++) {
           const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
           for (let j = 0; j < 4; j++) {
@@ -461,7 +469,7 @@ export const runAdapterHistorical = async (
                   break;
                 }
               } else if (chain === "solana") {
-                blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber);
+                blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber, latestSolanaBlock);
                 break;
               } else {
                 blockTimestamps[i] = currentTimestamp;

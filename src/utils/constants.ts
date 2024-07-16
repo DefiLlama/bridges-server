@@ -23,9 +23,9 @@ export const maxBlocksToQueryByChain = {
   celo: 1200,
   klaytn: 6000,
   sui: 2400, // sui creates a checkpoint about every 3 seconds
-  solana: 18000, // solana produces slots every 400ms, so 2 hours is 18000 slots
+  solana: 18000, // solana produces slots every 400ms, so 2 hours is 18000 slotsб
+  "tko-mainnet": 100,
 } as { [chain: string]: number };
-
 
 // will be handled by the bridge adapter
 export const nonBlocksChains: string[] = [];
