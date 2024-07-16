@@ -238,13 +238,16 @@ const constructParams = (chain: SupportedChains) => {
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  polygon: constructParams("polygon"),
-  arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  polygon: constructParams("polygon"),
   "zksync era": constructParams("era"),
+  lisk: constructParams("lisk"),
   base: constructParams("base"),
-  linea: constructParams("linea"),
   mode: constructParams("mode"),
+  arbitrum: constructParams("arbitrum"),
+  linea: constructParams("linea"),
+  blast: constructParams("blast"),
+  scroll: constructParams("scroll"),
 };
 
 export default adapter;
