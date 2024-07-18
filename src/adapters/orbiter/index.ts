@@ -9,19 +9,19 @@ import { getPadContractTxValue } from "./processTransaction";
 import { BigNumber } from "ethers";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 
-const blackListedAddresses = [
-  "0xa7883e0060286b7b9e3a87d8ef9f180a7c2673ce",
-  "0x3f5401a9d0dd2390d1a8c7060672d4b704df6372",
-  "0x0000000000000000000000000000000000008001",
-  "0xd9d74a29307cc6fc8bf424ee4217f1a587fbc8dc",
-  "0xbf3922a0cebbcd718e715e83d9187cc4bba23f11",
-  "0xabea9132b05a70803a4e85094fd0e1800777fbef",
-  "0xe7804c37c13166ff0b37f5ae0bb07a3aebb6e245",
-  "0x151409521FC4aF3DBaCE6D97fd4148a44BF07300",
-  "0xebe80f029b1c02862b9e8a70a7e5317c06f62cae",
-  "0x44f356e8716575f2a713a3d91ae4ed1c7c054a90",
-  "0xA7883E0060286B7B9e3a87d8Ef9f180a7c2673cE",
-].map((a) => a.toLowerCase());
+// const blackListedAddresses = [
+//   "0xa7883e0060286b7b9e3a87d8ef9f180a7c2673ce",
+//   "0x3f5401a9d0dd2390d1a8c7060672d4b704df6372",
+//   "0x0000000000000000000000000000000000008001",
+//   "0xd9d74a29307cc6fc8bf424ee4217f1a587fbc8dc",
+//   "0xbf3922a0cebbcd718e715e83d9187cc4bba23f11",
+//   "0xabea9132b05a70803a4e85094fd0e1800777fbef",
+//   "0xe7804c37c13166ff0b37f5ae0bb07a3aebb6e245",
+//   "0x151409521FC4aF3DBaCE6D97fd4148a44BF07300",
+//   "0xebe80f029b1c02862b9e8a70a7e5317c06f62cae",
+//   "0x44f356e8716575f2a713a3d91ae4ed1c7c054a90",
+//   "0xA7883E0060286B7B9e3a87d8Ef9f180a7c2673cE",
+// ].map((a) => a.toLowerCase());
 
 const eoaAddressErc = [
   "0x646592183ff25a0c44f09896a384004778f831ed",
@@ -36,8 +36,7 @@ const eoaAddressErc = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111"
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
 ];
 
 const eoaAddressNative = [
@@ -53,8 +52,7 @@ const eoaAddressNative = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111"
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
 ];
 
 const nativeTokens: Record<string, string> = {
@@ -181,12 +179,7 @@ const constructParams = (chain: string) => {
     )
 
     const allEvents: EventData[] = [...contractEvents.flat(), ...nativeEvents.flat(), ...eventLogData]
-    const filteredEvents = allEvents.filter(
-      (event) =>
-        !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
-        !blackListedAddresses.includes(event?.to?.toLowerCase())
-    );
-    return filteredEvents;
+    return allEvents;
   };
 };
 
