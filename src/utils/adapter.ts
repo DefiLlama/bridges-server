@@ -156,7 +156,7 @@ export const runAdapterToCurrentBlock = async (
           startBlock += step;
         }
       } catch (e) {
-        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "transactions",
@@ -259,7 +259,7 @@ export const runAllAdaptersToCurrentBlock = async (
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
-          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
             ts: currentTimestamp,
             target_table: "transactions",
@@ -317,7 +317,7 @@ export const runAllAdaptersTimestampRange = async (
           }
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
         } catch (e) {
-          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped.`;
+          const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
             ts: getCurrentUnixTimestamp() * 1000,
             target_table: "transactions",
