@@ -7,7 +7,7 @@ const handler = async (event: any) => {
   try {
     await runAdapterToCurrentBlock(bridgeNetworks[event.bridgeIndex], false, "ignore", event.lastRecordedBlocks);
   } catch (e) {
-    console.error(`Adapter ${bridgeNetworks[event.bridgeIndex].bridgeDbName} failed`);
+    console.error(`Adapter ${bridgeNetworks[event.bridgeIndex].bridgeDbName} failed ${JSON.stringify(e)}`);
   } finally {
     await sql.end();
   }
