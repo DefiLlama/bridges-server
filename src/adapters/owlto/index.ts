@@ -5,6 +5,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
+import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 
 const retry = require("async-retry");
 
@@ -78,6 +79,9 @@ const nativeTokens: Record<string, string> = {
     era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
     arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
     merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
+    taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+    btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+    zklink: "0x8280a4e7D5B3B658ec4580d3Bc30f5e50454F169",
 };
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -105,6 +109,10 @@ const constructParams = (chain: SupportedChains) => {
                         txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
                             includeSignatures: ["0x"],
                         });
+                    } else if (chain === "btr") {
+                        txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
+                            includeSignatures: ["0x"],
+                        });
                     } else {
                         txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
                             includeSignatures: ["0x"],
@@ -130,6 +138,10 @@ const constructParams = (chain: SupportedChains) => {
                     let txs: any[] = [];
                     if (chain === "merlin") {
                         txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
+                            includeSignatures: ["0xfc180638"],
+                        });
+                    } else if (chain === "btr") {
+                        txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
                             includeSignatures: ["0xfc180638"],
                         });
                     } else {
