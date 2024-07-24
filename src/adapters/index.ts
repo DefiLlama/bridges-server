@@ -62,6 +62,7 @@ import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
 import oooo from "./oooo";
 import memebridge from "./memebridge"
+import bunnyfi from "./bunnyfi"
 
 export default {
   polygon,
@@ -127,6 +128,7 @@ export default {
   zkbridge111: zkbridge,
   helixbridge,
   memebridge,
+  bunnyfi,
 } as {
   [bridge: string]: BridgeAdapter;
 };
