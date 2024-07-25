@@ -212,7 +212,6 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   optimism: constructParams("optimism"),
   celo: constructParams("celo"),
-  tron: constructTronParams(),
   solana: getSolanaEvents,
 };
 
