@@ -40,6 +40,7 @@ export default [
     largeTxThreshold: 10000,
     url: "https://app.optimism.io/bridge/deposit",
     chains: ["Ethereum", "Optimism"],
+    destinationChain: "Optimism",
   },
   // {
   //   id: 5,

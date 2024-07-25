@@ -15,6 +15,7 @@ import { lookupBlock } from "@defillama/sdk/build/util";
 import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
+import { sendDiscordText } from "./discord";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -631,6 +632,7 @@ export const runAdapterHistorical = async (
             keyword: "missingBlocks",
             error: errString,
           });
+          await sendDiscordText(errString);
           if (throwOnFailedInsert) {
             throw new Error(errString);
           }

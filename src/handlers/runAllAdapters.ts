@@ -47,9 +47,17 @@ export default wrapScheduledLambda(async (_event) => {
     console.error("Failed to store last recorded blocks");
     console.error(e);
   }
-  for (let i = 0; i < bridgeNetworks.length; i++) {
-    await invokeLambda(`llama-bridges-prod-runAdapter`, {
-      bridgeIndex: i,
+  const bridgeIndices = bridgeNetworks.map((_, i) => i);
+  const randomIndices = bridgeIndices.sort(() => Math.random() - 0.5);
+
+  const groupedIndices = [];
+  for (let i = 0; i < randomIndices.length; i += 3) {
+    groupedIndices.push(randomIndices.slice(i, i + 3));
+  }
+
+  for (const group of groupedIndices) {
+    await invokeLambda("llama-bridges-prod-runAdapter", {
+      bridgeIndices: group,
       lastRecordedBlocks: lastRecordedBlocks[0].result,
     });
   }

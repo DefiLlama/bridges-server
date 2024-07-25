@@ -149,6 +149,12 @@ functions:
     memorySize: 2000
     events:
       - schedule: cron(30 1 * * ? *)
+  checkStaleBridges:
+    handler: src/handlers/checkStaleBridges.default
+    timeout: 600
+    memorySize: 2000
+    events:
+      - schedule: cron(0 0 * * ? *)
 
 resources:
   # CORS for api gateway errors
