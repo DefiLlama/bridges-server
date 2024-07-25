@@ -54,7 +54,7 @@ const getBlocksForRunningAdapter = async (
         console.error(errString);
         return { startBlock, endBlock, useRecordedBlocks };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter.`);
       return { startBlock, endBlock, useRecordedBlocks };
     }
@@ -73,7 +73,7 @@ const getBlocksForRunningAdapter = async (
       //   const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
       //   const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
       //   lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY ? sixHoursBlock : lastRecordedEndBlock;
-      // } catch (e) {
+      // } catch (e: any) {
       //   console.error("Get start block error");
       // }
     }
@@ -109,7 +109,7 @@ export const runAdapterToCurrentBlock = async (
     ).data as RecordedBlocks;
 
     console.log(`[INFO] Retrieved recorded blocks for ${bridgeDbName}`);
-  } catch (e) {
+  } catch (e: any) {
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
 
@@ -186,7 +186,7 @@ export const runAdapterToCurrentBlock = async (
           startBlock += step;
           console.log(`[DEBUG] Processed blocks ${startBlock} to ${toBlock} for ${bridgeDbName} on chain ${chain}`);
         }
-      } catch (e) {
+      } catch (e: any) {
         const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed. Error: ${e.message}`;
         console.error(`[ERROR] ${errString}`, e);
         await insertErrorRow({
@@ -280,7 +280,7 @@ export const runAllAdaptersToCurrentBlock = async (
         if (startBlock == null) return;
         try {
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-        } catch (e) {
+        } catch (e: any) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
             ts: currentTimestamp,
@@ -338,7 +338,7 @@ export const runAllAdaptersTimestampRange = async (
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
           }
           await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
-        } catch (e) {
+        } catch (e: any) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
             ts: getCurrentUnixTimestamp() * 1000,
@@ -388,7 +388,7 @@ export const runAdapterHistorical = async (
   }
   try {
     await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
-  } catch (e) {
+  } catch (e: any) {
     console.error(`[ERROR] Failed to insert config entries for ${bridgeDbName}. Error: ${e.message}`);
     await insertErrorRow({
       ts: getCurrentUnixTimestamp() * 1000,
@@ -513,7 +513,7 @@ export const runAdapterHistorical = async (
                       blockTimestamps[i] = currentTimestamp;
                       break;
                     }
-                  } catch (e) {
+                  } catch (e: any) {
                     if (j >= 3) {
                       console.error(
                         `[ERROR] Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}. Error: ${e.message}`
