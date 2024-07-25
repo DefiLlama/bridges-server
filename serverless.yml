@@ -68,6 +68,7 @@ provider:
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
     SOLANA_RPC: ${env:SOLANA_RPC}
     RSK_RPC: ${env:RSK_RPC}
+    DISCORD_WEBHOOK: ${env:DISCORD_WEBHOOK}
 
 functions:
   bridgeDayStats:
