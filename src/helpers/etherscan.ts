@@ -54,6 +54,10 @@ export const getTxsBlockRangeEtherscan = async (
   const endpoint = endpoints[chain];
   const apiKey = apiKeys[chain];
   let res;
+  if (!endpoint) {
+    console.error(`WARNING: No Etherscan endpoint found for chain ${chain}.`);
+    return [];
+  }
   if (!apiKey) {
     res = (
       await retry(
