@@ -18,7 +18,7 @@ const outFlowEventParams: ContractEventParams = {
   },
   argKeys: {
     to: "btcAddress",
-    amount: "amount",
+    amount: "amountSatoshi",
   },
   isDeposit: false,
 };
