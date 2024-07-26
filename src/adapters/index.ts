@@ -65,6 +65,7 @@ import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
 import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
+import fastbtc from "./rootstock-fastbtc-bridge"
 
 export default {
   polygon,
@@ -133,6 +134,7 @@ export default {
   bunnyfi,
   minibridge,
   cometbridge,
+  fastbtc
 } as {
   [bridge: string]: BridgeAdapter;
 };
