@@ -56,35 +56,29 @@ const checkStaleBridges = async () => {
 
   console.log("Stale bridges report (3+ days stale):");
   let hasStaleEntries = false;
-  let discordMessage = "Bridges stale for more than 3 days:\n";
+  let discordMessage = "Bridges stale for 3+ days:\n";
 
   for (const [bridgeName, chains] of Object.entries(result)) {
-    let bridgeHasStaleEntries = false;
-    let bridgeMessage = `\nBridge: ${bridgeName}\n`;
+    let staleChains = [];
 
     for (const [chain, staleDays] of Object.entries(chains)) {
-      if (staleDays >= 3 || staleDays === -1) {
+      if (staleDays >= 3) {
         hasStaleEntries = true;
-        bridgeHasStaleEntries = true;
-        const statusMessage = staleDays === -1 ? "Error occurred" : `${staleDays} days stale`;
-        bridgeMessage += `  ${chain}: ${statusMessage}\n`;
-
-        if (staleDays > 3) {
-          discordMessage += `${bridgeName} on ${chain}: ${staleDays} days\n`;
-        }
+        staleChains.push(chain);
       }
     }
 
-    if (bridgeHasStaleEntries) {
-      console.log(bridgeMessage);
+    if (staleChains.length > 0) {
+      discordMessage += `${bridgeName}: [${staleChains.join(", ")}]\n`;
     }
   }
 
   if (!hasStaleEntries) {
     console.log("No bridges are 3 or more days stale.");
+    discordMessage = "No bridges are stale for 3+ days.";
   }
 
-  if (discordMessage !== "Bridges stale for more than 3 days:\n") {
+  if (discordMessage !== "Bridges stale for 3+ days:\n") {
     try {
       await sendDiscordText(discordMessage);
       console.log("Discord message prepared (not sent):", discordMessage);
