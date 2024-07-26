@@ -13,6 +13,7 @@ const handler = async (event: any) => {
       })
     );
     await promises;
+    console.log(`Adapters of ${bridgesToRun.map((bridge: any) => bridge.bridgeDbName).join(", ")} ran successfully`);
   } catch (e) {
     console.error(`Adapter ${bridgeNetworks[event.bridgeIndex].bridgeDbName} failed ${JSON.stringify(e)}`);
   } finally {

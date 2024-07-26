@@ -372,6 +372,8 @@ export const runAdapterHistorical = async (
   const { bridgeDbName } = bridgeNetwork;
   const adapter = adapters[bridgeDbName];
 
+  console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
+
   const adapterChainEventsFn = adapter[chain];
   if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
     console.log(`[INFO] Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
@@ -434,14 +436,12 @@ export const runAdapterHistorical = async (
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
   let block = startBlock;
-
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
 
     let retryCount = 0;
     const maxRetries = 3;
-
     while (retryCount < maxRetries) {
       try {
         const eventLogs = await retry(
@@ -459,7 +459,6 @@ export const runAdapterHistorical = async (
           console.log(`[INFO] No events found for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}`);
           block = block + maxBlocksToQuery;
           if (block >= endBlock) break;
-          else continue;
         }
 
         let provider = undefined as any;
@@ -606,7 +605,7 @@ export const runAdapterHistorical = async (
                   { retries: 3, factor: 2 }
                 ).catch((e: any) => {
                   console.error(
-                    `[ERROR] Failed to insert transaction row for ${bridgeDbName} on ${chain} after retries. Error: ${e.message}`
+                    `[ERROR] Failed to insert transaction row for ${bridgeDbName} on ${chain} after retries. Error: ${e}`
                   );
                   throw e;
                 });
@@ -615,7 +614,9 @@ export const runAdapterHistorical = async (
           },
           { retries: 3, factor: 2 }
         );
-
+        console.log(
+          `[INFO] Inserted transactions for ${bridgeDbName} on ${chain} for blocks ${block}-${endBlockForQuery}`
+        );
         break;
       } catch (e: any) {
         retryCount++;
@@ -641,7 +642,6 @@ export const runAdapterHistorical = async (
         }
       }
     }
-
     block = block + maxBlocksToQuery;
   }
   console.log(`finished inserting all transactions for ${bridgeID}`);

@@ -87,12 +87,19 @@ export async function getBlockByTimestamp(
   if (bridge && bridge.bridgeDbName === "ibc") {
     return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position);
   } else if (chain === "solana") {
+    const connection = getConnection();
     const { timestamp: latestTimestamp, number } = await getLatestBlock(chain);
     // There is not an easy way to get the slot number from a timestamp on Solana
     // without hammering the RPC node with requests.
     // So we estimate it by assuming that a slot is produced every 400ms.
     if (timestamp <= latestTimestamp) {
       const slot = number - Math.floor(((latestTimestamp - timestamp) * 1000) / 400);
+      const slotTs = (await connection.getBlockTime(slot)) as any;
+      if (Math.abs(slotTs - timestamp) > 400) {
+        const blocksOffset = Math.floor(((slotTs - timestamp) * 1000) / 400);
+
+        return { block: slot - blocksOffset, timestamp };
+      }
       return { block: slot, timestamp };
     }
   } else {
