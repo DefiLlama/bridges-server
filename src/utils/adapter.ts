@@ -16,6 +16,7 @@ import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
+import { getConnection } from "../helpers/solana";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -491,8 +492,14 @@ export const runAdapterHistorical = async (
               let block = {} as { timestamp: number; number: number };
 
               let latestSolanaBlock = null;
+              let averageBlockTimestamp = null;
+
               if (chain === "solana") {
                 latestSolanaBlock = await getLatestBlock("solana");
+                const averageBlock = Math.floor((minBlock + maxBlock) / 2);
+                const connection = getConnection();
+
+                averageBlockTimestamp = await connection.getBlockTime(averageBlock);
               }
 
               for (let i = 0; i < 10; i++) {
@@ -507,7 +514,7 @@ export const runAdapterHistorical = async (
                         break;
                       }
                     } else if (chain === "solana") {
-                      blockTimestamps[i] = await getTimestampBySolanaSlot(blockNumber, latestSolanaBlock);
+                      blockTimestamps[i] = averageBlockTimestamp as any;
                       break;
                     } else {
                       blockTimestamps[i] = currentTimestamp;
