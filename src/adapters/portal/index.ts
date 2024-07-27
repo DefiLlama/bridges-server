@@ -190,7 +190,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
   return aggregated;
 };
 
-// checks deposits for Solana as receipient chain, withdrawals for Solana as source chain and returns only those txs
+// checks deposits for Solana as recipient chain, withdrawals for Solana as source chain and returns only those txs
 // the 'wormhole chain id' for Solana is 1
 const processLogsForSolana = async (logs: EventData[], chain: Chain) => {
   const provider = getProvider(chain) as any;
