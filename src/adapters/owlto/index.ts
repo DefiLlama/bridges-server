@@ -35,6 +35,7 @@ export const bridgesAddress = {
     zklink: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     op_bnb: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
     "bouncebit-mainnet": ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
+    mint: ["0x5e809A85Aa182A9921EDD10a4163745bb3e36284"],
 } as const;
 
 export const contractsAddress = {
@@ -63,6 +64,7 @@ export const contractsAddress = {
     zklink: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     op_bnb: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     "bouncebit-mainnet": ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
+    mint: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
 } as const;
 
 const nativeTokens: Record<string, string> = {
@@ -198,6 +200,7 @@ const adapter: BridgeAdapter = {
     zklink: constructParams("zklink"),
     opbnb: constructParams("op_bnb"),
     bouncebit: constructParams("bouncebit-mainnet"),
+    mint: constructParams("mint"),
 
     'x layer': constructParams("xlayer"),
     "arbitrum nova": constructParams("arbitrum_nova"),

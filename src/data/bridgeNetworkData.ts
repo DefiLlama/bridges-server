@@ -1222,6 +1222,7 @@ export default [
       "ZkLink",
       "Bouncebit",
       "opBNB",
+      "Mint",
 
       "zkSync Era",
       "Polygon zkEVM",
