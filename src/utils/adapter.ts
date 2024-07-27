@@ -496,10 +496,9 @@ export const runAdapterHistorical = async (
 
               if (chain === "solana") {
                 latestSolanaBlock = await getLatestBlock("solana");
-                const averageBlock = Math.floor((minBlock + maxBlock) / 2);
                 const connection = getConnection();
-
-                averageBlockTimestamp = await connection.getBlockTime(averageBlock);
+                const medianBlockNumber = txBlocks?.sort((a, b) => a - b)?.[Math.floor(txBlocks.length / 2)];
+                averageBlockTimestamp = await connection.getBlockTime(medianBlockNumber);
               }
 
               for (let i = 0; i < 10; i++) {
