@@ -46,7 +46,7 @@ const getBlocksForRunningAdapter = async (
       }
 
       if (!endBlock) {
-        const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}.`;
+        const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}. `;
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "transactions",
@@ -57,7 +57,9 @@ const getBlocksForRunningAdapter = async (
         return { startBlock, endBlock, useRecordedBlocks };
       }
     } catch (e: any) {
-      console.error(`Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter.`);
+      console.error(
+        `Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter. Error: ${e.message}`
+      );
       return { startBlock, endBlock, useRecordedBlocks };
     }
     const maxBlocksToQuery = (maxBlocksToQueryByChain[chainContractsAreOn] ?? maxBlocksToQueryByChain.default) * 4;
