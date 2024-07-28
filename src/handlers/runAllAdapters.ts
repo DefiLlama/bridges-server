@@ -20,7 +20,7 @@ async function invokeLambda(functioName: string, event: any) {
   });
 }
 
-export default wrapScheduledLambda(async (_event) => {
+export default wrapScheduledLambda(async (event) => {
   const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
   FROM (
       SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
@@ -47,6 +47,19 @@ export default wrapScheduledLambda(async (_event) => {
     console.error("Failed to store last recorded blocks");
     console.error(e);
   }
+
+  if (event?.bridgeName) {
+    const bridge = bridgeNetworks.findIndex((x) => x.bridgeDbName === event.bridgeName);
+    if (!bridge) {
+      throw new Error(`Bridge ${event.bridgeName} not found`);
+    }
+    await invokeLambda("llama-bridges-prod-runAdapter", {
+      bridgeIndices: [bridge],
+      lastRecordedBlocks: lastRecordedBlocks[0].result,
+    });
+    return;
+  }
+
   const bridgeIndices = bridgeNetworks.map((_, i) => i);
   const randomIndices = bridgeIndices.sort(() => Math.random() - 0.5);
 
