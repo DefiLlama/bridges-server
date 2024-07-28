@@ -58,7 +58,7 @@ const getBlocksForRunningAdapter = async (
       }
     } catch (e: any) {
       console.error(
-        `Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter. Error: ${e.message}`
+        `Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter. Error: ${JSON.stringify(e)}`
       );
       return { startBlock, endBlock, useRecordedBlocks };
     }
