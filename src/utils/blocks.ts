@@ -12,13 +12,42 @@ import {
 } from "../adapters/ibc";
 const retry = require("async-retry");
 
+async function getLatestSlot(rpcUrl = "https://api.mainnet-beta.solana.com") {
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getSlot",
+      params: [
+        {
+          commitment: "finalized",
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(`RPC error: ${data.error.message}`);
+  }
+  return data.result;
+}
+
 export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
   if (chain === "sui") {
     // const client = getClient();
     // return Number(await client.getLatestCheckpointSequenceNumber());
   } else if (chain === "solana") {
-    const connection = getConnection();
-    return await connection.getSlot();
+    return await getLatestSlot();
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
   } else if (bridge && bridge === "ibc") {
@@ -53,35 +82,6 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
     return blockRes;
   }
 };
-async function getLatestSlot(rpcUrl = "https://api.mainnet-beta.solana.com") {
-  const response = await fetch(rpcUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getSlot",
-      params: [
-        {
-          commitment: "finalized",
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  if (data.error) {
-    throw new Error(`RPC error: ${data.error.message}`);
-  }
-  return data.result;
-}
 
 async function getBlockTime(slotNumber: number, rpcUrl = "https://api.mainnet-beta.solana.com") {
   const response = await fetch(rpcUrl, {
