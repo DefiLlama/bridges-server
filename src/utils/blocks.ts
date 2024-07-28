@@ -53,6 +53,62 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
     return blockRes;
   }
 };
+async function getLatestSlot(rpcUrl = "https://api.mainnet-beta.solana.com") {
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getSlot",
+      params: [
+        {
+          commitment: "finalized",
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(`RPC error: ${data.error.message}`);
+  }
+  return data.result;
+}
+
+async function getBlockTime(slotNumber: number, rpcUrl = "https://api.mainnet-beta.solana.com") {
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBlockTime",
+      params: [slotNumber],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(`RPC error: ${data.error.message}`);
+  }
+
+  return data.result;
+}
 
 export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
@@ -63,11 +119,10 @@ export async function getLatestBlock(chain: string, bridge?: string): Promise<{ 
   } else if (chain === "tron") {
     return await tronGetLatestBlock();
   } else if (chain === "solana") {
-    const connection = getConnection();
-    let number = await connection.getSlot();
+    let number = await getLatestSlot();
     let timestamp: number | null = null;
     do {
-      timestamp = await connection.getBlockTime(number);
+      timestamp = await getBlockTime(number);
     } while (timestamp === null);
     return { number, timestamp };
   } else if (bridge && bridge === "ibc") {
