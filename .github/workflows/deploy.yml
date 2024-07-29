@@ -30,3 +30,4 @@ jobs:
         ARBITRUM_RPC: ${{ secrets.ARBITRUM_RPC }}
         SOLANA_RPC: ${{ secrets.SOLANA_RPC }}
         RSK_RPC: ${{ secrets.RSK_RPC }}
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}

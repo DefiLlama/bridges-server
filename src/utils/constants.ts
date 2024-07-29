@@ -4,13 +4,13 @@ export const defaultConfidenceThreshold = 0.5; // for querying defillama prices
 
 // each chain should have number of blocks per approx. 1.5 or 2 hours. default is 400.
 export const maxBlocksToQueryByChain = {
-  default: 400,
-  ethereum: 400,
-  polygon: 2000,
-  fantom: 1000,
-  arbitrum: 5000,
-  "zksync era": 6000,
-  era: 6000,
+  default: 300,
+  ethereum: 300,
+  polygon: 1000,
+  fantom: 800,
+  arbitrum: 3000,
+  "zksync era": 5000,
+  era: 4000,
   linea: 3000,
   manta: 800,
   blast: 2000,
@@ -23,8 +23,8 @@ export const maxBlocksToQueryByChain = {
   celo: 1200,
   klaytn: 6000,
   sui: 2400, // sui creates a checkpoint about every 3 seconds
-  solana: 18000, // solana produces slots every 400ms, so 2 hours is 18000 slotsб
-  "tko-mainnet": 100,
+  solana: 12000, // solana produces slots every 400ms, so 2 hours is 18000 slotsб
+  taiko: 100,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter

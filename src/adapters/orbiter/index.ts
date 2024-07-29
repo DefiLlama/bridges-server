@@ -37,7 +37,7 @@ const eoaAddressErc = [
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
   "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111"
+  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
 ];
 
 const eoaAddressNative = [
@@ -54,7 +54,7 @@ const eoaAddressNative = [
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
   "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111"
+  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
 ];
 
 const nativeTokens: Record<string, string> = {
@@ -81,10 +81,10 @@ const nativeTokens: Record<string, string> = {
   bouncebit: "0x7F150c293c97172C75983BD8ac084c187107eA19",
   zkfair: "0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b",
   bsquared: "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
-  "tko-mainnet": "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+  taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
 };
 
-const padContractsAddresses:  Record<string, string[]> = {
+const padContractsAddresses: Record<string, string[]> = {
   ethereum: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
   base: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
   linea: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
@@ -94,7 +94,7 @@ const padContractsAddresses:  Record<string, string[]> = {
   polygon_zkevm: ["0x5D77b0c9855F44a8fbEf34E670e243E988682a82"],
   blast: ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
   // "bob": ['0x5D77b0c9855F44a8fbEf34E670e243E988682a82'], not support yet
-  "tko-mainnet": ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
+  taiko: ["0x176BAa4c563985209c159F3ecC7D9F09d3914dE0"],
 };
 
 const nativeTokenTransferSignature = ["0x535741", "0x", "0x52346412", "0xf9c028ec"];
@@ -121,12 +121,11 @@ const constructParams = (chain: string) => {
           txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
             includeSignatures: nativeTokenTransferSignature,
           });
-        } else if(chain === "btr") {
+        } else if (chain === "btr") {
           txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
-            includeSignatures: nativeTokenTransferSignature
-          })
-        } 
-        else {
+            includeSignatures: nativeTokenTransferSignature,
+          });
+        } else {
           txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
             includeSignatures: nativeTokenTransferSignature,
           });
@@ -153,16 +152,15 @@ const constructParams = (chain: string) => {
         const txs: any[] = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
           includeSignatures: padContractSignature,
         });
-        const eventsRes: EventData[] = []
-        for( const tx of txs) {
+        const eventsRes: EventData[] = [];
+        for (const tx of txs) {
           let value = BigNumber.from(0);
           let isDepositTemp = true;
-          if(tx.value == '0') {
-            const {internalValue, isDeposit} = await getPadContractTxValue(chain, tx.hash);
+          if (tx.value == "0") {
+            const { internalValue, isDeposit } = await getPadContractTxValue(chain, tx.hash);
             value = internalValue;
             isDepositTemp = isDeposit;
-          }
-          else {
+          } else {
             value = BigNumber.from(tx.value);
           }
           const event: EventData = {
@@ -178,9 +176,9 @@ const constructParams = (chain: string) => {
         }
         return eventsRes;
       })
-    )
+    );
 
-    const allEvents: EventData[] = [...contractEvents.flat(), ...nativeEvents.flat(), ...eventLogData]
+    const allEvents: EventData[] = [...contractEvents.flat(), ...nativeEvents.flat(), ...eventLogData];
     const filteredEvents = allEvents.filter(
       (event) =>
         !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
@@ -205,7 +203,7 @@ const adapter: BridgeAdapter = {
   merlin: constructParams("merlin"),
   zklink: constructParams("zklink"),
   bsc: constructParams("bsc"),
-  taiko: constructParams("tko-mainnet"),
+  taiko: constructParams("taiko"),
   bitlayer: constructParams("btr"),
   // mantle: constructParams("mantle"), // no etherscan
   // zkfair: constructParams("zkfair"), // no etherscan

@@ -7,7 +7,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs18.x
   memorySize: 128
   timeout: 10
   region: eu-central-1
@@ -68,6 +68,7 @@ provider:
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
     SOLANA_RPC: ${env:SOLANA_RPC}
     RSK_RPC: ${env:RSK_RPC}
+    DISCORD_WEBHOOK: ${env:DISCORD_WEBHOOK}
 
 functions:
   bridgeDayStats:
@@ -148,6 +149,12 @@ functions:
     memorySize: 2000
     events:
       - schedule: cron(30 1 * * ? *)
+  checkStaleBridges:
+    handler: src/handlers/checkStaleBridges.default
+    timeout: 600
+    memorySize: 2000
+    events:
+      - schedule: cron(0 0 * * ? *)
 
 resources:
   # CORS for api gateway errors

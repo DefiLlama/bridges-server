@@ -62,6 +62,7 @@ import zkbridge from "./zkbridge";
 import helixbridge from "./helixbridge"
 import oooo from "./oooo";
 import memebridge from "./memebridge"
+import bunnyfi from "./bunnyfi"
 import minibridge from "./minibridge"
 
 export default {
@@ -128,6 +129,7 @@ export default {
   zkbridge111: zkbridge,
   helixbridge,
   memebridge,
+  bunnyfi,
   minibridge,
 } as {
   [bridge: string]: BridgeAdapter;
