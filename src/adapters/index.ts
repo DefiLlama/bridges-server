@@ -63,6 +63,7 @@ import helixbridge from "./helixbridge"
 import oooo from "./oooo";
 import memebridge from "./memebridge"
 import bunnyfi from "./bunnyfi"
+import minibridge from "./minibridge"
 
 export default {
   polygon,
@@ -129,6 +130,7 @@ export default {
   helixbridge,
   memebridge,
   bunnyfi,
+  minibridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
