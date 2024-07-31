@@ -461,7 +461,7 @@ export const runAdapterHistorical = async (
         if (!eventLogs || eventLogs?.length === 0) {
           console.log(`[INFO] No events found for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}`);
           block = block + maxBlocksToQuery;
-          if (block >= endBlock) break;
+          break;
         }
 
         let provider = undefined as any;
@@ -502,7 +502,6 @@ export const runAdapterHistorical = async (
                 const medianBlockNumber = txBlocks?.sort((a, b) => a - b)?.[Math.floor(txBlocks.length / 2)];
                 averageBlockTimestamp = await connection.getBlockTime(medianBlockNumber);
               }
-
               for (let i = 0; i < 10; i++) {
                 const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
                 for (let j = 0; j < 4; j++) {
@@ -524,7 +523,9 @@ export const runAdapterHistorical = async (
                   } catch (e: any) {
                     if (j >= 3) {
                       console.error(
-                        `[ERROR] Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}. Error: ${e.message}`
+                        `[ERROR] Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}. Error: ${JSON.stringify(
+                          e
+                        )}`
                       );
                       throw new Error(
                         `Failed to get block timestamps at block number ${blockNumber} on chain ${chainContractsAreOn}`

@@ -59,11 +59,11 @@ import connext from "./connext";
 import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
-import helixbridge from "./helixbridge"
+import helixbridge from "./helixbridge";
 import oooo from "./oooo";
-import memebridge from "./memebridge"
-import bunnyfi from "./bunnyfi"
-import minibridge from "./minibridge"
+import memebridge from "./memebridge";
+import bunnyfi from "./bunnyfi";
+import minibridge from "./minibridge";
 
 export default {
   polygon,
@@ -82,7 +82,7 @@ export default {
   binancepeg,
   xdai,
   oooo,
-  "avalanche-btc": avalanchebtc,
+  "avalanche-c": avalanchebtc,
   axelar,
   rainbowbridge,
   across,
