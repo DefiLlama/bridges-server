@@ -1462,7 +1462,7 @@ export default [
     url: "https://rootstock.io/",
     chains: ["Rootstock", "Bitcoin"],
     chainMapping: {
-      rootstock: "rsk",
+      "rootstock": "rsk",
     },
     destinationChain: "Bitcoin",
   },
