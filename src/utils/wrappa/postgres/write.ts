@@ -35,7 +35,7 @@ export const insertTransactionRow = async (
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  // FIX should use dynamicly built strings here, I just didn't finish it
+  // FIX should use dynamically built strings here, I just didn't finish it
   let sqlCommand = sql`
   insert into bridges.transactions ${sql(params)}
 `;
