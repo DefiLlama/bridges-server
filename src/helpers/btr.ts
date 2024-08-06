@@ -41,10 +41,10 @@ const getBlockTXbyAddress = async (
   endBlock: number,
 ) => {
   let res = await axios.get(
-    `https://api.btrscan.com/scan/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&page=1&offset=10000&sort=asc`
+    `https://api.btrscan.com/scan/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=asc`
   )
   const data = res.data
-  if(data.message == 'OK' && data.status == 1 &&data.result.length != 0 ) {
+  if(data.message == 'OK' && data.status == 1 && data.result.length != 0 ) {
     //filter by address
     const txList: any[] = data.result;
     return txList;

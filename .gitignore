@@ -21,3 +21,5 @@ src/utils/filljobs2.ts
 .env
 
 .idea
+
+.vscode

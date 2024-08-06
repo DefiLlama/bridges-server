@@ -36,8 +36,8 @@ const eoaAddressErc = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
+
 ];
 
 const eoaAddressNative = [
@@ -53,8 +53,8 @@ const eoaAddressNative = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
-  "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
+
 ];
 
 const nativeTokens: Record<string, string> = {
