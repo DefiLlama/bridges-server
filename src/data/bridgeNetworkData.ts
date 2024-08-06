@@ -204,6 +204,7 @@ export default [
       "Base",
       "Blast",
       "Scroll",
+      "Linea",
       // "Harmony",
       // "Dogechain",
       // "DFK Chain",
@@ -1223,6 +1224,7 @@ export default [
       "ZkLink",
       "Bouncebit",
       "opBNB",
+      "Mint",
 
       "zkSync Era",
       "Polygon zkEVM",
