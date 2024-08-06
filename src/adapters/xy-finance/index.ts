@@ -13,9 +13,9 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
   const contractAddress = YBridgeContractAddress[chain]
   return {
     target: contractAddress,
-    topic: 'SwapRequested(uint256,address,(uint32,address,uint256,uint32),address,address,uint256,address,uint256,uint256,address)',
+    topic: 'SwapRequested(uint256,address,(uint32,address,address,uint256,uint32),address,address,uint256,address,uint256,uint256,address)',
     abi: [
-      "event SwapRequested(uint256 _swapId, address indexed _aggregatorAdaptor, tuple(uint32 dstChainId, address dstChainToken, uint256 expectedDstChainTokenAmount, uint32 slippage) _dstChainDesc, address _srcToken, address indexed _vaultToken, uint256 _vaultTokenAmount, address _receiver, uint256 _srcTokenAmount, uint256 _expressFeeAmount, address indexed _referrer)",
+      "event SwapRequested(uint256 _swapId, address indexed _aggregatorAdaptor, tuple(uint32 dstChainId, address dstChainToken, address dstAggregatorAdaptor, uint256 expectedDstChainTokenAmount, uint32 slippage) _dstChainDesc, address _srcToken, address indexed _vaultToken, uint256 _vaultTokenAmount, address _receiver, uint256 _srcTokenAmount, uint256 _expressFeeAmount, address indexed _referrer)",
     ],
     logKeys: {
       blockNumber: "blockNumber",

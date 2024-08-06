@@ -12,13 +12,42 @@ import {
 } from "../adapters/ibc";
 const retry = require("async-retry");
 
+async function getLatestSlot(rpcUrl = "https://api.mainnet-beta.solana.com") {
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getSlot",
+      params: [
+        {
+          commitment: "finalized",
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(`RPC error: ${data.error.message}`);
+  }
+  return data.result;
+}
+
 export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
   if (chain === "sui") {
     // const client = getClient();
     // return Number(await client.getLatestCheckpointSequenceNumber());
   } else if (chain === "solana") {
-    const connection = getConnection();
-    return await connection.getSlot();
+    return await getLatestSlot();
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
   } else if (bridge && bridge === "ibc") {
@@ -54,6 +83,33 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
   }
 };
 
+async function getBlockTime(slotNumber: number, rpcUrl = "https://api.mainnet-beta.solana.com") {
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getBlockTime",
+      params: [slotNumber],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(`RPC error: ${data.error.message}`);
+  }
+
+  return data.result;
+}
+
 export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
     // const client = getClient();
@@ -63,11 +119,10 @@ export async function getLatestBlock(chain: string, bridge?: string): Promise<{ 
   } else if (chain === "tron") {
     return await tronGetLatestBlock();
   } else if (chain === "solana") {
-    const connection = getConnection();
-    let number = await connection.getSlot();
+    let number = await getLatestSlot();
     let timestamp: number | null = null;
     do {
-      timestamp = await connection.getBlockTime(number);
+      timestamp = await getBlockTime(number);
     } while (timestamp === null);
     return { number, timestamp };
   } else if (bridge && bridge === "ibc") {
@@ -87,12 +142,19 @@ export async function getBlockByTimestamp(
   if (bridge && bridge.bridgeDbName === "ibc") {
     return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position);
   } else if (chain === "solana") {
+    const connection = getConnection();
     const { timestamp: latestTimestamp, number } = await getLatestBlock(chain);
     // There is not an easy way to get the slot number from a timestamp on Solana
     // without hammering the RPC node with requests.
     // So we estimate it by assuming that a slot is produced every 400ms.
     if (timestamp <= latestTimestamp) {
       const slot = number - Math.floor(((latestTimestamp - timestamp) * 1000) / 400);
+      const slotTs = (await connection.getBlockTime(slot)) as any;
+      if (Math.abs(slotTs - timestamp) > 400) {
+        const blocksOffset = Math.floor(((slotTs - timestamp) * 1000) / 400);
+
+        return { block: slot - blocksOffset, timestamp };
+      }
       return { block: slot, timestamp };
     }
   } else {
