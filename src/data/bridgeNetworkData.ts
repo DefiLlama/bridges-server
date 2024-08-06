@@ -1149,7 +1149,7 @@ export default [
       "x layer": "xlayer",
       bouncebit: "bouncebit-mainnet",
       opbnb: "op_bnb",
-      taiko: "tko-mainnet"
+      taiko: "tko-mainnet",
     },
   },
   {
@@ -1330,7 +1330,7 @@ export default [
     },
   },
   {
-    id: 999,
+    id: 67,
     displayName: "CometBridge",
     bridgeDbName: "cometbridge",
     iconLink: "icons:comet",
@@ -1352,11 +1352,11 @@ export default [
       "Merlin",
       "BSquared",
       "Bitlayer",
-      "Mode"
+      "Mode",
     ],
     chainMapping: {
       "zksync era": "era",
       "x layer": "xlayer",
     },
-  }
+  },
 ] as BridgeNetwork[];
