@@ -204,6 +204,7 @@ export default [
       "Base",
       "Blast",
       "Scroll",
+      "Linea",
       // "Harmony",
       // "Dogechain",
       // "DFK Chain",
