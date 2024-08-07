@@ -4,6 +4,8 @@ import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import {
   Chain,
+  ETH_ADDRESS,
+  NativeTokens,
   XYRouterContractAddress,
   YBridgeContractAddress,
   YBridgeVaultsTokenContractAddress
@@ -28,6 +30,13 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
       to: "_referrer",
     },
     argGetters: {
+      token: (log: any) => {
+        const token = log?._vaultToken
+        if (token?.toLowerCase() === ETH_ADDRESS.toLowerCase()) {
+          return NativeTokens[chain] || token
+        }
+        return token
+      },
       to: (log: any) => {
         const vaultToken = log?._vaultToken
         const toVaultContract = find(YBridgeVaultsTokenContractAddress[chain], { tokenAddress: vaultToken })?.contractAddress
@@ -55,6 +64,15 @@ const getYBridgeSwappedForUserEventParams = (chain: Exclude<Chain, Chain.Numbers
       amount: "_dstTokenAmountOut",
       from: "_srcToken",
       to: "_receiver",
+    },
+    argGetters: {
+      token: (log: any) => {
+        const token = log?._dstToken
+        if (token?.toLowerCase() === ETH_ADDRESS.toLowerCase()) {
+          return NativeTokens[chain] || token
+        }
+        return token
+      },
     },
     isDeposit: false,
   }
