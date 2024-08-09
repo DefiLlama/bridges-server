@@ -31,9 +31,9 @@ const contracts = {
   era: {
     spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
   },
-  // Chain id: 1135
+  // Chain id: 1135 (TODO: Add Lisk to llama-sdk first)
   // lisk: {
-    // spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
+  //  spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
   // },
   // Chain id: 8453
   base: {
@@ -241,7 +241,7 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
   "zksync era": constructParams("era"),
-  lisk: constructParams("lisk"),
+  // lisk: constructParams("lisk"),
   base: constructParams("base"),
   mode: constructParams("mode"),
   arbitrum: constructParams("arbitrum"),
