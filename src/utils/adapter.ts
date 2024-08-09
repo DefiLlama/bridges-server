@@ -487,8 +487,12 @@ export const runAdapterHistorical = async (
                 const { blockNumber } = log;
                 txBlocks.push(blockNumber);
               });
-              const minBlock = Math.min(...txBlocks) ?? 0;
-              const maxBlock = Math.max(...txBlocks) ?? 0;
+              let minBlock = 0;
+              let maxBlock = 0;
+              if (txBlocks.length > 0) {
+                minBlock = Math.min(...txBlocks) ?? 0;
+                maxBlock = Math.max(...txBlocks) ?? 0;
+              }
               const blockRange = maxBlock - minBlock || 1;
               let blockTimestamps = {} as { [bucket: number]: number };
               let block = {} as { timestamp: number; number: number };
