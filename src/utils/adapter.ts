@@ -438,10 +438,12 @@ export const runAdapterHistorical = async (
   }
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
+
   let block = startBlock;
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
+    console.log(`[INFO] Processing block range from ${block} to ${endBlockForQuery}`);
 
     let retryCount = 0;
     const maxRetries = 3;
@@ -458,9 +460,8 @@ export const runAdapterHistorical = async (
           { retries: 4, factor: 2 }
         );
 
-        if (!eventLogs || eventLogs?.length === 0) {
+        if (!eventLogs || eventLogs.length === 0) {
           console.log(`[INFO] No events found for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}`);
-          block = block + maxBlocksToQuery;
           break;
         }
 
@@ -483,10 +484,11 @@ export const runAdapterHistorical = async (
           async () => {
             await sql.begin(async (sql) => {
               let txBlocks = [] as number[];
-              eventLogs.map((log: any) => {
+              eventLogs.forEach((log: any) => {
                 const { blockNumber } = log;
                 txBlocks.push(blockNumber);
               });
+
               let minBlock = 0;
               let maxBlock = 0;
               if (txBlocks.length > 0) {
@@ -627,6 +629,7 @@ export const runAdapterHistorical = async (
           },
           { retries: 3, factor: 2 }
         );
+
         console.log(
           `[INFO] Inserted transactions for ${bridgeDbName} on ${chain} for blocks ${block}-${endBlockForQuery}`
         );
@@ -650,12 +653,13 @@ export const runAdapterHistorical = async (
           if (throwOnFailedInsert) {
             throw new Error(errString);
           }
+          break;
         } else {
           await wait(1000 * retryCount);
         }
       }
     }
-    block = block + maxBlocksToQuery;
+    block = endBlockForQuery;
   }
   console.log(`finished inserting all transactions for ${bridgeID}`);
 };
