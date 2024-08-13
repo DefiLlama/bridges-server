@@ -1459,7 +1459,7 @@ export default [
     bridgeDbName: "fastbtc",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
-    url: "https://rootstock.io/",
+    url: "https://sovryn.com/",
     chains: ["Rootstock", "Bitcoin"],
     chainMapping: {
       "rootstock": "rsk",

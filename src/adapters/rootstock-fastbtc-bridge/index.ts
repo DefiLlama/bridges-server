@@ -3,7 +3,6 @@ import { BridgeAdapter, ContractEventParams } from "../../helpers/bridgeAdapter.
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 const bridgeOutFlow = "0x1a8e78b41bc5ab9ebb6996136622b9b41a601b5c";
-const bridgeOutFlow2 = "0x0d5006330289336ebdf9d0ac9e0674f91b4851ea";
 const bridgeInFlow = "0xe43cafbdd6674df708ce9dff8762af356c2b454d";
 const rbtc = "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d";
 
@@ -17,25 +16,6 @@ const outFlowEventParams: ContractEventParams = {
   },
   fixedEventData: {
     from: bridgeOutFlow,
-    token: rbtc,
-  },
-  argKeys: {
-    to: "btcAddress",
-    amount: "amountSatoshi",
-  },
-  isDeposit: false,
-};
-
-const outFlow2EventParams: ContractEventParams = {
-  target: bridgeOutFlow2,
-  topic: "NewBitcoinTransfer(bytes32,string,uint256,uint256,uint256,address)",
-  abi: ["event NewBitcoinTransfer(bytes32 indexed transferId, string btcAddress, uint256 nonce, uint256 amountSatoshi, uint256 feeSatoshi, address indexed rskAddress)"],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  fixedEventData: {
-    from: bridgeOutFlow2,
     token: rbtc,
   },
   argKeys: {
@@ -63,10 +43,10 @@ const inFlowEventParams: ContractEventParams = {
       amount: "amountWei",
     },
     isDeposit: true,
-  };
+};
 
 const constructParams = () => {
-  const eventParams = [inFlowEventParams];
+  const eventParams = [outFlowEventParams, inFlowEventParams];
   return async (fromBlock: number, toBlock: number) => {    
     const logs = await getTxDataFromEVMEventLogs("fastbtc", "rsk", fromBlock, toBlock, eventParams);
 
