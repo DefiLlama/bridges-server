@@ -5,6 +5,7 @@ const retry = require("async-retry");
 const endpoints = {
   merlin: "https://scan.merlinchain.io",
   "b2-mainnet": "https://explorer.bsquared.network",
+  "rsk": "https://rootstock.blockscout.com",
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeL2Scan = async (
