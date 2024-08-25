@@ -175,6 +175,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams(Chain.Blast),
   'x layer': constructParams(Chain.XLayer),
   taiko: constructParams(Chain.Taiko),
+  'cronos zkevm': constructParams(Chain.CronosZkevm),
 };
 
 export default adapter;
