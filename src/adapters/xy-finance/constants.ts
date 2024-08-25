@@ -23,6 +23,7 @@ export enum Chain {
   Blast = 'blast',
   XLayer = 'xlayer',
   Taiko = 'taiko',
+  CronosZkevm = 'cronos_zkevm',
 }
 
 export enum VAULTS_TOKEN {
@@ -379,6 +380,20 @@ export const YBridgeVaultsTokenContractAddress: Record<Exclude<Chain, Chain.Numb
       contractAddress: '0xFa77c2DecCB21ACb9Bf196408Bf6aD5973D07762',
       tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
     },
+  },
+  [Chain.CronosZkevm]: {
+    [VAULTS_TOKEN.USDT]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.USDC]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.ETH]: {
+      contractAddress: '0xAa0b0654E79E17332d983E2351bD926cE336B9BD',
+      tokenAddress: '0x271602A97027ee1dd03b1E6e5dB153eB659A80b1'
+    },
   }
 }
 
@@ -405,7 +420,8 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Addre
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.Blast]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.XLayer]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
-  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1"
+  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
+  [Chain.CronosZkevm]: "0xE22747472A565e96D0867741811193895b9538f2",
 }
 
 export const XYRouterContractAddress: Record<Chain, Address> = {
@@ -432,5 +448,6 @@ export const XYRouterContractAddress: Record<Chain, Address> = {
   [Chain.Wemix]: "0x6471fAd467ac2854b403e7FE3e95FBbB3287a7ee",
   [Chain.Blast]: "0x43A86823EBBe2ECF9A384aDfD989E26A30626458",
   [Chain.XLayer]: "0x6A816cEE105a9409D8df0A83d8eeaeD9EB4309fE",
-  [Chain.Taiko]: "0xedC061306A79257f15108200C5B82ACc874C239d"
+  [Chain.Taiko]: "0xedC061306A79257f15108200C5B82ACc874C239d",
+  [Chain.CronosZkevm]: "0x986138f6ed1350a85De6B18280f7d139F74B7282",
 }

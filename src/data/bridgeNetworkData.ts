@@ -977,12 +977,14 @@ export default [
       "X Layer",
       // "Numbers",
       "Taiko",
+      "Cronos zkEVM"
     ],
     chainMapping: {
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       avalanche: "avax",
       "x layer": "xlayer",
+      "cronos zkevm": "cronos_zkevm",
     },
   },
   // {
