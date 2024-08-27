@@ -29,5 +29,5 @@ jobs:
         AURORA_RPC: ${{ secrets.AURORA_RPC }}
         ARBITRUM_RPC: ${{ secrets.ARBITRUM_RPC }}
         SOLANA_RPC: ${{ secrets.SOLANA_RPC }}
-        RSK_ARCHIVAL_RPC: ${{ secrets.RSK_RPC }}
+        RSK_ARCHIVAL_RPC: ${{ secrets.RSK_ARCHIVAL_RPC }}
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
