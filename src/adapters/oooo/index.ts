@@ -47,7 +47,7 @@ const constructParams = (chain: SupportedChains) => {
                 ...bridgeAddress.map(async (address: string, i: number) => {
                     await wait(300 * i); // for etherscan
                     let txs: any[] = [];
-                    if (chain === "merlin" || chain === "b2-mainnet") {
+                    if (chain === "merlin" || chain === "b2-mainnet" || chain === "rsk") {
                         txs = await getTxsBlockRangeL2Scan(chain, address, fromBlock, toBlock, {
                             includeSignatures: ["0x", "0x88d695b2"],
                         });
@@ -93,7 +93,7 @@ const adapter: BridgeAdapter = {
     merlin: constructParams("merlin"),
     bsquared: constructParams("b2-mainnet"),
     bitlayer: constructParams("btr"),
-    // rootstock: constructParams("rsk"),
+    rootstock: constructParams("rsk"),
     // bevm
     // bevm_canary
     // btc
