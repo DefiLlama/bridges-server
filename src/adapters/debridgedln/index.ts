@@ -104,6 +104,7 @@ type ApiSolanaEvent = {
   amount: string,
   isDeposit: boolean;
   giveAmountUSD: number;
+  blockTimestamp: number;
 }
 
 const solanaBlockNumberFirstUsedByDebridge = 166833820;
@@ -131,6 +132,7 @@ const getSolanaEvents = async (fromBlock: number, toBlock: number): Promise<Even
       : event.token,
     amount: ethers.BigNumber.from(Math.round(event.giveAmountUSD)),
     isUSDVolume: true,
+    timestamp: event.blockTimestamp
   }));
 };
 
