@@ -1469,4 +1469,17 @@ export default [
       "x layer": "xlayer",
     },
   },
+  {
+    id: 70,
+    displayName: "FastBTC",
+    bridgeDbName: "fastbtc",
+    iconLink: "icons:sovryn",
+    largeTxThreshold: 10000,
+    url: "https://sovryn.com/",
+    chains: ["Rootstock", "Bitcoin"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Bitcoin",
+  },
 ] as BridgeNetwork[];
