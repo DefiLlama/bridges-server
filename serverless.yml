@@ -155,6 +155,22 @@ functions:
     memorySize: 2000
     events:
       - schedule: cron(0 0 * * ? *)
+  runAdapterFromTo:
+    handler: src/handlers/runAdapterFromTo.default
+    timeout: 900
+    memorySize: 1024
+  runAllAdaptersHistorical:
+    handler: src/handlers/runAllAdaptersHistorical.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(0 0,12 * * ? *)
+  dailyAggregateAllAdapters:
+    handler: src/handlers/dailyAggregateAllAdapters.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(0 1 * * ? *)
 
 resources:
   # CORS for api gateway errors
