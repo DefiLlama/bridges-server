@@ -67,7 +67,7 @@ provider:
     AURORA_RPC: ${env:AURORA_RPC}
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
     SOLANA_RPC: ${env:SOLANA_RPC}
-    RSK_ARCHIVAL_RPC: ${env:RSK_RPC}
+    RSK_ARCHIVAL_RPC: ${env:RSK_ARCHIVAL_RPC}
     DISCORD_WEBHOOK: ${env:DISCORD_WEBHOOK}
 
 functions:
