@@ -96,26 +96,26 @@ const constructParams = (chain: SupportedChains) => {
 };
 
 type ApiSolanaEvent = {
-  blockNumber: number,
-  txHash: string,
-  from: string,
-  to: string,
-  token: string,
-  amount: string,
+  blockNumber: number;
+  txHash: string;
+  from: string;
+  to: string;
+  token: string;
+  amount: string;
   isDeposit: boolean;
   giveAmountUSD: number;
   blockTimestamp: number;
-}
+};
 
 const solanaBlockNumberFirstUsedByDebridge = 166833820;
 
 const fetchSolanaEvents = async (fromBlock: number, toBlock: number): Promise<ApiSolanaEvent[]> => {
-  return retry(() => fetch(
-    `https://stats-api.dln.trade/api/OrderEvents/solanaDepositsAndWithdrawals?fromBlock=${fromBlock}&toBlock=${toBlock}`
-    )
-    .then(res => res.json())
-  )
-}
+  return retry(() =>
+    fetch(
+      `https://stats-api.dln.trade/api/OrderEvents/solanaDepositsAndWithdrawals?fromBlock=${fromBlock}&toBlock=${toBlock}`
+    ).then((res) => res.json())
+  );
+};
 
 const getSolanaEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
   // Performance optimization: deBridge does not have any orders from Solana prior this block
@@ -123,17 +123,21 @@ const getSolanaEvents = async (fromBlock: number, toBlock: number): Promise<Even
     return [];
   }
 
-  const events = await fetchSolanaEvents(fromBlock, toBlock)
+  const events = await fetchSolanaEvents(fromBlock, toBlock);
 
-  return events.map((event) => (<EventData>{
-    ...event,
-    token: event.token === '11111111111111111111111111111111'
-      ? 'So11111111111111111111111111111111111111112'
-      : event.token,
-    amount: ethers.BigNumber.from(Math.round(event.giveAmountUSD)),
-    isUSDVolume: true,
-    timestamp: event.blockTimestamp
-  }));
+  return events.map(
+    (event) =>
+      <EventData>{
+        ...event,
+        token:
+          event.token === "11111111111111111111111111111111"
+            ? "So11111111111111111111111111111111111111112"
+            : event.token,
+        amount: ethers.BigNumber.from(Math.round(event.giveAmountUSD)),
+        isUSDVolume: true,
+        timestamp: event.blockTimestamp * 1000,
+      }
+  );
 };
 
 const adapter: BridgeAdapter = {

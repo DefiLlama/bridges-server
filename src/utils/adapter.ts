@@ -502,7 +502,7 @@ export const runAdapterHistorical = async (
               let latestSolanaBlock = null;
               let averageBlockTimestamp = null;
 
-              if (chain === "solana") {
+              if (chain === "solana" && bridgeDbName !== "debridgedln") {
                 latestSolanaBlock = await getLatestBlock("solana");
                 const connection = getConnection();
                 const medianBlockNumber = txBlocks?.sort((a, b) => a - b)?.[Math.floor(txBlocks.length / 2)];
@@ -563,7 +563,7 @@ export const runAdapterHistorical = async (
                   timestamp: realBlockTimestamp,
                 } = log;
                 const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-                const timestamp = blockTimestamps[bucket] * 1000;
+                const timestamp = (blockTimestamps[bucket] ?? 0) * 1000;
 
                 let amountString = amount ? amount.toString() : "0";
 
@@ -661,6 +661,7 @@ export const runAdapterHistorical = async (
     }
     block = endBlockForQuery;
   }
+
   console.log(`finished inserting all transactions for ${bridgeID}`);
 };
 
