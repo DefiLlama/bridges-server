@@ -183,6 +183,8 @@ custom:
     includeModules: true
     packager: "npm"
     excludeFiles: src/**/*.test.ts
+    concurrency: 5
+    serializedCompile: true
   prune:
     automatic: true
     number: 5 # Number of versions to keep
