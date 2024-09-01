@@ -191,6 +191,10 @@ custom:
     forceExclude:
       - aws-sdk
     keepOutputDirectory: true
+    individually: true
+    excludeDevDependencies: true
+    include:
+      - .webpack/**
   prune:
     automatic: true
     number: 5 # Number of versions to keep
