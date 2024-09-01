@@ -202,12 +202,6 @@ custom:
     bundle: true
     minify: true
     sourcemap: true
-    exclude:
-      - "aws-sdk"
-      - "@aws-sdk/*"
-    external:
-      - "aws-sdk"
-      - "@aws-sdk/*"
     target: "node18"
     define: { "require.resolve": undefined }
     platform: "node"
@@ -215,13 +209,10 @@ custom:
     concurrency: 10
     packager: "npm"
     keepOutputDirectory: true
-    packagerOptions:
-      scripts:
-        - rm -rf node_modules/aws-sdk
     metafile: true
     watch:
       pattern: ["src/**/*.ts"]
-      ignore: [".serverless/**/*", ".webpack/**/*", "node_modules/**/*"]
+      ignore: [".serverless/**/*", ".esbuild/**/*", "node_modules/**/*"]
 
 plugins:
   - serverless-esbuild
