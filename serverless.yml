@@ -198,8 +198,32 @@ custom:
   prune:
     automatic: true
     number: 5 # Number of versions to keep
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    exclude:
+      - "aws-sdk"
+      - "@aws-sdk/*"
+    external:
+      - "aws-sdk"
+      - "@aws-sdk/*"
+    target: "node18"
+    define: { "require.resolve": undefined }
+    platform: "node"
+    format: "cjs"
+    concurrency: 10
+    packager: "npm"
+    keepOutputDirectory: true
+    packagerOptions:
+      scripts:
+        - rm -rf node_modules/aws-sdk
+    metafile: true
+    watch:
+      pattern: ["src/**/*.ts"]
+      ignore: [".serverless/**/*", ".webpack/**/*", "node_modules/**/*"]
 
 plugins:
-  - serverless-webpack
+  - serverless-esbuild
   - serverless-offline
   - serverless-prune-plugin

@@ -2,7 +2,7 @@
   "scripts": {
     "deploy:prod": "sls deploy --stage prod",
     "serve": "sls offline start",
-    "build": "sls webpack",
+    "build": "sls package",
     "test": "tsx ./src/adapters/test.ts",
     "test-txs": "tsx ./src/utils/testAdapterHistorical.ts",
     "ts": "tsc --noEmit",
@@ -16,14 +16,12 @@
     "@types/node": "^18.6.4",
     "@types/node-fetch": "^2.6.2",
     "@types/retry": "^0.12.5",
-    "babel-loader": "^8.2.5",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
     "serverless": "^3.21.0",
+    "serverless-esbuild": "^1.52.1",
     "serverless-offline": "^12.0.0",
-    "serverless-prune-plugin": "^2.0.1",
-    "ts-loader": "^9.3.1",
-    "webpack-node-externals": "^3.0.0"
+    "serverless-prune-plugin": "^2.0.1"
   },
   "dependencies": {
     "@defillama/sdk": "^5.0.80",
@@ -39,8 +37,6 @@
     "graphql-request": "^6.1.0",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
-    "serverless-webpack": "^5.8.0",
-    "terser-webpack-plugin": "^5.3.10",
     "tron-format-address": "^0.1.11",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"
