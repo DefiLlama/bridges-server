@@ -1,23 +1,26 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
-import aws from "aws-sdk";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { sql } from "../utils/db";
 import { store } from "../utils/s3";
 
-async function invokeLambda(functioName: string, event: any) {
-  return new Promise((resolve, _reject) => {
-    new aws.Lambda().invoke(
-      {
-        FunctionName: functioName,
-        InvocationType: "Event",
-        Payload: JSON.stringify(event, null, 2), // pass params
-      },
-      function (error, data) {
-        console.log(error, data);
-        resolve(data);
-      }
-    );
+const lambdaClient = new LambdaClient({});
+
+async function invokeLambda(functionName: string, event: any) {
+  const command = new InvokeCommand({
+    FunctionName: functionName,
+    InvocationType: "Event",
+    Payload: Buffer.from(JSON.stringify(event, null, 2)),
   });
+
+  try {
+    const data = await lambdaClient.send(command);
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 export default wrapScheduledLambda(async (event) => {
