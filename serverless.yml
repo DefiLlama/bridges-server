@@ -172,23 +172,6 @@ resources:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
-  webpack:
-    webpackConfig: ./webpack.config.js
-    includeModules: true
-    packager: "npm"
-    excludeFiles: src/**/*.test.ts
-    concurrency: 1
-    serializedCompile: true
-    packagerOptions:
-      scripts:
-        - rm -rf node_modules/aws-sdk
-    forceExclude:
-      - aws-sdk
-    keepOutputDirectory: true
-    individually: true
-    excludeDevDependencies: true
-    include:
-      - .webpack/**
   prune:
     automatic: true
     number: 5 # Number of versions to keep
@@ -202,7 +185,7 @@ custom:
     packager: "npm"
     keepOutputDirectory: true
     metafile: true
-    external:
+    forceInclude:
       - aws-sdk
 
 plugins:
