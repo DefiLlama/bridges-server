@@ -155,22 +155,22 @@ functions:
     memorySize: 2000
     events:
       - schedule: cron(0 0 * * ? *)
-  # runAdapterFromTo:
-  #   handler: src/handlers/runAdapterFromTo.default
-  #   timeout: 900
-  #   memorySize: 1024
-  # runAllAdaptersHistorical:
-  #   handler: src/handlers/runAllAdaptersHistorical.default
-  #   timeout: 900
-  #   memorySize: 1024
-  #   events:
-  #     - schedule: cron(0 0,12 * * ? *)
-  # dailyAggregateAllAdapters:
-  #   handler: src/handlers/dailyAggregateAllAdapters.default
-  #   timeout: 900
-  #   memorySize: 1024
-  #   events:
-  #     - schedule: cron(0 1 * * ? *)
+  runAdapterFromTo:
+    handler: src/handlers/runAdapterFromTo.default
+    timeout: 900
+    memorySize: 1024
+  runAllAdaptersHistorical:
+    handler: src/handlers/runAllAdaptersHistorical.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(0 0,12 * * ? *)
+  dailyAggregateAllAdapters:
+    handler: src/handlers/dailyAggregateAllAdapters.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(0 1 * * ? *)
 
 resources:
   # CORS for api gateway errors
@@ -183,8 +183,14 @@ custom:
     includeModules: true
     packager: "npm"
     excludeFiles: src/**/*.test.ts
-    concurrency: 5
+    concurrency: 1
     serializedCompile: true
+    packagerOptions:
+      scripts:
+        - rm -rf node_modules/aws-sdk
+    forceExclude:
+      - aws-sdk
+    keepOutputDirectory: true
   prune:
     automatic: true
     number: 5 # Number of versions to keep

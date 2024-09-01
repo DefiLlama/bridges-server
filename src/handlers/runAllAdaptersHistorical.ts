@@ -1,7 +1,6 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import aws from "aws-sdk";
-import { sql } from "../utils/db";
 
 async function invokeLambda(functionName: string, event: any) {
   return new Promise((resolve, _reject) => {
@@ -19,7 +18,7 @@ async function invokeLambda(functionName: string, event: any) {
   });
 }
 
-const handler = async (event: any) => {
+const handler = async (_event: any) => {
   const now = Math.floor(Date.now() / 1000);
   const oneDayAgo = now - 86400;
   const halfDayAgo = now - 43200;

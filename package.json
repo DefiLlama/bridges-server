@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "deploy:prod": "export NODE_OPTIONS=--max-old-space-size=10240 && sls deploy --stage prod",
+    "deploy:prod": "sls deploy --stage prod",
     "serve": "sls offline start",
-    "build": "export NODE_OPTIONS=--max-old-space-size=10240 && sls webpack",
+    "build": "sls webpack",
     "test": "tsx ./src/adapters/test.ts",
     "test-txs": "tsx ./src/utils/testAdapterHistorical.ts",
     "ts": "tsc --noEmit",
@@ -22,7 +22,8 @@
     "serverless": "^3.21.0",
     "serverless-offline": "^9.1.6",
     "serverless-prune-plugin": "^2.0.1",
-    "ts-loader": "^9.3.1"
+    "ts-loader": "^9.3.1",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "@defillama/sdk": "^5.0.80",
@@ -39,6 +40,7 @@
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
     "serverless-webpack": "^5.8.0",
+    "terser-webpack-plugin": "^5.3.10",
     "tron-format-address": "^0.1.11",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"
