@@ -202,6 +202,8 @@ custom:
     packager: "npm"
     keepOutputDirectory: true
     metafile: true
+    external:
+      - aws-sdk
 
 plugins:
   - serverless-esbuild
