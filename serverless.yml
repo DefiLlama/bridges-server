@@ -143,12 +143,6 @@ functions:
     memorySize: 10240
     events:
       - schedule: cron(32 * * * ? *)
-  checkDbEntries:
-    handler: src/handlers/checkDbEntries.default
-    timeout: 600
-    memorySize: 2000
-    events:
-      - schedule: cron(30 1 * * ? *)
   checkStaleBridges:
     handler: src/handlers/checkStaleBridges.default
     timeout: 600
@@ -203,16 +197,11 @@ custom:
     minify: true
     sourcemap: true
     target: "node18"
-    define: { "require.resolve": undefined }
     platform: "node"
-    format: "cjs"
     concurrency: 10
     packager: "npm"
     keepOutputDirectory: true
     metafile: true
-    watch:
-      pattern: ["src/**/*.ts"]
-      ignore: [".serverless/**/*", ".esbuild/**/*", "node_modules/**/*"]
 
 plugins:
   - serverless-esbuild
