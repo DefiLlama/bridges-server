@@ -33,6 +33,16 @@ const getBridge = async (bridgeNetworkId?: number) => {
       const currentTimestamp = getCurrentUnixTimestamp();
       const dailyStartTimestamp = currentTimestamp - 30 * secondsInDay;
       const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, currentTimestamp, queryChain, id);
+      let last24hVolume = await getAggregatedDataClosestToTimestamp(
+        currentTimestamp - secondsInDay,
+        secondsInDay,
+        false,
+        undefined,
+        id
+      );
+      if (last24hVolume) {
+        last24hVolume = (last24hVolume.depositUSD + last24hVolume.withdrawUSD) / 2;
+      }
       let lastDailyTs = 0;
       if (lastMonthDailyVolume?.length) {
         const lastDailyVolumeRecord = lastMonthDailyVolume[lastMonthDailyVolume.length - 1];
@@ -99,6 +109,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
         dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
         weeklyVolume: weeklyVolume ?? 0,
         monthlyVolume: monthlyVolume ?? 0,
+        last24hVolume: last24hVolume ?? 0,
         lastHourlyTxs: Object.keys(lastHourlyTxs).length ? lastHourlyTxs : { deposits: 0, withdrawals: 0 },
         currentDayTxs: Object.keys(currentDayTxs).length ? currentDayTxs : { deposits: 0, withdrawals: 0 },
         prevDayTxs: Object.keys(prevDayTxs).length ? prevDayTxs : { deposits: 0, withdrawals: 0 },
@@ -124,7 +135,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
     monthlyTxs,
   } = chainBreakdown["all"];
 
-  if (destinationChain){
+  if (destinationChain) {
     chainBreakdown[destinationChain] = chainBreakdown["all"];
   }
   delete chainBreakdown["all"];

@@ -48,7 +48,7 @@ const getBridges = async () => {
           });
         }
 
-        const last24hVolume = await getAggregatedDataClosestToTimestamp(
+        let last24hVolume = await getAggregatedDataClosestToTimestamp(
           currentTimestamp - secondsInDay,
           secondsInDay,
           false,
@@ -56,7 +56,7 @@ const getBridges = async () => {
           id
         );
         if (last24hVolume) {
-          lastDailyVolume = (last24hVolume.depositUSD + last24hVolume.withdrawUSD) / 2;
+          last24hVolume = (last24hVolume.depositUSD + last24hVolume.withdrawUSD) / 2;
         }
 
         const hourlyStartTimestamp = startOfTheDayTs - secondsInDay;
