@@ -326,18 +326,7 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "https://across.to/",
-    chains: [
-      "Ethereum",
-      "Polygon",
-      "Optimism",
-      "ZKsync Era",
-      "Base",
-      "Arbitrum",
-      "Linea",
-      "Mode",
-      "Blast",
-      "Scroll"
-    ],
+    chains: ["Ethereum", "Polygon", "Optimism", "ZKsync Era", "Base", "Arbitrum", "Linea", "Mode", "Blast", "Scroll"],
     chainMapping: {
       "zksync era": "era",
     },
@@ -977,7 +966,7 @@ export default [
       "X Layer",
       // "Numbers",
       "Taiko",
-      "Cronos zkEVM"
+      "Cronos zkEVM",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1162,7 +1151,6 @@ export default [
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       bitlayer: "btr",
-      taiko: "tko-mainnet",
       // bsquared: "b2-mainnet",
       // "x layer": "xlayer",
       // bouncebit: "bouncebit-mainnet",
