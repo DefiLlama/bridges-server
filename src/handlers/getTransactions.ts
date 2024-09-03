@@ -3,6 +3,7 @@ import wrap from "../utils/wrap";
 import { queryTransactionsTimestampRangeByBridgeNetwork } from "../utils/wrappa/postgres/query";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
+import { sql } from "../utils/db";
 
 const maxResponseTxs = 6000; // maximum number of transactions to return
 
@@ -86,6 +87,11 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const address = event.queryStringParameters?.address?.toLowerCase();
   const limit = event.queryStringParameters?.limit;
   const response = await getTransactions(startTimestamp, endTimestamp, id, chain, sourceChain, address, limit);
+  try {
+    await sql.end();
+  } catch (e) {
+    console.error(e);
+  }
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 

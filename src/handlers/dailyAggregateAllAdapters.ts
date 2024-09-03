@@ -2,6 +2,7 @@ import { wrapScheduledLambda } from "../utils/wrap";
 import { convertToUnixTimestamp } from "../utils/date";
 import { runAggregateDataHistorical } from "../utils/aggregate";
 import bridgeNetworkData from "../data/bridgeNetworkData";
+import { sql } from "../utils/db";
 
 export default wrapScheduledLambda(async (_event) => {
   const currentDate = new Date();
@@ -18,5 +19,10 @@ export default wrapScheduledLambda(async (_event) => {
 
   for (const adapter of bridgeNetworkData) {
     await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false);
+  }
+  try {
+    await sql.end();
+  } catch (e) {
+    console.error(e);
   }
 });

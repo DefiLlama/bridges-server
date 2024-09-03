@@ -6,6 +6,7 @@ import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTime
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
 import { getLast24HVolume } from "../utils/wrappa/postgres/query";
+import { sql } from "../utils/db";
 
 const getBridge = async (bridgeNetworkId?: number) => {
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
@@ -160,6 +161,11 @@ const getBridge = async (bridgeNetworkId?: number) => {
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const bridgeNetworkId = parseInt(event.pathParameters?.id ?? "0");
   const response = await getBridge(bridgeNetworkId);
+  try {
+    await sql.end();
+  } catch (e) {
+    console.error(e);
+  }
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
