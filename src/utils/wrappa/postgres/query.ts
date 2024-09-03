@@ -326,6 +326,36 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
   )[0];
 };
 
+type VolumeType = "deposit" | "withdrawal" | "both";
+
+const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "both"): Promise<number> => {
+  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+
+  let volumeColumn = sql``;
+  switch (volumeType) {
+    case "deposit":
+      volumeColumn = sql`total_deposited_usd`;
+      break;
+    case "withdrawal":
+      volumeColumn = sql`total_withdrawn_usd`;
+      break;
+    case "both":
+    default:
+      volumeColumn = sql`(total_deposited_usd + total_withdrawn_usd)`;
+      break;
+  }
+
+  const result = await sql<{ total_volume: string }[]>`
+    SELECT COALESCE(SUM(${volumeColumn}), 0) as total_volume
+    FROM bridges.hourly_aggregated ha
+    JOIN bridges.config c ON ha.bridge_id = c.id
+    WHERE c.bridge_name = ${bridgeName}
+      AND ha.ts >= to_timestamp(${twentyFourHoursAgo})
+  `;
+
+  return parseFloat((+result[0].total_volume / 2).toString());
+};
+
 export {
   getBridgeID,
   getConfigsWithDestChain,
@@ -338,4 +368,5 @@ export {
   queryAggregatedDailyDataAtTimestamp,
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
+  getLast24HVolume,
 };

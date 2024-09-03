@@ -6,6 +6,7 @@ import { secondsInDay, getCurrentUnixTimestamp, secondsInHour, getTimestampAtSta
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
+import { getLast24HVolume } from "../utils/wrappa/postgres/query";
 
 const getBridges = async () => {
   const response = (
@@ -48,16 +49,7 @@ const getBridges = async () => {
           });
         }
 
-        let last24hVolume = await getAggregatedDataClosestToTimestamp(
-          currentTimestamp - secondsInDay,
-          secondsInDay,
-          false,
-          undefined,
-          id
-        );
-        if (last24hVolume) {
-          last24hVolume = (last24hVolume.depositUSD + last24hVolume.withdrawUSD) / 2;
-        }
+        let last24hVolume = await getLast24HVolume(bridgeDbName);
 
         const hourlyStartTimestamp = startOfTheDayTs - secondsInDay;
         const lastDayHourlyVolume = await getHourlyBridgeVolume(hourlyStartTimestamp, startOfTheDayTs, undefined, id);
