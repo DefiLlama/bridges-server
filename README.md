@@ -4,6 +4,7 @@
 
    `npm i`
 
+
 ## Adding new adapter
 ### Adapter output
 Array of
