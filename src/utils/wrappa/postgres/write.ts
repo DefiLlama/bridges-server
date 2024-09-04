@@ -274,3 +274,24 @@ export const insertErrorRow = async (params: {
     }
   }
 };
+
+export const closeIdleConnections = async (idleTimeMinutes = 3) => {
+  try {
+    const result = await sql`
+      WITH closed AS (
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE state = 'idle'
+          AND state_change < NOW() - INTERVAL '${idleTimeMinutes} minutes'
+          AND pid <> pg_backend_pid()
+      )
+      SELECT COUNT(*) as closed_count FROM closed;
+    `;
+
+    const closedCount = parseInt(result[0].closed_count);
+    console.log(`${closedCount} idle connection(s) closed successfully. (Idle time: ${idleTimeMinutes} minutes)`);
+    return closedCount;
+  } catch (error) {
+    console.error(`Error closing idle connections (Idle time: ${idleTimeMinutes} minutes):`, error);
+  }
+};

@@ -3,6 +3,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { sql } from "../utils/db";
 import { store } from "../utils/s3";
+import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
 const lambdaClient = new LambdaClient({});
 
@@ -24,6 +25,7 @@ async function invokeLambda(functionName: string, event: any) {
 }
 
 export default wrapScheduledLambda(async (event) => {
+  await closeIdleConnections();
   const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
   FROM (
       SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
