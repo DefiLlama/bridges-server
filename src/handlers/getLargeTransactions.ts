@@ -6,7 +6,6 @@ import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
-import { sql } from "../utils/db";
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -72,11 +71,6 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const startTimestamp = event.queryStringParameters?.starttimestamp;
   const endTimestamp = event.queryStringParameters?.endtimestamp;
   const response = await getLargeTransactions(chain, startTimestamp, endTimestamp);
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 

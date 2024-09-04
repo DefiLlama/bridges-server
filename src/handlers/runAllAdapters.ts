@@ -77,9 +77,4 @@ export default wrapScheduledLambda(async (event) => {
       lastRecordedBlocks: lastRecordedBlocks[0].result,
     });
   }
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
 });

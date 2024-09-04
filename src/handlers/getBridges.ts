@@ -7,7 +7,6 @@ import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTime
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
 import { getLast24HVolume } from "../utils/wrappa/postgres/query";
-import { sql } from "../utils/db";
 
 const getBridges = async () => {
   const response = (
@@ -126,11 +125,6 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   if (event.queryStringParameters?.includeChains === "true") {
     const chainData = await craftBridgeChainsResponse();
     response.chains = chainData;
-  }
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
   }
   return successResponse(response, 10 * 60); // 10 mins cache
 };

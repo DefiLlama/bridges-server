@@ -1,7 +1,6 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { sql } from "../utils/db";
 
 const lambdaClient = new LambdaClient({});
 
@@ -43,11 +42,6 @@ const handler = async (_event: any) => {
   }
 
   console.log("Initiated historical runs for all adapters");
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
 };
 
 export default wrapScheduledLambda(handler);

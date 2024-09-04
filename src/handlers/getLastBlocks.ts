@@ -1,4 +1,6 @@
 import wrap, { wrapScheduledLambda } from "../utils/wrap";
+import bridgeNetworks from "../data/bridgeNetworkData";
+import { runAdapterToCurrentBlock } from "../utils/adapter";
 import { sql } from "../utils/db";
 import { successResponse } from "../utils/lambda-response";
 
@@ -24,11 +26,6 @@ const handler = async () => {
     acc[`${bridgeConfigById[bridgeId].bridge_name}-${bridgeConfigById[bridgeId].chain}`] = lastRecordedBlocks[bridgeId];
     return acc;
   }, {});
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
   return successResponse(lastBlocksByName);
 };
 

@@ -5,7 +5,6 @@ import { getChainDisplayName, chainCoingeckoIds } from "../utils/normalizeChain"
 import { getCurrentUnixTimestamp, secondsInDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
-import { sql } from "../utils/db";
 
 export async function craftBridgeChainsResponse() {
   const chainsSet = new Set<string>();
@@ -52,11 +51,6 @@ export async function craftBridgeChainsResponse() {
 
 const handler = async (_event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const chainData = await craftBridgeChainsResponse();
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
   return successResponse(chainData, 10 * 60); // 10 mins cache
 };
 

@@ -4,7 +4,6 @@ import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolu
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { secondsInDay, getCurrentUnixTimestamp } from "../utils/date";
 import { normalizeChain } from "../utils/normalizeChain";
-import { sql } from "../utils/db";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   if (!chain) {
@@ -14,10 +13,11 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   }
   let bridgeNetwork;
   if (bridgeNetworkId) {
-    bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
+   
+      bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
   }
   const destinationChain = bridgeNetwork?.destinationChain;
-  if (destinationChain && chain === destinationChain?.toLowerCase()) {
+  if (destinationChain && chain === destinationChain?.toLowerCase()){
     chain = "all";
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
@@ -95,11 +95,6 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const chain = event.pathParameters?.chain?.toLowerCase().replace(/%20/g, " ");
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeVolume(chain, bridgeNetworkId);
-  try {
-    await sql.end();
-  } catch (e) {
-    console.error(e);
-  }
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
