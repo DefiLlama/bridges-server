@@ -24,7 +24,6 @@ export const getSingleLlamaPrice = async (
 const NAME_MAPPING: Record<string, string> = {
   "b2-mainnet": "bsquared",
   xdai: "gnosis",
-  "tko-mainnet": "taiko",
 };
 
 export const getLlamaPrices = async (tokens: string[], timestamp?: number): Promise<Record<string, any>> => {
