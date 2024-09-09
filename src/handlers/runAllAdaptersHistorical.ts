@@ -25,22 +25,14 @@ async function invokeLambda(functionName: string, event: any) {
 const handler = async (_event: any) => {
   await closeIdleConnections();
   const now = Math.floor(Date.now() / 1000);
-  const oneDayAgo = now - 86400;
-  const halfDayAgo = now - 43200;
+  const oneHourAgo = now - 3600;
 
-  const timeRanges = [
-    { start: oneDayAgo, end: halfDayAgo },
-    { start: halfDayAgo, end: now },
-  ];
-
-  for (const timeRange of timeRanges) {
-    for (const bridge of bridgeNetworks) {
-      await invokeLambda("llama-bridges-prod-runAdapterFromTo", {
-        bridgeName: bridge.bridgeDbName,
-        fromTimestamp: timeRange.start,
-        toTimestamp: timeRange.end,
-      });
-    }
+  for (const bridge of bridgeNetworks) {
+    await invokeLambda("llama-bridges-prod-runAdapterFromTo", {
+      bridgeName: bridge.bridgeDbName,
+      fromTimestamp: oneHourAgo,
+      toTimestamp: now,
+    });
   }
 
   console.log("Initiated historical runs for all adapters");
