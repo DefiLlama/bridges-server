@@ -1470,4 +1470,19 @@ export default [
     },
     destinationChain: "Bitcoin",
   },
+  {
+    id: 71,
+    displayName: "Crowdswap",
+    bridgeDbName: "crowdswap",
+    iconLink: "icons:crowdswap",
+    largeTxThreshold: 10000,
+    url: "https://scanner.crowdswap.org/",
+    chains: [
+      "Ethereum",
+      "Arbitrum",
+      "Optimism",
+      "BSC",
+      "Polygon"
+    ]
+  },
 ] as BridgeNetwork[];
