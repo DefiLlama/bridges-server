@@ -66,6 +66,7 @@ import bunnyfi from "./bunnyfi";
 import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
 import fastbtc from "./rootstock-fastbtc-bridge"
+import crowdswap from "./crowdswap"
 
 export default {
   polygon,
@@ -134,7 +135,8 @@ export default {
   bunnyfi,
   minibridge,
   cometbridge,
-  fastbtc
+  fastbtc,
+  crowdswap,
 } as {
   [bridge: string]: BridgeAdapter;
 };
