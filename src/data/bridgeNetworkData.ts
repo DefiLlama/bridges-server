@@ -937,7 +937,7 @@ export default [
   },
   {
     id: 46,
-    displayName: "yBridge (Powered by XY Finance)",
+    displayName: "yBridge by xSync",
     bridgeDbName: "xy",
     iconLink: "protocols:xy-finance",
     largeTxThreshold: 10000,
