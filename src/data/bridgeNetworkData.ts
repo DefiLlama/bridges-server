@@ -1011,7 +1011,7 @@ export default [
     bridgeDbName: "chain-fusion",
     iconLink: "icons:chain-fusion",
     largeTxThreshold: 10000,
-    url: "https://owlto.finance",
+    url: "https://dashboard.internetcomputer.org/",
     chains: [
       "Ethereum",
     ],
