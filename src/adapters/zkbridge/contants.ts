@@ -333,7 +333,7 @@ const zkbridgeContractes = {
                 shareDecimal: 6
             },
             2: {
-                tokenAddress: "0x9827431e8b77e87c9894bd50b055d6be56be0030",
+                tokenAddress: "0xf8c374ce88a3be3d374e8888349c7768b607c755",
                 tokenDecimal: 6,
                 shareDecimal: 6
             },
