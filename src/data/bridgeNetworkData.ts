@@ -1005,4 +1005,17 @@ export default [
       "x layer": "xlayer",
     },
   },
+  {
+    id: 63,
+    displayName: "Chain-Fusion",
+    bridgeDbName: "chain-fusion",
+    iconLink: "icons:chain-fusion",
+    largeTxThreshold: 10000,
+    url: "https://owlto.finance",
+    chains: [
+      "Ethereum",
+    ],
+    chainMapping: {
+    },
+  },
 ] as BridgeNetwork[];
