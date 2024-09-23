@@ -12,6 +12,8 @@ export const transformTokens = {
     "0x9cef9a0b1be0d289ac9f4a98ff317c33eaa84eb8": "ethereum:0x8d6cebd76f18e1558d4db88138e2defb3909fad6",
     "0xd8772edbf88bba2667ed011542343b0eddacda47": "ethereum:0x9e32b13ce7f2e80a01932b42553652e053d6ed8e",
     "0x430ebff5e3e80a6c58e7e6ada1d90f5c28aa116d": "ethereum:0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": "ethereum:0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+    "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
   },
   bsc: {
     "0x98a5737749490856b401db5dc27f522fc314a4e1": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
@@ -20,6 +22,8 @@ export const transformTokens = {
     "0x7bfd7f2498c4796f10b6c611d9db393d3052510c": "bsc:0x3f56e0c36d275367b8c502090edf38289b3dea0d",
     "0xd4cec732b3b135ec52a3c0bc8ce4b8cfb9dace46": "bsc:0xe552fb52a4f19e44ef5a967632dbc320b0820639",
     "0x68c6c27fb0e02285829e69240be16f32c5f8befe": "bsc:0x55d398326f99059ff775485246999027b3197955",
+    "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": "bsc:0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+    "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
   },
   avax: {
     "0x1205f31718499dbf1fca446663b532ef87481fe1": "avax:0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
@@ -56,6 +60,19 @@ export const transformTokens = {
   fantom: {
     "0x12edea9cd262006cc3c4e77c90d2cd2dd4b1eb97": "fantom:0x04068da6c83afcfa0e13ba15a6696662335d5b75",
   },
+  "bouncebit-mainnet": {
+    "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": "bsc:0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+    "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
+  },
+  "combo-mainnet":{
+    "0xd08a2917653d4e460893203471f0000826fb4034": "bsc:0xc03fbf20a586fa89c2a5f6f941458e1fbc40c661",
+    "0x7c6b91d9be155a6db01f749217d76ff02a7227f2": "bsc:0x55d398326f99059ff775485246999027b3197955",
+    "0x4200000000000000000000000000000000000006": "bsc:0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
+  },
+  "op_bnb":{
+    "0xe7798f023fc62146e8aa1b36da45fb70855a77ea": "ethereum:0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    "0x9d94a7ff461e83f161c8c040e78557e31d8cba72": "bsc:0xf4c8e32eadec4bfe97e0f595add0f4450a863a11",
+  }
 } as {
   [chain: string]: {
     [token: string]: string;
@@ -76,6 +93,7 @@ export const transformTokenDecimals = {
     "0x9cef9a0b1be0d289ac9f4a98ff317c33eaa84eb8": 6,
     "0xd8772edbf88bba2667ed011542343b0eddacda47": 18,
     "0x430ebff5e3e80a6c58e7e6ada1d90f5c28aa116d": 6,
+    "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": 18,
   },
   bsc: {
     "0x98a5737749490856b401db5dc27f522fc314a4e1": 6,

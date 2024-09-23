@@ -57,7 +57,16 @@ import fuse from "./fuse";
 import orbiter from "./orbiter";
 import connext from "./connext";
 import xswap from "./xswap";
-import owlto from "./owlto"
+import owlto from "./owlto";
+import zkbridge from "./zkbridge";
+import helixbridge from "./helixbridge";
+import oooo from "./oooo";
+import memebridge from "./memebridge";
+import bunnyfi from "./bunnyfi";
+import minibridge from "./minibridge";
+import cometbridge from "./cometbridge";
+import fastbtc from "./rootstock-fastbtc-bridge"
+import crowdswap from "./crowdswap"
 
 export default {
   polygon,
@@ -75,7 +84,8 @@ export default {
   portal,
   binancepeg,
   xdai,
-  "avalanche-btc": avalanchebtc,
+  oooo,
+  "avalanche-c": avalanchebtc,
   axelar,
   rainbowbridge,
   across,
@@ -118,6 +128,15 @@ export default {
   connext,
   xswap,
   owlto,
+  zkbridge,
+  zkbridge111: zkbridge,
+  helixbridge,
+  memebridge,
+  bunnyfi,
+  minibridge,
+  cometbridge,
+  fastbtc,
+  crowdswap,
 } as {
   [bridge: string]: BridgeAdapter;
 };

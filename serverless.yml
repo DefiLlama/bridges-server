@@ -7,7 +7,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs18.x
   memorySize: 128
   timeout: 10
   region: eu-central-1
@@ -67,7 +67,8 @@ provider:
     AURORA_RPC: ${env:AURORA_RPC}
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
     SOLANA_RPC: ${env:SOLANA_RPC}
-    RSK_RPC: ${env:RSK_RPC}
+    RSK_ARCHIVAL_RPC: ${env:RSK_ARCHIVAL_RPC}
+    DISCORD_WEBHOOK: ${env:DISCORD_WEBHOOK}
 
 functions:
   bridgeDayStats:
@@ -118,6 +119,14 @@ functions:
       - http:
           path: largetransactions/{chain}
           method: get
+  lastBlocks:
+    handler: src/handlers/getLastBlocks.default
+    timeout: 120
+    memorySize: 2000
+    events:
+      - http:
+          path: lastblocks
+          method: get
   runAdapter:
     handler: src/handlers/runAdapter.default
     timeout: 900
@@ -127,19 +136,35 @@ functions:
     timeout: 900
     memorySize: 250
     events:
-      - schedule: cron(2,17,47 * * * ? *)
+      - schedule: cron(10,25,40 * * * ? *)
   runAggregateAllAdapters:
     handler: src/handlers/runAggregateAllAdapters.default
     timeout: 900
     memorySize: 10240
     events:
       - schedule: cron(32 * * * ? *)
-  checkDbEntries:
-    handler: src/handlers/checkDbEntries.default
+  checkStaleBridges:
+    handler: src/handlers/checkStaleBridges.default
     timeout: 600
     memorySize: 2000
     events:
-      - schedule: cron(30 1 * * ? *)
+      - schedule: cron(0 0 * * ? *)
+  runAdapterFromTo:
+    handler: src/handlers/runAdapterFromTo.default
+    timeout: 900
+    memorySize: 1024
+  runAllAdaptersHistorical:
+    handler: src/handlers/runAllAdaptersHistorical.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(1 * * * ? *)
+  dailyAggregateAllAdapters:
+    handler: src/handlers/dailyAggregateAllAdapters.default
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule: cron(0 1 * * ? *)
 
 resources:
   # CORS for api gateway errors
@@ -147,16 +172,21 @@ resources:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
-  webpack:
-    webpackConfig: ./webpack.config.js
-    includeModules: true
-    packager: "npm"
-    excludeFiles: src/**/*.test.ts
   prune:
     automatic: true
     number: 5 # Number of versions to keep
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    target: "node18"
+    platform: "node"
+    concurrency: 10
+    packager: "npm"
+    keepOutputDirectory: true
+    metafile: true
 
 plugins:
-  - serverless-webpack
+  - serverless-esbuild
   - serverless-offline
   - serverless-prune-plugin

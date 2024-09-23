@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "deploy:prod": "export NODE_OPTIONS=--max-old-space-size=10240 && sls deploy --stage prod",
+    "deploy:prod": "sls deploy --stage prod",
     "serve": "sls offline start",
-    "build": "export NODE_OPTIONS=--max-old-space-size=10240 && sls webpack",
+    "build": "sls package",
     "test": "tsx ./src/adapters/test.ts",
     "test-txs": "tsx ./src/utils/testAdapterHistorical.ts",
     "ts": "tsc --noEmit",
@@ -11,19 +11,23 @@
     "daily-volume": "export $(cat .env.test | xargs) &&  tsx ./src/utils/testDailyVolume.ts"
   },
   "devDependencies": {
+    "@types/async-retry": "^1.4.8",
     "@types/aws-lambda": "^8.10.101",
     "@types/node": "^18.6.4",
     "@types/node-fetch": "^2.6.2",
-    "babel-loader": "^8.2.5",
+    "@types/retry": "^0.12.5",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
     "serverless": "^3.21.0",
-    "serverless-offline": "^9.1.6",
-    "serverless-prune-plugin": "^2.0.1",
-    "ts-loader": "^9.3.1"
+    "serverless-esbuild": "^1.52.1",
+    "serverless-offline": "^12.0.0",
+    "serverless-prune-plugin": "^2.0.1"
   },
   "dependencies": {
-    "@defillama/sdk": "^5.0.54",
+    "@aws-sdk/client-lambda": "^3.637.0",
+    "@aws-sdk/client-s3": "^3.637.0",
+    "@defillama/sdk": "^5.0.80",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@solana/web3.js": "^1.87.3",
     "async-retry": "^1.3.1",
     "axios": "^0.21.4",
@@ -32,10 +36,9 @@
     "dotenv": "^8.2.0",
     "ethers": "^5",
     "graphql": "^16.0.0",
-    "graphql-request": "^4.0.0",
+    "graphql-request": "^6.1.0",
     "node-fetch": "^2.6.7",
     "postgres": "^3.2.4",
-    "serverless-webpack": "^5.8.0",
     "tron-format-address": "^0.1.11",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"

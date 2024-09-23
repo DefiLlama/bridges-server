@@ -13,8 +13,6 @@ import {
 import { getLlamaPrices } from "./prices";
 import {
   getBridgeID,
-  queryAggregatedHourlyDataAtTimestamp,
-  queryAggregatedDailyDataAtTimestamp,
   getLargeTransaction,
 } from "./wrappa/postgres/query";
 import {
@@ -55,6 +53,18 @@ export const runAggregateDataHistorical = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
+
+  if(!bridgeNetwork) {
+    const errString = `Bridge network with id ${bridgeNetworkId} not found.`;
+    await insertErrorRow({
+      ts: currentTimestamp,
+      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+      keyword: "critical",
+      error: errString,
+    });
+    throw new Error(errString);
+  }
+
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
   const adapter = adapters[bridgeDbName];
 
@@ -68,7 +78,10 @@ export const runAggregateDataHistorical = async (
     });
     throw new Error(errString);
   }
+
+  
   const chains = Object.keys(adapter);
+ 
   let timestamp = endTimestamp;
   while (timestamp > startTimestamp) {
     if (chainToRestrictTo) {
@@ -283,6 +296,7 @@ export const aggregateData = async (
       let tokenKey = null;
       if (is_usd_volume) {
         usdValue = rawBnAmount.toNumber();
+        tokenKey = `${chain}:${token}`
       } else {
         const tokenL = token.toLowerCase();
         const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
@@ -306,28 +320,32 @@ export const aggregateData = async (
           }
 
           usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
-          if (usdValue > 10 ** 9) {
-            const errString = `USD value of tx id ${id} is ${usdValue}.`;
-            await insertErrorRow({
-              ts: currentTimestamp,
-              target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-              keyword: "data",
-              error: errString,
-            });
-          }
-          if (usdValue > 10 ** 10) {
-            console.error(`USD value of tx id ${id} is over 10 billion, skipping.`);
-            return;
-          }
-          if (largeTxThreshold && id && usdValue > largeTxThreshold) {
-            largeTxs.push({
-              id: id,
-              ts: ts,
-              usdValue: usdValue,
-            });
-          }
         }
       }
+
+      if(usdValue) {
+        if (usdValue > 10 ** 9) {
+          const errString = `USD value of tx id ${id} is ${usdValue}.`;
+          await insertErrorRow({
+            ts: currentTimestamp,
+            target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+            keyword: "data",
+            error: errString,
+          });
+        }
+        if (usdValue > 10 ** 10) {
+          console.error(`USD value of tx id ${id} is over 10 billion, skipping.`);
+          return;
+        }
+        if (largeTxThreshold && id && usdValue > largeTxThreshold) {
+          largeTxs.push({
+            id: id,
+            ts: ts,
+            usdValue: usdValue,
+          });
+        }
+      }
+      
       if (is_deposit) {
         totalDepositedUsd += usdValue ?? 0;
         if (txs_counted_as) {
@@ -335,7 +353,7 @@ export const aggregateData = async (
         } else {
           totalDepositTxs += 1;
         }
-        if (!is_usd_volume && tokenKey) {
+        if (tokenKey) {
           cumTokensDeposited[tokenKey] = cumTokensDeposited[tokenKey] || {};
           cumTokensDeposited[tokenKey].amount = cumTokensDeposited[tokenKey].amount
             ? cumTokensDeposited[tokenKey].amount.plus(rawBnAmount)
@@ -356,7 +374,7 @@ export const aggregateData = async (
         } else {
           totalWithdrawalTxs += 1;
         }
-        if (!is_usd_volume && tokenKey) {
+        if (tokenKey) {
           cumTokensWithdrawn[tokenKey] = cumTokensWithdrawn[tokenKey] || {};
           cumTokensWithdrawn[tokenKey].amount = cumTokensWithdrawn[tokenKey].amount
             ? cumTokensWithdrawn[tokenKey].amount.plus(rawBnAmount)

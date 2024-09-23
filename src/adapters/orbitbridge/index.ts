@@ -13,7 +13,7 @@ Docs: https://bridge-docs.orbitchain.io/
 Adapter is finished for chains with a vault: Ethereum, BSC, (also on Klaytn).
 Issue is that other chains have minter contracts, and there appears to be multiple (at least on Polygon).
 It's difficult to find them all, but can use explorer txs to find them: https://scope.klaytn.com/bridge
-(stil not sure I have found them all, some chains do not have much activity).
+(still not sure I have found them all, some chains do not have much activity).
 
 Seems like Klaytn has both vault and minters, not sure if this is also true for Ethereum or BSC.
 

@@ -20,6 +20,7 @@ const contractAddresses = {
   },
   bsc: {
       synapseBridge: "0xd123f70AE324d34A9E76b67a27bf77593bA8749f",
+      synapseRFQ: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E"
   },
   canto: {
       synapseBridge: "0xDde5BEC4815E1CeCf336fb973Ca578e8D83606E0",
@@ -68,7 +69,15 @@ const contractAddresses = {
   },
   blast: {
     synapseBridge:"0x55769baf6ec39b3bf4aae948eb890ea33307ef3c",
-  }
+    synapseRFQ: "0x34F52752975222d5994C206cE08C1d5B329f24dD"
+  },
+  scroll: {
+    synapseBridge: "0x5523D3c98809DdDB82C686E152F5C58B1B0fB59E",
+  },
+  linea: {
+    synapseBridge: "0x34F52752975222d5994C206cE08C1d5B329f24dD",
+  },
+
 }  as {
     [chain: string]: {
         synapseBridge: string;
@@ -412,6 +421,8 @@ const adapter: BridgeAdapter = {
   // // canto: constructParams("canto"),
   // cronos: constructParams("cronos"),
   // dogechain: constructParams("dogechain"),
+  scroll: constructParams("scroll"),
+  linea: constructParams("linea"),
 };
 
 

@@ -4,6 +4,8 @@ import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import {
   Chain,
+  ETH_ADDRESS,
+  NativeTokens,
   XYRouterContractAddress,
   YBridgeContractAddress,
   YBridgeVaultsTokenContractAddress
@@ -13,9 +15,9 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
   const contractAddress = YBridgeContractAddress[chain]
   return {
     target: contractAddress,
-    topic: 'SwapRequested(uint256,address,(uint32,address,uint256,uint32),address,address,uint256,address,uint256,uint256,address)',
+    topic: 'SwapRequested(uint256,address,(uint32,address,address,uint256,uint32),address,address,uint256,address,uint256,uint256,address)',
     abi: [
-      "event SwapRequested(uint256 _swapId, address indexed _aggregatorAdaptor, tuple(uint32 dstChainId, address dstChainToken, uint256 expectedDstChainTokenAmount, uint32 slippage) _dstChainDesc, address _srcToken, address indexed _vaultToken, uint256 _vaultTokenAmount, address _receiver, uint256 _srcTokenAmount, uint256 _expressFeeAmount, address indexed _referrer)",
+      "event SwapRequested(uint256 _swapId, address indexed _aggregatorAdaptor, tuple(uint32 dstChainId, address dstChainToken, address dstAggregatorAdaptor, uint256 expectedDstChainTokenAmount, uint32 slippage) _dstChainDesc, address _srcToken, address indexed _vaultToken, uint256 _vaultTokenAmount, address _receiver, uint256 _srcTokenAmount, uint256 _expressFeeAmount, address indexed _referrer)",
     ],
     logKeys: {
       blockNumber: "blockNumber",
@@ -28,6 +30,13 @@ const getYBridgeSwapRequestedEventParams = (chain: Exclude<Chain, Chain.Numbers>
       to: "_referrer",
     },
     argGetters: {
+      token: (log: any) => {
+        const token = log?._vaultToken
+        if (token?.toLowerCase() === ETH_ADDRESS.toLowerCase()) {
+          return NativeTokens[chain] || token
+        }
+        return token
+      },
       to: (log: any) => {
         const vaultToken = log?._vaultToken
         const toVaultContract = find(YBridgeVaultsTokenContractAddress[chain], { tokenAddress: vaultToken })?.contractAddress
@@ -55,6 +64,15 @@ const getYBridgeSwappedForUserEventParams = (chain: Exclude<Chain, Chain.Numbers
       amount: "_dstTokenAmountOut",
       from: "_srcToken",
       to: "_receiver",
+    },
+    argGetters: {
+      token: (log: any) => {
+        const token = log?._dstToken
+        if (token?.toLowerCase() === ETH_ADDRESS.toLowerCase()) {
+          return NativeTokens[chain] || token
+        }
+        return token
+      },
     },
     isDeposit: false,
   }
@@ -156,6 +174,8 @@ const adapter: BridgeAdapter = {
   wemix: constructParams(Chain.Wemix),
   blast: constructParams(Chain.Blast),
   'x layer': constructParams(Chain.XLayer),
+  taiko: constructParams(Chain.Taiko),
+  'cronos zkevm': constructParams(Chain.CronosZkevm),
 };
 
 export default adapter;

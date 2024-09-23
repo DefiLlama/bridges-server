@@ -71,5 +71,11 @@
   "rainbowbridge:ethereum": { "startBlock": 15443371, "endBlock": 15887866 },
   "chainport:aurora": { "startBlock": 73145592, "endBlock": 77620017 },
   "rootstock:rsk": { "startBlock": 3616337, "endBlock": 3616337 },
-  "tokenbrige:rsk": { "startBlock": 4089976, "endBlock": 6088951 }
+  "tokenbrige:rsk": { "startBlock": 4089976, "endBlock": 6088951 },
+  "fastbtc:rsk": { "startBlock": 4089976, "endBlock": 6088951 },
+  "crowdswap:ethereum": { "startBlock": 20407899, "endBlock": 20720738 },
+  "crowdswap:polygon": { "startBlock": 56713222, "endBlock": 61657366 },
+  "crowdswap:bsc": { "startBlock": 40878700, "endBlock": 42133978 },
+  "crowdswap:arbitrum": { "startBlock": 237073033, "endBlock": 252086093 },
+  "crowdswap:optimism": { "startBlock": 123302167, "endBlock": 125190128 }
 }

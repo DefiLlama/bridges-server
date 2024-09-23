@@ -18,6 +18,10 @@ src/utils/runall.ts
 src/utils/filljobs.ts
 src/utils/filljobs2.ts
 
+.esbuild
+
 .env
 
 .idea
+
+.vscode

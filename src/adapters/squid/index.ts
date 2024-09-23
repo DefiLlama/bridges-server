@@ -1,16 +1,14 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
 import { fetchAssets, getTokenAddress} from "./utils";
-import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
+import { axelarGatewayAddresses, squidRouterAddresses } from "./constants";
 
-
-  const constructGatewayWithdrawalParams = (assets: any[], chain: string) => {
-    let GatewayWithdrawalParams: PartialContractEventParams;
+const constructGatewayWithdrawalParams = (assets: any[], chain: string) => {
+    const squidRouterAddress = squidRouterAddresses[chain as keyof typeof squidRouterAddresses] || squidRouterAddresses.default;
     
-    return  GatewayWithdrawalParams = {
+    return {
       target: "",
       topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
       topics: [ethers.utils.id("ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
@@ -18,7 +16,6 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      //   token: "token"
       },
       argKeys: {
         from: "payload",
@@ -27,22 +24,19 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
         token: "symbol"
       },
       argGetters: {
-          from: (log: any) => "0x".concat(log.payload.substr(90,40)), // note: this is not the real sender address
+          from: (log: any) => "0x".concat(log.payload.substr(90,40)),
           amount: (log: any) => log.amount,
           to: (log: any) => "0x".concat(log.payload.substr(log.payload.lastIndexOf(log.payload.substr(90,40)),40)),
           token: (log: any) => getTokenAddress(log.symbol, chain, assets)
         },
       isDeposit: false,
-  
     };
+}
 
-  }
-
-
-  const constructGatewayDepositParams = (assets: any[], chain: string) => {
-    let GatewayDepositParams: PartialContractEventParams;
-
-    return GatewayDepositParams = {
+const constructGatewayDepositParams = (assets: any[], chain: string) => {
+    const squidRouterAddress = squidRouterAddresses[chain as keyof typeof squidRouterAddresses] || squidRouterAddresses.default;
+    
+    return {
       target: "",
       topic: "ContractCallApprovedWithMint(bytes32,string,string,address,bytes32,string,uint256,bytes32,uint256)",
       topics: [ethers.utils.id("ContractCallApprovedWithMint(bytes32,string,string,address,bytes32,string,uint256,bytes32,uint256)"), null, ethers.utils.hexZeroPad(squidRouterAddress,32)],
@@ -50,7 +44,6 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      //   token: "token"
       },
       argKeys: {
         from: "sourceAddress",
@@ -66,35 +59,30 @@ import { axelarGatewayAddresses, squidRouterAddress } from "./constants";
       },
       isDeposit: true,
     };
-  }
-
+}
 
 const constructParams = (chain: string) => {
-
   return async (fromBlock: number, toBlock: number) => {
     let eventParams = [] as PartialContractEventParams[];
-    // fetch all assets from axelarscan
     const assets = await fetchAssets();
 
     const GatewayDepositParams = constructGatewayDepositParams(assets, chain);
-    const deposit = {...GatewayDepositParams, target: axelarGatewayAddresses[chain], };
+    const deposit = {...GatewayDepositParams, target: axelarGatewayAddresses[chain]};
     
     const GatewayWithdrawalParams = constructGatewayWithdrawalParams(assets, chain);
-    const withdraw = {...GatewayWithdrawalParams, target: axelarGatewayAddresses[chain], };
-
+    const withdraw = {...GatewayWithdrawalParams, target: axelarGatewayAddresses[chain]};
 
     eventParams.push(deposit, withdraw);
 
     return getTxDataFromEVMEventLogs("squid", chain as Chain, fromBlock, toBlock, eventParams);
   }
-    
 };
 
 const adapter: BridgeAdapter = {
   polygon: constructParams("polygon"),
   fantom: constructParams("fantom"),
   avalanche: constructParams("avax"),
-  // bsc: constructParams("bsc"),
+  bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
@@ -105,6 +93,11 @@ const adapter: BridgeAdapter = {
   filecoin: constructParams("filecoin"),
   optimism: constructParams("optimism"),
   mantle: constructParams("mantle"),
+//new chains
+  scroll: constructParams("scroll"),
+  blast: constructParams("blast"),
+  fraxtal: constructParams("fraxtal"),
+  immutable: constructParams("immutable"),
 };
 
 export default adapter;

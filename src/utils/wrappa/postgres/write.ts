@@ -35,7 +35,7 @@ export const insertTransactionRow = async (
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  // FIX should use dynamicly built strings here, I just didn't finish it
+  // FIX should use dynamically built strings here, I just didn't finish it
   let sqlCommand = sql`
   insert into bridges.transactions ${sql(params)}
 `;
@@ -113,7 +113,10 @@ export const insertConfigRow = async (
   for (let i = 0; i < 5; i++) {
     try {
       console.log(`inserting into bridges.config`);
-      return sql`insert into bridges.config ${sql(paramsToAvoidTsError)}`;
+      return sql`
+        INSERT INTO bridges.config ${sql(paramsToAvoidTsError)} 
+        ON CONFLICT (bridge_name, chain) DO NOTHING;
+      `;
     } catch (e) {
       if (i >= 4) {
         throw new Error(`Could not insert config row for ${params.bridge_name} on ${params.chain}`);
@@ -269,5 +272,26 @@ export const insertErrorRow = async (params: {
         continue;
       }
     }
+  }
+};
+
+export const closeIdleConnections = async (idleTimeMinutes = 3) => {
+  try {
+    const result = await sql`
+      WITH closed AS (
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE state = 'idle'
+          AND state_change < NOW() - INTERVAL '3 minutes'
+          AND pid <> pg_backend_pid()
+      )
+      SELECT COUNT(*) as closed_count FROM closed;
+    `;
+
+    const closedCount = parseInt(result[0].closed_count);
+    console.log(`${closedCount} idle connection(s) closed successfully. (Idle time: ${idleTimeMinutes} minutes)`);
+    return closedCount;
+  } catch (error) {
+    console.error(`Error closing idle connections (Idle time: ${idleTimeMinutes} minutes):`, error);
   }
 };
