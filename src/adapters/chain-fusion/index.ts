@@ -86,15 +86,19 @@ function constructParams(chain: string) {
                     target: erc20_helper_contract,
                 }
                 // Erc20 withdrawals through the Erc20 token contract
-                const ercWithdrawParams = {
+                let ercWithdrawParams = {
                     ...ercWithdrawalEventParams,
                     target: ercContract,
                     fixedEventData: {
                         from: eth_minter_address,
                     }
                 }
+                // We set the token address for the erc20 withdrawal event
+                if  (ercWithdrawParams.argKeys) {
+                    ercWithdrawParams.argKeys.token = ercContract;
+                }
                 eventParams.push(ercDepositParams, ercWithdrawParams);
-            }
+            }   
 
             // Eth deposits to the Ethereum helper contract
             eventParams.push({

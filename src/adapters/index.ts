@@ -67,6 +67,7 @@ import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
 import fastbtc from "./rootstock-fastbtc-bridge"
 import crowdswap from "./crowdswap"
+import chainfusion from "./chain-fusion"
 
 export default {
   polygon,
@@ -137,6 +138,7 @@ export default {
   cometbridge,
   fastbtc,
   crowdswap,
+  chainfusion
 } as {
   [bridge: string]: BridgeAdapter;
 };
