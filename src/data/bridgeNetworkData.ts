@@ -1276,7 +1276,7 @@ export default [
     bridgeDbName: "helixbridge",
     iconLink: "icons:helixbridge",
     largeTxThreshold: 10000,
-    url: "https://bridge.helix.box",
+    url: "https://helixbridge.app",
     chains: [
       "Arbitrum",
       "Darwinia",
