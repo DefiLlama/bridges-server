@@ -2,7 +2,7 @@ import type { BridgeAdapter, PartialContractEventParams } from "../../helpers/br
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import type { Chain } from "@defillama/sdk/build/general";
 
-const depositParams = (chain: Chain, contractAddress: string): PartialContractEventParams => {
+const depositParams = (contractAddress: string): PartialContractEventParams => {
   return {
     target: contractAddress,
     topic: "TokenLocked((uint256,address,address,address,uint112,uint112,address,uint256),bytes32,uint112,uint112)",
@@ -18,18 +18,6 @@ const depositParams = (chain: Chain, contractAddress: string): PartialContractEv
       amount: "params.amount",
       to: "params.receiver",
     },
-    argGetters: {
-      token: (args: any) => {
-        if (chain !== 'darwinia') return undefined;
-
-        const sourceToken = args.params?.sourceToken;
-        if (sourceToken != '0x0000000000000000000000000000000000000000') {
-          return undefined;
-        }
-
-        return '0xe7578598aac020abfb918f33a20fad5b71d670b4';
-      },
-    },
     txKeys: {
       from: "from",
     },
@@ -37,7 +25,7 @@ const depositParams = (chain: Chain, contractAddress: string): PartialContractEv
   };
 }
 
-const withdrawalParams = (chain: Chain, contractAddress: string): PartialContractEventParams => {
+const withdrawalParams = (contractAddress: string): PartialContractEventParams => {
   return {
     target: contractAddress,
     topic: "TransferFilledExt(bytes32,(uint256,address,address,address,uint112,uint112,address,uint256))",
@@ -57,19 +45,6 @@ const withdrawalParams = (chain: Chain, contractAddress: string): PartialContrac
       amount: "params.targetAmount",
       to: "params.receiver",
     },
-    argGetters: {
-      token: (args: any) => {
-        console.log(chain);
-        if (chain !== 'darwinia') return undefined;
-
-        const targetToken = args.params?.targetToken;    
-        if (targetToken != '0x0000000000000000000000000000000000000000') {
-          return undefined;
-        }
-
-        return '0xe7578598aac020abfb918f33a20fad5b71d670b4';
-      },
-    },
     isDeposit: false,
   };
 }
@@ -82,8 +57,8 @@ const constructParams = (chain: Chain) => {
   }
 
   const eventParams: PartialContractEventParams[] = [
-    depositParams(chain, contractAddress),
-    withdrawalParams(chain, contractAddress),
+    depositParams(contractAddress),
+    withdrawalParams(contractAddress),
   ];
 
   return async (fromBlock: number, toBlock: number) =>
