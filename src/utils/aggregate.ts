@@ -17,6 +17,7 @@ import {
   insertDailyAggregatedRow,
   insertLargeTransactionRow,
   insertErrorRow,
+  insertOrUpdateTokenWithoutPrice,
 } from "./wrappa/postgres/write";
 import adapters from "../adapters";
 import bridgeNetworks from "../data/bridgeNetworkData";
@@ -286,7 +287,7 @@ export const aggregateData = async (
     console.log(errString);
   }
 
-  let tokensWithNullPrices = new Set();
+  let tokensWithNullPrices = new Set<string>();
   const txsPromises = Promise.all(
     txs.map(async (tx) => {
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume, txs_counted_as, origin_chain } =
@@ -402,8 +403,10 @@ export const aggregateData = async (
   );
   await txsPromises;
   if (tokensWithNullPrices.size) {
-    await sendDiscordText(
-      `There are ${tokensWithNullPrices.size} tokens with no price: \n ${Array.from(tokensWithNullPrices).join("\n")}`
+    await Promise.all(
+      Array.from(tokensWithNullPrices).map(async (token: string) => {
+        await insertOrUpdateTokenWithoutPrice(token);
+      })
     );
   }
   if (tokensWithNullPrices.size > nullPriceCountThreshold) {

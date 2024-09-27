@@ -297,3 +297,16 @@ export const closeIdleConnections = async (idleTimeMinutes = 3) => {
     console.error(`Error closing idle connections (Idle time: ${idleTimeMinutes} minutes):`, error);
   }
 };
+
+export const insertOrUpdateTokenWithoutPrice = async (token: string) => {
+  try {
+    await sql`
+        INSERT INTO bridges.tokens_without_price (token, occurrence_count)
+        VALUES (${token}, 1)
+        ON CONFLICT (token)
+        DO UPDATE SET occurrence_count = bridges.tokens_without_price.occurrence_count + 1;
+      `;
+  } catch (e) {
+    console.error(`Could not insert or update token without price: ${token}`, e);
+  }
+};
