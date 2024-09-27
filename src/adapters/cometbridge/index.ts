@@ -15,11 +15,13 @@ export const bridgesAddress = {
     scroll: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     blast: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     xlayer: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
+    xlayer: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     taiko: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     zklink: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     bsc: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     mode: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     merlin: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
+    manta: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     "b2-mainnet": ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
 } as const;
 
@@ -100,6 +102,7 @@ const adapter: BridgeAdapter = {
     bsc: constructParams("bsc"),
     taiko: constructParams("taiko"),
     zklink: constructParams("zklink"),
+    manta: constructParams("manta"),
 
     'x layer': constructParams("xlayer"),
     "zksync era": constructParams("era"),
