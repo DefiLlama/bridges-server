@@ -9,7 +9,7 @@ const handler = async (event: any) => {
     const bridgesToRun = event.bridgeIndices.map((index: number) => bridgeNetworks[index]);
     const promises = Promise.all(
       bridgesToRun.map(async (bridge: BridgeNetwork) => {
-        return runAdapterToCurrentBlock(bridge, false, "ignore", event.lastRecordedBlocks);
+        return runAdapterToCurrentBlock(bridge, true, "ignore", event.lastRecordedBlocks);
       })
     );
     await promises;
