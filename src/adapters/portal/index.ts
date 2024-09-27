@@ -251,7 +251,7 @@ const constructParams = (chain: string) => {
     const events = await getTxDataFromEVMEventLogs("portal", chain as Chain, fromBlock, toBlock, [
       logMessagePublishedEventParams,
     ]);
-    const solanaLogs = await getSolanaEventsDestChain(fromBlock, toBlock, chain);
+
     let hashes = events.map((e) => e.txHash);
     // The token bridge doesn't emit events on withdrawals/inbound token transfers,
     // only able to get from subgraph, Etherscan API, etc.
@@ -272,7 +272,7 @@ const constructParams = (chain: string) => {
 
     const transfers = await portalNativeAndWrappedTransfersFromHashes(chain, hashes, tokenBridge);
     // console.log(`transfers: ${JSON.stringify(transfers, null, 2)}`);
-    return [...transfers, ...solanaLogs];
+    return transfers;
   };
 };
 
