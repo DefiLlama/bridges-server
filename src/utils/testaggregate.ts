@@ -4,6 +4,7 @@ import { runAggregateDataHistorical } from "./aggregate";
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
+const chain = process.argv[5];
 
 async function aggregateHistorical(
   startTimestamp: number,
@@ -30,4 +31,4 @@ async function aggregateHistorical(
   }
 }
 
-aggregateHistorical(startTs, endTs, bridgeName);
+aggregateHistorical(startTs, endTs, bridgeName, [chain]);

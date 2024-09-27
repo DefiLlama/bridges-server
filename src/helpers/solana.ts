@@ -1,7 +1,7 @@
 import { Connection } from "@solana/web3.js";
 
 export const getConnection = (): Connection => {
-  const rpc = "https://api.mainnet-beta.solana.com";
+  const rpc = process.env.SOLANA_RPC as string;
   const connection = new Connection(rpc);
   const getBlock = async (block: number) => {
     return new Connection(rpc).getBlock(block, {

@@ -502,12 +502,27 @@ export const runAdapterHistorical = async (
               let latestSolanaBlock = null;
               let averageBlockTimestamp = null;
 
+              let solanaTimestampsMap = {} as { [blockNumber: number]: number };
+
               if (chain === "solana" && bridgeDbName !== "debridgedln") {
                 latestSolanaBlock = await getLatestBlock("solana");
                 const connection = getConnection();
-                const medianBlockNumber = txBlocks?.sort((a, b) => a - b)?.[Math.floor(txBlocks.length / 2)];
-                averageBlockTimestamp = await connection.getBlockTime(medianBlockNumber);
+
+                const blockTimePromises = eventLogs.map(async (event: any) => {
+                  const blockTime = await retry(async () => connection.getBlockTime(event.blockNumber), { retries: 3 });
+                  return { blockNumber: event.blockNumber, blockTime, chainOverride: event.chainOverride };
+                });
+
+                const results = await Promise.all(blockTimePromises);
+
+                results.forEach(({ blockNumber, blockTime, chainOverride }) => {
+                  solanaTimestampsMap[blockNumber] = blockTime ?? 0;
+                  console.log(
+                    `[INFO] Block time for block ${blockNumber}: ${blockTime}, destination chain: ${chainOverride}`
+                  );
+                });
               }
+
               for (let i = 0; i < 10; i++) {
                 const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
                 for (let j = 0; j < 4; j++) {
@@ -560,6 +575,7 @@ export const runAdapterHistorical = async (
                   chainOverride,
                   isUSDVolume,
                   txsCountedAs,
+                  originChain,
                   timestamp: realBlockTimestamp,
                 } = log;
                 const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
@@ -573,7 +589,7 @@ export const runAdapterHistorical = async (
                   if (storedBridgeID) {
                     bridgeIdOverride = storedBridgeID;
                   } else {
-                    const overrideID = await retry(async () => getBridgeID(bridgeDbName, chainOverride))?.id;
+                    const overrideID = (await retry(async () => getBridgeID(bridgeDbName, chainOverride)))?.id;
                     bridgeIdOverride = overrideID;
                     storedBridgeIds[chainOverride] = overrideID;
                     if (!overrideID) {
@@ -602,9 +618,9 @@ export const runAdapterHistorical = async (
                       allowNullTxValues,
                       {
                         bridge_id: bridgeIdOverride,
-                        chain: chainContractsAreOn,
+                        chain: chainOverride ?? chainContractsAreOn,
                         tx_hash: txHash ?? null,
-                        ts: realBlockTimestamp ?? timestamp,
+                        ts: solanaTimestampsMap[blockNumber] ?? realBlockTimestamp ?? timestamp,
                         tx_block: blockNumber ?? null,
                         tx_from: from ?? null,
                         tx_to: to ?? null,
@@ -613,6 +629,7 @@ export const runAdapterHistorical = async (
                         is_deposit: isDeposit,
                         is_usd_volume: isUSDVolume ?? false,
                         txs_counted_as: txsCountedAs ?? 0,
+                        origin_chain: originChain ?? null,
                       },
                       onConflict
                     );
