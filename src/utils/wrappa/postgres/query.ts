@@ -27,6 +27,7 @@ interface ITransaction {
   usd_value?: number;
   is_usd_volume?: boolean;
   txs_counted_as?: number;
+  origin_chain?: string;
 }
 
 interface IAggregatedData {
@@ -329,7 +330,7 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
 type VolumeType = "deposit" | "withdrawal" | "both";
 
 const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "both"): Promise<number> => {
-  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 25 * 60 * 60;
 
   let volumeColumn = sql``;
   switch (volumeType) {
