@@ -27,7 +27,7 @@ const handler = async (event: { bridgeName: string }) => {
     `;
 
     console.log(`Running adapter for ${bridgeName}`);
-    await runAdapterToCurrentBlock(bridge, true, "ignore", lastRecordedBlocks);
+    await runAdapterToCurrentBlock(bridge, true, "ignore", lastRecordedBlocks[0].result);
     console.log(`Adapter for ${bridgeName} ran successfully`);
   } catch (e) {
     console.error(`Adapter ${event.bridgeName} failed: ${JSON.stringify(e)}`);
