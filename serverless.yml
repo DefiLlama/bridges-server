@@ -159,6 +159,10 @@ functions:
     memorySize: 1024
     events:
       - schedule: cron(1 * * * ? *)
+  runAdapterByName:
+    handler: src/handlers/runAdapterByName.default
+    timeout: 900
+    memorySize: 1024
   dailyAggregateAllAdapters:
     handler: src/handlers/dailyAggregateAllAdapters.default
     timeout: 900
