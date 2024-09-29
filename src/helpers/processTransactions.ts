@@ -6,6 +6,7 @@ import { ContractEventParams, PartialContractEventParams } from "../helpers/brid
 import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
+import * as sdk from "@defillama/sdk";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -18,13 +19,6 @@ const EventKeyTypes = {
   [key: string]: string;
 };
 
-interface EventLog {
-  blockNumber: number;
-  blockHash: string;
-  transactionIndex: number;
-  removed: boolean;
-  address: string;
-}
 
 const setTransferEventParams = (isDeposit: boolean, target: string) => {
   const topic = "Transfer(address,address,uint256)";
@@ -542,3 +536,29 @@ export const makeTxHashesUnique = (eventData: EventData[]) => {
     return event;
   });
 };
+
+const dummyFunction = (i: any) => i
+
+export async function getEVMLogs({ chain = 'ethereum', entireLog = true, fromBlock, toBlock, topic, topics, eventAbi, target, targets, transformLog = dummyFunction }: {
+  chain?: Chain,
+  entireLog?: boolean,
+  fromBlock: number,
+  toBlock: number,
+  topic?: string,
+  topics?: (string | null)[],
+  eventAbi?: string | any,
+  target?: string,
+  targets?: string[],
+  transformLog?: Function
+}) {
+  const logs = await sdk.getEventLogs({
+    chain, entireLog: true, fromBlock, toBlock, topic, topics, eventAbi, target, targets,
+  })
+  if (!entireLog && transformLog !== dummyFunction)
+    return logs.map((log: any) => log.args)
+
+  return logs.map((log: any) => {
+    log.txHash = log.transactionHash
+    return transformLog(log)
+  })
+}
