@@ -2,7 +2,7 @@ import { getLogs } from "@defillama/sdk/build/util";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
-import { ContractEventParams, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
+import { AdapterV2Params, ContractEventParams, ContractEventParamsV2, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
@@ -97,15 +97,15 @@ export const getTxDataFromEVMEventLogs = async (
       if (!logKeys) {
         logKeys = isDeposit
           ? {
-              blockNumber: "blockNumber",
-              txHash: "transactionHash",
-              to: "address",
-            }
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+            to: "address",
+          }
           : {
-              blockNumber: "blockNumber",
-              txHash: "transactionHash",
-              from: "address",
-            };
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+            from: "address",
+          };
       }
       if (!(topic && abi)) {
         throw new Error(
@@ -131,7 +131,7 @@ export const getTxDataFromEVMEventLogs = async (
           ).output;
           //console.log(logs)
           if (logs.length === 0) {
-            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${isDeposit ? 'Deposit': 'Withdrawal'}) for ${targetValue}.`);
+            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${isDeposit ? 'Deposit' : 'Withdrawal'}) for ${targetValue}.`);
 
           }
           break;
@@ -155,8 +155,7 @@ export const getTxDataFromEVMEventLogs = async (
             const value = txLog[logKey];
             if (typeof value !== EventKeyTypes[eventKey]) {
               throw new Error(
-                `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
-                  EventKeyTypes[eventKey]
+                `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${EventKeyTypes[eventKey]
                 }.`
               );
             }
@@ -188,8 +187,7 @@ export const getTxDataFromEVMEventLogs = async (
                 const value = argGetters?.[eventKey]?.(args) || get(args, argKey);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
-                    `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
-                      EventKeyTypes[eventKey]
+                    `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${EventKeyTypes[eventKey]
                     }.`
                   );
                 }
@@ -238,8 +236,7 @@ export const getTxDataFromEVMEventLogs = async (
                 const value = tx[logKey];
                 if (typeof value !== EventKeyTypes[eventKey]) {
                   throw new Error(
-                    `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
-                      EventKeyTypes[eventKey]
+                    `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${EventKeyTypes[eventKey]
                     }.`
                   );
                 }
@@ -369,8 +366,7 @@ export const getTxDataFromEVMEventLogs = async (
                 }
                 if (typeof value !== EventKeyTypes[eventKey]) {
                   throw new Error(
-                    `Type of ${eventKey} retrieved using ${inputDataKey} with inputDataExtraction is ${typeof value} when it must be ${
-                      EventKeyTypes[eventKey]
+                    `Type of ${eventKey} retrieved using ${inputDataKey} with inputDataExtraction is ${typeof value} when it must be ${EventKeyTypes[eventKey]
                     }.`
                   );
                 }
@@ -561,4 +557,41 @@ export async function getEVMLogs({ chain = 'ethereum', entireLog = true, fromBlo
     log.txHash = log.transactionHash
     return transformLog(log)
   })
+}
+
+const defaultArgKeys = ["from", "to", "token", "amount", ]
+
+export async function processEVMLogs({ getLogs, contractEventParams }: {
+  getLogs: Function,
+  contractEventParams: ContractEventParamsV2 | ContractEventParamsV2[]
+}) {
+  const allLogs = [] as any[]
+  if (!Array.isArray(contractEventParams)) contractEventParams = [contractEventParams]
+
+  for (const contractEventParam of contractEventParams) {
+    let { target, targets, abi, logKeys = {}, argKeys = {}, isDeposit, fixedEventData = {}, transformLog, filter = (i: any) => i} = contractEventParam;
+    if (typeof abi === 'string') abi = [abi]
+    if (abi === undefined) throw new Error("ABI is required for processing logs")
+    if (abi.length > 1) throw new Error("ABI must be a single string")
+    abi = abi[0]
+
+    const logs = await getLogs({ target, targets, eventAbi: abi, })
+
+    allLogs.push(logs.map((log: any) => {
+      defaultArgKeys.filter(i => log.args[i] !== undefined).map((argKey) => log[argKey] = log.args[argKey])
+      Object.entries(logKeys).map(([eventKey, logKey]) => log[eventKey] = log[logKey])
+      Object.entries(argKeys).map(([eventKey, argKey]) => log[eventKey] = log.args[argKey])
+      Object.entries(fixedEventData).map(([eventKey, value]) => log[eventKey] = value)
+      log.isDeposit = isDeposit
+      return transformLog ? transformLog(log) : log
+    }).filter(filter))
+  }
+
+  return allLogs.flat()
+}
+
+export function processEVMLogsExport(contractEventParams: ContractEventParamsV2 | ContractEventParamsV2[]) {
+  return async (_fromBlock: number, _toBlock: number, { getLogs }: AdapterV2Params) =>  {
+    return processEVMLogs({ getLogs, contractEventParams })
+  }
 }

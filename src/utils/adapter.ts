@@ -17,6 +17,7 @@ import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
+import runAdapter from "./runAdapter";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -451,7 +452,7 @@ export const runAdapterHistorical = async (
       try {
         const eventLogs = await retry(
           () =>
-            adapterChainEventsFn(block, endBlockForQuery).catch((e) => {
+            runAdapter({ fromBlock: block, toBlock: endBlockForQuery, chain, adapterChainEventsFn}).catch((e) => {
               console.error(
                 `[ERROR] Failed to fetch event logs for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}. Error: ${e.message}`
               );

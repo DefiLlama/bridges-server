@@ -3,7 +3,7 @@ import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
 export type BridgeAdapter = {
-  [chain: string]: (fromBlock: number, toBlock: number) => Promise<EventData[]>;
+  [chain: string]: (fromBlock: number, toBlock: number, v2Params?: AdapterV2Params) => Promise<EventData[]>;
 };
 
 export type EventLogFilter = {
@@ -79,3 +79,22 @@ export type PartialContractEventParams = {
     native?: string;
   };
 };
+
+export type ContractEventParamsV2 = {
+  target?: string;
+  targets?: string[];
+  abi?: string[]|string;
+  logKeys?: EventKeyMapping;
+  argKeys?: EventKeyMapping;
+  isDeposit: boolean;
+  fixedEventData?: EventKeyMapping;
+  transformLog?: Function;
+  filter?: Function
+};
+
+export type AdapterV2Params = {
+  fromBlock: number;
+  toBlock: number;
+  chain: Chain;
+  getLogs: Function;
+}

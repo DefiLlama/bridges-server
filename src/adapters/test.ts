@@ -4,6 +4,7 @@ import adapters from "./";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
+import { runAdapter } from "../utils/runAdapter";
 
 const logTypes = {
   txHash: "string",
@@ -54,17 +55,18 @@ const testAdapter = async () => {
           return;
         }
 
-        const { number, timestamp } = block;
+        let { number, timestamp } = block;
         if (!(number && timestamp)) {
           console.error(`Missing block number or timestamp for chain ${contractsChain}.`);
           return;
         }
+        number = number - 2000 // 2000 blocks behind to let indexer catch up
         const startBlock = number - parseInt(numberOfBlocks);
         console.log(`Getting event logs on chain ${contractsChain} from block ${startBlock} to ${number}.`);
-        const eventLogs = await adapterChainEventsFn(startBlock, number);
+        const eventLogs = await runAdapter({ fromBlock: startBlock, toBlock: number, adapterChainEventsFn, chain });
         // console.log(eventLogs)
         console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
-        for (const log of eventLogs) {
+        for (const log of eventLogs.slice(0, 12)) {
           console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);
           console.log(`From: ${log.from} To: ${log.to} `);
         }
@@ -85,9 +87,9 @@ const testAdapter = async () => {
             const { amount, isUSDVolume } = log;
 
             if (!isUSDVolume) {
-              if (!amount._isBigNumber) {
-                throw new Error(`Amount type ${typeof amount} and should be of type BigNumber.`);
-              }
+              // if (!amount._isBigNumber) {
+              //   throw new Error(`Amount type ${typeof amount} and should be of type BigNumber.`);
+              // }
               const token = log.token.toLowerCase();
               const tokenKey = transformTokens[contractsChain]?.[token]
                 ? transformTokens[contractsChain]?.[token]
