@@ -27,11 +27,9 @@ const ethWithdrawalParams: ContractEventParamsV2 = {
   target: BASE_PORTAL,
   abi: "event ETHWithdrawalFinalized(address indexed from, address indexed to, uint256 amount, bytes extraData)",
   isDeposit: false,
-  argKeys: {
-    token: WETH,
-  },
   fixedEventData: {
     from: BASE_PORTAL,
+    token: WETH,
   },
 }
 

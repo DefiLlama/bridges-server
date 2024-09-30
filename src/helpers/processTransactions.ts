@@ -2,7 +2,7 @@ import { getLogs } from "@defillama/sdk/build/util";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
-import { AdapterV2Params, ContractEventParams, ContractEventParamsV2, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
+import { AdapterV2Params, ContractEventParams, ContractEventParamsV2, Erc20TransferType, PartialContractEventParams } from "../helpers/bridgeAdapter.type";
 import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
@@ -559,39 +559,118 @@ export async function getEVMLogs({ chain = 'ethereum', entireLog = true, fromBlo
   })
 }
 
-const defaultArgKeys = ["from", "to", "token", "amount", ]
+const defaultArgKeys = ["from", "to", "token", "amount",]
 
-export async function processEVMLogs({ getLogs, contractEventParams }: {
-  getLogs: Function,
+export async function processEVMLogs({ contractEventParams, options, }: {
+  options: AdapterV2Params,
   contractEventParams: ContractEventParamsV2 | ContractEventParamsV2[]
 }) {
+
   const allLogs = [] as any[]
   if (!Array.isArray(contractEventParams)) contractEventParams = [contractEventParams]
 
-  for (const contractEventParam of contractEventParams) {
-    let { target, targets, abi, logKeys = {}, argKeys = {}, isDeposit, fixedEventData = {}, transformLog, filter = (i: any) => i} = contractEventParam;
+  for (const contractEventParam of contractEventParams as ContractEventParamsV2[]) {
+    let { target, targets, abi, logKeys = {}, argKeys = {}, isDeposit, fixedEventData = {}, transformLog, filter = (i: any) => i, eventLogType } = contractEventParam;
+    const isTransferType = eventLogType && [Erc20TransferType.TRANSFER, Erc20TransferType.TRANSFER_FROM, Erc20TransferType.TRANSFER_TO].includes(eventLogType)
+
+    if (!isTransferType && typeof isDeposit !== 'boolean') throw new Error("isDeposit is required for processing logs")
     if (typeof abi === 'string') abi = [abi]
     if (abi === undefined) throw new Error("ABI is required for processing logs")
     if (abi.length > 1) throw new Error("ABI must be a single string")
     abi = abi[0]
 
-    const logs = await getLogs({ target, targets, eventAbi: abi, })
+
+    let logs = [] as any[]
+
+    if (isTransferType)
+      logs = await getERC20TransferLogs({ options, target, targets, eventLogType, })
+    else
+      logs = await options.getLogs({ target, targets, eventAbi: abi, })
+
 
     allLogs.push(logs.map((log: any) => {
       defaultArgKeys.filter(i => log.args[i] !== undefined).map((argKey) => log[argKey] = log.args[argKey])
       Object.entries(logKeys).map(([eventKey, logKey]) => log[eventKey] = log[logKey])
       Object.entries(argKeys).map(([eventKey, argKey]) => log[eventKey] = log.args[argKey])
       Object.entries(fixedEventData).map(([eventKey, value]) => log[eventKey] = value)
-      log.isDeposit = isDeposit
+      if (!isTransferType)
+        log.isDeposit = isDeposit
       return transformLog ? transformLog(log) : log
-    }).filter(filter))
+    }).filter(filter as any))
   }
 
-  return allLogs.flat()
+  return allLogs.flat().map(filterOutNonEventDataKeys)
 }
 
+const eventDataKeySet = new Set(['blockNumber', 'txHash', 'from', 'to', 'token', 'amount', 'isDeposit', 'isUSDVolume', 'chainOverride', 'timestamp', 'txsCountedAs'])
+
+const filterOutNonEventDataKeys = (log: any) => {
+  const keys = Object.keys(log)
+  keys.filter(key => !eventDataKeySet.has(key)).map(key => delete log[key])
+  return log
+}
+
+
 export function processEVMLogsExport(contractEventParams: ContractEventParamsV2 | ContractEventParamsV2[]) {
-  return async (_fromBlock: number, _toBlock: number, { getLogs }: AdapterV2Params) =>  {
-    return processEVMLogs({ getLogs, contractEventParams })
+  return async (_fromBlock: number, _toBlock: number, options: AdapterV2Params) => {
+    return processEVMLogs({ options, contractEventParams, })
   }
+}
+
+export async function getERC20TransferLogs({ options, target, targets, skipIndexer = false, eventLogType }: {
+  options: AdapterV2Params,
+  target?: string,
+  targets?: string[],
+  eventLogType: Erc20TransferType,
+  skipIndexer?: boolean
+}): Promise<EventData[]> {
+  if (eventLogType === Erc20TransferType.TRANSFER)  {
+    const fromLogs = await getERC20TransferLogs({ options, target, targets, eventLogType: Erc20TransferType.TRANSFER_FROM, skipIndexer })
+    const toLogs = await getERC20TransferLogs({ options, target, targets, eventLogType: Erc20TransferType.TRANSFER_TO, skipIndexer })
+    return fromLogs.concat(toLogs)
+  }
+
+  const isDeposit = eventLogType === Erc20TransferType.TRANSFER_TO
+  const { chain, fromBlock, toBlock } = options
+
+  if (!skipIndexer) {
+    try {
+      const iTokenTransfers = await sdk.indexer.getTokenTransfers({
+        chain, fromBlock, toBlock, target, targets, transferType: isDeposit ? 'in': 'out'
+      })
+      return iTokenTransfers.map((log: any) => {
+        log.txHash = log.transaction_hash
+        log.blockNumber = log.block_number
+        log.from = log.from_address
+        log.to = log.to_address
+        log.amount = log.value
+        return log
+      })
+    } catch (e) {
+      console.error(`Error getting token transfers from indexer: ${(e as any)?.message}`)
+      return getERC20TransferLogs({ options, target, targets, eventLogType, skipIndexer: true })
+    }
+  }
+
+  if (targets?.length) {
+    const allLogs = [] as any[]
+    for (const target of targets) {
+      allLogs.push(await getERC20TransferLogs({ options, target, eventLogType, skipIndexer: true }))
+    }
+    return allLogs.flat()
+  }
+
+  if (!target) throw new Error("target is required for processing logs")
+
+  let topics = [];
+  if (isDeposit) {
+    topics = [ethers.utils.id("Transfer(address,address,uint256)"), null, ethers.utils.hexZeroPad(target, 32)];
+  } else {
+    topics = [ethers.utils.id("Transfer(address,address,uint256)"), ethers.utils.hexZeroPad(target, 32)];
+  }
+  
+  return getEVMLogs({
+    chain, fromBlock, toBlock, target, topics,
+    eventAbi: "event Transfer(address indexed from, address indexed to, uint256 amount)",
+  })
 }

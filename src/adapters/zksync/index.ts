@@ -1,6 +1,5 @@
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
+import { BridgeAdapter, ContractEventParamsV2, } from "../../helpers/bridgeAdapter.type";
+import { processEVMLogs } from "../../helpers/processTransactions";
 
 /* 
 
@@ -18,73 +17,56 @@ import { constructTransferParams } from "../../helpers/eventParams";
 
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 
-const ethDepositEventParams: PartialContractEventParams = {
+const ethWithdrawalParams: ContractEventParamsV2 = {
   target: "0x32400084C286CF3E17e7B677ea9583e60a000324",
-  // topic: "NewPriorityRequest(uint256,bytes32,uint64,tuple,bytes[])", // as shown on Etherscan
-  topic:
-    "NewPriorityRequest(uint256,bytes32,uint64,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256[4],bytes,bytes,uint256[],bytes,bytes),bytes[])", // expand tuple data types
-  // topic: "NewPriorityRequest(uint256,bytes32,uint64,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256[4],bytes,bytes,uint256[],bytes,bytes,bytes[])", // break out data types from tuple
-  abi: [
-    // "event NewPriorityRequest(uint256 txId, bytes32 txHash, uint64 expirationTimestamp, tuple transaction, bytes[] factoryDeps)", // as shown on Etherscan
-    "event NewPriorityRequest(uint256 txId, bytes32 txHash, uint64 expirationTimestamp, tuple(uint256 txType, uint256 from, uint256 to, uint256 gasLimit, uint256 gasPerPubdataByteLimit, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, uint256 paymaster, uint256 nonce, uint256 value, uint256[4] reserved, bytes data, bytes signature, uint256[] factoryDeps, bytes paymasterInput, bytes reservedDynamic) transaction, bytes[] factoryDeps)",
-  ],
-  argKeys: {
-    to: "transaction[2]",
-    amount: "transaction[9]",
-  },
-  argGetters: {
-    to: (log: any) => log?.transaction?.[2]?.toHexString(),
-    amount: (log: any) => log?.transaction?.[9],
-  },
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  fixedEventData: {
-    from: "0x32400084C286CF3E17e7B677ea9583e60a000324",
-    token: WETH,
-  },
-  isDeposit: true,
-};
-
-const erc20DepositEventParams: PartialContractEventParams = constructTransferParams(
-  "0x57891966931Eb4Bb6FB81430E6cE0A03AAbDe063",
-  true
-);
-
-const ethWithdrawalEventParams: PartialContractEventParams = {
-  target: "0x32400084C286CF3E17e7B677ea9583e60a000324",
-  topic: "EthWithdrawalFinalized(address,uint256)",
-  abi: ["event EthWithdrawalFinalized(address indexed to, uint256 amount)"],
-  argKeys: {
-    to: "to",
-    amount: "amount",
-  },
-  fixedEventData: {
-    from: "0x32400084C286CF3E17e7B677ea9583e60a000324",
-    token: WETH,
-  },
+  abi: "event EthWithdrawalFinalized(address indexed to, uint256 amount)",
   isDeposit: false,
-};
+  fixedEventData: {
+    from: "0x32400084C286CF3E17e7B677ea9583e60a000324",
+    token: WETH,
+  },
+}
+const erc20WithdrawalParams: ContractEventParamsV2 = {
+  target: "0x57891966931Eb4Bb6FB81430E6cE0A03AAbDe063",
+  abi: "event WithdrawalFinalized(address indexed to, address indexed l1Token, uint256 amount)",
+  isDeposit: false,
+  argKeys: {
+    token: "l1Token",
+  },
+  fixedEventData: {
+    from: "0x57891966931Eb4Bb6FB81430E6cE0A03AAbDe063",
+  },
+}
 
-const erc20WithdrawalEventParams: PartialContractEventParams = constructTransferParams(
-  "0x57891966931Eb4Bb6FB81430E6cE0A03AAbDe063",
-  false
-);
-
-const constructParams = () => {
-  const eventParams = [
-    ethDepositEventParams,
-    erc20DepositEventParams,
-    ethWithdrawalEventParams,
-    erc20WithdrawalEventParams,
-  ];
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("zksync", "ethereum", fromBlock, toBlock, eventParams);
-};
+const erc20DepositParams: ContractEventParamsV2 = {
+  target: "0x57891966931Eb4Bb6FB81430E6cE0A03AAbDe063",
+  abi: "event DepositInitiated (bytes32 indexed l2DepositTxHash, address indexed from, address indexed to, address l1Token, uint256 amount)",
+  isDeposit: true,
+  argKeys: {
+    token: "l1Token",
+  },
+}
+const ethDepositParams: ContractEventParamsV2 = {
+  target: "0x32400084C286CF3E17e7B677ea9583e60a000324",
+  abi: "event NewPriorityRequest(uint256 txId, bytes32 txHash, uint64 expirationTimestamp, tuple(uint256 txType, uint256 from, uint256 to, uint256 gasLimit, uint256 gasPerPubdataByteLimit, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, uint256 paymaster, uint256 nonce, uint256 value, uint256[4] reserved, bytes data, bytes signature, uint256[] factoryDeps, bytes paymasterInput, bytes reservedDynamic) transaction, bytes[] factoryDeps)",
+  isDeposit: true,
+  transformLog: (log: any) => {
+    log.amount = log.transaction.amount
+    log.to = log.transaction.to
+    return log;
+  }
+}
 
 const adapter: BridgeAdapter = {
-  ethereum: constructParams(),
+  ethereum: async (_from, _to, options) => {
+    const logs = await processEVMLogs({ options: options!, contractEventParams:[ethWithdrawalParams, erc20DepositParams, erc20WithdrawalParams] });
+    const ethDepositLogs = await processEVMLogs({ options: options!, contractEventParams:[ethDepositParams, ] });
+
+    // there was a bug where we assumed all NewPriorityRequest logs were for eth deposits, but we need to exclude all erc20 deposits
+    const txSet = new Set(logs.map((log) => log.txHash));
+    const filteredEthDepositLogs = ethDepositLogs.filter((log) => !txSet.has(log.txHash));
+    return logs.concat(filteredEthDepositLogs)
+  },
 };
 
 export default adapter;

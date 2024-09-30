@@ -80,16 +80,23 @@ export type PartialContractEventParams = {
   };
 };
 
+export enum Erc20TransferType {
+  TRANSFER = "erc20Transfer",
+  TRANSFER_FROM = "erc20TransferFrom",
+  TRANSFER_TO = "erc20TransferTo",
+}
+
 export type ContractEventParamsV2 = {
   target?: string;
   targets?: string[];
   abi?: string[]|string;
   logKeys?: EventKeyMapping;
   argKeys?: EventKeyMapping;
-  isDeposit: boolean;
+  isDeposit?: boolean;
   fixedEventData?: EventKeyMapping;
   transformLog?: Function;
-  filter?: Function
+  filter?: Function;
+  eventLogType?: Erc20TransferType; 
 };
 
 export type AdapterV2Params = {
