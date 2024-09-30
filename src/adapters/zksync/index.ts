@@ -48,18 +48,24 @@ const erc20DepositParams: ContractEventParamsV2 = {
 }
 const ethDepositParams: ContractEventParamsV2 = {
   target: "0x32400084C286CF3E17e7B677ea9583e60a000324",
+  topic: '0x4531cd5795773d7101c17bdeb9f5ab7f47d7056017506f937083be5d6e77a382',
   abi: "event NewPriorityRequest(uint256 txId, bytes32 txHash, uint64 expirationTimestamp, tuple(uint256 txType, uint256 from, uint256 to, uint256 gasLimit, uint256 gasPerPubdataByteLimit, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, uint256 paymaster, uint256 nonce, uint256 value, uint256[4] reserved, bytes data, bytes signature, uint256[] factoryDeps, bytes paymasterInput, bytes reservedDynamic) transaction, bytes[] factoryDeps)",
   isDeposit: true,
   transformLog: (log: any) => {
-    log.amount = log.transaction.amount
-    log.to = log.transaction.to
+    log.amount = log.args.transaction.value
+    log.to = '0x'+log.args.transaction.to.toString(16)
+    log.from = '0x'+log.args.transaction.from.toString(16)
     return log;
-  }
+  },
+  fixedEventData: {
+    token: WETH,
+  },
+  filter: (i: any) => Number(i.amount) > 0,
 }
 
 const adapter: BridgeAdapter = {
   ethereum: async (_from, _to, options) => {
-    const logs = await processEVMLogs({ options: options!, contractEventParams:[ethWithdrawalParams, erc20DepositParams, erc20WithdrawalParams] });
+    const logs = await processEVMLogs({ options: options!, contractEventParams:[erc20DepositParams, erc20WithdrawalParams, ethWithdrawalParams] });
     const ethDepositLogs = await processEVMLogs({ options: options!, contractEventParams:[ethDepositParams, ] });
 
     // there was a bug where we assumed all NewPriorityRequest logs were for eth deposits, but we need to exclude all erc20 deposits

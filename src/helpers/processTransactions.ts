@@ -570,7 +570,7 @@ export async function processEVMLogs({ contractEventParams, options, }: {
   if (!Array.isArray(contractEventParams)) contractEventParams = [contractEventParams]
 
   for (const contractEventParam of contractEventParams as ContractEventParamsV2[]) {
-    let { target, targets, abi, logKeys = {}, argKeys = {}, isDeposit, fixedEventData = {}, transformLog, filter = (i: any) => i, eventLogType } = contractEventParam;
+    let { topic, target, targets, abi, logKeys = {}, argKeys = {}, isDeposit, fixedEventData = {}, transformLog, filter = (i: any) => i, eventLogType } = contractEventParam;
     const isTransferType = eventLogType && [Erc20TransferType.TRANSFER, Erc20TransferType.TRANSFER_FROM, Erc20TransferType.TRANSFER_TO].includes(eventLogType)
 
     if (!isTransferType && typeof isDeposit !== 'boolean') throw new Error("isDeposit is required for processing logs")
@@ -585,7 +585,7 @@ export async function processEVMLogs({ contractEventParams, options, }: {
     if (isTransferType)
       logs = await getERC20TransferLogs({ options, target, targets, eventLogType, })
     else
-      logs = await options.getLogs({ target, targets, eventAbi: abi, })
+      logs = await options.getLogs({ target, targets, topic, eventAbi: abi, })
 
 
     allLogs.push(logs.map((log: any) => {
@@ -612,7 +612,7 @@ const filterOutNonEventDataKeys = (log: any) => {
 
 
 export function processEVMLogsExport(contractEventParams: ContractEventParamsV2 | ContractEventParamsV2[]) {
-  return async (_fromBlock: number, _toBlock: number, options: AdapterV2Params) => {
+  return async (_fromBlock: number, _toBlock: number, options: AdapterV2Params): Promise<EventData[]> => {
     return processEVMLogs({ options, contractEventParams, })
   }
 }

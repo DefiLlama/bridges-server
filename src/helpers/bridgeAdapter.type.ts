@@ -2,8 +2,11 @@ import { Chain } from "@defillama/sdk/build/general";
 import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
+type AdapterChainFnV2ParamsOptional = (fromBlock: number, toBlock: number, v2Params?: AdapterV2Params) => Promise<EventData[]>
+type AdapterChainFnV2ParamsMandatory = (fromBlock: number, toBlock: number, v2Params: AdapterV2Params) => Promise<EventData[]>
+
 export type BridgeAdapter = {
-  [chain: string]: (fromBlock: number, toBlock: number, v2Params?: AdapterV2Params) => Promise<EventData[]>;
+  [chain: string]: AdapterChainFnV2ParamsMandatory | AdapterChainFnV2ParamsOptional;
 };
 
 export type EventLogFilter = {
@@ -89,6 +92,7 @@ export enum Erc20TransferType {
 export type ContractEventParamsV2 = {
   target?: string;
   targets?: string[];
+  topic?: string;
   abi?: string[]|string;
   logKeys?: EventKeyMapping;
   argKeys?: EventKeyMapping;

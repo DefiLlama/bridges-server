@@ -75,7 +75,7 @@ const testAdapter = async () => {
           eventLogs.map(async (log: any) => {
             ["txHash", "blockNumber", "from", "to", "token", "isDeposit"].map((key) => {
               if (!(log[key] !== null && typeof log[key] === logTypes[key])) {
-                console.log("Yes it is missing", key);
+                console.log("Yes it is missing", key, log.txHash);
                 throw new Error(
                   `${key} is missing, null, or wrong type in log. It is of type ${typeof log[
                     key
