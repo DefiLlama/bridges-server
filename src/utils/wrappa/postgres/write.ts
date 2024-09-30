@@ -298,11 +298,11 @@ export const closeIdleConnections = async (idleTimeMinutes = 3) => {
   }
 };
 
-export const insertOrUpdateTokenWithoutPrice = async (token: string) => {
+export const insertOrUpdateTokenWithoutPrice = async (token: string, symbol: string) => {
   try {
     await sql`
-        INSERT INTO bridges.tokens_without_price (token, occurrence_count)
-        VALUES (${token}, 1)
+        INSERT INTO bridges.tokens_without_price (token, occurrence_count, symbol)
+        VALUES (${token}, 1, ${symbol})
         ON CONFLICT (token)
         DO UPDATE SET occurrence_count = bridges.tokens_without_price.occurrence_count + 1;
       `;

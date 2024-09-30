@@ -26,7 +26,7 @@ import { defaultConfidenceThreshold } from "./constants";
 import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
 import { blacklist } from "../data/blacklist";
 import { PublicKey } from "@solana/web3.js";
-import { sendDiscordText } from "./discord";
+import sdk from "@defillama/sdk";
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
 
@@ -405,7 +405,13 @@ export const aggregateData = async (
   if (tokensWithNullPrices.size) {
     await Promise.all(
       Array.from(tokensWithNullPrices).map(async (token: string) => {
-        await insertOrUpdateTokenWithoutPrice(token);
+        try {
+          const [chain, tokenAddress] = token.split(":");
+          const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, chain)).output;
+          await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
+        } catch (e) {
+          console.error(`Could not insert or update token without price: ${token}`, e);
+        }
       })
     );
   }
