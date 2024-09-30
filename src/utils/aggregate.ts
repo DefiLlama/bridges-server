@@ -26,7 +26,7 @@ import { defaultConfidenceThreshold } from "./constants";
 import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
 import { blacklist } from "../data/blacklist";
 import { PublicKey } from "@solana/web3.js";
-import sdk from "@defillama/sdk";
+const sdk = require("@defillama/sdk");
 
 const nullPriceCountThreshold = 10; // insert error when there are more than this many prices missing per hour/day for a bridge
 
