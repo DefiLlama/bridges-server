@@ -912,7 +912,7 @@ export default [
   },
   {
     id: 46,
-    displayName: "yBridge by xSync",
+    displayName: "yBridge by xSync Network",
     bridgeDbName: "xy",
     iconLink: "protocols:xy-finance",
     largeTxThreshold: 10000,
