@@ -1440,6 +1440,7 @@ export default [
       "BSquared",
       "Bitlayer",
       "Mode",
+      "Manta", 
     ],
     chainMapping: {
       "zksync era": "era",
