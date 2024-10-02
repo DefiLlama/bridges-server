@@ -4,6 +4,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 import { Chain } from "@defillama/sdk/build/general";
 import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
+import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
 
 export const bridgesAddress = {
     ethereum: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
@@ -20,7 +21,27 @@ export const bridgesAddress = {
     bsc: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     mode: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     merlin: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
+    manta: ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
     "b2-mainnet": ["0xB50Ac92D6d8748AC42721c25A3e2C84637385A6b"],
+} as const;
+
+export const contractsAddress = {
+    ethereum: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    arbitrum: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    optimism: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    era: ["0xA151d87100352089e52a70Ca8D52983cC9b39D47"],
+    base: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    linea: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    scroll: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    blast: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    xlayer: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    taiko: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    zklink: ["0xA151d87100352089e52a70Ca8D52983cC9b39D47"],
+    bsc: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    mode: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    merlin: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    manta: ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
+    "b2-mainnet": ["0x0fbCf4a62036E96C4F6770B38a9B536Aa14d1846"],
 } as const;
 
 const nativeTokens: Record<string, string> = {
@@ -42,6 +63,7 @@ type SupportedChains = keyof typeof bridgesAddress;
 
 const constructParams = (chain: SupportedChains) => {
     const bridgeAddress = bridgesAddress[chain];
+    const contractAddress = contractsAddress[chain];
 
     let eventParams = [] as any;
     bridgeAddress.map((address: string) => {
@@ -53,14 +75,11 @@ const constructParams = (chain: SupportedChains) => {
     if (nativeTokens.hasOwnProperty(chain)) {
         return async (fromBlock: number, toBlock: number) => {
             const eventLogData = await getTxDataFromEVMEventLogs("comet", chain as Chain, fromBlock, toBlock, eventParams);
-
             const nativeEvents = await Promise.all([
                 ...bridgeAddress.map(async (address: string, i: number) => {
                     await wait(300 * i); // for etherscan
                     let txs: any[] = [];
-                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                            includeSignatures: nativeTokenTransferSignature,
-                        });
+                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock);
             
                     const eventsRes: EventData[] = txs.map((tx: any) => {
                         const event: EventData = {
@@ -77,6 +96,29 @@ const constructParams = (chain: SupportedChains) => {
 
                     return eventsRes;
                 }),
+                ...contractAddress.map(async (address: string, i: number) => {
+                    await wait(300 * i); // for etherscan
+                    let txs: any[] = [];
+                    if (chain === "merlin") {
+                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock);
+                    } else {
+                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock);
+                    }
+                    const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
+                        const event: EventData = {
+                            txHash: tx.hash,
+                            blockNumber: +tx.blockNumber,
+                            from: tx.from,
+                            to: tx.to,
+                            token: nativeTokens[chain],
+                            amount: tx.value,
+                            isDeposit: address.toLowerCase() === tx.to,
+                        };
+                        return event;
+                    });
+
+                    return eventsRes;
+                })
             ]
             );
             const allEvents = [...eventLogData, ...nativeEvents.flat()];
@@ -100,6 +142,7 @@ const adapter: BridgeAdapter = {
     bsc: constructParams("bsc"),
     taiko: constructParams("taiko"),
     zklink: constructParams("zklink"),
+    manta: constructParams("manta"),
 
     'x layer': constructParams("xlayer"),
     "zksync era": constructParams("era"),
