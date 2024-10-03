@@ -1265,10 +1265,25 @@ export default [
     bridgeDbName: "helixbridge",
     iconLink: "icons:helixbridge",
     largeTxThreshold: 10000,
-    url: "https://helixbridge.app/",
-    chains: ["Arbitrum", "Darwinia", "Polygon", "BSC", "Linea", "Mantle", "Scroll", "Optimism", "Gnosis"],
+    url: "https://helixbridge.app",
+    chains: [
+      "Arbitrum",
+      "Darwinia",
+      "Polygon",
+      "BSC",
+      "Linea",
+      "Mantle",
+      "Scroll",
+      "Optimism",
+      "Gnosis",
+      "Blast",
+      "Moonbeam",
+      "Base",
+      "Avalanche",
+    ],
     chainMapping: {
       gnosis: "xdai",
+      avalanche: "avax",
     },
   },
   {
@@ -1467,12 +1482,6 @@ export default [
     iconLink: "icons:crowdswap",
     largeTxThreshold: 10000,
     url: "https://scanner.crowdswap.org/",
-    chains: [
-      "Ethereum",
-      "Arbitrum",
-      "Optimism",
-      "BSC",
-      "Polygon"
-    ]
+    chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon"],
   },
 ] as BridgeNetwork[];
