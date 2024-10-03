@@ -78,7 +78,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   moonbeam: constructParams("moonbeam"),
   base: constructParams("base"),
-  avalanche: constructParams("avalanche"),
+  avalanche: constructParams("avax"),
 };
 
 export default adapter;

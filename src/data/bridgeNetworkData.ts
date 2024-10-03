@@ -1294,6 +1294,7 @@ export default [
     ],
     chainMapping: {
       gnosis: "xdai",
+      avalanche: "avax",
     },
   },
   {
@@ -1491,12 +1492,6 @@ export default [
     iconLink: "icons:crowdswap",
     largeTxThreshold: 10000,
     url: "https://scanner.crowdswap.org/",
-    chains: [
-      "Ethereum",
-      "Arbitrum",
-      "Optimism",
-      "BSC",
-      "Polygon"
-    ]
+    chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon"],
   },
 ] as BridgeNetwork[];
