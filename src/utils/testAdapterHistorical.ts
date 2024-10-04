@@ -22,7 +22,7 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworkData.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = adapters[bridgeDbName];
+  const adapter = await adapters[bridgeDbName];
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;

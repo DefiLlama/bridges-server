@@ -117,7 +117,7 @@ export const runAdapterToCurrentBlock = async (
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
 
-  const adapter = adapters[bridgeDbName];
+  const adapter = await adapters[bridgeDbName];
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     console.error(`[ERROR] ${errString}`);
@@ -257,7 +257,7 @@ export const runAllAdaptersToCurrentBlock = async (
 
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    const adapter = await adapters[bridgeDbName];
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -311,7 +311,7 @@ export const runAllAdaptersTimestampRange = async (
 ) => {
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    const adapter = await adapters[bridgeDbName];
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -373,7 +373,7 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = adapters[bridgeDbName];
+  const adapter = await adapters[bridgeDbName];
 
   console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
 

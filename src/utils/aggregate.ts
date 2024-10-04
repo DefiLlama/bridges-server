@@ -66,7 +66,7 @@ export const runAggregateDataHistorical = async (
   }
 
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
-  const adapter = adapters[bridgeDbName];
+  const adapter = await adapters[bridgeDbName];
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
@@ -125,7 +125,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
     .for(bridgeNetworks)
     .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
-      const adapter = adapters[bridgeDbName];
+      const adapter = await adapters[bridgeDbName];
       const chains = Object.keys(adapter);
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {

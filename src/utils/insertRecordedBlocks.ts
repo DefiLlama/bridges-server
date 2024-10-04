@@ -8,7 +8,7 @@ const FileSystem = require("fs");
 
 const insertRecordedBlocks = async (adapterName: string, startTimestamp: number, endTimestamp: number) => {
   let recordedBlocks = recordedBlocksRecord as { [adapterChain: string]: { startBlock: number; endBlock: number } };
-  const adapter = adapters[adapterName];
+  const adapter = await adapters[adapterName];
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }

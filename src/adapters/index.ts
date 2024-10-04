@@ -138,5 +138,5 @@ export default {
   fastbtc,
   crowdswap,
 } as {
-  [bridge: string]: BridgeAdapter;
+  [bridge: string]: BridgeAdapter | Promise<BridgeAdapter>;
 };
