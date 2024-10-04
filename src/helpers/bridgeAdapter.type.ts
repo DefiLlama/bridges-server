@@ -1,4 +1,6 @@
 import { Chain } from "@defillama/sdk/build/general";
+import { LlamaProvider } from "@defillama/sdk/build/util/LlamaProvider";
+import { ethers } from "ethers";
 import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
@@ -16,6 +18,7 @@ export type EventLogFilter = {
   includeArg?: { [key: string]: string }[];
   excludeArg?: { [key: string]: string }[];
   includeTxData?: { [key: string]: string }[];
+  custom?: (provider: LlamaProvider, iface: ethers.utils.Interface, transactionHash: string) => Promise<boolean>;
 };
 
 export type FunctionSignatureFilter = {
