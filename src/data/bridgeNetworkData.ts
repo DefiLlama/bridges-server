@@ -148,12 +148,15 @@ export default [
       "Linea",
       "Scroll",
       "Moonbeam",
+      "Flow",
+      "Flow EVM",
     ],
     chainMapping: {
       avalanche: "avax",
       gnosis: "xdai",
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
+      "flow evm": "flow",
     },
   },
   {
