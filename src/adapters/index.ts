@@ -67,6 +67,7 @@ import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
 import fastbtc from "./rootstock-fastbtc-bridge"
 import crowdswap from "./crowdswap"
+import hyperlane from "./hyperlane";
 
 export default {
   polygon,
@@ -137,6 +138,7 @@ export default {
   cometbridge,
   fastbtc,
   crowdswap,
+  hyperlane,
 } as {
   [bridge: string]: BridgeAdapter | Promise<BridgeAdapter>;
 };
