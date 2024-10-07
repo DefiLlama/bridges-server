@@ -1484,4 +1484,17 @@ export default [
     url: "https://scanner.crowdswap.org/",
     chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon"],
   },
+  {
+        id: 72,
+        displayName: "Chain-Fusion",
+        bridgeDbName: "chain-fusion",
+        iconLink: "icons:chain-fusion",
+        largeTxThreshold: 10000,
+        url: "https://dashboard.internetcomputer.org/",
+        chains: [
+          "Ethereum",
+        ],
+        chainMapping: {
+        },
+      },
 ] as BridgeNetwork[];
