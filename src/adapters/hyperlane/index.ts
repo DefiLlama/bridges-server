@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { getProvider, setProvider } from "@defillama/sdk";
+import { LlamaProvider } from "@defillama/sdk/build/util/LlamaProvider";
 import providerList from "@defillama/sdk/build/providers.json";
 import { Chain } from "@defillama/sdk/build/general";
 
@@ -11,18 +12,18 @@ import * as yaml from 'js-yaml';
 const baseUri = "https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main";
 
 let metadata: Record<string, any>;
-let addresses: Record<string, Map<string, string>>;
+let addresses: Record<string, Record<string, string>>;
 const chainMapping: Record<string, string> = {};
 
 async function setUp(): Promise<void> {
   metadata =
-    await fetch(`${baseUri}/chains/metadata.yaml`)
+    (await fetch(`${baseUri}/chains/metadata.yaml`)
       .then((r) => r.text())
-      .then((t) => yaml.load(t));
+      .then((t) => yaml.load(t)) as Record<string, any>);
   addresses =
-    await fetch(`${baseUri}/chains/addresses.yaml`)
+    (await fetch(`${baseUri}/chains/addresses.yaml`)
       .then((r) => r.text())
-      .then((t) => yaml.load(t));
+      .then((t) => yaml.load(t)) as Record<string, Record<string, string>>);
 
   for (const [, chain] of Object.entries(metadata)) {
     if (chain.isTestnet) continue;
@@ -31,7 +32,7 @@ async function setUp(): Promise<void> {
     const provider = getProvider(chain.name);
     if (provider === null) {
       for (const p in providerList) {
-        const data = providerList[p];
+        const data = (providerList as any)[p];
         if (data.chainId == chain.chainId) {
           chainMapping[chain.name] = p;
           setProvider(chain.name, getProvider(p));
@@ -61,13 +62,13 @@ function constructParams(chain: string) {
   let eventParams = [] as PartialContractEventParams[];
   const mailboxAddress = ethers.utils.getAddress(addresses[chain].mailbox);
 
-  function buildFilter(eventName: string): () => Promise<boolean> {
+  function buildFilter(eventName: string): (provider: LlamaProvider, iface: ethers.utils.Interface, txHash: string) => Promise<boolean> {
     return async (provider, iface, txHash) => {
       const txReceipt = await provider.getTransactionReceipt(txHash);
       if (!txReceipt) return true;
 
       let toFilter = true;
-      txReceipt.logs.map((log) => {
+      txReceipt.logs.map((log: ethers.providers.Log) => {
         let parsed;
         try {
           parsed = iface.parseLog(log);
