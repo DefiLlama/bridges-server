@@ -150,15 +150,24 @@ const constructParams = (chain: SupportedChains) => {
                     let txs: any[] = [];
                     if (chain === "merlin") {
                         txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                            includeSignatures: ["0xddf252ad"],
+                            includeSignatures: [
+                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                            ],
                         });
                     } else if (chain === "btr") {
                         txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
-                            includeSignatures: ["0xddf252ad"],
+                            includeSignatures: [
+                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                            ],
                         });
                     } else {
                         txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                            includeSignatures: ["0xddf252ad"],
+                            includeSignatures: [
+                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                            ],
                         });
                     }
                     const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
