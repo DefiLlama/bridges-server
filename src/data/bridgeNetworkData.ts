@@ -175,6 +175,7 @@ export default [
       "Linea",
       "Scroll",
       "Moonbeam",
+      "Flow",
     ],
     chainMapping: {
       avalanche: "avax",
