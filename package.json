@@ -1,4 +1,5 @@
 {
+  "name": "bridges-server",
   "scripts": {
     "deploy:prod": "sls deploy --stage prod",
     "serve": "sls offline start",
@@ -13,6 +14,7 @@
   "devDependencies": {
     "@types/async-retry": "^1.4.8",
     "@types/aws-lambda": "^8.10.101",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^18.6.4",
     "@types/node-fetch": "^2.6.2",
     "@types/retry": "^0.12.5",
@@ -26,7 +28,7 @@
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.637.0",
     "@aws-sdk/client-s3": "^3.637.0",
-    "@defillama/sdk": "^5.0.80",
+    "@defillama/sdk": "^5.0.94",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@solana/web3.js": "^1.87.3",
     "async-retry": "^1.3.1",

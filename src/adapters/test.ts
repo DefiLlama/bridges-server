@@ -24,7 +24,7 @@ const adapterName = process.argv[2];
 const numberOfBlocks = process.argv[3];
 
 const testAdapter = async () => {
-  const adapter = adapters[adapterName];
+  const adapter = await adapters[adapterName];
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
