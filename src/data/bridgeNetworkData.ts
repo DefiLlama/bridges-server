@@ -42,6 +42,7 @@ export default [
     chains: ["Ethereum", "Optimism"],
     destinationChain: "Optimism",
   },
+
   // {
   //   id: 5,
   //   displayName: "Multichain",
@@ -121,7 +122,33 @@ export default [
   //  avalanche: "avax",
   //  },
   // },
- 
+  {
+    id: 9,
+    displayName: "Portal by Wormhole",
+    bridgeDbName: "portal",
+    iconLink: "icons:portal",
+    largeTxThreshold: 10000,
+    url: "https://portalbridge.com/",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Aurora",
+      "Celo",
+      "Klaytn",
+      "BSC",
+      "Moonbeam",
+      "Optimism",
+      "Arbitrum",
+      "Base",
+      "Solana",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
+
   {
     id: 10,
     displayName: "Celer cBridge",
@@ -1455,7 +1482,7 @@ export default [
       "BSquared",
       "Bitlayer",
       "Mode",
-      "Manta", 
+      "Manta",
     ],
     chainMapping: {
       "zksync era": "era",
