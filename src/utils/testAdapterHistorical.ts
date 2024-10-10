@@ -6,6 +6,7 @@ import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import adapters from "../adapters";
 import { getCurrentUnixTimestamp } from "./date";
 import { getBlockByTimestamp } from "./blocks";
+import runAdapter from "./runAdapter";
 const retry = require("async-retry");
 
 const startTs = Number(process.argv[2]);
@@ -61,7 +62,7 @@ export const runAdapterHistorical = async (
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
     try {
-      const eventLogs = await retry(() => adapterChainEventsFn(block, endBlockForQuery), { retries: 3, factor: 1 });
+      const eventLogs = await retry(() => runAdapter({ fromBlock: block, toBlock: endBlockForQuery, chain, adapterChainEventsFn}), { retries: 3, factor: 1 });
 
       // console.log(eventLogs);
       if (eventLogs.length === 0) {
