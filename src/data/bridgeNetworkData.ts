@@ -1514,7 +1514,7 @@ export default [
   {
     id: 72,
     displayName: "Mint",
-    bridgeDbName: "Mint",
+    bridgeDbName: "mint",
     iconLink: "icons:mint",
     largeTxThreshold: 10000,
     url: "https://bridge.mintchain.io/",
