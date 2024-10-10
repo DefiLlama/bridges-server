@@ -5,10 +5,115 @@ import {
     ACTION_EXECUTOR_ADDRESSES,
     VAULT_TYPE_USDC,
     VAULT_TYPE_USDT,
-    VAULT_ASSET_ADDRESSES
+    VAULT_ASSET_ADDRESSES,
+    CCIP_TOKEN_BRIDGE,
+    NATIVE_TOKENS,
+    CCIP_NATIVE_BRIDGE,
+    CCTP_ACTION_EXECUTOR
 } from "./constants";
 
 type SupportedChains = keyof typeof ACTION_EXECUTOR_ADDRESSES;
+
+const ccipDepositParams = (chain: SupportedChains): PartialContractEventParams => {
+    const ccipTokenBridge = CCIP_TOKEN_BRIDGE[chain] as string;
+
+    return {
+        target: ccipTokenBridge,
+        topic: "TokenBridgeActionSource(uint256,address,address,(address,uint256)[],uint256,bytes32,uint256)",
+        abi: [
+            "event TokenBridgeActionSource(uint256 targetChainId, address indexed sourceSender, address targetRecipient, tuple(address token, uint256 amount)[] tokenAmounts, uint256 reserve, bytes32 indexed ccipMessageId, uint256 timestamp)"
+        ],
+        isDeposit: true,
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            from: "sourceSender",
+            to: "targetRecipient",
+            amount: "tokenAmounts[0].amount",
+            token: "tokenAmounts[0].token"
+        },
+    };
+};
+
+const ccipNativeDepositParams = (chain: SupportedChains): PartialContractEventParams => {
+    const ccipTokenBridge = CCIP_NATIVE_BRIDGE[chain] as string;
+
+    return {
+        target: ccipTokenBridge,
+        topic: "NativeBridgeActionSource(uint256,uint256,address,address,bool,bool,uint256,uint256,bytes32,uint256)",
+        abi: [
+            "event NativeBridgeActionSource(uint256 indexed actionId, uint256 targetChainId, address indexed sourceSender, address targetRecipient, bool fromWrapped, bool toWrapped, uint256 amount, uint256 reserve, bytes32 indexed ccipMessageId, uint256 timestamp)"
+        ],
+        isDeposit: true,
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            from: "sourceSender",
+            to: "targetRecipient",
+            amount: "amount",
+        },
+        fixedEventData: {
+            token: NATIVE_TOKENS[chain]
+        }
+    };
+};
+
+const cctpDepositParams = (chain: SupportedChains): PartialContractEventParams => {
+    const cctpActionExecutor = CCTP_ACTION_EXECUTOR[chain] as string;
+
+    return {
+        target: cctpActionExecutor,
+        topic: "SourceProcessed(uint256,bool,address,uint256,address,address,uint256,uint256)",
+        abi: [
+            "event SourceProcessed(uint256 indexed actionId, bool indexed isLocal, address indexed sender, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
+        ],
+        isDeposit: true,
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            from: "sender",
+            amount: "fromAmount",
+            token: "fromTokenAddress"
+        },
+        fixedEventData: {
+            to: cctpActionExecutor
+        },
+        filter: {
+            includeArg: [{ isLocal: false as unknown as string }],
+        },
+    };
+};
+
+const cctpWithdrawParams = (chain: SupportedChains): PartialContractEventParams => {
+    const cctpActionExecutor = CCTP_ACTION_EXECUTOR[chain] as string;
+
+    return {
+        target: cctpActionExecutor,
+        topic: "TargetProcessed(uint256,address,uint256,address,address,uint256,uint256)",
+        abi: [
+            "event TargetProcessed(uint256 indexed actionId, address indexed recipient, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
+        ],
+        isDeposit: false,
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            token: "fromTokenAddress",
+            to: "recipient",
+            amount: "fromAmount",
+        },
+        fixedEventData: {
+            from: cctpActionExecutor
+        }
+    };
+};
 
 const depositParams = (chain: SupportedChains): PartialContractEventParams => {
     const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
@@ -129,6 +234,19 @@ const constructParams = (chain: SupportedChains) => {
 
     if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDT][chain]) {
         eventParams.push(variableBalanceUsdtParams(chain));
+    }
+
+    if(CCIP_TOKEN_BRIDGE[chain]) {
+        eventParams.push(ccipDepositParams(chain));
+    }
+
+    if(CCIP_NATIVE_BRIDGE[chain]) {
+        eventParams.push(ccipNativeDepositParams(chain));
+    }
+
+    if(CCTP_ACTION_EXECUTOR[chain]) {
+        eventParams.push(cctpDepositParams(chain));
+        eventParams.push(cctpWithdrawParams(chain));
     }
 
     return async (fromBlock: number, toBlock: number) =>
