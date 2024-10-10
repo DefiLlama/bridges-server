@@ -1511,4 +1511,13 @@ export default [
     url: "https://scanner.crowdswap.org/",
     chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon"],
   },
+  {
+    id: 72,
+    displayName: "Sui Bridge",
+    bridgeDbName: "suibridge",
+    iconLink: "icons:sui",
+    largeTxThreshold: 10000,
+    url: "https://sui.io/",
+    chians: ["Ethereum", "Sui"]
+  }
 ] as BridgeNetwork[];
