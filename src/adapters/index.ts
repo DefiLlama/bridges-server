@@ -65,9 +65,10 @@ import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
 import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
-import fastbtc from "./rootstock-fastbtc-bridge"
-import crowdswap from "./crowdswap"
-import mint from "./mint"
+import fastbtc from "./rootstock-fastbtc-bridge";
+import crowdswap from "./crowdswap";
+import mint from "./mint";
+import suibridge from "./suibridge";
 
 export default {
   polygon,
@@ -139,6 +140,7 @@ export default {
   fastbtc,
   crowdswap,
   mint,
+  suibridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
