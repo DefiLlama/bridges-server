@@ -1511,4 +1511,14 @@ export default [
     url: "https://scanner.crowdswap.org/",
     chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon"],
   },
+  {
+    id: 72,
+    displayName: "Mint",
+    bridgeDbName: "mint",
+    iconLink: "icons:mint",
+    largeTxThreshold: 10000,
+    url: "https://bridge.mintchain.io/",
+    chains: ["Ethereum", "Mint"],
+    destinationChain: "Mint",
+  },
 ] as BridgeNetwork[];
