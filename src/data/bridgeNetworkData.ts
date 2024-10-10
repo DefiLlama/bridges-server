@@ -1521,4 +1521,14 @@ export default [
     chains: ["Ethereum", "Mint"],
     destinationChain: "Mint",
   },
+  {
+    id: 73,
+    displayName: "Sui Bridge",
+    bridgeDbName: "suibridge",
+    iconLink: "icons:sui",
+    largeTxThreshold: 10000,
+    url: "https://sui.io/",
+    chains: ["Ethereum", "Sui"],
+    destinationChain: "Sui",
+  },
 ] as BridgeNetwork[];
