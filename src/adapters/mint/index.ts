@@ -4,7 +4,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 
-const MINT_L1_BRIDGE = "0x735aDBbE72226BD52e818E7181953f42E3b0FF21";
+const MINT_L1_BRIDGE = "0x2b3F201543adF73160bA42E1a5b7750024F30420";
 
 const ercDepositParams: PartialContractEventParams = {
     target: MINT_L1_BRIDGE,
