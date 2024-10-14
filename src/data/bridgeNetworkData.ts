@@ -42,6 +42,7 @@ export default [
     chains: ["Ethereum", "Optimism"],
     destinationChain: "Optimism",
   },
+
   // {
   //   id: 5,
   //   displayName: "Multichain",
@@ -121,7 +122,33 @@ export default [
   //  avalanche: "avax",
   //  },
   // },
- 
+  {
+    id: 9,
+    displayName: "Portal by Wormhole",
+    bridgeDbName: "portal",
+    iconLink: "icons:portal",
+    largeTxThreshold: 10000,
+    url: "https://portalbridge.com/",
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Fantom",
+      "Avalanche",
+      "Aurora",
+      "Celo",
+      "Klaytn",
+      "BSC",
+      "Moonbeam",
+      "Optimism",
+      "Arbitrum",
+      "Base",
+      "Solana",
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
+
   {
     id: 10,
     displayName: "Celer cBridge",
@@ -1455,7 +1482,7 @@ export default [
       "BSquared",
       "Bitlayer",
       "Mode",
-      "Manta", 
+      "Manta",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1486,6 +1513,26 @@ export default [
   },
   {
     id: 72,
+    displayName: "Mint",
+    bridgeDbName: "mint",
+    iconLink: "icons:mint",
+    largeTxThreshold: 10000,
+    url: "https://bridge.mintchain.io/",
+    chains: ["Ethereum", "Mint"],
+    destinationChain: "Mint",
+  },
+  {
+    id: 73,
+    displayName: "Sui Bridge",
+    bridgeDbName: "suibridge",
+    iconLink: "icons:sui",
+    largeTxThreshold: 10000,
+    url: "https://sui.io/",
+    chains: ["Ethereum", "Sui"],
+    destinationChain: "Sui",
+  },
+  {
+    id: 74,
     displayName: "RetroBridge",
     bridgeDbName: "retrobridge",
     iconLink: "icons:retrobridge",
@@ -1517,12 +1564,10 @@ export default [
       "opBNB",
       "Gravity",
       "Mint",
+      "BOB",
+      "Mantle",
       "Zora",
       "Kroma",
-      "Zeta Chain",
-      "Rari Chain",
-      "Zircuit",
-      "BOB",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1533,8 +1578,6 @@ export default [
       "x layer": "xlayer",
       opbnb: "op_bnb",
       avalanche: "avax",
-      "zeta chain": "zeta_chain",
-      "rari chain": "rari_chain",
     },
-  },
+  }
 ] as BridgeNetwork[];

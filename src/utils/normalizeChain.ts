@@ -915,6 +915,13 @@ export const chainCoingeckoIds = {
     categories: ["EVM", "Rollup"],
     chainId: 34443,
   },
+  Mint: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    chainId: 185,
+  },
   Merlin: {
     geckoId: null,
     symbol: null,
