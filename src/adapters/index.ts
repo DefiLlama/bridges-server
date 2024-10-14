@@ -69,6 +69,7 @@ import fastbtc from "./rootstock-fastbtc-bridge";
 import crowdswap from "./crowdswap";
 import mint from "./mint";
 import suibridge from "./suibridge";
+import retrobridge from "./retrobridge"
 
 export default {
   polygon,
@@ -141,6 +142,7 @@ export default {
   crowdswap,
   mint,
   suibridge,
+  retrobridge,
 } as {
   [bridge: string]: BridgeAdapter;
 };
