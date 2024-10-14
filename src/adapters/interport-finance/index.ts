@@ -9,7 +9,6 @@ import {
     CCIP_TOKEN_BRIDGE,
     NATIVE_TOKENS,
     CCIP_NATIVE_BRIDGE,
-    CCTP_ACTION_EXECUTOR
 } from "./constants";
 
 type SupportedChains = keyof typeof ACTION_EXECUTOR_ADDRESSES;
@@ -58,59 +57,6 @@ const ccipNativeDepositParams = (chain: SupportedChains): PartialContractEventPa
         },
         fixedEventData: {
             token: NATIVE_TOKENS[chain]
-        }
-    };
-};
-
-const cctpDepositParams = (chain: SupportedChains): PartialContractEventParams => {
-    const cctpActionExecutor = CCTP_ACTION_EXECUTOR[chain] as string;
-
-    return {
-        target: cctpActionExecutor,
-        topic: "SourceProcessed(uint256,bool,address,uint256,address,address,uint256,uint256)",
-        abi: [
-            "event SourceProcessed(uint256 indexed actionId, bool indexed isLocal, address indexed sender, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
-        ],
-        isDeposit: true,
-        logKeys: {
-            blockNumber: "blockNumber",
-            txHash: "transactionHash",
-        },
-        argKeys: {
-            from: "sender",
-            amount: "fromAmount",
-            token: "fromTokenAddress"
-        },
-        fixedEventData: {
-            to: cctpActionExecutor
-        },
-        filter: {
-            includeArg: [{ isLocal: false as unknown as string }],
-        },
-    };
-};
-
-const cctpWithdrawParams = (chain: SupportedChains): PartialContractEventParams => {
-    const cctpActionExecutor = CCTP_ACTION_EXECUTOR[chain] as string;
-
-    return {
-        target: cctpActionExecutor,
-        topic: "TargetProcessed(uint256,address,uint256,address,address,uint256,uint256)",
-        abi: [
-            "event TargetProcessed(uint256 indexed actionId, address indexed recipient, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
-        ],
-        isDeposit: false,
-        logKeys: {
-            blockNumber: "blockNumber",
-            txHash: "transactionHash",
-        },
-        argKeys: {
-            token: "fromTokenAddress",
-            to: "recipient",
-            amount: "fromAmount",
-        },
-        fixedEventData: {
-            from: cctpActionExecutor
         }
     };
 };
@@ -242,11 +188,6 @@ const constructParams = (chain: SupportedChains) => {
 
     if(CCIP_NATIVE_BRIDGE[chain]) {
         eventParams.push(ccipNativeDepositParams(chain));
-    }
-
-    if(CCTP_ACTION_EXECUTOR[chain]) {
-        eventParams.push(cctpDepositParams(chain));
-        eventParams.push(cctpWithdrawParams(chain));
     }
 
     return async (fromBlock: number, toBlock: number) =>
