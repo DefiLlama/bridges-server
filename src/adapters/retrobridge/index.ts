@@ -6,6 +6,7 @@ import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 import { EventData } from "../../utils/types";
+import { ethers } from "ethers";
 
 export const bridgesAddress = {
     arbitrum: ["0x009905bf008CcA637185EEaFE8F51BB56dD2ACa7"],
@@ -88,6 +89,11 @@ const nativeTokens: Record<string, string> = {
     taiko: "0x0000000000000000000000000000000000000000",
     btr: "0x0000000000000000000000000000000000000000",
     zklink: "0x0000000000000000000000000000000000000000",
+    manta: "0x0000000000000000000000000000000000000000",
+    mode: "0x0000000000000000000000000000000000000000",
+    mint: "0x0000000000000000000000000000000000000000",
+    zora: "0x0000000000000000000000000000000000000000",
+    kroma: "0x0000000000000000000000000000000000000000",
 };
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -171,7 +177,7 @@ const constructParams = (chain: SupportedChains) => {
                             from: tx.from,
                             to: tx.to,
                             token: nativeTokens[chain],
-                            amount: tx.value,
+                            amount: ethers.BigNumber.from(tx.value),
                             isDeposit: address.toLowerCase() === tx.to,
                         };
                         return event;
