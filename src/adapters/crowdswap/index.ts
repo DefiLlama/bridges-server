@@ -20,7 +20,15 @@ let routerAddresses = {} as {
   [chain: string]: string[];
 };
 
-const activeChains = ["ethereum", "bsc", "polygon", "optimism", "arbitrum", "defi", "rsk"];
+const activeChains = [
+  "ethereum", 
+  "bsc", 
+  "polygon", 
+  "optimism", 
+  "arbitrum", 
+  // "defi", 
+  // "rsk"
+];
 
 for(const chain of activeChains){
   if(!routerAddresses[chain]){
