@@ -92,7 +92,7 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  // defi: constructParams("defi"),
+  // defi: constructParams("Defichain"),
   // rsk: constructParams("rsk"),
 };
 
