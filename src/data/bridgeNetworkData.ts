@@ -1537,7 +1537,7 @@ export default [
     bridgeDbName: "retrobridge",
     iconLink: "icons:retrobridge",
     largeTxThreshold: 10000,
-    url: 'https://retrobridge.io/?utm_source=defillama',
+    url: 'https://retrobridge.io/',
     chains: [
       "Ethereum",
       "Arbitrum",
