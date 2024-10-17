@@ -1,14 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 import { BigNumber } from 'ethers';
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { Chain } from "@defillama/sdk/build/general";
+import { BridgeAdapter, ContractEventParamsV2, } from "../../helpers/bridgeAdapter.type";
 import { EventData } from '../../utils/types';
-import { fromHex } from 'tron-format-address';
 import { getConnection } from '../../helpers/solana';
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { getTxDataFromTronEventLogs } from './eventParsing';
+import { processEVMLogsExport } from "../../helpers/processTransactions";
 
-const adapterName = "allbridge-core";
 
 const lpAddresses = {
   bsc: [
@@ -50,55 +46,30 @@ const lpAddresses = {
 };
 
 const constructParams = (chain: string) => {
-  let eventParams = [] as PartialContractEventParams[];
+  let eventParams = [] as ContractEventParamsV2[];
   const lps = lpAddresses[chain];
 
-  for (const lpAddress of Object.values(lps)) {
-    const depositParams: PartialContractEventParams = {
+  for (const lpAddress of lps) {
+    const depositParams: ContractEventParamsV2 = {
       target: lpAddress,
-      topic: "SwappedToVUsd(address,address,uint256,uint256,uint256)",
-      abi: [
-        "event SwappedToVUsd(address sender, address token, uint amount, uint vUsdAmount, uint fee)"
-      ],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash"
-      },
-      argKeys: {
-        from: "sender",
-        token: "token",
-        amount: "amount"
-      },
+      abi: "event SwappedToVUsd(address from, address token, uint amount, uint vUsdAmount, uint fee)",
       fixedEventData: {
         to: lpAddress,
       },
       isDeposit: true
     };
 
-    const withdrawParams = {
+    const withdrawParams: ContractEventParamsV2 = {
       target: lpAddress,
-      topic: "SwappedFromVUsd(address,address,uint256,uint256,uint256)",
-      abi: [
-        "event SwappedFromVUsd(address recipient, address token, uint256 vUsdAmount, uint256 amount, uint256 fee)",
-      ],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        amount: "amount",
-        token: "token",
-        to: "recipient",
-      },
+      abi: "event SwappedFromVUsd(address to, address token, uint256 vUsdAmount, uint256 amount, uint256 fee)",
       fixedEventData: {
         from: lpAddress,
       },
       isDeposit: false,
     };
-    eventParams.push(depositParams, withdrawParams);
+    eventParams.push(depositParams, withdrawParams)
   }
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs(adapterName, chain as Chain, fromBlock, toBlock, eventParams);
+  return processEVMLogsExport(eventParams)
 };
 
 interface SolanaEvent {
@@ -147,61 +118,6 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
     isDeposit: event.isDeposit,
   }));
 };
-
-function constructTronParams() {
-  const chain = "tron";
-  const eventParams: any[] = [];
-  const lps = lpAddresses[chain];
-  for (const lpAddress of Object.values(lps)) {
-    const depositParams = {
-      target: lpAddress,
-      eventName: "SwappedToVUsd",
-      logKeys: {
-        blockNumber: "block_number",
-        txHash: "transaction_id",
-      },
-      argKeys: {
-        from: "sender",
-        token: "token",
-        amount: "amount"
-      },
-      argGetters: {
-        amount: (log: any) => BigNumber.from(log.amount),
-        from: (log: any) => fromHex(log.sender),
-        token: (log: any) => fromHex(log.token),
-      },
-      fixedEventData: {
-        to: lpAddress,
-      },
-      isDeposit: true,
-    }
-    const withdrawParams = {
-      target: lpAddress,
-      eventName: "SwappedFromVUsd",
-      logKeys: {
-        blockNumber: "block_number",
-        txHash: "transaction_id",
-      },
-      argKeys: {
-        amount: "amount",
-        token: "token",
-        to: "recipient",
-      },
-      argGetters: {
-        amount: (log: any) => BigNumber.from(log.amount),
-        to: (log: any) => fromHex(log.recipient),
-        token: (log: any) => fromHex(log.token),
-      },
-      fixedEventData: {
-        from: lpAddress,
-      },
-      isDeposit: false,
-    }
-    eventParams.push(depositParams, withdrawParams);
-  }
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromTronEventLogs(adapterName, fromBlock, toBlock, eventParams);
-}
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
