@@ -1527,7 +1527,7 @@ export default [
     bridgeDbName: "suibridge",
     iconLink: "icons:sui",
     largeTxThreshold: 10000,
-    url: "https://sui.io/",
+    url: "https://bridge.sui.io/",
     chains: ["Ethereum", "Sui"],
     destinationChain: "Sui",
   },
