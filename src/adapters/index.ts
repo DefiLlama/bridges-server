@@ -70,6 +70,7 @@ import crowdswap from "./crowdswap";
 import mint from "./mint";
 import suibridge from "./suibridge";
 import retrobridge from "./retrobridge"
+import layerswap from "./layerswap"
 
 export default {
   polygon,
@@ -143,6 +144,7 @@ export default {
   mint,
   suibridge,
   retrobridge,
+  layerswap,
 } as {
   [bridge: string]: BridgeAdapter;
 };
