@@ -129,7 +129,7 @@ const adapter: BridgeAdapter = {
   kroma: constructParams("kroma"),
   fraxtal: constructParams("fraxtal"),
   kcc: constructParams("kcc"),
-  // astar: constructParams("astar"),
+  astar: constructParams("astar"),
   fuse: constructParams("fuse"),
 };
 export default adapter;
