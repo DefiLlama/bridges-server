@@ -67,6 +67,10 @@ import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
 import fastbtc from "./rootstock-fastbtc-bridge"
 import crowdswap from "./crowdswap"
+import mint from "./mint";
+import suibridge from "./suibridge";
+import retrobridge from "./retrobridge"
+import layerswap from "./layerswap"
 import hyperlane from "./hyperlane";
 
 export default {
@@ -138,6 +142,10 @@ export default {
   cometbridge,
   fastbtc,
   crowdswap,
+  mint,
+  suibridge,
+  retrobridge,
+  layerswap,
   hyperlane,
 } as {
   [bridge: string]: BridgeAdapter | Promise<BridgeAdapter>;

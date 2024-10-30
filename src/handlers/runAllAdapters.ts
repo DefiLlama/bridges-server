@@ -30,6 +30,7 @@ export default wrapScheduledLambda(async (event) => {
   FROM (
       SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
       FROM bridges.transactions
+      WHERE origin_chain IS NULL
       GROUP BY bridge_id
   ) subquery;
   `;

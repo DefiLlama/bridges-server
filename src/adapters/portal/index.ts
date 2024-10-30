@@ -284,6 +284,7 @@ interface SolanaEvent {
   token: string;
   amount: string;
   isDeposit: boolean;
+  timestamp: number;
 }
 
 const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
@@ -332,6 +333,7 @@ const getSolanaEventsDestChain = async (fromBlock: number, toBlock: number, dest
         originChain: "solana",
         isDeposit: true,
         chainOverride: destChain === "avax" ? "avalanche" : destChain,
+        timestamp: event.timestamp * 1000,
       }));
     },
     {

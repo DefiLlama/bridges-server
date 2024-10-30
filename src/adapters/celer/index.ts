@@ -182,6 +182,9 @@ const contractAddresses = {
   moonbeam: {
     poolV2: ["0x841ce48F9446C8E281D3F1444cB859b4A6D0738C"],
   },
+  flow: {
+    peggedV2: ["0xBB7684Cc5408F4DD0921E5c2Cadd547b8f1AD573"],
+  }
 } as {
   [chain: string]: {
     poolV1?: string[];
@@ -523,6 +526,7 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   manta: constructParams("manta"),
   moonbeam: constructParams("moonbeam"),
+  flow: constructParams("flow"),
 };
 
 export default adapter;
