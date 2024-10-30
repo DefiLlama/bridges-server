@@ -145,7 +145,7 @@ const adapter: BridgeAdapter = {
   [Chains.optimism]: constructParams(Chains.optimism),
   avalanche: constructParams(Chains.avax),
   [Chains.base]: constructParams(Chains.base),
-  [Chains.gnosis]: constructParams(Chains.gnosis),
+  gnosis: constructParams(Chains.gnosis),
   [Chains.blast]: constructParams(Chains.blast),
   [Chains.linea]: constructParams(Chains.linea),
   [Chains.mantle]: constructParams(Chains.mantle),
