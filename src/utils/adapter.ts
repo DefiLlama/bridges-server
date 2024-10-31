@@ -7,7 +7,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import { store } from "./s3";
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
@@ -117,7 +117,8 @@ export const runAdapterToCurrentBlock = async (
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
 
-  const adapter = await adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     console.error(`[ERROR] ${errString}`);
@@ -257,7 +258,8 @@ export const runAllAdaptersToCurrentBlock = async (
 
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = await adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -311,7 +313,8 @@ export const runAllAdaptersTimestampRange = async (
 ) => {
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = await adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -373,7 +376,8 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = await adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
 
@@ -704,3 +708,7 @@ export const insertConfigEntriesForAdapter = async (
     })
   );
 };
+
+export function isAsyncAdapter(adapter: BridgeAdapter | AsyncBridgeAdapter): adapter is AsyncBridgeAdapter {
+  return (adapter as AsyncBridgeAdapter).isAsync;
+}

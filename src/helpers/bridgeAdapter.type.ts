@@ -8,6 +8,11 @@ export type BridgeAdapter = {
   [chain: string]: (fromBlock: number, toBlock: number) => Promise<EventData[]>;
 };
 
+export type AsyncBridgeAdapter = {
+  isAsync: boolean;
+  build: () => Promise<BridgeAdapter>;
+};
+
 export type EventLogFilter = {
   includeToken?: string[];
   includeFrom?: string[];

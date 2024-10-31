@@ -4,6 +4,7 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import adapters from "../adapters";
+import { isAsyncAdapter } from "../utils/adapter";
 import { getCurrentUnixTimestamp } from "./date";
 import { getBlockByTimestamp } from "./blocks";
 const retry = require("async-retry");
@@ -22,7 +23,8 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworkData.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = await adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;

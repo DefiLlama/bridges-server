@@ -137,7 +137,7 @@ const excludedChains = [
   "lumia", // TODO: not available in defillama sdk providerList, can be added manually
 ];
 
-async function buildAdapter(): Promise<BridgeAdapter> {
+async function build(): Promise<BridgeAdapter> {
   await setUp();
 
   const adapter: BridgeAdapter = {
@@ -158,4 +158,4 @@ async function buildAdapter(): Promise<BridgeAdapter> {
   return adapter;
 }
 
-export default buildAdapter();
+export default { isAsync: true, build };

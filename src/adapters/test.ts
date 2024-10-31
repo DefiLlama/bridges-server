@@ -4,6 +4,7 @@ import adapters from "./";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { getLlamaPrices } from "../utils/prices";
 import { transformTokens } from "../helpers/tokenMappings";
+import { isAsyncAdapter } from "../utils/adapter";
 
 const logTypes = {
   txHash: "string",
@@ -24,7 +25,8 @@ const adapterName = process.argv[2];
 const numberOfBlocks = process.argv[3];
 
 const testAdapter = async () => {
-  const adapter = await adapters[adapterName];
+  let adapter = adapters[adapterName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }

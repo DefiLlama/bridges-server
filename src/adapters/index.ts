@@ -1,4 +1,4 @@
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import polygon from "./polygon";
 import synapse from "./synapse";
 import hop from "./hop";
@@ -65,8 +65,8 @@ import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
 import minibridge from "./minibridge";
 import cometbridge from "./cometbridge";
-import fastbtc from "./rootstock-fastbtc-bridge"
-import crowdswap from "./crowdswap"
+import fastbtc from "./rootstock-fastbtc-bridge";
+import crowdswap from "./crowdswap";
 import mint from "./mint";
 import suibridge from "./suibridge";
 import retrobridge from "./retrobridge"
@@ -148,5 +148,5 @@ export default {
   layerswap,
   hyperlane,
 } as {
-  [bridge: string]: BridgeAdapter | Promise<BridgeAdapter>;
+  [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

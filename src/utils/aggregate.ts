@@ -20,6 +20,7 @@ import {
   insertOrUpdateTokenWithoutPrice,
 } from "./wrappa/postgres/write";
 import adapters from "../adapters";
+import { isAsyncAdapter } from "../utils/adapter";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
@@ -66,7 +67,8 @@ export const runAggregateDataHistorical = async (
   }
 
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
-  const adapter = await adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
@@ -125,7 +127,8 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
     .for(bridgeNetworks)
     .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
-      const adapter = await adapters[bridgeDbName];
+      let adapter = adapters[bridgeDbName];
+      adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
       const chains = Object.keys(adapter);
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
