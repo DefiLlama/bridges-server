@@ -1,4 +1,4 @@
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import polygon from "./polygon";
 import synapse from "./synapse";
 import hop from "./hop";
@@ -71,6 +71,7 @@ import mint from "./mint";
 import suibridge from "./suibridge";
 import retrobridge from "./retrobridge"
 import layerswap from "./layerswap"
+import hyperlane from "./hyperlane";
 
 export default {
   polygon,
@@ -145,6 +146,7 @@ export default {
   suibridge,
   retrobridge,
   layerswap,
+  hyperlane,
 } as {
-  [bridge: string]: BridgeAdapter;
+  [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
