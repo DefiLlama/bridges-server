@@ -79,6 +79,7 @@ const adapter: BridgeAdapter = {
   moonbeam: constructParams("moonbeam"),
   base: constructParams("base"),
   avalanche: constructParams("avax"),
+  morph: constructParams("morph"),
 };
 
 export default adapter;

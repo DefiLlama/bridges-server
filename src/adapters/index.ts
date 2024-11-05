@@ -59,7 +59,7 @@ import connext from "./connext";
 import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
-import helixbridge from "./helixbridge";
+import helixbox from "./helixbox";
 import oooo from "./oooo";
 import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
@@ -135,7 +135,7 @@ export default {
   owlto,
   zkbridge,
   zkbridge111: zkbridge,
-  helixbridge,
+  helixbox,
   memebridge,
   bunnyfi,
   minibridge,
