@@ -1264,11 +1264,11 @@ export default [
   },
   {
     id: 64,
-    displayName: "HelixBridge",
+    displayName: "Helixbox",
     bridgeDbName: "helixbridge",
     iconLink: "icons:helixbridge",
     largeTxThreshold: 10000,
-    url: "https://helixbridge.app",
+    url: "https://helix.box",
     chains: [
       "Arbitrum",
       "Darwinia",
@@ -1283,6 +1283,7 @@ export default [
       "Moonbeam",
       "Base",
       "Avalanche",
+      "Morph",
     ],
     chainMapping: {
       gnosis: "xdai",
