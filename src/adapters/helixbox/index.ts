@@ -56,6 +56,10 @@ const constructParams = (chain: Chain) => {
     contractAddress = '0xB180D7DcB5CC161C862aD60442FA37527546cAFC';
   }
 
+  if (chain === 'morph') {
+    contractAddress = '0xCcD566F8dA3643A9948A1509cde0D0324D32d19b';
+  }
+
   const eventParams: PartialContractEventParams[] = [
     depositParams(contractAddress),
     withdrawalParams(contractAddress),
