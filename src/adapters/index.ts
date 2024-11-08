@@ -135,7 +135,7 @@ export default {
   owlto,
   zkbridge,
   zkbridge111: zkbridge,
-  helixbox,
+  helixbridge: helixbox,
   memebridge,
   bunnyfi,
   minibridge,
