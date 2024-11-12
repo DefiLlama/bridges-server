@@ -65,7 +65,7 @@ abi: ["event ETHWithdrawalFinalized(address indexed _from, address indexed _to, 
 isDeposit: false, // event type 
 logKeys: {
   blockNumber:  "blockNumber", 
-  txHash:  "transactionHash",// if event log data key != adapter ouptup key
+  txHash:  "transactionHash",// if event log data key != adapter output key
 },
 argKeys: {
   to: "_to", 
