@@ -78,6 +78,7 @@ export const getTxDataFromEVMEventLogs = async (
         mapTokens,
         getTokenFromReceipt,
         argGetters,
+        logGetters,
       } = params;
       const targetValue = target
       // if this is ever used, need to also overwrite fromBlock and toBlock
@@ -157,8 +158,9 @@ export const getTxDataFromEVMEventLogs = async (
         .process(async (txLog: any, i) => {
           data[i] = data[i] || {};
           data[i]["isDeposit"] = isDeposit;
-          Object.entries(logKeys!).map(([eventKey, logKey]) => {
-            const value = txLog[logKey];
+          await Promise.all(Object.entries(logKeys!).map(async ([eventKey, logKey]) => {
+            // @ts-ignore
+            const value = await logGetters?.[eventKey]?.(provider, iface, txLog) || txLog[logKey];
             if (typeof value !== EventKeyTypes[eventKey]) {
               throw new Error(
                 `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
@@ -167,7 +169,7 @@ export const getTxDataFromEVMEventLogs = async (
               );
             }
             data[i][eventKey] = value;
-          });
+          }));
           let parsedLog = {} as any;
           try {
             parsedLog = iface.parseLog({

@@ -58,6 +58,8 @@ function bytes32ToAddress(bytes32: string) {
   return ethers.utils.getAddress('0x' + bytes32.slice(26));
 }
 
+const cachedTokens: Record<string, Record<string, string>> = {};
+
 function constructParams(chain: string) {
   let eventParams = [] as PartialContractEventParams[];
   const mailboxAddress = ethers.utils.getAddress(addresses[chain].mailbox);
@@ -88,15 +90,36 @@ function constructParams(chain: string) {
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
-      from: "address",
       token: "address",
+    },
+    logGetters: {
+      token: async (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => {
+        cachedTokens[provider.chainId] ||= {};
+
+        if (cachedTokens[provider.chainId][log.address]) {
+          return cachedTokens[provider.chainId][log.address];
+        }
+
+        const data = iface.encodeFunctionData("wrappedToken");
+        const tokenAddress =
+          await provider.call({ to: log.address, data }).then((r) => {
+            return iface.decodeFunctionResult("wrappedToken", r)[0];
+          }).catch(() => log.address);
+
+        cachedTokens[provider.chainId][log.address] = tokenAddress;
+
+        return tokenAddress;
+      }
     },
     argKeys: {
       to: "recipient",
       amount: "amount",
     },
     argGetters: {
-      to: (log: any) => { bytes32ToAddress(log.recipient); }
+      to: (logArgs: any) => { bytes32ToAddress(logArgs.recipient); }
+    },
+    txKeys: {
+      from: "from",
     },
   };
   const depositParams: PartialContractEventParams = {
@@ -105,6 +128,7 @@ function constructParams(chain: string) {
     abi: [
       "event SentTransferRemote(uint32 indexed destination, bytes32 indexed recipient, uint256 amount)",
       "event Dispatch(address indexed sender, uint32 indexed destination, bytes32 indexed recipient, bytes message)",
+      "function wrappedToken() external view returns (address)",
     ],
     isDeposit: true,
     filter: {
@@ -118,6 +142,7 @@ function constructParams(chain: string) {
     abi: [
       "event ReceivedTransferRemote(uint32 indexed origin, bytes32 indexed recipient, uint256 amount)",
       "event Process(uint32 indexed origin, bytes32 indexed sender, address indexed recipient)",
+      "function wrappedToken() external view returns (address)",
     ],
     isDeposit: false,
     filter: {
