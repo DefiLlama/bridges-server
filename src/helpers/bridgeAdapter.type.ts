@@ -43,6 +43,7 @@ export type ContractEventParams = {
   topic: string;
   abi: string[];
   logKeys?: EventKeyMapping; // retrieve data from event log
+  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
   argKeys?: EventKeyMapping; // retrieve data from parsed event log
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping; // retrieve data from transaction referenced in event log
@@ -68,6 +69,7 @@ export type PartialContractEventParams = {
   topic?: string;
   abi?: string[];
   logKeys?: EventKeyMapping;
+  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
   argKeys?: EventKeyMapping;
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping;
