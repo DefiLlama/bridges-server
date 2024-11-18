@@ -43,6 +43,8 @@ interface IAggregatedData {
   total_address_withdrawn: string[];
 }
 
+type TimePeriod = "day" | "week" | "month";
+
 const getBridgeID = async (bridgNetworkName: string, chain: string) => {
   return (
     await sql<IConfigID[]>`
@@ -357,6 +359,41 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   return parseFloat((+result[0].total_volume / 2).toString());
 };
 
+const getNetflows = async (period: TimePeriod) => {
+  let intervalPeriod = sql``;
+  switch (period) {
+    case "day":
+      intervalPeriod = sql`interval '1 day'`;
+      break;
+    case "week":
+      intervalPeriod = sql`interval '1 week'`;
+      break;
+    case "month":
+      intervalPeriod = sql`interval '1 month'`;
+      break;
+  }
+
+  return await sql<{ chain: string; net_flow: string }[]>`
+    WITH period_flows AS (
+      SELECT 
+        c.chain,
+        SUM(ha.total_deposited_usd - ha.total_withdrawn_usd) as net_flow
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      WHERE ha.ts >= date_trunc(${period}, NOW()) - ${intervalPeriod}
+      AND ha.ts < date_trunc(${period}, NOW())
+      AND LOWER(c.chain) NOT LIKE '%dydx%'
+      GROUP BY c.chain
+    )
+    SELECT 
+      chain,
+      net_flow
+    FROM period_flows
+    WHERE net_flow IS NOT NULL
+    ORDER BY ABS(net_flow) DESC;
+  `;
+};
+
 export {
   getBridgeID,
   getConfigsWithDestChain,
@@ -370,4 +407,5 @@ export {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
+  getNetflows,
 };

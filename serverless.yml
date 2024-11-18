@@ -169,7 +169,14 @@ functions:
     memorySize: 1024
     events:
       - schedule: cron(0 1 * * ? *)
-
+  getNetflows:
+    handler: src/handlers/getNetflows.default
+    timeout: 30
+    memorySize: 2000
+    events:
+      - http:
+          path: netflows/{period}
+          method: get
 resources:
   # CORS for api gateway errors
   - ${file(resources/api-gateway-errors.yml)}
