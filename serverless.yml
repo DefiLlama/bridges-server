@@ -158,7 +158,7 @@ functions:
     timeout: 900
     memorySize: 1024
     events:
-      - schedule: cron(0 0/12 * * ? *)
+      - schedule: cron(0 * * * ? *)
   runAdapterByName:
     handler: src/handlers/runAdapterByName.default
     timeout: 900
@@ -168,7 +168,7 @@ functions:
     timeout: 900
     memorySize: 1024
     events:
-      - schedule: cron(30 0/12 * * ? *)
+      - schedule: cron(30 * * * ? *)
   getNetflows:
     handler: src/handlers/getNetflows.default
     timeout: 30

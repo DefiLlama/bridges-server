@@ -60,30 +60,8 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
 };
 
 async function getBlockTime(slotNumber: number) {
-  const response = await fetch(process.env.SOLANA_RPC as string, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "getBlockTime",
-      params: [slotNumber],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  if (data.error) {
-    throw new Error(`RPC error: ${data.error.message}`);
-  }
-
-  return data.result;
+  const response = await connection.getBlockTime(slotNumber);
+  return response;
 }
 
 export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
