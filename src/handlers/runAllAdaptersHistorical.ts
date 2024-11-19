@@ -25,12 +25,12 @@ async function invokeLambda(functionName: string, event: any) {
 const handler = async (_event: any) => {
   await closeIdleConnections();
   const now = Math.floor(Date.now() / 1000);
-  const oneHourAgo = now - 3600;
+  const dayAgo = now - 86400;
 
   for (const bridge of bridgeNetworks) {
     await invokeLambda("llama-bridges-prod-runAdapterFromTo", {
       bridgeName: bridge.bridgeDbName,
-      fromTimestamp: oneHourAgo,
+      fromTimestamp: dayAgo,
       toTimestamp: now,
     });
   }

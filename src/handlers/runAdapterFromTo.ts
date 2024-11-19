@@ -2,8 +2,7 @@ import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { runAdapterHistorical } from "../utils/adapter";
 import { sql } from "../utils/db";
-import { Chain } from "@defillama/sdk/build/general";
-import { getBlockByTimestamp } from "../utils/blocks";
+import { getBridgeID } from "../utils/wrappa/postgres/query";
 
 const handler = async (event: any) => {
   try {
@@ -25,25 +24,41 @@ const handler = async (event: any) => {
 
       console.log(`Processing chain ${nChain} for ${bridgeName}`);
 
-      let fromBlock, toBlock;
-      if (bridgeName === "ibc") {
-        fromBlock = await getBlockByTimestamp(fromTimestamp, nChain as Chain, adapter, "First");
-        toBlock = await getBlockByTimestamp(toTimestamp, nChain as Chain, adapter, "Last");
-      } else {
-        fromBlock = await getBlockByTimestamp(fromTimestamp, nChain as Chain);
-        toBlock = await getBlockByTimestamp(toTimestamp, nChain as Chain);
-      }
-
-      if (!fromBlock || !toBlock) {
-        console.error(`Could not find blocks for ${nChain} on ${bridgeName}`);
+      const bridgeConfig = await getBridgeID(bridgeName, nChain);
+      if (!bridgeConfig) {
+        console.error(`Could not find bridge config for ${nChain} on ${bridgeName}`);
         return;
       }
 
-      await runAdapterHistorical(fromBlock.block, toBlock.block, adapter.id, nChain, true, false, "upsert");
+      const fromTx = await sql<{ tx_block: number }[]>`
+        SELECT tx_block FROM bridges.transactions 
+        WHERE bridge_id = ${bridgeConfig.id}
+        AND chain = ${nChain}
+        AND tx_block IS NOT NULL
+        AND ts <= to_timestamp(${fromTimestamp})
+        ORDER BY ts DESC LIMIT 1
+      `;
 
-      console.log(
-        `Adapter ${bridgeName} ran successfully for chain ${nChain} from block ${fromBlock.block} to ${toBlock.block}`
-      );
+      const toTx = await sql<{ tx_block: number }[]>`
+        SELECT tx_block FROM bridges.transactions 
+        WHERE bridge_id = ${bridgeConfig.id}
+        AND chain = ${nChain}
+        AND tx_block IS NOT NULL
+        AND ts >= to_timestamp(${toTimestamp})
+        ORDER BY ts ASC LIMIT 1
+      `;
+
+      if (!fromTx.length || !toTx.length) {
+        console.error(`Could not find transactions with blocks for ${nChain} on ${bridgeName}`);
+        return;
+      }
+
+      const fromBlock = fromTx[0].tx_block;
+      const toBlock = toTx[0].tx_block;
+
+      await runAdapterHistorical(fromBlock, toBlock, adapter.id, nChain, true, false, "upsert");
+
+      console.log(`Adapter ${bridgeName} ran successfully for chain ${nChain} from block ${fromBlock} to ${toBlock}`);
     });
 
     await Promise.all(promises);
