@@ -142,7 +142,7 @@ functions:
     timeout: 900
     memorySize: 10240
     events:
-      - schedule: cron(32 * * * ? *)
+      - schedule: cron(10 * * * ? *)
   checkStaleBridges:
     handler: src/handlers/checkStaleBridges.default
     timeout: 600
@@ -158,7 +158,7 @@ functions:
     timeout: 900
     memorySize: 1024
     events:
-      - schedule: cron(0 * * * ? *)
+      - schedule: cron(0,15,30,45 * * * ? *)
   runAdapterByName:
     handler: src/handlers/runAdapterByName.default
     timeout: 900
