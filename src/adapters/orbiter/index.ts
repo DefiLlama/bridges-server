@@ -205,7 +205,7 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   taiko: constructParams("taiko"),
   bitlayer: constructParams("btr"),
-  // mantle: constructParams("mantle"), // no etherscan
+  mantle: constructParams("mantle"),
   // zkfair: constructParams("zkfair"), // no etherscan
   // bsquared: constructParams("b2-mainnet"), // no etherscan
   // bouncebit: constructParams("bouncebit-mainnet"), // no etherscan
