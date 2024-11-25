@@ -7,7 +7,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import { store } from "./s3";
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
@@ -117,7 +117,8 @@ export const runAdapterToCurrentBlock = async (
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
 
-  const adapter = adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     console.error(`[ERROR] ${errString}`);
@@ -257,7 +258,8 @@ export const runAllAdaptersToCurrentBlock = async (
 
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -311,7 +313,8 @@ export const runAllAdaptersTimestampRange = async (
 ) => {
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -373,7 +376,8 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
 
@@ -438,10 +442,12 @@ export const runAdapterHistorical = async (
   }
 
   const useChainBlocks = !(nonBlocksChains.includes(chainContractsAreOn) || ["ibc"].includes(bridgeDbName));
+
   let block = startBlock;
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
+    console.log(`[INFO] Processing block range from ${block} to ${endBlockForQuery}`);
 
     let retryCount = 0;
     const maxRetries = 3;
@@ -458,9 +464,8 @@ export const runAdapterHistorical = async (
           { retries: 4, factor: 2 }
         );
 
-        if (!eventLogs || eventLogs?.length === 0) {
+        if (!eventLogs || eventLogs.length === 0) {
           console.log(`[INFO] No events found for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}`);
-          block = block + maxBlocksToQuery;
           break;
         }
 
@@ -483,12 +488,17 @@ export const runAdapterHistorical = async (
           async () => {
             await sql.begin(async (sql) => {
               let txBlocks = [] as number[];
-              eventLogs.map((log: any) => {
+              eventLogs.forEach((log: any) => {
                 const { blockNumber } = log;
                 txBlocks.push(blockNumber);
               });
-              const minBlock = Math.min(...txBlocks) ?? 0;
-              const maxBlock = Math.max(...txBlocks) ?? 0;
+
+              let minBlock = 0;
+              let maxBlock = 0;
+              if (txBlocks.length > 0) {
+                minBlock = Math.min(...txBlocks) ?? 0;
+                maxBlock = Math.max(...txBlocks) ?? 0;
+              }
               const blockRange = maxBlock - minBlock || 1;
               let blockTimestamps = {} as { [bucket: number]: number };
               let block = {} as { timestamp: number; number: number };
@@ -496,12 +506,27 @@ export const runAdapterHistorical = async (
               let latestSolanaBlock = null;
               let averageBlockTimestamp = null;
 
-              if (chain === "solana") {
+              let solanaTimestampsMap = {} as { [blockNumber: number]: number };
+
+              if (chain === "solana" && !["debridgedln", "portal"].includes(bridgeDbName)) {
                 latestSolanaBlock = await getLatestBlock("solana");
                 const connection = getConnection();
-                const medianBlockNumber = txBlocks?.sort((a, b) => a - b)?.[Math.floor(txBlocks.length / 2)];
-                averageBlockTimestamp = await connection.getBlockTime(medianBlockNumber);
+
+                const blockTimePromises = eventLogs.map(async (event: any) => {
+                  const blockTime = await retry(async () => connection.getBlockTime(event.blockNumber), { retries: 3 });
+                  return { blockNumber: event.blockNumber, blockTime, chainOverride: event.chainOverride };
+                });
+
+                const results = await Promise.all(blockTimePromises);
+
+                results.forEach(({ blockNumber, blockTime, chainOverride }) => {
+                  solanaTimestampsMap[blockNumber] = blockTime ?? 0;
+                  console.log(
+                    `[INFO] Block time for block ${blockNumber}: ${blockTime}, destination chain: ${chainOverride}`
+                  );
+                });
               }
+
               for (let i = 0; i < 10; i++) {
                 const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
                 for (let j = 0; j < 4; j++) {
@@ -554,10 +579,11 @@ export const runAdapterHistorical = async (
                   chainOverride,
                   isUSDVolume,
                   txsCountedAs,
+                  originChain,
                   timestamp: realBlockTimestamp,
                 } = log;
                 const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-                const timestamp = blockTimestamps[bucket] * 1000;
+                const timestamp = (blockTimestamps[bucket] ?? 0) * 1000;
 
                 let amountString = amount ? amount.toString() : "0";
 
@@ -567,7 +593,7 @@ export const runAdapterHistorical = async (
                   if (storedBridgeID) {
                     bridgeIdOverride = storedBridgeID;
                   } else {
-                    const overrideID = await retry(async () => getBridgeID(bridgeDbName, chainOverride))?.id;
+                    const overrideID = (await retry(async () => getBridgeID(bridgeDbName, chainOverride)))?.id;
                     bridgeIdOverride = overrideID;
                     storedBridgeIds[chainOverride] = overrideID;
                     if (!overrideID) {
@@ -596,9 +622,9 @@ export const runAdapterHistorical = async (
                       allowNullTxValues,
                       {
                         bridge_id: bridgeIdOverride,
-                        chain: chainContractsAreOn,
+                        chain: chainOverride ?? chainContractsAreOn,
                         tx_hash: txHash ?? null,
-                        ts: realBlockTimestamp ?? timestamp,
+                        ts: solanaTimestampsMap[blockNumber] ?? realBlockTimestamp ?? timestamp,
                         tx_block: blockNumber ?? null,
                         tx_from: from ?? null,
                         tx_to: to ?? null,
@@ -607,6 +633,7 @@ export const runAdapterHistorical = async (
                         is_deposit: isDeposit,
                         is_usd_volume: isUSDVolume ?? false,
                         txs_counted_as: txsCountedAs ?? 0,
+                        origin_chain: originChain ?? null,
                       },
                       onConflict
                     );
@@ -623,6 +650,7 @@ export const runAdapterHistorical = async (
           },
           { retries: 3, factor: 2 }
         );
+
         console.log(
           `[INFO] Inserted transactions for ${bridgeDbName} on ${chain} for blocks ${block}-${endBlockForQuery}`
         );
@@ -646,13 +674,15 @@ export const runAdapterHistorical = async (
           if (throwOnFailedInsert) {
             throw new Error(errString);
           }
+          break;
         } else {
           await wait(1000 * retryCount);
         }
       }
     }
-    block = block + maxBlocksToQuery;
+    block = endBlockForQuery;
   }
+
   console.log(`finished inserting all transactions for ${bridgeID}`);
 };
 
@@ -678,3 +708,7 @@ export const insertConfigEntriesForAdapter = async (
     })
   );
 };
+
+export function isAsyncAdapter(adapter: BridgeAdapter | AsyncBridgeAdapter): adapter is AsyncBridgeAdapter {
+  return (adapter as AsyncBridgeAdapter).isAsync;
+}

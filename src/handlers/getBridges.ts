@@ -6,6 +6,7 @@ import { secondsInDay, getCurrentUnixTimestamp, secondsInHour, getTimestampAtSta
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
+import { getLast24HVolume } from "../utils/wrappa/postgres/query";
 
 const getBridges = async () => {
   const response = (
@@ -18,9 +19,11 @@ const getBridges = async () => {
         let currentDayVolume = 0;
         let weeklyVolume = 0;
         let monthlyVolume = 0;
-        const currentTimestamp = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
-        const dailyStartTimestamp = currentTimestamp - 30 * secondsInDay;
-        const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, currentTimestamp, undefined, id);
+        const startOfTheDayTs = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
+        const currentTimestamp = getCurrentUnixTimestamp();
+
+        const dailyStartTimestamp = startOfTheDayTs - 30 * secondsInDay;
+        const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, startOfTheDayTs, undefined, id);
         let lastDailyTs = 0;
         if (lastMonthDailyVolume?.length) {
           const lastDailyVolumeRecord = lastMonthDailyVolume[lastMonthDailyVolume.length - 1];
@@ -46,8 +49,10 @@ const getBridges = async () => {
           });
         }
 
-        const hourlyStartTimestamp = currentTimestamp - secondsInDay;
-        const lastDayHourlyVolume = await getHourlyBridgeVolume(hourlyStartTimestamp, currentTimestamp, undefined, id);
+        let last24hVolume = await getLast24HVolume(bridgeDbName);
+
+        const hourlyStartTimestamp = startOfTheDayTs - secondsInDay;
+        const lastDayHourlyVolume = await getHourlyBridgeVolume(hourlyStartTimestamp, startOfTheDayTs, undefined, id);
         if (lastDayHourlyVolume?.length) {
           const lastHourlyVolumeRecord = lastDayHourlyVolume[lastDayHourlyVolume.length - 1];
           lastHourlyVolume = (lastHourlyVolumeRecord.depositUSD + lastHourlyVolumeRecord.withdrawUSD) / 2 || 0;
@@ -67,7 +72,7 @@ const getBridges = async () => {
             let chainLastDailyVolume;
             const chainLastMonthDailyVolume = await getDailyBridgeVolume(
               dailyStartTimestamp,
-              currentTimestamp,
+              startOfTheDayTs,
               queryChain,
               id
             );
@@ -93,6 +98,7 @@ const getBridges = async () => {
           volumePrev2Day: dayBeforeLastVolume ?? 0, // temporary, remove
           lastHourlyVolume: lastHourlyVolume ?? 0,
           currentDayVolume: currentDayVolume ?? 0,
+          last24hVolume: last24hVolume ?? 0,
           lastDailyVolume: lastDailyVolume ?? 0,
           dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
           weeklyVolume: weeklyVolume ?? 0,

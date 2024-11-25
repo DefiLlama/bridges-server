@@ -1,5 +1,6 @@
 import recordedBlocksRecord from "./recordedBlocks.json";
 import adapters from "../adapters";
+import { isAsyncAdapter } from "../utils/adapter";
 import { lookupBlock } from "@defillama/sdk/build/util";
 import { Chain } from "@defillama/sdk/build/general";
 import bridgeNetworks from "../data/bridgeNetworkData";
@@ -8,7 +9,8 @@ const FileSystem = require("fs");
 
 const insertRecordedBlocks = async (adapterName: string, startTimestamp: number, endTimestamp: number) => {
   let recordedBlocks = recordedBlocksRecord as { [adapterChain: string]: { startBlock: number; endBlock: number } };
-  const adapter = adapters[adapterName];
+  let adapter = adapters[adapterName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }

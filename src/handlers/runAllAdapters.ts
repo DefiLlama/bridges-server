@@ -1,30 +1,36 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
-import aws from "aws-sdk";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { sql } from "../utils/db";
 import { store } from "../utils/s3";
+import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
-async function invokeLambda(functioName: string, event: any) {
-  return new Promise((resolve, _reject) => {
-    new aws.Lambda().invoke(
-      {
-        FunctionName: functioName,
-        InvocationType: "Event",
-        Payload: JSON.stringify(event, null, 2), // pass params
-      },
-      function (error, data) {
-        console.log(error, data);
-        resolve(data);
-      }
-    );
+const lambdaClient = new LambdaClient({});
+
+async function invokeLambda(functionName: string, event: any) {
+  const command = new InvokeCommand({
+    FunctionName: functionName,
+    InvocationType: "Event",
+    Payload: Buffer.from(JSON.stringify(event, null, 2)),
   });
+
+  try {
+    const data = await lambdaClient.send(command);
+    console.log(data);
+    return data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 export default wrapScheduledLambda(async (event) => {
+  await closeIdleConnections();
   const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
   FROM (
       SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
       FROM bridges.transactions
+      WHERE origin_chain IS NULL
       GROUP BY bridge_id
   ) subquery;
   `;

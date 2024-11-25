@@ -14,6 +14,7 @@ const txTypes = {
   is_deposit: "boolean",
   is_usd_volume: "boolean",
   txs_counted_as: "number",
+  origin_chain: "string",
 } as { [key: string]: string };
 
 export const insertTransactionRow = async (
@@ -32,10 +33,11 @@ export const insertTransactionRow = async (
     is_deposit: boolean;
     is_usd_volume: boolean;
     txs_counted_as: number | null;
+    origin_chain: string | null;
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  // FIX should use dynamicly built strings here, I just didn't finish it
+  // FIX should use dynamically built strings here, I just didn't finish it
   let sqlCommand = sql`
   insert into bridges.transactions ${sql(params)}
 `;
@@ -272,5 +274,38 @@ export const insertErrorRow = async (params: {
         continue;
       }
     }
+  }
+};
+
+export const closeIdleConnections = async (idleTimeMinutes = 3) => {
+  try {
+    const result = await sql`
+      WITH closed AS (
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE state = 'idle'
+          AND state_change < NOW() - INTERVAL '3 minutes'
+          AND pid <> pg_backend_pid()
+      )
+      SELECT COUNT(*) as closed_count FROM closed;
+    `;
+
+    const closedCount = parseInt(result[0].closed_count);
+    console.log(`${closedCount} idle connection(s) closed successfully. (Idle time: ${idleTimeMinutes} minutes)`);
+    return closedCount;
+  } catch (error) {
+    console.error(`Error closing idle connections (Idle time: ${idleTimeMinutes} minutes):`, error);
+  }
+};
+
+export const insertOrUpdateTokenWithoutPrice = async (token: string, symbol: string) => {
+  try {
+    await sql`
+        INSERT INTO bridges.tokens_without_price ${sql({ token, occurrence_count: 1, symbol })}
+        ON CONFLICT (token)
+        DO UPDATE SET occurrence_count = bridges.tokens_without_price.occurrence_count + 1, symbol = ${symbol};
+      `;
+  } catch (e) {
+    console.error(`Could not insert or update token without price: ${token}`, e);
   }
 };

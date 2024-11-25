@@ -59,3 +59,5 @@ export const contractAddresses = {
     coreBridge: string;
   };
 };
+
+export const wormholeChains = Object.keys(contractAddresses).filter((chain) => chain !== "solana");

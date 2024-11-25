@@ -1,9 +1,16 @@
 import { Chain } from "@defillama/sdk/build/general";
+import { LlamaProvider } from "@defillama/sdk/build/util/LlamaProvider";
+import { ethers } from "ethers";
 import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
 export type BridgeAdapter = {
   [chain: string]: (fromBlock: number, toBlock: number) => Promise<EventData[]>;
+};
+
+export type AsyncBridgeAdapter = {
+  isAsync: boolean;
+  build: () => Promise<BridgeAdapter>;
 };
 
 export type EventLogFilter = {
@@ -16,6 +23,7 @@ export type EventLogFilter = {
   includeArg?: { [key: string]: string }[];
   excludeArg?: { [key: string]: string }[];
   includeTxData?: { [key: string]: string }[];
+  custom?: (provider: LlamaProvider, iface: ethers.utils.Interface, transactionHash: string) => Promise<boolean>;
 };
 
 export type FunctionSignatureFilter = {
@@ -35,6 +43,7 @@ export type ContractEventParams = {
   topic: string;
   abi: string[];
   logKeys?: EventKeyMapping; // retrieve data from event log
+  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
   argKeys?: EventKeyMapping; // retrieve data from parsed event log
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping; // retrieve data from transaction referenced in event log
@@ -60,6 +69,7 @@ export type PartialContractEventParams = {
   topic?: string;
   abi?: string[];
   logKeys?: EventKeyMapping;
+  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
   argKeys?: EventKeyMapping;
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping;

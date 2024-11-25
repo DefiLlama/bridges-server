@@ -7,6 +7,7 @@ import { getBlockByTimestamp } from "./blocks";
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
+const chain = process.argv[5];
 
 async function fillAdapterHistorical(
   startTimestamp: number,
@@ -41,7 +42,7 @@ async function fillAdapterHistorical(
       await wait(500 * i);
       let startBlock;
       let endBlock;
-      if(bridgeDbName === "ibc") {
+      if (bridgeDbName === "ibc") {
         startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
         if (!startBlock) {
           console.error(`Could not find start block for ${chain} on ${bridgeDbName}`);
@@ -72,4 +73,4 @@ async function fillAdapterHistorical(
   console.log(`Finished running adapter from ${startTimestamp} to ${endTimestamp} for ${bridgeDbName}`);
 }
 
-fillAdapterHistorical(startTs, endTs, bridgeName);
+fillAdapterHistorical(startTs, endTs, bridgeName, chain);

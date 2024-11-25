@@ -23,6 +23,7 @@ export enum Chain {
   Blast = 'blast',
   XLayer = 'xlayer',
   Taiko = 'taiko',
+  CronosZkevm = 'cronos_zkevm',
 }
 
 export enum VAULTS_TOKEN {
@@ -31,11 +32,32 @@ export enum VAULTS_TOKEN {
   ETH
 }
 
-type ContractAddress = string
+type Address = string
 type YBridgeVaultsTokenAddress = Record<VAULTS_TOKEN, {
-  contractAddress: ContractAddress
-  tokenAddress: ContractAddress
+  contractAddress: Address
+  tokenAddress: Address
 }>
+
+export const ETH_ADDRESS: Address = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
+export const NativeTokens: Partial<Record<Chain, string>> = {
+  [Chain.Ethereum]: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+  [Chain.Arbitrum]: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+  [Chain.Optimism]: "0x4200000000000000000000000000000000000006",
+  [Chain.Base]: "0x4200000000000000000000000000000000000006",
+  [Chain.Linea]: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
+  [Chain.Blast]: "0x4300000000000000000000000000000000000004",
+  [Chain.Polygon]: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  [Chain.Scroll]: "0x5300000000000000000000000000000000000004",
+  [Chain.PolygonZkevm]: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  [Chain.ZkSync]: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
+  [Chain.XLayer]: "0x5a77f1443d16ee5761d310e38b62f77f726bc71c",
+  [Chain.Bsc]: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+  [Chain.Mantle]: "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+  [Chain.Taiko]: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+  [Chain.Avalanche]: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+};
+
 export const YBridgeVaultsTokenContractAddress: Record<Exclude<Chain, Chain.Numbers>, YBridgeVaultsTokenAddress> = {
   [Chain.Ethereum]: {
     [VAULTS_TOKEN.USDT]: {
@@ -358,10 +380,24 @@ export const YBridgeVaultsTokenContractAddress: Record<Exclude<Chain, Chain.Numb
       contractAddress: '0xFa77c2DecCB21ACb9Bf196408Bf6aD5973D07762',
       tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
     },
+  },
+  [Chain.CronosZkevm]: {
+    [VAULTS_TOKEN.USDT]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.USDC]: {
+      contractAddress: '',
+      tokenAddress: ''
+    },
+    [VAULTS_TOKEN.ETH]: {
+      contractAddress: '0xAa0b0654E79E17332d983E2351bD926cE336B9BD',
+      tokenAddress: '0x271602A97027ee1dd03b1E6e5dB153eB659A80b1'
+    },
   }
 }
 
-export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, ContractAddress> = {
+export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Address> = {
   [Chain.Ethereum]: '0x4315f344a905dC21a08189A117eFd6E1fcA37D57',
   [Chain.Scroll]: "0x778C974568e376146dbC64fF12aD55B2d1c4133f",
   [Chain.Mantle]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
@@ -384,10 +420,11 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Contr
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.Blast]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.XLayer]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
-  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1"
+  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
+  [Chain.CronosZkevm]: "0xE22747472A565e96D0867741811193895b9538f2",
 }
 
-export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
+export const XYRouterContractAddress: Record<Chain, Address> = {
   [Chain.Ethereum]: "0xFfB9faf89165585Ad4b25F81332Ead96986a2681",
   [Chain.Scroll]: "0x22bf2A9fcAab9dc96526097318f459eF74277042",
   [Chain.Mantle]: "0x52075Fd1fF67f03beABCb5AcdA9679b02d98cA37",
@@ -411,5 +448,6 @@ export const XYRouterContractAddress: Record<Chain, ContractAddress> = {
   [Chain.Wemix]: "0x6471fAd467ac2854b403e7FE3e95FBbB3287a7ee",
   [Chain.Blast]: "0x43A86823EBBe2ECF9A384aDfD989E26A30626458",
   [Chain.XLayer]: "0x6A816cEE105a9409D8df0A83d8eeaeD9EB4309fE",
-  [Chain.Taiko]: "0xedC061306A79257f15108200C5B82ACc874C239d"
+  [Chain.Taiko]: "0xedC061306A79257f15108200C5B82ACc874C239d",
+  [Chain.CronosZkevm]: "0x986138f6ed1350a85De6B18280f7d139F74B7282",
 }

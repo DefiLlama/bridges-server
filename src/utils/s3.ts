@@ -1,7 +1,8 @@
-import aws from "aws-sdk";
+import { S3Client, PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import type { Readable } from "stream";
 
 const datasetBucket = "llama-bridges-data";
+const s3Client = new S3Client({});
 
 function next21Minutedate() {
   const dt = new Date();
@@ -16,31 +17,33 @@ export async function store(
   hourlyCache = false,
   compressed = true
 ) {
-  await new aws.S3()
-    .upload({
-      Bucket: datasetBucket,
-      Key: filename,
-      Body: body,
-      ACL: "public-read",
-      ...(hourlyCache && {
-        Expires: next21Minutedate(),
-        ...(compressed && {
-          ContentEncoding: "br",
-        }),
-        ContentType: "application/json",
+  const params = {
+    Bucket: datasetBucket,
+    Key: filename,
+    Body: body,
+    ACL: ObjectCannedACL.public_read,
+    ...(hourlyCache && {
+      Expires: next21Minutedate(),
+      ...(compressed && {
+        ContentEncoding: "br",
       }),
-    })
-    .promise();
+      ContentType: "application/json",
+    }),
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3Client.send(command);
 }
 
 export async function storeDataset(filename: string, body: string) {
-  await new aws.S3()
-    .upload({
-      Bucket: datasetBucket,
-      Key: `temp/${filename}`,
-      Body: body,
-      ACL: "public-read",
-      ContentType: "text/csv",
-    })
-    .promise();
+  const params = {
+    Bucket: datasetBucket,
+    Key: `temp/${filename}`,
+    Body: body,
+    ACL: ObjectCannedACL.public_read,
+    ContentType: "text/csv",
+  };
+
+  const command = new PutObjectCommand(params);
+  await s3Client.send(command);
 }

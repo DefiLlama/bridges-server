@@ -4,6 +4,7 @@
 
    `npm i`
 
+
 ## Adding new adapter
 ### Adapter output
 Array of
@@ -64,7 +65,7 @@ abi: ["event ETHWithdrawalFinalized(address indexed _from, address indexed _to, 
 isDeposit: false, // event type 
 logKeys: {
   blockNumber:  "blockNumber", 
-  txHash:  "transactionHash",// if event log data key != adapter ouptup key
+  txHash:  "transactionHash",// if event log data key != adapter output key
 },
 argKeys: {
   to: "_to", 
@@ -111,9 +112,9 @@ syntax: `npm run {script-name} {startTimestamp} {endTimestamp} {bridgeName}`
 
 Example: 
 ```
-npm run adapter 1704690402 1704949602 arbitrum  
-npm run aggregate 1704690402 1704949602 arbitrum  
-npm run daily-volume 1704690402 1704949602 arbitrum  
+npm run adapter arbitrum 1704690402 1704949602
+npm run aggregate arbitrum 1704690402 1704949602
+npm run daily-volume arbitrum 1704690402 1704949602 
 ```
 Returns: 
 ```
