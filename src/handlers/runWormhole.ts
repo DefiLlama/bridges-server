@@ -29,8 +29,8 @@ const handler = async () => {
     const events = await fetchWormholeEvents(startTs, endTs);
     const BATCH_SIZE = 500;
 
-    await sql.begin(async (sql) => {
-      for (let i = 0; i < events.length; i += BATCH_SIZE) {
+    for (let i = 0; i < events.length; i += BATCH_SIZE) {
+      await sql.begin(async (sql) => {
         const batch = events.slice(i, i + BATCH_SIZE);
         const insertPromises: Promise<void>[] = [];
 
@@ -109,8 +109,9 @@ const handler = async () => {
         }
 
         await Promise.all(insertPromises);
-      }
-    });
+        console.log(`Inserted ${insertPromises.length} of ${events.length} Wormhole events`);
+      });
+    }
   } catch (error) {
     console.error("Error processing Wormhole events:", error);
     throw error;
