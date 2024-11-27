@@ -4,6 +4,7 @@ import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolu
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { secondsInDay, getCurrentUnixTimestamp } from "../utils/date";
 import { normalizeChain } from "../utils/normalizeChain";
+import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   if (!chain) {
@@ -13,11 +14,10 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   }
   let bridgeNetwork;
   if (bridgeNetworkId) {
-   
-      bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
+    bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
   }
   const destinationChain = bridgeNetwork?.destinationChain;
-  if (destinationChain && chain === destinationChain?.toLowerCase()){
+  if (destinationChain && chain === destinationChain?.toLowerCase()) {
     chain = "all";
   }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
@@ -92,6 +92,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
+  await closeIdleConnections();
   const chain = event.pathParameters?.chain?.toLowerCase().replace(/%20/g, " ");
   const bridgeNetworkId = event.queryStringParameters?.id;
   const response = await getBridgeVolume(chain, bridgeNetworkId);

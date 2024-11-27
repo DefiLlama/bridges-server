@@ -284,7 +284,7 @@ export const closeIdleConnections = async (idleTimeMinutes = 3) => {
         SELECT pg_terminate_backend(pid)
         FROM pg_stat_activity
         WHERE state = 'idle'
-          AND state_change < NOW() - INTERVAL '3 minutes'
+          AND state_change < NOW() - INTERVAL '1 minutes'
           AND pid <> pg_backend_pid()
       )
       SELECT COUNT(*) as closed_count FROM closed;
