@@ -377,20 +377,25 @@ const getNetflows = async (period: TimePeriod) => {
     WITH period_flows AS (
       SELECT 
         c.chain,
-        SUM(ha.total_deposited_usd - ha.total_withdrawn_usd) as net_flow
+        SUM(CASE 
+          -- Deposits are outflows (-), withdrawals are inflows (+)
+          WHEN c.destination_chain IS NULL THEN (ha.total_withdrawn_usd - ha.total_deposited_usd)
+          -- For bridges with fixed destination chains, count flows on destination chain (inverted)
+          ELSE (ha.total_deposited_usd - ha.total_withdrawn_usd)
+        END) as net_flow
       FROM bridges.hourly_aggregated ha
       JOIN bridges.config c ON ha.bridge_id = c.id
-      WHERE ha.ts >= date_trunc(${period}, NOW()) - ${intervalPeriod}
-      AND ha.ts < date_trunc(${period}, NOW())
+      WHERE ha.ts >= date_trunc(${period}, NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
+      AND ha.ts < date_trunc(${period}, NOW() AT TIME ZONE 'UTC')
       AND LOWER(c.chain) NOT LIKE '%dydx%'
       GROUP BY c.chain
     )
     SELECT 
       chain,
-      net_flow
+      net_flow::text
     FROM period_flows
     WHERE net_flow IS NOT NULL
-    ORDER BY ABS(net_flow) DESC;
+    ORDER BY ABS(net_flow::numeric) DESC;
   `;
 };
 

@@ -376,6 +376,12 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
+
+  if (bridgeDbName === "wormhole") {
+    console.log("Skipping Wormhole adapter, handled separately");
+    return;
+  }
+
   let adapter = adapters[bridgeDbName];
   adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 

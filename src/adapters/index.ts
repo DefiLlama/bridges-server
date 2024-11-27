@@ -69,9 +69,10 @@ import fastbtc from "./rootstock-fastbtc-bridge";
 import crowdswap from "./crowdswap";
 import mint from "./mint";
 import suibridge from "./suibridge";
-import retrobridge from "./retrobridge"
-import layerswap from "./layerswap"
+import retrobridge from "./retrobridge";
+import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
+import wormhole from "./wormhole";
 
 export default {
   polygon,
@@ -147,6 +148,7 @@ export default {
   retrobridge,
   layerswap,
   hyperlane,
+  wormhole,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
