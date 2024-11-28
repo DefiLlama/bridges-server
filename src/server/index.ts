@@ -34,26 +34,33 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
   }
 };
 
-server.get("/bridgedaystats/:timestamp/:chain", lambdaToFastify(getBridgeStatsOnDay));
-server.get("/bridgevolume/:chain", lambdaToFastify(getBridgeVolume));
-server.get("/bridges", lambdaToFastify(getBridges));
-server.get("/bridge/:id", lambdaToFastify(getBridge));
-server.get("/bridgechains", lambdaToFastify(getBridgeChains));
-server.get("/largetransactions/:chain", lambdaToFastify(getLargeTransactions));
-server.get("/lastblocks", lambdaToFastify(getLastBlocks));
-server.get("/netflows", lambdaToFastify(getNetflows));
-server.get("/transactions/:id", lambdaToFastify(getTransactions));
-server.post("/run-adapter", lambdaToFastify(runAdapter));
-
 const start = async () => {
   try {
     await server.register(cors, {
       origin: true,
     });
-    console.log(process.env.ALLIUM_API_KEY);
+
+    server.get("/bridgedaystats/:timestamp/:chain", lambdaToFastify(getBridgeStatsOnDay));
+    server.get("/bridgevolume/:chain", lambdaToFastify(getBridgeVolume));
+    server.get("/bridges", lambdaToFastify(getBridges));
+    server.get("/bridge/:id", lambdaToFastify(getBridge));
+    server.get("/bridgechains", lambdaToFastify(getBridgeChains));
+    server.get("/largetransactions/:chain", lambdaToFastify(getLargeTransactions));
+    server.get("/lastblocks", lambdaToFastify(getLastBlocks));
+    server.get("/netflows", lambdaToFastify(getNetflows));
+    server.get("/transactions/:id", lambdaToFastify(getTransactions));
+    server.post("/run-adapter", lambdaToFastify(runAdapter));
+    server.get("/healthcheck", (_, reply) => {
+      return reply.send("OK");
+    });
+
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     await server.listen({ port, host: "0.0.0.0" });
     console.log(`Server listening on port ${port}`);
+    console.log("\nAvailable routes:");
+    server.ready(() => {
+      console.log(server.printRoutes());
+    });
   } catch (err) {
     server.log.error(err);
     process.exit(1);
