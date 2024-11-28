@@ -41,6 +41,7 @@ const chains = [
   "terra classic",
   "karura",
   "acala",
+  "wormchain",
 ];
 
 export const chainNameMapping: { [key: string]: string } = {
