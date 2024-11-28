@@ -1695,7 +1695,7 @@ export default [
     id: 77,
     displayName: "Wormhole",
     bridgeDbName: "wormhole",
-    iconLink: "icons:portal",
+    iconLink: "icons:wormhole",
     largeTxThreshold: 10000,
     url: "https://portalbridge.com/",
     chains: [
