@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, "src/server/index.ts"),
       formats: ["cjs"],
-      fileName: () => "index.js",
+      fileName: () => "index.cjs",
     },
     rollupOptions: {
       external: ["fastify", "@fastify/cors", ...Object.keys(require("./package.json").dependencies)],

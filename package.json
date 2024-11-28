@@ -1,6 +1,5 @@
 {
   "name": "bridges-server",
-  "type": "module",
   "scripts": {
     "deploy:prod": "sls deploy --stage prod",
     "serve": "sls offline start",
@@ -14,8 +13,8 @@
     "clean": "rimraf dist",
     "dev": "vite",
     "build": "vite build",
-    "start": "pm2 start dist/index.cjs --name bridges-server",
-    "start:dev": "pm2 start dist/index.cjs --name bridges-server --watch",
+    "start": "pm2 start dist/index.js --name bridges-server",
+    "start:dev": "pm2 start dist/index.js --name bridges-server --watch",
     "stop": "pm2 stop bridges-server",
     "restart": "pm2 restart bridges-server",
     "logs": "pm2 logs bridges-server",
