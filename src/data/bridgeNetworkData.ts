@@ -780,6 +780,9 @@ export default [
       "Linea",
       "Mantle",
       "Taiko",
+      "Celo",
+      "Kava",
+      "Fraxtal",
     ],
     chainMapping: {
       avalanche: "avax",
