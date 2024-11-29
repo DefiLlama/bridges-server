@@ -47,7 +47,7 @@ const start = async () => {
     server.get("/bridgechains", lambdaToFastify(getBridgeChains));
     server.get("/largetransactions/:chain", lambdaToFastify(getLargeTransactions));
     server.get("/lastblocks", lambdaToFastify(getLastBlocks));
-    server.get("/netflows", lambdaToFastify(getNetflows));
+    server.get("/netflows/:day", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
     server.post("/run-adapter", lambdaToFastify(runAdapter));
     server.get("/healthcheck", (_, reply) => {
