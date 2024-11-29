@@ -16,6 +16,19 @@ dotenv.config();
 
 const server: FastifyInstance = fastify({
   logger: true,
+  connectionTimeout: 60000,
+  keepAliveTimeout: 65000,
+});
+
+server.addHook("onRequest", async (request, reply) => {
+  reply.raw.setTimeout(55000);
+
+  const startTime = process.hrtime();
+  request.raw.on("end", () => {
+    const [seconds, nanoseconds] = process.hrtime(startTime);
+    const duration = seconds * 1000 + nanoseconds / 1000000;
+    request.log.info(`Request to ${request.url} took ${duration.toFixed(2)}ms`);
+  });
 });
 
 const lambdaToFastify = (handler: Function) => async (request: any, reply: any) => {
@@ -26,11 +39,29 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
   };
 
   try {
-    const result = await handler(event);
+    const timeout = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Request timeout"));
+      }, 50000);
+    });
+
+    const result = await Promise.race([handler(event), timeout]);
+
     return reply.code(result.statusCode).send(JSON.parse(result.body));
-  } catch (error) {
+  } catch (error: any) {
     request.log.error(error);
-    return reply.code(500).send({ error: "Internal Server Error" });
+
+    if (error.message === "Request timeout") {
+      return reply.code(504).send({
+        error: "Gateway Timeout",
+        message: "Request took too long to process",
+      });
+    }
+
+    return reply.code(500).send({
+      error: "Internal Server Error",
+      message: error.message || "An unexpected error occurred",
+    });
   }
 };
 
