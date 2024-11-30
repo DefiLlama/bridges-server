@@ -1,3 +1,4 @@
+//constants.ts
 export const squidRouterAddresses = {
   default: "0xce16F69375520ab01377ce7B88f5BA8C48F8D666",
   blast: "0x492751eC3c57141deb205eC2da8bFcb410738630",
@@ -26,3 +27,5 @@ export const axelarGatewayAddresses = {
 } as {
   [chain: string]: string;
 };
+
+export const coralSpokeAddress = "0xDdDDD043bD7A886a26C1231e4305582faB219667";

@@ -1,3 +1,4 @@
+//utils.ts
 import fetch from "node-fetch";
 const retry = require("async-retry");
 
@@ -15,7 +16,6 @@ const getChain = (chain: string) => {
   switch (chain) {
     case "avax": return "avalanche";
     case "bsc": return "binance";
-    // Add any new chain mappings here if needed
     default: return chain;
   }
 }
@@ -33,7 +33,6 @@ const getSymbol = (rawSymbol: string) => {
     "FIL": "WFIL",
     "ETH": "WETH",
     "wAXL": "AXL",
-    // Add any new native token mappings here if needed
   };
 
   symbol = nativeTokenMap[symbol] || symbol;
