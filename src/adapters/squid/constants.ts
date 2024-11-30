@@ -28,4 +28,4 @@ export const axelarGatewayAddresses = {
   [chain: string]: string;
 };
 
-export const coralSpokeAddress = "0xDdDDD043bD7A886a26C1231e4305582faB219667";
+export const coralAddress = "0xDdDDD043bD7A886a26C1231e4305582faB219667";

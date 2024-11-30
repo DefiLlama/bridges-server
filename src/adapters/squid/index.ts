@@ -3,7 +3,7 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
 import { fetchAssets, getTokenAddress} from "./utils";
-import { axelarGatewayAddresses, squidRouterAddresses, coralSpokeAddress } from "./constants";
+import { axelarGatewayAddresses, squidRouterAddresses, coralAddress } from "./constants";
 
 const constructGatewayWithdrawalParams = (assets: any[], chain: string) => {
     const squidRouterAddress = squidRouterAddresses[chain as keyof typeof squidRouterAddresses] || squidRouterAddresses.default;
@@ -66,7 +66,7 @@ const constructGatewayDepositParams = (assets: any[], chain: string) => {
 
 const constructCoralWithdrawalParams = (chain: string) => {
   return {
-    target: coralSpokeAddress,
+    target: coralAddress,
     topic: "OrderCreated(bytes32,tuple)",
     topics: [
       "0x181de28643611afcf1cb4c095a1ef99c157e78437294f478c978e4a56e1ca77e"
@@ -96,7 +96,7 @@ const constructCoralWithdrawalParams = (chain: string) => {
 
 const constructCoralDepositParams = (chain: string) => {
   return {
-    target: coralSpokeAddress,
+    target: coralAddress,
     topic: "OrderFilled(bytes32,tuple)",
     topics: [
       "0x6955fd9b2a7639a9baac024897cad7007b45ffa74cbfe9582d58401ff6b977b7"
