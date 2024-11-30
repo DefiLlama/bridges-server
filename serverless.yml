@@ -136,7 +136,7 @@ functions:
     timeout: 900
     memorySize: 250
     events:
-      - schedule: cron(10 * * * ? *)
+      - schedule: cron(10,45 * * * ? *)
   runAggregateAllAdapters:
     handler: src/handlers/runAggregateAllAdapters.default
     timeout: 900
@@ -147,8 +147,7 @@ functions:
     handler: src/handlers/checkStaleBridges.default
     timeout: 600
     memorySize: 2000
-    events:
-      - schedule: cron(0 0 * * ? *)
+
   runAdapterFromTo:
     handler: src/handlers/runAdapterFromTo.default
     timeout: 900
@@ -157,8 +156,6 @@ functions:
     handler: src/handlers/runAllAdaptersHistorical.default
     timeout: 900
     memorySize: 1024
-    events:
-      - schedule: cron(0,15 * * * ? *)
   runAdapterByName:
     handler: src/handlers/runAdapterByName.default
     timeout: 900
@@ -167,8 +164,6 @@ functions:
     handler: src/handlers/dailyAggregateAllAdapters.default
     timeout: 900
     memorySize: 1024
-    events:
-      - schedule: cron(30 * * * ? *)
   getNetflows:
     handler: src/handlers/getNetflows.default
     timeout: 30
