@@ -12,6 +12,7 @@ import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
 import cron from "./cron";
+import { generateApiCacheKey, cache } from "../utils/cache";
 
 dotenv.config();
 
@@ -39,6 +40,12 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
     body: request.body,
   };
 
+  const cacheKey = generateApiCacheKey(event);
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return reply.code(200).send(cachedData);
+  }
+
   try {
     const timeout = new Promise((_, reject) => {
       setTimeout(() => {
@@ -47,8 +54,9 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
     });
 
     const result = await Promise.race([handler(event), timeout]);
-
-    return reply.code(result.statusCode).send(JSON.parse(result.body));
+    const parsedBody = JSON.parse(result.body);
+    cache.set(cacheKey, parsedBody);
+    return reply.code(result.statusCode).send(parsedBody);
   } catch (error: any) {
     request.log.error(error);
 

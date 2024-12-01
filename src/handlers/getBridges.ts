@@ -118,12 +118,16 @@ const getBridges = async () => {
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
-  const bridges = await getBridges();
+  const includeChains = event.queryStringParameters?.includeChains === "true";
+  const promises = [getBridges()];
+  if (includeChains) {
+    promises.push(craftBridgeChainsResponse());
+  }
+  const [bridges, chainData] = await Promise.all(promises);
   let response: any = {
     bridges: bridges,
   };
-  if (event.queryStringParameters?.includeChains === "true") {
-    const chainData = await craftBridgeChainsResponse();
+  if (includeChains) {
     response.chains = chainData;
   }
   return successResponse(response, 10 * 60); // 10 mins cache

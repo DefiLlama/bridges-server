@@ -119,48 +119,33 @@ const queryAggregatedDailyTimestampRange = async (
   chain?: string,
   bridgeNetworkName?: string
 ) => {
-  let bridgeNetworkNameEqual = sql``;
-  let chainEqual = sql``;
-  if (bridgeNetworkName && chain) {
-    bridgeNetworkNameEqual = sql`
-    WHERE bridge_name = ${bridgeNetworkName} AND
-    chain = ${chain}
-    `;
-  } else {
-    bridgeNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
-    chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
+  let conditions = sql`WHERE ts >= to_timestamp(${startTimestamp}) 
+    AND ts <= to_timestamp(${endTimestamp})`;
+
+  if (chain) {
+    conditions = sql`${conditions} AND dv.chain = ${chain}`;
   }
 
-  return await sql<IAggregatedData[]>`
-  SELECT 
-    bridge_id, 
-    date_trunc('day', ts) AS ts, 
-    CAST(SUM(total_deposited_usd) AS BIGINT) AS total_deposited_usd, 
-    CAST(SUM(total_withdrawn_usd) AS BIGINT) AS total_withdrawn_usd, 
-    CAST(SUM(total_deposit_txs) AS INT) AS total_deposit_txs, 
-    CAST(SUM(total_withdrawal_txs) AS INT) AS total_withdrawal_txs 
-  FROM 
-    bridges.hourly_aggregated
-  WHERE
-  ts >= to_timestamp(${startTimestamp}) AND 
-  ts <= to_timestamp(${endTimestamp}) AND 
-   ts < DATE_TRUNC('day', NOW()) AND
-    bridge_id IN (
-      SELECT id FROM
-        bridges.config
-      ${bridgeNetworkNameEqual}
-      ${chainEqual}
-    )
-    AND
-    (total_deposited_usd IS NOT NULL AND total_deposited_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
-    (total_withdrawn_usd IS NOT NULL AND total_withdrawn_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
-    (total_deposit_txs IS NOT NULL AND total_deposit_txs::text ~ '^[0-9]+$') AND 
-    (total_withdrawal_txs IS NOT NULL AND total_withdrawal_txs::text ~ '^[0-9]+$')
-    GROUP BY 
-       bridge_id, 
-       date_trunc('day', ts)
-    ORDER BY ts;
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+  const result = await sql<IAggregatedData[]>`
+SELECT 
+  dv.bridge_id,
+  dv.ts,
+  dv.total_deposited_usd::text,
+  dv.total_withdrawn_usd::text,
+  dv.total_deposit_txs,
+  dv.total_withdrawal_txs,
+  dv.chain
+FROM 
+  bridges.daily_volume dv
+JOIN
+  bridges.config c ON dv.bridge_id = c.id
+${conditions}
+ORDER BY ts;
   `;
+  return result;
 };
 
 const queryAggregatedHourlyTimestampRange = async (
