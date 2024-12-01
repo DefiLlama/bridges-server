@@ -8,7 +8,7 @@ import { insertConfigEntriesForAdapter } from "../utils/adapter";
 export const handler = async () => {
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
-    const startTs = dayjs().subtract(1, "day").unix();
+    const startTs = dayjs().subtract(2, "hour").unix();
     const endTs = dayjs().unix();
     const bridgeIds = Object.fromEntries(
       await Promise.all(

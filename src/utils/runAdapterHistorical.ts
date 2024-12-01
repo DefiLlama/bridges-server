@@ -3,11 +3,14 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
 import { getBlockByTimestamp } from "./blocks";
-
+import PromisePool from "@supercharge/promise-pool";
+import retry from "async-retry";
+import { sql } from "./db";
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
 const chain = process.argv[5];
+const blockByChain: Record<string, { startBlock: number; endBlock: number }> = {};
 
 async function fillAdapterHistorical(
   startTimestamp: number,
@@ -54,8 +57,17 @@ async function fillAdapterHistorical(
           return;
         }
       } else {
-        startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain);
-        endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain);
+        if (!blockByChain[nChain]) {
+          startBlock = await retry(() => getBlockByTimestamp(startTimestamp, nChain as Chain));
+          endBlock = await retry(() => getBlockByTimestamp(endTimestamp, nChain as Chain));
+          blockByChain[nChain] = {
+            startBlock: startBlock.block,
+            endBlock: endBlock.block,
+          };
+        } else {
+          startBlock = blockByChain[nChain].startBlock;
+          endBlock = blockByChain[nChain].endBlock;
+        }
       }
 
       await runAdapterHistorical(
@@ -73,4 +85,20 @@ async function fillAdapterHistorical(
   console.log(`Finished running adapter from ${startTimestamp} to ${endTimestamp} for ${bridgeDbName}`);
 }
 
-fillAdapterHistorical(startTs, endTs, bridgeName, chain);
+const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: number) => {
+  try {
+    await Promise.all(
+      bridgeNetworkData.map(async (adapter) => {
+        await fillAdapterHistorical(startTimestamp, endTimestamp, adapter.bridgeDbName);
+      })
+    );
+  } finally {
+    await sql.end();
+  }
+};
+
+if (bridgeName && chain) {
+  fillAdapterHistorical(startTs, endTs, bridgeName, chain);
+} else {
+  runAllAdaptersHistorical(startTs, endTs);
+}
