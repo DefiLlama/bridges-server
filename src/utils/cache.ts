@@ -1,23 +1,14 @@
-import NodeCache from "node-cache";
+import { LRUCache } from "lru-cache";
 import hash from "object-hash";
 
-const MAX_KEYS = 10000;
-const CLEANUP_THRESHOLD = 0.9;
+const MAX_SIZE_BYTES = 100 * 1024 * 1024;
 
-export const cache = new NodeCache({
-  stdTTL: 600,
-  checkperiod: 120,
-  maxKeys: Number.MAX_SAFE_INTEGER,
-  useClones: false,
-  deleteOnExpire: true,
-});
-
-cache.on("set", () => {
-  const keys = cache.keys();
-  if (keys.length > MAX_KEYS * CLEANUP_THRESHOLD) {
-    const keysToRemove = keys.slice(0, Math.floor(MAX_KEYS * 0.2));
-    keysToRemove.forEach((key) => cache.del(key));
-  }
+export const cache = new LRUCache({
+  maxSize: MAX_SIZE_BYTES,
+  sizeCalculation: (value: any) => {
+    return Buffer.byteLength(JSON.stringify(value), "utf8");
+  },
+  ttl: 1000 * 600,
 });
 
 interface APIEvent {
