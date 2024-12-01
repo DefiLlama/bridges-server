@@ -5,8 +5,7 @@ import { closeIdleConnections, insertTransactionRow } from "../utils/wrappa/post
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
-
-const handler = async () => {
+export const handler = async () => {
   try {
     await closeIdleConnections();
     await insertConfigEntriesForAdapter(adapter, "wormhole");

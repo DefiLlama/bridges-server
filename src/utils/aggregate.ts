@@ -123,7 +123,7 @@ export const runAggregateDataHistorical = async (
 };
 
 export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boolean = false) => {
-  await PromisePool.withConcurrency(2)
+  await PromisePool.withConcurrency(5)
     .for(bridgeNetworks)
     .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;

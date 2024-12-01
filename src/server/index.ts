@@ -11,6 +11,7 @@ import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
+import cron from "./cron";
 
 dotenv.config();
 
@@ -84,7 +85,7 @@ const start = async () => {
     server.get("/healthcheck", (_, reply) => {
       return reply.send("OK");
     });
-    
+    cron();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     await server.listen({ port, host: "0.0.0.0" });

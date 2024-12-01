@@ -135,14 +135,10 @@ functions:
     handler: src/handlers/runAllAdapters.default
     timeout: 900
     memorySize: 250
-    events:
-      - schedule: cron(10,45 * * * ? *)
   runAggregateAllAdapters:
     handler: src/handlers/runAggregateAllAdapters.default
     timeout: 900
     memorySize: 10240
-    events:
-      - schedule: cron(10 * * * ? *)
   checkStaleBridges:
     handler: src/handlers/checkStaleBridges.default
     timeout: 600
