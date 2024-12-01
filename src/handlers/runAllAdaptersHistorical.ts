@@ -1,7 +1,6 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
 const lambdaClient = new LambdaClient({});
 
@@ -23,7 +22,6 @@ async function invokeLambda(functionName: string, event: any) {
 }
 
 const handler = async (_event: any) => {
-  await closeIdleConnections();
   const now = Math.floor(Date.now() / 1000);
   const fourHoursAgo = now - 60 * 60;
 

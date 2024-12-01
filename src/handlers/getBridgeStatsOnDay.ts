@@ -6,7 +6,6 @@ import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
 import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
-import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
 const numberOfTokensToReturn = 30; // also determines # of addresses returned
 
@@ -198,7 +197,6 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
-  await closeIdleConnections();
   const timestamp = event.pathParameters?.timestamp;
   if (Number(timestamp) % 3600 !== 0) {
     return errorResponse({

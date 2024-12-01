@@ -1,13 +1,12 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import adapter, { fetchWormholeEvents, normalizeChainName } from "../adapters/wormhole";
 import { sql } from "../utils/db";
-import { closeIdleConnections, insertTransactionRow } from "../utils/wrappa/postgres/write";
+import { insertTransactionRow } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 export const handler = async () => {
   try {
-    await closeIdleConnections();
     await insertConfigEntriesForAdapter(adapter, "wormhole");
     const startTs = dayjs().subtract(1, "day").unix();
     const endTs = dayjs().unix();
