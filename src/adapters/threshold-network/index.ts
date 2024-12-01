@@ -4,7 +4,7 @@ import { EventData } from "../../utils/types";
 
 const bridge = "0x5e4861a80B55f035D899f66772117F00FA0E8e7B";
 const tbtc = "0x18084fbA666a33d37592fA2633fD49a74DD93a88";
-const tbtcVault = "0x9c070027cdc9dc8f82416b2e5314e11dfb4fe3cd"
+const tbtcVault = "0x9c070027cdc9dc8f82416b2e5314e11dfb4fe3cd";
 
 export type ExtendedContractEventParams = ContractEventParams & {
   extraData?: { [key: string]: any };
@@ -53,7 +53,7 @@ const constructParams = (chain: string) => {
   return async (fromBlock: number, toBlock: number) => {
     const evmEventLogs = await getTxDataFromEVMEventLogs("thresholdnetwork", chain, fromBlock, toBlock, eventParams);
 
-    const mintAndRedeemEventLogs: EventData[] = []
+    const mintAndRedeemEventLogs: EventData[] = [];
     evmEventLogs.forEach((eventLog) => {
       if (eventLog.isDeposit) {
         !eventLog.amount.eq(0) && mintAndRedeemEventLogs.push(eventLog);
@@ -63,7 +63,7 @@ const constructParams = (chain: string) => {
     });
 
     return mintAndRedeemEventLogs;
-  }
+  };
 };
 
 const adapter: BridgeAdapter = {
