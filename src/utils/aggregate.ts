@@ -149,7 +149,6 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       await chainsPromises;
     });
 
-  await sql.end();
   console.log("Finished aggregating job.");
 };
 

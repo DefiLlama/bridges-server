@@ -71,108 +71,108 @@ provider:
     ALLIUM_API_KEY: ${env:ALLIUM_API_KEY}
 
 functions:
-  bridgeDayStats:
-    handler: src/handlers/getBridgeStatsOnDay.default
-    timeout: 30
-    memorySize: 2000
-    events:
-      - http:
-          path: bridgedaystats/{timestamp}/{chain}
-          method: get
-  bridgeVolume:
-    handler: src/handlers/getBridgeVolume.default
-    timeout: 30
-    memorySize: 3000
-    events:
-      - http:
-          path: bridgevolume/{chain}
-          method: get
-  bridges:
-    handler: src/handlers/getBridges.default
-    timeout: 30
-    memorySize: 2000
-    events:
-      - http:
-          path: bridges
-          method: get
-  bridge:
-    handler: src/handlers/getBridge.default
-    timeout: 30
-    memorySize: 2000
-    events:
-      - http:
-          path: bridge/{id}
-          method: get
-  transactions:
-    handler: src/handlers/getTransactions.default
-    timeout: 30
-    memorySize: 3000
-    events:
-      - http:
-          path: transactions/{id}
-          method: get
-  largeTransactions:
-    handler: src/handlers/getLargeTransactions.default
-    timeout: 30
-    memorySize: 3000
-    events:
-      - http:
-          path: largetransactions/{chain}
-          method: get
-  lastBlocks:
-    handler: src/handlers/getLastBlocks.default
-    timeout: 120
-    memorySize: 2000
-    events:
-      - http:
-          path: lastblocks
-          method: get
-  runAdapter:
-    handler: src/handlers/runAdapter.default
-    timeout: 900
-    memorySize: 1024
-  runAllAdapters:
-    handler: src/handlers/runAllAdapters.default
-    timeout: 900
-    memorySize: 250
-  runAggregateAllAdapters:
-    handler: src/handlers/runAggregateAllAdapters.default
-    timeout: 900
-    memorySize: 10240
-  checkStaleBridges:
-    handler: src/handlers/checkStaleBridges.default
-    timeout: 600
-    memorySize: 2000
+  # bridgeDayStats:
+  #   handler: src/handlers/getBridgeStatsOnDay.default
+  #   timeout: 30
+  #   memorySize: 2000
+  #   events:
+  #     - http:
+  #         path: bridgedaystats/{timestamp}/{chain}
+  #         method: get
+  # bridgeVolume:
+  #   handler: src/handlers/getBridgeVolume.default
+  #   timeout: 30
+  #   memorySize: 3000
+  #   events:
+  #     - http:
+  #         path: bridgevolume/{chain}
+  #         method: get
+  # bridges:
+  #   handler: src/handlers/getBridges.default
+  #   timeout: 30
+  #   memorySize: 2000
+  #   events:
+  #     - http:
+  #         path: bridges
+  #         method: get
+  # bridge:
+  #   handler: src/handlers/getBridge.default
+  #   timeout: 30
+  #   memorySize: 2000
+  #   events:
+  #     - http:
+  #         path: bridge/{id}
+  #         method: get
+  # transactions:
+  #   handler: src/handlers/getTransactions.default
+  #   timeout: 30
+  #   memorySize: 3000
+  #   events:
+  #     - http:
+  #         path: transactions/{id}
+  #         method: get
+  # largeTransactions:
+  #   handler: src/handlers/getLargeTransactions.default
+  #   timeout: 30
+  #   memorySize: 3000
+  #   events:
+  #     - http:
+  #         path: largetransactions/{chain}
+  #         method: get
+  # lastBlocks:
+  #   handler: src/handlers/getLastBlocks.default
+  #   timeout: 120
+  #   memorySize: 2000
+  #   events:
+  #     - http:
+  #         path: lastblocks
+  #         method: get
+  # runAdapter:
+  #   handler: src/handlers/runAdapter.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAllAdapters:
+  #   handler: src/handlers/runAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 250
+  # runAggregateAllAdapters:
+  #   handler: src/handlers/runAggregateAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 10240
+  # checkStaleBridges:
+  #   handler: src/handlers/checkStaleBridges.default
+  #   timeout: 600
+  #   memorySize: 2000
 
-  runAdapterFromTo:
-    handler: src/handlers/runAdapterFromTo.default
-    timeout: 900
-    memorySize: 1024
-  runAllAdaptersHistorical:
-    handler: src/handlers/runAllAdaptersHistorical.default
-    timeout: 900
-    memorySize: 1024
-  runAdapterByName:
-    handler: src/handlers/runAdapterByName.default
-    timeout: 900
-    memorySize: 1024
-  dailyAggregateAllAdapters:
-    handler: src/handlers/dailyAggregateAllAdapters.default
-    timeout: 900
-    memorySize: 1024
-  getNetflows:
-    handler: src/handlers/getNetflows.default
-    timeout: 30
-    memorySize: 2000
-    events:
-      - http:
-          path: netflows/{period}
-          method: get
-  runWormhole:
-    handler: src/handlers/runWormhole.default
-    timeout: 900
-    events:
-      - schedule: cron(0 * * * ? *)
+  # runAdapterFromTo:
+  #   handler: src/handlers/runAdapterFromTo.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAllAdaptersHistorical:
+  #   handler: src/handlers/runAllAdaptersHistorical.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAdapterByName:
+  #   handler: src/handlers/runAdapterByName.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # dailyAggregateAllAdapters:
+  #   handler: src/handlers/dailyAggregateAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # getNetflows:
+  #   handler: src/handlers/getNetflows.default
+  #   timeout: 30
+  #   memorySize: 2000
+  #   events:
+  #     - http:
+  #         path: netflows/{period}
+  #         method: get
+  # runWormhole:
+  #   handler: src/handlers/runWormhole.default
+  #   timeout: 900
+  #   events:
+  #     - schedule: cron(0 * * * ? *)
 
 resources:
   # CORS for api gateway errors
