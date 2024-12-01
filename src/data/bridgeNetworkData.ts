@@ -1738,6 +1738,5 @@ export default [
     largeTxThreshold: 10000,
     url: "https://threshold.network/",
     chains:  ["Ethereum", "Bitcoin"],
-
   },
 ] as BridgeNetwork[];
