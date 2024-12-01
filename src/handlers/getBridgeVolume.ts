@@ -4,7 +4,7 @@ import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolu
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { secondsInDay, getCurrentUnixTimestamp } from "../utils/date";
 import { normalizeChain } from "../utils/normalizeChain";
-import { closeIdleConnections } from "../utils/wrappa/postgres/write";
+import { DEFAULT_TTL } from "../utils/cache";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   if (!chain) {
@@ -92,11 +92,11 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
-  await closeIdleConnections();
   const chain = event.pathParameters?.chain?.toLowerCase().replace(/%20/g, " ");
   const bridgeNetworkId = event.queryStringParameters?.id;
+
   const response = await getBridgeVolume(chain, bridgeNetworkId);
-  return successResponse(response, 10 * 60); // 10 mins cache
+  return successResponse(response, DEFAULT_TTL);
 };
 
 export default wrap(handler);
