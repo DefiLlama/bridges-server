@@ -99,7 +99,7 @@ const getBridges = async () => {
           lastHourlyVolume: lastHourlyVolume ?? 0,
           currentDayVolume: currentDayVolume ?? 0,
           last24hVolume: last24hVolume ?? 0,
-          lastDailyVolume: lastDailyVolume ?? 0,
+          lastDailyVolume: last24hVolume ?? 0,
           dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
           weeklyVolume: weeklyVolume ?? 0,
           monthlyVolume: monthlyVolume ?? 0,

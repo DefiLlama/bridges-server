@@ -1,7 +1,7 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getTimestampAtStartOfDay } from "../utils/date";
-import { queryAggregatedDailyDataAtTimestamp, queryConfig } from "../utils/wrappa/postgres/query";
+import { queryAggregatedDailyTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
@@ -113,20 +113,27 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
     return true;
   });
 
-  const queryTimestamp = getTimestampAtStartOfDay(parseInt(timestamp));
+  const queryTimestamp = getTimestampAtStartOfDay(parseInt(timestamp)) + 1;
+  const yesterdayTimestamp = getTimestampAtStartOfDay(parseInt(timestamp) - 86400) - 1;
 
   let sourceChainsDailyData = [] as IAggregatedData[];
   await Promise.all(
     sourceChainConfigs.map(async (config) => {
-      const sourceChainData = await queryAggregatedDailyDataAtTimestamp(
+      const sourceChainData = await queryAggregatedDailyTimestampRange(
         queryTimestamp,
+        yesterdayTimestamp,
         config.chain,
         config.bridge_name
       );
       sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
     })
   );
-  const dailyData = await queryAggregatedDailyDataAtTimestamp(queryTimestamp, queryChain, bridgeDbName);
+  const dailyData = await queryAggregatedDailyTimestampRange(
+    queryTimestamp,
+    yesterdayTimestamp,
+    queryChain,
+    bridgeDbName
+  );
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
   let dailyAddressesDeposited = {} as AddressRecord;

@@ -3,7 +3,6 @@ import bridgeNetworkData from "../data/bridgeNetworkData";
 import { wait } from "../helpers/etherscan";
 import { runAdapterHistorical } from "./adapter";
 import { getBlockByTimestamp } from "./blocks";
-import PromisePool from "@supercharge/promise-pool";
 import retry from "async-retry";
 import { sql } from "./db";
 const startTs = Number(process.argv[2]);
