@@ -152,6 +152,20 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
   console.log("Finished aggregating job.");
 };
 
+export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: number, endTimestamp: number) => {
+  const promises = Promise.all(
+    bridgeNetworks.map(async (bridgeNetwork) => {
+      const { id } = bridgeNetwork;
+      try {
+        await runAggregateDataHistorical(startTimestamp, endTimestamp, id, true);
+      } catch (e) {
+        console.error(`Error aggregating data for bridge network ${id}:`, e);
+      }
+    })
+  );
+  await promises;
+};
+
 const checkSolanaAddress = (address: string) => {
   try {
     return PublicKey.isOnCurve(address);

@@ -3,7 +3,7 @@ import { runAllAdapters } from "./jobs/runAllAdapters";
 import { runAggregateAllAdapters } from "./jobs/runAggregateAllAdapter";
 import { runAdaptersFromTo } from "./jobs/runAdaptersFromTo";
 import { handler as runWormhole } from "../handlers/runWormhole";
-import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
+import { aggregateHourlyVolume } from "./jobs/aggregateHourlyVolume";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -22,14 +22,13 @@ const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
 const cron = () => {
   withTimeout(runAllAdapters(), 10);
   withTimeout(runAggregateAllAdapters(), 20);
-  withTimeout(runAdaptersFromTo(), 15);
   withTimeout(runWormhole(), 30);
 
-  new CronJob("*/15 * * * *", async () => {
+  new CronJob("15,30,45 * * * *", async () => {
     await withTimeout(runAllAdapters(), 10);
   }).start();
 
-  new CronJob("30 * * * *", async () => {
+  new CronJob("5 * * * *", async () => {
     await withTimeout(runAggregateAllAdapters(), 20);
   }).start();
 
@@ -41,8 +40,8 @@ const cron = () => {
     await withTimeout(runWormhole(), 30);
   }).start();
 
-  new CronJob("0 * * * *", async () => {
-    await withTimeout(aggregateDailyVolume(), 10);
+  new CronJob("20 * * * *", async () => {
+    await withTimeout(aggregateHourlyVolume(), 10);
   }).start();
 };
 

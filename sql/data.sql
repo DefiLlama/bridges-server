@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS bridges.errors (
 
 CREATE INDEX IF NOT EXISTS errors_ts ON bridges.errors (ts);
 
-CREATE TABLE IF NOT EXISTS bridges.daily_volume (
+CREATE TABLE IF NOT EXISTS bridges.hourly_volume (
     id INT GENERATED ALWAYS AS IDENTITY,
     bridge_id uuid NOT NULL,
     ts TIMESTAMPTZ NOT NULL,
@@ -136,5 +136,5 @@ CREATE TABLE IF NOT EXISTS bridges.daily_volume (
             ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS daily_volume_ts ON bridges.daily_volume (ts);
-CREATE INDEX IF NOT EXISTS daily_volume_chain ON bridges.daily_volume (chain);
+CREATE INDEX IF NOT EXISTS hourly_volume_ts ON bridges.hourly_volume (ts);
+CREATE INDEX IF NOT EXISTS hourly_volume_chain ON bridges.hourly_volume (chain);
