@@ -1,14 +1,14 @@
 import { LRUCache } from "lru-cache";
 import hash from "object-hash";
 
-const MAX_SIZE_BYTES = 100 * 1024 * 1024;
+const MAX_SIZE_BYTES = 300 * 1024 * 1024;
 
 export const cache = new LRUCache({
   maxSize: MAX_SIZE_BYTES,
   sizeCalculation: (value: any) => {
     return Buffer.byteLength(JSON.stringify(value), "utf8");
   },
-  ttl: 1000 * 600,
+  ttl: 100 * 60 * 12,
 });
 
 interface APIEvent {

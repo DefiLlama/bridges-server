@@ -366,19 +366,17 @@ const getNetflows = async (period: TimePeriod) => {
   return await sql<{ chain: string; net_flow: string }[]>`
     WITH period_flows AS (
       SELECT 
-        c.chain,
+        hv.chain,
         SUM(CASE 
-          -- Deposits are outflows (-), withdrawals are inflows (+)
-          WHEN c.destination_chain IS NULL THEN (ha.total_withdrawn_usd - ha.total_deposited_usd)
-          -- For bridges with fixed destination chains, count flows on destination chain (inverted)
-          ELSE (ha.total_deposited_usd - ha.total_withdrawn_usd)
+          WHEN c.destination_chain IS NULL THEN (hv.total_withdrawn_usd - hv.total_deposited_usd)
+          ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
         END) as net_flow
-      FROM bridges.hourly_aggregated ha
-      JOIN bridges.config c ON ha.bridge_id = c.id
-      WHERE ha.ts >= date_trunc(${period}, NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
-      AND ha.ts < date_trunc(${period}, NOW() AT TIME ZONE 'UTC')
-      AND LOWER(c.chain) NOT LIKE '%dydx%'
-      GROUP BY c.chain
+      FROM bridges.hourly_volume hv
+      JOIN bridges.config c ON hv.bridge_id = c.id
+      WHERE hv.ts >= date_trunc(${period}, NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
+      AND hv.ts < date_trunc(${period}, NOW() AT TIME ZONE 'UTC')
+      AND LOWER(hv.chain) NOT LIKE '%dydx%'
+      GROUP BY hv.chain
     )
     SELECT 
       chain,
