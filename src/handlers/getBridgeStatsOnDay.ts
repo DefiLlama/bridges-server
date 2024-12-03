@@ -1,7 +1,11 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
-import { queryAggregatedDailyTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
+import {
+  queryAggregatedDailyTimestampRange,
+  queryAggregatedTokensInRange,
+  queryConfig,
+} from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
@@ -128,7 +132,7 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
       sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
     })
   );
-  const dailyData = await queryAggregatedDailyTimestampRange(queryTimestamp, endTimestamp, queryChain, bridgeDbName);
+  const dailyData = await queryAggregatedTokensInRange(queryTimestamp, endTimestamp, queryChain, bridgeDbName);
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
   let dailyAddressesDeposited = {} as AddressRecord;

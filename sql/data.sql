@@ -138,3 +138,6 @@ CREATE TABLE IF NOT EXISTS bridges.hourly_volume (
 
 CREATE INDEX IF NOT EXISTS hourly_volume_ts ON bridges.hourly_volume (ts);
 CREATE INDEX IF NOT EXISTS hourly_volume_chain ON bridges.hourly_volume (chain);
+
+CREATE INDEX IF NOT EXISTS hourly_volume_bridge_ts_chain ON bridges.hourly_volume (bridge_id, ts, chain);
+CREATE INDEX IF NOT EXISTS config_bridge_name_id ON bridges.config (bridge_name, id);

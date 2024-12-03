@@ -387,6 +387,49 @@ const getNetflows = async (period: TimePeriod) => {
   `;
 };
 
+const queryAggregatedTokensInRange = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  chain?: string,
+  bridgeNetworkName?: string
+) => {
+  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})::date 
+    AND ha.ts <= to_timestamp(${endTimestamp})::date`;
+
+  if (chain) {
+    conditions = sql`${conditions} AND c.chain = ${chain}`;
+  }
+
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+
+  return await sql<
+    {
+      bridge_id: string;
+      ts: Date;
+      total_tokens_deposited: string[];
+      total_tokens_withdrawn: string[];
+      total_address_deposited: string[];
+      total_address_withdrawn: string[];
+    }[]
+  >`
+    SELECT 
+      ha.bridge_id,
+      ha.ts,
+      ha.total_tokens_deposited,
+      ha.total_tokens_withdrawn,
+      ha.total_address_deposited,
+      ha.total_address_withdrawn
+    FROM 
+      bridges.hourly_aggregated ha
+    JOIN
+      bridges.config c ON ha.bridge_id = c.id
+    ${conditions}
+    ORDER BY ts;
+  `;
+};
+
 export {
   getBridgeID,
   getConfigsWithDestChain,
@@ -401,4 +444,5 @@ export {
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
   getNetflows,
+  queryAggregatedTokensInRange,
 };
