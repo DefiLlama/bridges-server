@@ -119,31 +119,36 @@ const queryAggregatedDailyTimestampRange = async (
   chain?: string,
   bridgeNetworkName?: string
 ) => {
-  let conditions = sql`WHERE ts >= to_timestamp(${startTimestamp}) 
-    AND ts <= to_timestamp(${endTimestamp})`;
+  let conditions = sql`WHERE date_trunc('day', hv.ts) >= to_timestamp(${startTimestamp})::date 
+    AND date_trunc('day', hv.ts) <= to_timestamp(${endTimestamp})::date`;
 
   if (chain) {
-    conditions = sql`${conditions} AND dv.chain = ${chain}`;
+    conditions = sql`${conditions} AND hv.chain = ${chain}`;
   }
 
   if (bridgeNetworkName) {
     conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
   }
+
   const result = await sql<IAggregatedData[]>`
-SELECT 
-  dv.bridge_id,
-  dv.ts,
-  dv.total_deposited_usd::text,
-  dv.total_withdrawn_usd::text,
-  dv.total_deposit_txs,
-  dv.total_withdrawal_txs,
-  dv.chain
-FROM 
-  bridges.daily_volume dv
-JOIN
-  bridges.config c ON dv.bridge_id = c.id
-${conditions}
-ORDER BY ts;
+    SELECT 
+      hv.bridge_id,
+      date_trunc('day', hv.ts) as ts,
+      CAST(SUM(hv.total_deposited_usd) AS TEXT) as total_deposited_usd,
+      CAST(SUM(hv.total_withdrawn_usd) AS TEXT) as total_withdrawn_usd,
+      CAST(COALESCE(SUM(hv.total_deposit_txs), 0) AS INTEGER) as total_deposit_txs,
+      CAST(COALESCE(SUM(hv.total_withdrawal_txs), 0) AS INTEGER) as total_withdrawal_txs,
+      hv.chain
+    FROM 
+      bridges.hourly_volume hv
+    JOIN
+      bridges.config c ON hv.bridge_id = c.id
+    ${conditions}
+    GROUP BY 
+      hv.bridge_id,
+      date_trunc('day', hv.ts),
+      hv.chain
+    ORDER BY ts;
   `;
   return result;
 };

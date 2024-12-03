@@ -5,6 +5,8 @@ import { runAdapterHistorical } from "./adapter";
 import { getBlockByTimestamp } from "./blocks";
 import retry from "async-retry";
 import { sql } from "./db";
+import PromisePool from "@supercharge/promise-pool";
+
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
@@ -86,11 +88,11 @@ async function fillAdapterHistorical(
 
 const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: number) => {
   try {
-    await Promise.all(
-      bridgeNetworkData.map(async (adapter) => {
+    await PromisePool.withConcurrency(20)
+      .for(bridgeNetworkData.reverse())
+      .process(async (adapter) => {
         await fillAdapterHistorical(startTimestamp, endTimestamp, adapter.bridgeDbName);
-      })
-    );
+      });
   } finally {
     await sql.end();
   }
