@@ -1,5 +1,4 @@
-import type { Chain } from "@defillama/sdk/build/general";
-import { sql } from "../../db";
+import { querySql as sql } from "../../db";
 
 interface IConfig {
   id: string;

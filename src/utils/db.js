@@ -10,7 +10,13 @@ const connectionString =
 const sql = postgres(connectionString, {
   idle_timeout: 20,
   max_lifetime: 60 * 30,
-  max: 10,
+  max: 5,
 });
 
-export { sql };
+const querySql = postgres(connectionString, {
+  idle_timeout: 20,
+  max_lifetime: 60 * 30,
+  max: 5,
+});
+
+export { sql, querySql };
