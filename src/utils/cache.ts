@@ -1,7 +1,7 @@
 import { LRUCache } from "lru-cache";
 import hash from "object-hash";
 
-const MAX_SIZE_BYTES = 300 * 1024 * 1024;
+const MAX_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const cache = new LRUCache({
   maxSize: MAX_SIZE_BYTES,
