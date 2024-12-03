@@ -1131,7 +1131,7 @@ export default [
       "ZkLink",
       "BSC",
       "Taiko",
-      // "Mantle",
+      "Mantle",
       // "Zkfair",
       // "BSquared",
       // "Bouncebit",
