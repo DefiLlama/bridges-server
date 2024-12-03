@@ -119,11 +119,11 @@ const queryAggregatedDailyTimestampRange = async (
   chain?: string,
   bridgeNetworkName?: string
 ) => {
-  let conditions = sql`WHERE date_trunc('day', hv.ts) >= to_timestamp(${startTimestamp})::date 
-    AND date_trunc('day', hv.ts) <= to_timestamp(${endTimestamp})::date`;
+  let conditions = sql`WHERE date_trunc('day', dv.ts) >= to_timestamp(${startTimestamp})::date 
+    AND date_trunc('day', dv.ts) <= to_timestamp(${endTimestamp})::date`;
 
   if (chain) {
-    conditions = sql`${conditions} AND hv.chain = ${chain}`;
+    conditions = sql`${conditions} AND dv.chain = ${chain}`;
   }
 
   if (bridgeNetworkName) {
@@ -132,22 +132,22 @@ const queryAggregatedDailyTimestampRange = async (
 
   const result = await sql<IAggregatedData[]>`
     SELECT 
-      hv.bridge_id,
-      date_trunc('day', hv.ts) as ts,
-      CAST(SUM(hv.total_deposited_usd) AS TEXT) as total_deposited_usd,
-      CAST(SUM(hv.total_withdrawn_usd) AS TEXT) as total_withdrawn_usd,
-      CAST(COALESCE(SUM(hv.total_deposit_txs), 0) AS INTEGER) as total_deposit_txs,
-      CAST(COALESCE(SUM(hv.total_withdrawal_txs), 0) AS INTEGER) as total_withdrawal_txs,
-      hv.chain
+      dv.bridge_id,
+      dv.ts,
+      CAST(SUM(dv.total_deposited_usd) AS TEXT) as total_deposited_usd,
+      CAST(SUM(dv.total_withdrawn_usd) AS TEXT) as total_withdrawn_usd,
+      CAST(COALESCE(SUM(dv.total_deposit_txs), 0) AS INTEGER) as total_deposit_txs,
+      CAST(COALESCE(SUM(dv.total_withdrawal_txs), 0) AS INTEGER) as total_withdrawal_txs,
+      dv.chain
     FROM 
-      bridges.hourly_volume hv
+      bridges.daily_volume dv
     JOIN
-      bridges.config c ON hv.bridge_id = c.id
+      bridges.config c ON dv.bridge_id = c.id
     ${conditions}
     GROUP BY 
-      hv.bridge_id,
-      date_trunc('day', hv.ts),
-      hv.chain
+      dv.bridge_id,
+      dv.ts,
+      dv.chain
     ORDER BY ts;
   `;
   return result;
@@ -340,7 +340,7 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
 
   const result = await sql<{ total_volume: string }[]>`
     SELECT COALESCE(SUM(${volumeColumn}), 0) as total_volume
-    FROM bridges.hourly_aggregated ha
+    FROM bridges.hourly_volume ha
     JOIN bridges.config c ON ha.bridge_id = c.id
     WHERE c.bridge_name = ${bridgeName}
       AND ha.ts >= to_timestamp(${twentyFourHoursAgo})
@@ -371,10 +371,10 @@ const getNetflows = async (period: TimePeriod) => {
           WHEN c.destination_chain IS NULL THEN (hv.total_withdrawn_usd - hv.total_deposited_usd)
           ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
         END) as net_flow
-      FROM bridges.hourly_volume hv
+      FROM bridges.daily_volume hv
       JOIN bridges.config c ON hv.bridge_id = c.id
-      WHERE hv.ts >= date_trunc(${period}, NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
-      AND hv.ts < date_trunc(${period}, NOW() AT TIME ZONE 'UTC')
+      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
+      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')
       AND LOWER(hv.chain) NOT LIKE '%dydx%'
       GROUP BY hv.chain
     )

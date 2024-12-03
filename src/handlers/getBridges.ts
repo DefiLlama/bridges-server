@@ -18,31 +18,10 @@ const getBridges = async () => {
         let weeklyVolume = 0;
         let monthlyVolume = 0;
         const startOfTheDayTs = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
-        let chainDailyVolumes = {} as any;
         const dailyStartTimestamp = startOfTheDayTs - 30 * secondsInDay;
         const [lastMonthDailyVolume, last24hVolume] = await Promise.all([
           getDailyBridgeVolume(dailyStartTimestamp, startOfTheDayTs, undefined, id),
           getLast24HVolume(bridgeDbName),
-          Promise.all(
-            chains.map(async (chain) => {
-              const queryChain = normalizeChain(chain);
-              let chainLastDailyVolume;
-              const chainLastMonthDailyVolume = await getDailyBridgeVolume(
-                dailyStartTimestamp,
-                startOfTheDayTs,
-                queryChain,
-                id
-              );
-              let chainLastDailyTs = 0;
-              if (chainLastMonthDailyVolume?.length) {
-                const chainLastDailyVolumeRecord = chainLastMonthDailyVolume[chainLastMonthDailyVolume.length - 1];
-                chainLastDailyTs = parseInt(chainLastDailyVolumeRecord.date);
-                chainLastDailyVolume =
-                  (chainLastDailyVolumeRecord.depositUSD + chainLastDailyVolumeRecord.withdrawUSD) / 2;
-              }
-              chainDailyVolumes[chain] = chainLastDailyVolume ?? 0;
-            })
-          ),
         ]);
 
         let lastDailyTs = 0;
@@ -71,7 +50,7 @@ const getBridges = async () => {
           displayName: displayName,
           // url: url,
           icon: iconLink,
-          volumePrevDay: lastDailyVolume ?? 0,
+          volumePrevDay: last24hVolume ?? 0,
           volumePrev2Day: dayBeforeLastVolume ?? 0,
           lastHourlyVolume: lastHourlyVolume ?? 0,
           last24hVolume: last24hVolume ?? 0,
@@ -79,7 +58,7 @@ const getBridges = async () => {
           dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
           weeklyVolume: weeklyVolume ?? 0,
           monthlyVolume: monthlyVolume ?? 0,
-          chains: chains.sort((a, b) => chainDailyVolumes[b] - chainDailyVolumes[a]),
+          chains: chains,
           destinationChain: destinationChain ?? "false",
           url,
         } as any;

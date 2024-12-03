@@ -132,8 +132,6 @@ export const getHourlyBridgeVolume = async (
     ({ bridgeDbName } = bridgeNetwork);
   }
 
-  const chainIdsWithSingleEntry = (await getConfigsWithDestChain()).map((config) => config.id);
-
   let sourceChainConfigs = [] as IConfig[];
   if (chain) {
     sourceChainConfigs = (await queryConfig(undefined, undefined, chain)).filter((config) => {
