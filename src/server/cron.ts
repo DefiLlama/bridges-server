@@ -45,7 +45,7 @@ const cron = () => {
     await withTimeout(aggregateHourlyVolume(), 20);
   }).start();
 
-  new CronJob("0 0 * * *", async () => {
+  new CronJob("35 * * * *", async () => {
     await withTimeout(aggregateDailyVolume(), 20);
   }).start();
 };
