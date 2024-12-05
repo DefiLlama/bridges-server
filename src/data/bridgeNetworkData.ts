@@ -1732,6 +1732,16 @@ export default [
   },
   {
     id: 78,
+    displayName: "Threshold Network",
+    bridgeDbName: "thresholdnetwork",
+    iconLink: "icons:threshold-network",
+    largeTxThreshold: 10000,
+    url: "https://threshold.network/",
+    chains:  ["Ethereum", "Bitcoin"],
+    destinationChain: "Bitcoin",
+  },
+  {
+    id: 79,
     displayName: "Zircuit Bridge",
     bridgeDbName: "zircuit",
     iconLink: "chain:zircuit",
