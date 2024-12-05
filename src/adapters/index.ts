@@ -73,6 +73,7 @@ import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
+import thresholdnetwork from "./threshold-network";
 
 export default {
   polygon,
@@ -149,6 +150,7 @@ export default {
   layerswap,
   hyperlane,
   wormhole,
+  thresholdnetwork,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

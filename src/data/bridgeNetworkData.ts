@@ -1730,4 +1730,14 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 78,
+    displayName: "Threshold Network",
+    bridgeDbName: "thresholdnetwork",
+    iconLink: "icons:threshold-network",
+    largeTxThreshold: 10000,
+    url: "https://threshold.network/",
+    chains:  ["Ethereum", "Bitcoin"],
+    destinationChain: "Bitcoin",
+  },
 ] as BridgeNetwork[];
