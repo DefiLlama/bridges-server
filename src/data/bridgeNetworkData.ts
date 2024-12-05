@@ -1730,4 +1730,14 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 78,
+    displayName: "Zircuit Bridge",
+    bridgeDbName: "zircuit",
+    iconLink: "chain:zircuit",
+    largeTxThreshold: 10000,
+    url: "https://bridge.zircuit.com/",
+    chains: ["Ethereum", "Zircuit"],
+    destinationChain: "Zircuit",
+  },
 ] as BridgeNetwork[];
