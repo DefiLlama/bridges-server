@@ -74,6 +74,7 @@ import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
 import thresholdnetwork from "./threshold-network";
+import universalx from "./universalx";
 
 export default {
   polygon,
@@ -151,6 +152,7 @@ export default {
   hyperlane,
   wormhole,
   thresholdnetwork,
+  universalx,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
