@@ -73,6 +73,7 @@ import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
+import thresholdnetwork from "./threshold-network";
 import universalx from "./universalx";
 
 export default {
@@ -150,6 +151,7 @@ export default {
   layerswap,
   hyperlane,
   wormhole,
+  thresholdnetwork,
   universalx,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
