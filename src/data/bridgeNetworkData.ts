@@ -1740,4 +1740,14 @@ export default [
     chains:  ["Ethereum", "Bitcoin"],
     destinationChain: "Bitcoin",
   },
+  {
+    id: 79,
+    displayName: "Zircuit Bridge",
+    bridgeDbName: "zircuit",
+    iconLink: "chain:zircuit",
+    largeTxThreshold: 10000,
+    url: "https://bridge.zircuit.com/",
+    chains: ["Ethereum", "Zircuit"],
+    destinationChain: "Zircuit",
+  },
 ] as BridgeNetwork[];
