@@ -21,10 +21,6 @@ const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
 };
 
 const cron = () => {
-  withTimeout(runAllAdapters(), 10);
-  withTimeout(runAggregateAllAdapters(), 20);
-  withTimeout(runWormhole(), 30);
-
   new CronJob("15,30,45 * * * *", async () => {
     await withTimeout(runAllAdapters(), 10);
   }).start();
