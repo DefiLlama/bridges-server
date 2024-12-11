@@ -783,6 +783,8 @@ export default [
       "Celo",
       "Kava",
       "Fraxtal",
+      "Metis",
+      "Mode",
     ],
     chainMapping: {
       avalanche: "avax",
