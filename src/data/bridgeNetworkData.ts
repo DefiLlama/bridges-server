@@ -1762,4 +1762,17 @@ export default [
     chains: ["Arbitrum", "Hyperliquid"],
     destinationChain: "Hyperliquid",
   },
+  {
+    id: 81,
+    displayName: "PowPeg Fast Mode",
+    bridgeDbName: "flyover",
+    iconLink: "icons:rsk",
+    largeTxThreshold: 10000,
+    url: "https://powpeg.rootstock.io/",
+    chains: ["Rootstock", "Bitcoin"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
+    destinationChain: "Bitcoin",
+  },
 ] as BridgeNetwork[];

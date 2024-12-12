@@ -76,6 +76,7 @@ import wormhole from "./wormhole";
 import thresholdnetwork from "./threshold-network";
 import zircuit from "./zircuit";
 import hyperliquid from "./hyperliquid";
+import flyover from "./rootstock-flyover";
 
 export default {
   polygon,
@@ -155,6 +156,7 @@ export default {
   thresholdnetwork,
   zircuit,
   hyperliquid,
+  flyover
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
