@@ -65,16 +65,11 @@ export const getTokenId = (token: string, chain: string): string => {
 }
 
 export const getTokenAddress = (symbol: string, chain: string, assets: any[]) =>  {
-    // Handle native token address
-    if (symbol === "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE") {
-        return symbol;
-    }
-
     symbol = getSymbol(symbol);
     chain = getChain(chain);
     let tokenAddress = assets.find((asset) => asset.symbol === symbol)?.addresses?.[chain]?.address;
 
-    if (tokenAddress == undefined) tokenAddress = "0x000000000000000000000000000000000000dEaD"
+    if (tokenAddress == undefined  || symbol === "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE") tokenAddress = "0x0000000000000000000000000000000000000000"
 
     return tokenAddress;
 }
@@ -182,7 +177,7 @@ export const isStablecoin = (tokenAddress: string, chain: string) => {
     ]
   };
 
-  const chainStablecoins = stablecoinAddresses[chain.toLowerCase()] || [];
+  const chainStablecoins = stablecoinAddresses[chain.toLowerCase() as keyof typeof stablecoinAddresses] || [];
   return chainStablecoins.includes(tokenAddress.toLowerCase());
 };
 
