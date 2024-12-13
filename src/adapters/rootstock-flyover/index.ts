@@ -47,14 +47,7 @@ const constructParams = () => {
   const eventParams = [depositPegoutEventParams, callForUserEventParams];
   return async (fromBlock: number, toBlock: number) => {    
     const logs = await getTxDataFromEVMEventLogs("flyover", "rsk", fromBlock, toBlock, eventParams);
-
-    logs.forEach((log) => {
-        if (!log.isDeposit) {
-            log.amount = log?.amount?.mul(1e10)
-        }
-      });
-
-      return logs;
+    return logs;
   };
 };
 
