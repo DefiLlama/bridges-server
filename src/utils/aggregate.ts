@@ -123,7 +123,7 @@ export const runAggregateDataHistorical = async (
 };
 
 export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boolean = false) => {
-  await PromisePool.withConcurrency(2)
+  await PromisePool.withConcurrency(5)
     .for(bridgeNetworks)
     .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
@@ -149,8 +149,21 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       await chainsPromises;
     });
 
-  await sql.end();
   console.log("Finished aggregating job.");
+};
+
+export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: number, endTimestamp: number) => {
+  const promises = Promise.all(
+    bridgeNetworks.map(async (bridgeNetwork) => {
+      const { id } = bridgeNetwork;
+      try {
+        await runAggregateDataHistorical(startTimestamp, endTimestamp, id, true);
+      } catch (e) {
+        console.error(`Error aggregating data for bridge network ${id}:`, e);
+      }
+    })
+  );
+  await promises;
 };
 
 const checkSolanaAddress = (address: string) => {

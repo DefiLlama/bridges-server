@@ -66,9 +66,9 @@ provider:
     OPTIMISM_RPC: ${env:OPTIMISM_RPC}
     AURORA_RPC: ${env:AURORA_RPC}
     ARBITRUM_RPC: ${env:ARBITRUM_RPC}
-    SOLANA_RPC: ${env:SOLANA_RPC}
     RSK_ARCHIVAL_RPC: ${env:RSK_ARCHIVAL_RPC}
     DISCORD_WEBHOOK: ${env:DISCORD_WEBHOOK}
+    ALLIUM_API_KEY: ${env:ALLIUM_API_KEY}
 
 functions:
   bridgeDayStats:
@@ -127,48 +127,39 @@ functions:
       - http:
           path: lastblocks
           method: get
-  runAdapter:
-    handler: src/handlers/runAdapter.default
-    timeout: 900
-    memorySize: 1024
-  runAllAdapters:
-    handler: src/handlers/runAllAdapters.default
-    timeout: 900
-    memorySize: 250
-    events:
-      - schedule: cron(10,25,40 * * * ? *)
-  runAggregateAllAdapters:
-    handler: src/handlers/runAggregateAllAdapters.default
-    timeout: 900
-    memorySize: 10240
-    events:
-      - schedule: cron(10 * * * ? *)
-  checkStaleBridges:
-    handler: src/handlers/checkStaleBridges.default
-    timeout: 600
-    memorySize: 2000
-    events:
-      - schedule: cron(0 0 * * ? *)
-  runAdapterFromTo:
-    handler: src/handlers/runAdapterFromTo.default
-    timeout: 900
-    memorySize: 1024
-  runAllAdaptersHistorical:
-    handler: src/handlers/runAllAdaptersHistorical.default
-    timeout: 900
-    memorySize: 1024
-    events:
-      - schedule: cron(0,15,30,45 * * * ? *)
-  runAdapterByName:
-    handler: src/handlers/runAdapterByName.default
-    timeout: 900
-    memorySize: 1024
-  dailyAggregateAllAdapters:
-    handler: src/handlers/dailyAggregateAllAdapters.default
-    timeout: 900
-    memorySize: 1024
-    events:
-      - schedule: cron(30 * * * ? *)
+  # runAdapter:
+  #   handler: src/handlers/runAdapter.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAllAdapters:
+  #   handler: src/handlers/runAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 250
+  # runAggregateAllAdapters:
+  #   handler: src/handlers/runAggregateAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 10240
+  # checkStaleBridges:
+  #   handler: src/handlers/checkStaleBridges.default
+  #   timeout: 600
+  #   memorySize: 2000
+
+  # runAdapterFromTo:
+  #   handler: src/handlers/runAdapterFromTo.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAllAdaptersHistorical:
+  #   handler: src/handlers/runAllAdaptersHistorical.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # runAdapterByName:
+  #   handler: src/handlers/runAdapterByName.default
+  #   timeout: 900
+  #   memorySize: 1024
+  # dailyAggregateAllAdapters:
+  #   handler: src/handlers/dailyAggregateAllAdapters.default
+  #   timeout: 900
+  #   memorySize: 1024
   getNetflows:
     handler: src/handlers/getNetflows.default
     timeout: 30
@@ -177,6 +168,12 @@ functions:
       - http:
           path: netflows/{period}
           method: get
+  # runWormhole:
+  #   handler: src/handlers/runWormhole.default
+  #   timeout: 900
+  #   events:
+  #     - schedule: cron(0 * * * ? *)
+
 resources:
   # CORS for api gateway errors
   - ${file(resources/api-gateway-errors.yml)}

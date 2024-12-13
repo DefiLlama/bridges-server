@@ -1,6 +1,6 @@
-import { ChainId } from './constants'
+import {ChainId} from './constants';
 
-export const contracts: { chainId: ChainId, portal: string, synthesis: string }[] =  [
+export const contracts: { chainId: ChainId; portal: string; synthesis: string }[] = [
     {
         chainId: 1,
         portal: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
@@ -44,12 +44,12 @@ export const contracts: { chainId: ChainId, portal: string, synthesis: string }[
     {
         chainId: 324,
         portal: '0x4f5456d4d0764473DfCA1ffBB8524C151c4F19b9',
-        synthesis: '0x0000000000000000000000000000000000000000'
+        synthesis: '0x07bffC25011901CB01a00127518A154b47eB6e80'
     },
     {
         chainId: 42161,
         portal: '0x01A3c8E513B758EBB011F7AFaf6C37616c9C24d9',
-        synthesis: '0x0000000000000000000000000000000000000000'
+        synthesis: '0x326adbE46D7E6C1B3927e9309B96DF478bda6D16'
     },
     {
         chainId: 10,
@@ -145,5 +145,40 @@ export const contracts: { chainId: ChainId, portal: string, synthesis: string }[
         chainId: 1329,
         portal: '0x292fC50e4eB66C3f6514b9E402dBc25961824D62',
         synthesis: '0x0000000000000000000000000000000000000000'
-    }
+    },
+    {
+        chainId: 7000,
+        portal: '0x8a7F930003BedD63A1ebD99C5917FD6aE7E3dedf',
+        synthesis: '0x2b7Aa8bDc40B6d3d19d0dE7480c4db8d5B6495e2'
+    },
+    {
+        chainId: 25,
+        portal: '0xE75C7E85FE6ADd07077467064aD15847E6ba9877',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
+    {
+        chainId: 252,
+        portal: '0x292fC50e4eB66C3f6514b9E402dBc25961824D62',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
+    {
+        chainId: 1625,
+        portal: '0x292fC50e4eB66C3f6514b9E402dBc25961824D62',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
+    {
+        chainId: 223,
+        portal: '0x292fC50e4eB66C3f6514b9E402dBc25961824D62',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
+    {
+        chainId: 388,
+        portal: '0x2E818E50b913457015E1277B43E469b63AC5D3d7',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
+    {
+        chainId: 2818,
+        portal: '0x292fC50e4eB66C3f6514b9E402dBc25961824D62',
+        synthesis: '0x0000000000000000000000000000000000000000'
+    },
 ] as const;
