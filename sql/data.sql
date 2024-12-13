@@ -118,3 +118,47 @@ CREATE TABLE IF NOT EXISTS bridges.errors (
 );
 
 CREATE INDEX IF NOT EXISTS errors_ts ON bridges.errors (ts);
+
+CREATE TABLE IF NOT EXISTS bridges.hourly_volume (
+    id INT GENERATED ALWAYS AS IDENTITY,
+    bridge_id uuid NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
+    total_deposited_usd NUMERIC,
+    total_withdrawn_usd NUMERIC,
+    total_deposit_txs INTEGER,
+    total_withdrawal_txs INTEGER,
+    chain VARCHAR NOT NULL,
+    PRIMARY KEY(id),
+    UNIQUE (bridge_id, ts, chain),
+    CONSTRAINT fk_bridge_id
+        FOREIGN KEY(bridge_id)
+            REFERENCES bridges.config(id)
+            ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS hourly_volume_ts ON bridges.hourly_volume (ts);
+CREATE INDEX IF NOT EXISTS hourly_volume_chain ON bridges.hourly_volume (chain);
+
+CREATE INDEX IF NOT EXISTS hourly_volume_bridge_ts_chain ON bridges.hourly_volume (bridge_id, ts, chain);
+CREATE INDEX IF NOT EXISTS config_bridge_name_id ON bridges.config (bridge_name, id);
+
+CREATE TABLE IF NOT EXISTS bridges.daily_volume (
+    id INT GENERATED ALWAYS AS IDENTITY,
+    bridge_id uuid NOT NULL,
+    ts TIMESTAMPTZ NOT NULL,
+    total_deposited_usd NUMERIC,
+    total_withdrawn_usd NUMERIC,
+    total_deposit_txs INTEGER,
+    total_withdrawal_txs INTEGER,
+    chain VARCHAR NOT NULL,
+    PRIMARY KEY(id),
+    UNIQUE (bridge_id, ts, chain),
+    CONSTRAINT fk_bridge_id
+        FOREIGN KEY(bridge_id)
+            REFERENCES bridges.config(id)
+            ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS daily_volume_ts ON bridges.daily_volume (ts);
+CREATE INDEX IF NOT EXISTS daily_volume_chain ON bridges.daily_volume (chain);
+CREATE INDEX IF NOT EXISTS daily_volume_bridge_ts_chain ON bridges.daily_volume (bridge_id, ts, chain);

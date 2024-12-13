@@ -32,8 +32,6 @@ const handler = async (event: { bridgeName: string }) => {
   } catch (e) {
     console.error(`Adapter ${event.bridgeName} failed: ${JSON.stringify(e)}`);
     throw e;
-  } finally {
-    await sql.end();
   }
 };
 

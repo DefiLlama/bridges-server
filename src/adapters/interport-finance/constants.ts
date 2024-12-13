@@ -53,3 +53,73 @@ export const VAULT_ASSET_ADDRESSES = {
         fantom: '0xcc1b99dDAc1a33c201a742A1851662E87BC7f22C',
     },
 };
+
+export const CCIP_TOKEN_BRIDGE = {
+    ethereum: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    arbitrum: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    bsc: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    base: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    polygon: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    optimism: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    avax: "0x5A6bF2878eE179e928F504c5357c9146e8EaA573",
+    era: undefined,
+    scroll: undefined,
+    linea: undefined,
+    polygon_zkevm: undefined,
+    opbnb: undefined,
+    eon: undefined,
+    fantom: undefined,
+} as const;
+
+export const CCIP_NATIVE_BRIDGE = {
+    ethereum: "0x4a33c2421D5E0d10132CE5E0484eE1270A6aF4C6",
+    arbitrum: "0x4a33c2421D5E0d10132CE5E0484eE1270A6aF4C6",
+    optimism: "0x4a33c2421D5E0d10132CE5E0484eE1270A6aF4C6",
+    era: undefined,
+    base: undefined,
+    bsc: undefined,
+    avax: undefined,
+    polygon: undefined,
+    scroll: undefined,
+    linea: undefined,
+    polygon_zkevm: undefined,
+    opbnb: undefined,
+    eon: undefined,
+    fantom: undefined,
+} as const;
+
+export const CCTP_ACTION_EXECUTOR = {
+    ethereum: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    arbitrum: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    base: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    polygon: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    optimism: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    avax: "0x41b84aea119E945f4C275BADA0eD38b8aFE864c8",
+    era: undefined,
+    scroll: undefined,
+    linea: undefined,
+    bsc: undefined,
+    polygon_zkevm: undefined,
+    opbnb: undefined,
+    eon: undefined,
+    fantom: undefined,
+} as const;
+
+export const NATIVE_TOKENS: Record<string, string> = {
+    ethereum: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+    arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+    optimism: "0x4200000000000000000000000000000000000006",
+    base: "0x4200000000000000000000000000000000000006",
+    linea: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
+    blast: "0x4300000000000000000000000000000000000004",
+    scroll: "0x5300000000000000000000000000000000000004",
+    polygon: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    polygon_zkevm: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+    era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
+    arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
+    merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
+    taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+    btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+    zklink: "0x8280a4e7D5B3B658ec4580d3Bc30f5e50454F169",
+};

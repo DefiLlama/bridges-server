@@ -1,4 +1,4 @@
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import polygon from "./polygon";
 import synapse from "./synapse";
 import hop from "./hop";
@@ -59,7 +59,7 @@ import connext from "./connext";
 import xswap from "./xswap";
 import owlto from "./owlto";
 import zkbridge from "./zkbridge";
-import helixbridge from "./helixbridge";
+import helixbox from "./helixbox";
 import oooo from "./oooo";
 import memebridge from "./memebridge";
 import bunnyfi from "./bunnyfi";
@@ -69,6 +69,12 @@ import fastbtc from "./rootstock-fastbtc-bridge";
 import crowdswap from "./crowdswap";
 import mint from "./mint";
 import suibridge from "./suibridge";
+import retrobridge from "./retrobridge";
+import layerswap from "./layerswap";
+import hyperlane from "./hyperlane";
+import wormhole from "./wormhole";
+import thresholdnetwork from "./threshold-network";
+import zircuit from "./zircuit";
 
 export default {
   polygon,
@@ -132,7 +138,7 @@ export default {
   owlto,
   zkbridge,
   zkbridge111: zkbridge,
-  helixbridge,
+  helixbridge: helixbox,
   memebridge,
   bunnyfi,
   minibridge,
@@ -141,6 +147,12 @@ export default {
   crowdswap,
   mint,
   suibridge,
+  retrobridge,
+  layerswap,
+  hyperlane,
+  wormhole,
+  thresholdnetwork,
+  zircuit,
 } as {
-  [bridge: string]: BridgeAdapter;
+  [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

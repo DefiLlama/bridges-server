@@ -78,8 +78,9 @@ export const getTxDataFromEVMEventLogs = async (
         mapTokens,
         getTokenFromReceipt,
         argGetters,
+        logGetters,
       } = params;
-      const targetValue = target
+      const targetValue = target;
       // if this is ever used, need to also overwrite fromBlock and toBlock
       const overriddenChain = chain ? chain : chainContractsAreOn;
       if (isTransfer) {
@@ -137,8 +138,11 @@ export const getTxDataFromEVMEventLogs = async (
           ).output;
           //console.log(logs)
           if (logs.length === 0) {
-            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${isDeposit ? 'Deposit': 'Withdrawal'}) for ${targetValue}.`);
-
+            console.info(
+              `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${
+                isDeposit ? "Deposit" : "Withdrawal"
+              }) for ${targetValue}.`
+            );
           }
           break;
         } catch (e) {
@@ -157,17 +161,26 @@ export const getTxDataFromEVMEventLogs = async (
         .process(async (txLog: any, i) => {
           data[i] = data[i] || {};
           data[i]["isDeposit"] = isDeposit;
-          Object.entries(logKeys!).map(([eventKey, logKey]) => {
-            const value = txLog[logKey];
-            if (typeof value !== EventKeyTypes[eventKey]) {
-              throw new Error(
-                `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
-                  EventKeyTypes[eventKey]
-                }.`
-              );
-            }
-            data[i][eventKey] = value;
-          });
+          try {
+            await Promise.all(
+              Object.entries(logKeys!).map(async ([eventKey, logKey]) => {
+                // @ts-ignore
+                const value = (await logGetters?.[eventKey]?.(provider, iface, txLog)) || txLog[logKey];
+                if (typeof value !== EventKeyTypes[eventKey]) {
+                  throw new Error(
+                    `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
+                      EventKeyTypes[eventKey]
+                    }.`
+                  );
+                }
+                data[i][eventKey] = value;
+              })
+            );
+          } catch (e) {
+            console.error(
+              `Unable to get log keys for ${adapterName} with log keys ${logKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
+            );
+          }
           let parsedLog = {} as any;
           try {
             parsedLog = iface.parseLog({
@@ -270,6 +283,10 @@ export const getTxDataFromEVMEventLogs = async (
               });
               if (toFilter) dataKeysToFilter.push(i);
             }
+          }
+          if (filter?.custom) {
+            let toFilter = await filter.custom(provider, iface, txLog.transactionHash);
+            if (toFilter) dataKeysToFilter.push(i);
           }
           if (getTokenFromReceipt && getTokenFromReceipt.token) {
             const txReceipt = await provider.getTransactionReceipt(txLog.transactionHash);

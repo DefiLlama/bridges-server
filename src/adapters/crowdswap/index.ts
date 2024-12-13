@@ -9,6 +9,8 @@ const gatewayAddresses = {
   polygon: "0x9092fCF5Ea1E22f2922eEa132D2931CDd795ab53",
   optimism: "0x1B3aE33ff0241999854C05B0CdF821DE55A4404A",
   arbitrum: "0x99a68649E927774680e9D3387BF8cCbF93B45230",
+  defi: "0x9092fCF5Ea1E22f2922eEa132D2931CDd795ab53",
+  rsk: "0x9Ff74eEA1e7f0f8eE437b70d68F7Cdc1a1030642"
 } as {
   [chain: string]: string;
 };
@@ -18,7 +20,15 @@ let routerAddresses = {} as {
   [chain: string]: string[];
 };
 
-const activeChains = ["ethereum", "bsc", "polygon", "optimism", "arbitrum"];
+const activeChains = [
+  "ethereum", 
+  "bsc", 
+  "polygon", 
+  "optimism", 
+  "arbitrum", 
+  // "defi", 
+  // "rsk"
+];
 
 for(const chain of activeChains){
   if(!routerAddresses[chain]){
@@ -34,11 +44,11 @@ const constructParams = (chain: string) => {
   for (const router of Object.values(routers)) {
     const deposit :PartialContractEventParams = {
       target: router,
-      topic: "MessageSent(bytes32,uint256,uint256,uint256,address,address,uint64)",
-      abi: ["event MessageSent(bytes32 indexed messageId, uint256 sourceAmount, uint256 destinationAmount, uint256 destinationMinAmount, address sourceTokenAddress, address destinationTokenAddress, uint64 indexed destinationChainId)"],
+      topic: "MessageSent(bytes32,uint256,uint256,uint256,address,address,address,uint64)",
+      abi: ["event MessageSent(bytes32 indexed messageId, uint256 sourceAmount, uint256 destinationAmount, uint256 destinationMinAmount, address sourceTokenAddress, address destinationTokenAddress, address sender, uint64 indexed destinationChainId)"],
       isDeposit: true,
       logKeys: {
-        blockNumber:  "blockNumber", 
+        blockNumber:  "blockNumber",
         txHash:  "transactionHash",
       },
       argKeys: {
@@ -50,20 +60,19 @@ const constructParams = (chain: string) => {
         from: router,
       },
     };
-    
+
     const withdraw :PartialContractEventParams = {
       target: router,
-      topic: "Sold(bytes32,address,uint256,uint256,address,uint256,uint256,address,uint256,uint256)",
-      abi: ["event Sold(bytes32 indexed messageId, address sourceTokenAddress, uint256 sourceAmount, uint256 usdValue, address crowdAddress, uint256 crowdAmount, uint256 crowdPrice, address tokenXAddress, uint256 tokenXAmount, uint256 tokenXPrice)"],
-      isDeposit: false, // event type 
+      topic: "MessageCompleted(bytes32,uint256,address,address)",
+      abi: ["event MessageCompleted(bytes32 indexed messageId, uint256 destinationAmount, address destinationTokenAddress, address receiver)"],
+      isDeposit: false, // event type
       logKeys: {
-        blockNumber:  "blockNumber", 
-        txHash:  "transactionHash",
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
       },
       argKeys: {
-        amount: "tokenXAmount",
-        token: "tokenXAddress",
-      
+        amount: "destinationAmount",
+        token: "destinationTokenAddress",
       },
       fixedEventData: {
         from: router,
@@ -83,6 +92,8 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  // defi: constructParams("Defichain"),
+  // rsk: constructParams("rsk"),
 };
 
 export default adapter;

@@ -4,17 +4,11 @@ import { runAggregateDataHistorical } from "../utils/aggregate";
 import bridgeNetworkData from "../data/bridgeNetworkData";
 
 export default wrapScheduledLambda(async (_event) => {
-  const currentDate = new Date();
-  const yesterdayDate = new Date(currentDate);
-  yesterdayDate.setDate(currentDate.getDate() - 1);
+  const fourHoursAgo = convertToUnixTimestamp(new Date()) - 60 * 60 * 4;
+  const now = convertToUnixTimestamp(new Date());
 
-  const startOfYesterday = new Date(yesterdayDate.setUTCHours(0, 0, 0, 0));
-  const endOfYesterday = new Date(yesterdayDate.setUTCHours(23, 59, 59, 999));
-
-  const startTimestamp = convertToUnixTimestamp(startOfYesterday);
-  const endTimestamp = convertToUnixTimestamp(endOfYesterday);
-
-  console.log(`Aggregating data for ${startOfYesterday.toISOString()} to ${endOfYesterday.toISOString()}`);
+  const startTimestamp = fourHoursAgo;
+  const endTimestamp = now;
 
   for (const adapter of bridgeNetworkData) {
     await runAggregateDataHistorical(startTimestamp, endTimestamp, adapter.id, false);

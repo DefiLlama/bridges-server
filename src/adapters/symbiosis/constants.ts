@@ -27,7 +27,15 @@ export enum ChainId {
     ZKLINK_MAINNET = 810180,
     CORE_MAINNET = 1116,
     TAIKO_MAINNET = 167000,
-    SEI_EVM_MAINNET = 1329
+    SEI_EVM_MAINNET = 1329,
+    ZETACHAIN_MAINNET = 7000,
+    CRONOS_MAINNET = 25,
+    FRAXTAL_MAINNET = 252,
+    GRAVITY_MAINNET = 1625,
+    BSQUARED_MAINNET = 223,
+    CRONOS_ZK_MAINNET = 388,
+    MORPH_MAINNET = 2818,
+
 }
 export const AddressZero = "0x0000000000000000000000000000000000000000"
 
@@ -60,7 +68,14 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.ZKLINK_MAINNET]: 'zklink',
     [ChainId.CORE_MAINNET]: 'core',
     [ChainId.TAIKO_MAINNET]: 'taiko',
-    [ChainId.SEI_EVM_MAINNET]: 'sei_v2', // TODO
+    [ChainId.SEI_EVM_MAINNET]: 'sei_v2', // TODO no chain on defillama bridges
+    [ChainId.ZETACHAIN_MAINNET]: 'zetachain', // TODO no chain on defillama bridges
+    [ChainId.CRONOS_MAINNET]: 'cronos',
+    [ChainId.FRAXTAL_MAINNET]: 'fraxtal', // TODO no chain on defillama bridges
+    [ChainId.GRAVITY_MAINNET]: 'gravity',
+    [ChainId.BSQUARED_MAINNET]: 'bsquared',
+    [ChainId.CRONOS_ZK_MAINNET]: 'cronos_zk', // TODO no chain on defillama bridges
+    [ChainId.MORPH_MAINNET]: 'morph', // TODO no chain on defillama bridges
 }
 
 export const CHAIN_ADAPTER_MAP: Record<string, string> = {

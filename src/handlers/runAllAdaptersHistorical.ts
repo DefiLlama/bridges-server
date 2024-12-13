@@ -1,7 +1,6 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { closeIdleConnections } from "../utils/wrappa/postgres/write";
 
 const lambdaClient = new LambdaClient({});
 
@@ -23,15 +22,13 @@ async function invokeLambda(functionName: string, event: any) {
 }
 
 const handler = async (_event: any) => {
-  await closeIdleConnections();
   const now = Math.floor(Date.now() / 1000);
-  const oneHourAgo = now - 3600;
+  const fourHoursAgo = now - 60 * 60;
 
   for (const bridge of bridgeNetworks) {
     await invokeLambda("llama-bridges-prod-runAdapterFromTo", {
       bridgeName: bridge.bridgeDbName,
-      fromTimestamp: oneHourAgo,
-      toTimestamp: now,
+      fromTimestamp: fourHoursAgo,
     });
   }
 

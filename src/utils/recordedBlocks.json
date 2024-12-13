@@ -77,5 +77,7 @@
   "crowdswap:polygon": { "startBlock": 56713222, "endBlock": 61657366 },
   "crowdswap:bsc": { "startBlock": 40878700, "endBlock": 42133978 },
   "crowdswap:arbitrum": { "startBlock": 237073033, "endBlock": 252086093 },
-  "crowdswap:optimism": { "startBlock": 123302167, "endBlock": 125190128 }
+  "crowdswap:optimism": { "startBlock": 123302167, "endBlock": 125190128 },
+  "crowdswap:defi": { "startBlock": 863892, "endBlock": 125190128 },
+  "crowdswap:rootstock": { "startBlock": 6795853, "endBlock": 125190128 }
 }
