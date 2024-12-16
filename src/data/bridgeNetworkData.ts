@@ -1764,7 +1764,7 @@ export default [
   },
   {
     id: 81,
-    displayName: "PowPeg Fast Mode",
+    displayName: "PowPeg Fast Mode (Flyover)",
     bridgeDbName: "flyover",
     iconLink: "icons:rsk",
     largeTxThreshold: 10000,
