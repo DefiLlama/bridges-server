@@ -1739,7 +1739,7 @@ export default [
     iconLink: "icons:threshold-network",
     largeTxThreshold: 10000,
     url: "https://threshold.network/",
-    chains:  ["Ethereum", "Bitcoin"],
+    chains: ["Ethereum", "Bitcoin"],
     destinationChain: "Bitcoin",
   },
   {
@@ -1751,5 +1751,15 @@ export default [
     url: "https://bridge.zircuit.com/",
     chains: ["Ethereum", "Zircuit"],
     destinationChain: "Zircuit",
+  },
+  {
+    id: 80,
+    displayName: "Hyperliquid",
+    bridgeDbName: "hyperliquid",
+    iconLink: "icons:hyperliquid",
+    largeTxThreshold: 10000,
+    url: "https://app.hyperliquid.xyz/trade",
+    chains: ["Arbitrum", "Hyperliquid"],
+    destinationChain: "Hyperliquid",
   },
 ] as BridgeNetwork[];
