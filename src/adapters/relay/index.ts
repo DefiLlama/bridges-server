@@ -11,9 +11,58 @@ const retry = require("async-retry");
  *
  */
 
+const startingBlocks: Record<string, number> = {
+  1: 18976112,
+  10: 114647896,
+  56: 39739873,
+  100: 33619680,
+  137: 55172593,
+  185: 3417903,
+  288: 2353048,
+  324: 25006838,
+  360: 2691201,
+  480: 3466510,
+  690: 254553,
+  1101: 12491343,
+  1135: 761002,
+  1329: 118912096,
+  2741: 4116,
+  2911: 2136055,
+  4321: 138647,
+  5000: 72911632,
+  5112: 1462668,
+  7560: 896262,
+  8333: 144055,
+  8453: 9046270,
+  17071: 58343,
+  33139: 636958,
+  33979: 238923,
+  34443: 7297896,
+  42161: 169028419,
+  42170: 38963884,
+  43114: 44583244,
+  55244: 30,
+  57073: 275058,
+  59144: 1814719,
+  60808: 275964,
+  70700: 19,
+  70701: 1543,
+  81457: 216675,
+  534352: 5560094,
+  543210: 1282,
+  660279: 4759873,
+  984122: 2655107,
+  7777777: 9094029,
+  8253038: 865885,
+  9286185: 17617195,
+  666666666: 1310814,
+  792703809: 279758248,
+  888888888: 1278785,
+  1380012617: 205727,
+};
+
 const convertRequestToEvent = (
-  request: NonNullable<RelayRequestsResponse["requests"]>["0"],
-  blockNumber: number
+  request: NonNullable<RelayRequestsResponse["requests"]>["0"]
 ): { deposit?: EventData; withdraw?: EventData; depositChainId?: number; withdrawChainId?: number } => {
   const deposit = request.data?.metadata?.currencyIn;
   const withdraw = request.data?.metadata?.currencyOut;
@@ -23,31 +72,33 @@ const convertRequestToEvent = (
 
   return {
     depositChainId: depositTx?.chainId,
-    deposit: depositTx
-      ? {
-          blockNumber: blockNumber, //MISSING: going to just fudge it for now
-          txHash: depositTx.hash as string,
-          from: (depositTx.data as any).to,
-          to: (depositTx.data as any).from,
-          token: deposit?.currency?.address!,
-          amount: deposit?.amountUsd as any,
-          isDeposit: true,
-          isUSDVolume: true,
-        }
-      : undefined,
+    deposit:
+      depositTx && depositTx.data && deposit
+        ? {
+            blockNumber: depositTx.block!,
+            txHash: depositTx.hash as string,
+            from: (depositTx.data as any).to,
+            to: (depositTx.data as any).from,
+            token: deposit?.currency?.address!,
+            amount: deposit?.amountUsd as any,
+            isDeposit: true,
+            isUSDVolume: true,
+          }
+        : undefined,
     withdrawChainId: withdrawTx?.chainId,
-    withdraw: withdrawTx
-      ? {
-          blockNumber: blockNumber, //MISSING: going to just fudge it for now
-          txHash: withdrawTx.hash!,
-          from: (withdrawTx.data as unknown as any).from,
-          to: (withdrawTx.data as unknown as any).to,
-          token: withdraw?.currency?.address!,
-          amount: withdraw?.amountUsd as any,
-          isDeposit: false,
-          isUSDVolume: true,
-        }
-      : undefined,
+    withdraw:
+      withdrawTx && withdrawTx.data && withdraw
+        ? {
+            blockNumber: withdrawTx.block!,
+            txHash: withdrawTx.hash!,
+            from: (withdrawTx.data as unknown as any).from,
+            to: (withdrawTx.data as unknown as any).to,
+            token: withdraw?.currency?.address!,
+            amount: withdraw?.amountUsd as any,
+            isDeposit: false,
+            isUSDVolume: true,
+          }
+        : undefined,
   };
 };
 
@@ -77,7 +128,7 @@ const fetchAllRequests = async (
   let maxRequests = 10000;
   let requestCount = 0;
   while (continuation !== undefined && requestCount < maxRequests) {
-    const response = await fetchRequests(chainId, fromBlock, toBlock);
+    const response = await fetchRequests(chainId, fromBlock, toBlock, continuation);
     continuation = response.continuation;
     allRequests = [...allRequests, ...(response.requests ?? [])];
   }
@@ -86,10 +137,15 @@ const fetchAllRequests = async (
 
 const constructParams = (chainId: number) => {
   return async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+    //Performance optimization to limit empty requests
+    const startingBlock = startingBlocks[chainId];
+    if (startingBlock !== undefined && toBlock < startingBlock) {
+      return [];
+    }
     const requests = await fetchAllRequests(chainId, fromBlock, toBlock);
     const events: EventData[] = [];
     requests?.forEach((request) => {
-      const event = convertRequestToEvent(request, fromBlock);
+      const event = convertRequestToEvent(request);
       if (event.depositChainId === chainId && event.deposit) {
         events.push(event.deposit);
       }
