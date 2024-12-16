@@ -98,7 +98,7 @@ const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: nu
   }
 };
 
-if (bridgeName && chain) {
+if (bridgeName) {
   fillAdapterHistorical(startTs, endTs, bridgeName, chain);
 } else {
   runAllAdaptersHistorical(startTs, endTs);
