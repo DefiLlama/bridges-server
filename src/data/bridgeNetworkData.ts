@@ -1804,4 +1804,14 @@ export default [
       "Proof of Play Boss",
     ],
   },
+  {
+    id: 80,
+    displayName: "Hyperliquid",
+    bridgeDbName: "hyperliquid",
+    iconLink: "icons:hyperliquid",
+    largeTxThreshold: 10000,
+    url: "https://app.hyperliquid.xyz/trade",
+    chains: ["Arbitrum", "Hyperliquid"],
+    destinationChain: "Hyperliquid",
+  },
 ] as BridgeNetwork[];
