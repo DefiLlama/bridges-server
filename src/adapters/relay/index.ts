@@ -77,8 +77,17 @@ const convertRequestToEvent = (
         ? {
             blockNumber: depositTx.block!,
             txHash: depositTx.hash as string,
-            from: (depositTx.data as any).to,
-            to: (depositTx.data as any).from,
+            timestamp: depositTx.timestamp! * 1000,
+            from: (depositTx.data as any).from
+              ? (depositTx.data as any).from
+              : depositTx.data
+              ? (depositTx.data as any).signer
+              : undefined,
+            to: (depositTx.data as any).to
+              ? (depositTx.data as any).to
+              : withdrawTx?.data
+              ? (withdrawTx.data as any).signer
+              : undefined,
             token: deposit?.currency?.address!,
             amount: deposit?.amountUsd as any,
             isDeposit: true,
@@ -91,8 +100,13 @@ const convertRequestToEvent = (
         ? {
             blockNumber: withdrawTx.block!,
             txHash: withdrawTx.hash!,
-            from: (withdrawTx.data as unknown as any).from,
-            to: (withdrawTx.data as unknown as any).to,
+            timestamp: withdrawTx.timestamp! * 1000,
+            from: (withdrawTx.data as any).from
+              ? (withdrawTx.data as any).from
+              : withdrawTx.data
+              ? (withdrawTx.data as any).signer
+              : undefined,
+            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
             token: withdraw?.currency?.address!,
             amount: withdraw?.amountUsd as any,
             isDeposit: false,
