@@ -783,6 +783,8 @@ export default [
       "Celo",
       "Kava",
       "Fraxtal",
+      "Metis",
+      "Mode",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -1737,7 +1739,7 @@ export default [
     iconLink: "icons:threshold-network",
     largeTxThreshold: 10000,
     url: "https://threshold.network/",
-    chains:  ["Ethereum", "Bitcoin"],
+    chains: ["Ethereum", "Bitcoin"],
     destinationChain: "Bitcoin",
   },
   {
@@ -1752,6 +1754,16 @@ export default [
   },
   {
     id: 80,
+    displayName: "Hyperliquid",
+    bridgeDbName: "hyperliquid",
+    iconLink: "icons:hyperliquid",
+    largeTxThreshold: 10000,
+    url: "https://app.hyperliquid.xyz/trade",
+    chains: ["Arbitrum", "Hyperliquid"],
+    destinationChain: "Hyperliquid",
+  },
+  {
+    id: 81,
     displayName: "UniversalX",
     bridgeDbName: "universalx",
     iconLink: "icons:universalx",

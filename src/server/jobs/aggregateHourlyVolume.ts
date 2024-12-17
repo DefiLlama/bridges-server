@@ -27,6 +27,7 @@ async function aggregateHourlyVolume() {
         AND (ha.total_withdrawn_usd IS NOT NULL AND ha.total_withdrawn_usd::text ~ '^[0-9]+(\.[0-9]+)?$')
         AND (ha.total_deposit_txs IS NOT NULL AND ha.total_deposit_txs::text ~ '^[0-9]+$')
         AND (ha.total_withdrawal_txs IS NOT NULL AND ha.total_withdrawal_txs::text ~ '^[0-9]+$')
+        AND ha.ts >= NOW() - INTERVAL '30 days'
       ON CONFLICT (bridge_id, ts, chain) DO UPDATE SET
         total_deposited_usd = EXCLUDED.total_deposited_usd,
         total_withdrawn_usd = EXCLUDED.total_withdrawn_usd,

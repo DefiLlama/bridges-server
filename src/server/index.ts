@@ -12,7 +12,7 @@ import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
 import cron from "./cron";
-import { generateApiCacheKey, cache } from "../utils/cache";
+import { generateApiCacheKey, cache, registerCacheHandler, warmCache, needsWarming } from "../utils/cache";
 
 dotenv.config();
 
@@ -42,7 +42,13 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
 
   const cacheKey = generateApiCacheKey(event);
   const cachedData = cache.get(cacheKey);
+
+  registerCacheHandler(cacheKey, () => handler(event));
+
   if (cachedData) {
+    if (needsWarming(cacheKey)) {
+      warmCache(cacheKey);
+    }
     return reply.code(200).send(cachedData);
   }
 

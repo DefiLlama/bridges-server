@@ -18,10 +18,16 @@ export const runAllAdapters = async () => {
     console.error("Failed to store last recorded blocks");
     console.error(e);
   }
+  const shuffledBridgeNetworks = bridgeNetworks.sort(() => Math.random() - 0.5);
 
-  await PromisePool.withConcurrency(10)
-    .for(bridgeNetworks)
-    .process(async (bridge) => {
-      await runAdapterToCurrentBlock(bridge, true, "upsert", lastRecordedBlocks[0].result);
+  await PromisePool.withConcurrency(20)
+    .for(shuffledBridgeNetworks)
+    .process(async (adapter) => {
+      try {
+        await runAdapterToCurrentBlock(adapter, true, "upsert", lastRecordedBlocks[0].result);
+      } catch (e) {
+        console.error(`Failed to run adapter ${adapter.bridgeDbName}`);
+        console.error(e);
+      }
     });
 };

@@ -6,6 +6,7 @@ import {
   getConfigsWithDestChain,
 } from "./wrappa/postgres/query";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import { cache } from "./cache";
 
 const startTimestampToRestrictTo = 1661990400; // Sept. 01, 2022: timestamp data is backfilled to
 
@@ -124,6 +125,11 @@ export const getHourlyBridgeVolume = async (
   bridgeNetworkId?: number
 ) => {
   let bridgeDbName = undefined as any;
+  const cacheKey = `hourly_bridge_volume_${bridgeNetworkId}_${chain}_${startTimestamp}_${endTimestamp}`;
+  const cachedData = await cache.get(cacheKey);
+  if (cachedData) {
+    return cachedData as any[];
+  }
   if (bridgeNetworkId) {
     const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
     if (!bridgeNetwork) {
@@ -219,6 +225,7 @@ export const getHourlyBridgeVolume = async (
     }
   }
   */
+  await cache.set(cacheKey, hourlyBridgeVolume);
 
   return hourlyBridgeVolume;
 };

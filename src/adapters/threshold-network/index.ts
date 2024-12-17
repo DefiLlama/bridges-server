@@ -39,7 +39,7 @@ const redeemEventParams: ContractEventParams = {
   },
   fixedEventData: {
     token: tbtc,
-    to: "",
+    to: bridge,
   },
   argKeys: {
     from: "from",
