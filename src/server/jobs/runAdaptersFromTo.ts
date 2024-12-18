@@ -1,4 +1,5 @@
 import bridgeNetworks from "../../data/bridgeNetworkData";
+import { chainMappings } from "../../helpers/tokenMappings";
 import { runAdapterHistorical } from "../../utils/adapter";
 import { sql } from "../../utils/db";
 import { getBridgeID } from "../../utils/wrappa/postgres/query";
@@ -15,8 +16,8 @@ export const runAdaptersFromTo = async () => {
         await Promise.all(
           adapter.chains.map(async (chain) => {
             let nChain;
-            if (adapter.chainMapping && adapter.chainMapping[chain.toLowerCase()]) {
-              nChain = adapter.chainMapping[chain.toLowerCase()];
+            if (chainMappings[chain.toLowerCase()]) {
+              nChain = chainMappings[chain.toLowerCase()];
             } else {
               nChain = chain.toLowerCase();
             }

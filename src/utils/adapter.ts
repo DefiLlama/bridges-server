@@ -17,6 +17,7 @@ import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
+import { chainMappings } from "../helpers/tokenMappings";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -146,9 +147,7 @@ export const runAdapterToCurrentBlock = async (
 
   const adapterPromises = Promise.all(
     Object.keys(adapter).map(async (chain) => {
-      const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-        ? bridgeNetwork.chainMapping?.[chain as Chain]
-        : chain;
+      const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
 
       let bridgeID: string;
       try {
@@ -274,9 +273,7 @@ export const runAllAdaptersToCurrentBlock = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
-        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-          ? bridgeNetwork.chainMapping?.[chain as Chain]
-          : chain;
+        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
           bridgeDbName,
           chain,
@@ -329,9 +326,7 @@ export const runAllAdaptersTimestampRange = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
-        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-          ? bridgeNetwork.chainMapping?.[chain as Chain]
-          : chain;
+        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui" || chainContractsAreOn === "solana") {
           console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
           return;
@@ -423,9 +418,7 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
-  const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-    ? bridgeNetwork.chainMapping?.[chain as Chain]
-    : chain;
+  const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
 
   const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
