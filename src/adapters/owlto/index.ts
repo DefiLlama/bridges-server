@@ -83,6 +83,26 @@ const nativeTokens: Record<string, string> = {
     btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
 };
 
+const depositParams: PartialContractEventParams = {
+    target: "",
+    topic: "Deposit(address,address,address,string,uint256,uint256,uint256,uint256)",
+    abi: [
+      "event Deposit(address user, address token, address maker, string target, uint256 amount, uint256 destination, uint256 channel, uint256 timestamp)",
+    ],
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    argKeys: {
+      amount: "amount",
+      to: "maker",
+      from: "user",
+      token: "token",
+    },
+    isDeposit: true,
+  };
+
+  
 type SupportedChains = keyof typeof contractsAddress;
 
 const constructParams = (chain: SupportedChains) => {
@@ -93,7 +113,7 @@ const constructParams = (chain: SupportedChains) => {
     bridgeAddress.map((address: string) => {
         const transferWithdrawalParams: PartialContractEventParams = constructTransferParams(address, false);
         const transferDepositParams: PartialContractEventParams = constructTransferParams(address, true);
-        eventParams.push(transferWithdrawalParams, transferDepositParams);
+        eventParams.push(transferWithdrawalParams, transferDepositParams, depositParams);
     });
 
     if (nativeTokens.hasOwnProperty(chain)) {
