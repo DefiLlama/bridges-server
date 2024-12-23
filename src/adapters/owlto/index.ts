@@ -6,6 +6,7 @@ import { EventData } from "../../utils/types";
 import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
+import { BigNumber } from "ethers";
 
 const retry = require("async-retry");
 
@@ -145,7 +146,7 @@ const constructParams = (chain: SupportedChains) => {
                     from: tx.from,
                     to: tx.to,
                     token: nativeTokens[chain],
-                    amount: tx.value,
+                    amount: BigNumber.from(tx.value),
                     isDeposit: address.toLowerCase() === tx.to.toLowerCase(),
                 };
                 return event;
