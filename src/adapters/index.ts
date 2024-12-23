@@ -77,6 +77,7 @@ import thresholdnetwork from "./threshold-network";
 import zircuit from "./zircuit";
 import hyperliquid from "./hyperliquid";
 import flyover from "./rootstock-flyover";
+import universalx from "./universalx";
 
 export default {
   polygon,
@@ -156,7 +157,8 @@ export default {
   thresholdnetwork,
   zircuit,
   hyperliquid,
-  flyover
+  flyover,
+  universalx,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
