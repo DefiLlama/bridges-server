@@ -64,15 +64,15 @@ export const transformTokens = {
     "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": "bsc:0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
     "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
   },
-  "combo-mainnet":{
+  "combo-mainnet": {
     "0xd08a2917653d4e460893203471f0000826fb4034": "bsc:0xc03fbf20a586fa89c2a5f6f941458e1fbc40c661",
     "0x7c6b91d9be155a6db01f749217d76ff02a7227f2": "bsc:0x55d398326f99059ff775485246999027b3197955",
     "0x4200000000000000000000000000000000000006": "bsc:0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c",
   },
-  "op_bnb":{
+  op_bnb: {
     "0xe7798f023fc62146e8aa1b36da45fb70855a77ea": "ethereum:0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     "0x9d94a7ff461e83f161c8c040e78557e31d8cba72": "bsc:0xf4c8e32eadec4bfe97e0f595add0f4450a863a11",
-  }
+  },
 } as {
   [chain: string]: {
     [token: string]: string;
@@ -142,4 +142,18 @@ export const transformTokenDecimals = {
   [chain: string]: {
     [token: string]: number;
   };
+};
+
+export const chainMappings: Record<string, string> = {
+  avalanche: "avax",
+  gnosis: "xdai",
+  "zksync era": "era",
+  "polygon zkevm": "polygon_zkevm",
+  "arbitrum nova": "arbitrum_nova",
+  rootstock: "rsk",
+  bsquared: "b2-mainnet",
+  "x layer": "xlayer",
+  bouncebit: "bouncebit-mainnet",
+  opbnb: "op_bnb",
+  bitlayer: "btr",
 };

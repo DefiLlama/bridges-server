@@ -4,6 +4,7 @@ import { runAdapterHistorical } from "../utils/adapter";
 import { sql } from "../utils/db";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { getLatestBlock } from "../utils/blocks";
+import { chainMappings } from "../helpers/tokenMappings";
 
 const handler = async (event: any) => {
   try {
@@ -16,8 +17,8 @@ const handler = async (event: any) => {
 
     const promises = adapter.chains.map(async (chain) => {
       let nChain;
-      if (adapter.chainMapping && adapter.chainMapping[chain.toLowerCase()]) {
-        nChain = adapter.chainMapping[chain.toLowerCase()];
+      if (chainMappings[chain.toLowerCase()]) {
+        nChain = chainMappings[chain.toLowerCase()];
       } else {
         nChain = chain.toLowerCase();
       }
