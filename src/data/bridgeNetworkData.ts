@@ -1795,7 +1795,7 @@ export default [
     id: 81,
     displayName: "PowPeg Fast Mode (Flyover)",
     bridgeDbName: "flyover",
-    iconLink: "icons:rsk",
+    iconLink: "icons:flyover",
     largeTxThreshold: 10000,
     url: "https://powpeg.rootstock.io/",
     chains: ["Rootstock", "Bitcoin"],
