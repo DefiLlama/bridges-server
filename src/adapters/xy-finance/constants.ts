@@ -419,8 +419,8 @@ export const YBridgeContractAddress: Record<Exclude<Chain, Chain.Numbers>, Addre
   [Chain.ThunderCore]: "0xF103b5B479d2A629F422C42bb35E7eEceE1ad55E",
   [Chain.Wemix]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
   [Chain.Blast]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
-  [Chain.XLayer]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
-  [Chain.Taiko]: "0x73Ce60416035B8D7019f6399778c14ccf5C9c7A1",
+  [Chain.XLayer]: "0x6be1fe9dd10a4fbfce5552ca9add122341ec6c04",
+  [Chain.Taiko]: "0x6be1fe9dd10a4fbfce5552ca9add122341ec6c04",
   [Chain.CronosZkevm]: "0xE22747472A565e96D0867741811193895b9538f2",
 }
 
