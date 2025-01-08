@@ -217,12 +217,29 @@ const adapter: BridgeAdapter = {
   taiko: constructParams("taiko"),
   bitlayer: constructParams("btr"),
   mantle: constructParams("mantle"),
-  // zkfair: constructParams("zkfair"), // no etherscan
-  // bsquared: constructParams("b2-mainnet"), // no etherscan
-  // bouncebit: constructParams("bouncebit-mainnet"), // no etherscan
-  // 'x layer': constructParams("xlayer"), // no etherscan
-  // opbnb: constructParams("op_bnb"), //no etherscan
-  // mode: constructParams("mode"), // no etherscan
-  // manta: constructParams("manta"), // no etherscan
+  cyber: constructParams("cyeth"),
+  mint: constructParams("mint"),
+  zircuit: constructParams("zircuit"),
+  fraxtal: constructParams("fraxtal"),
+  fuse: constructParams("fuse"),
+  gravity: constructParams("gravity"),
+  matchain: constructParams("matchain"),
+  lisk: constructParams("lisk"),
+  kaia: constructParams("klaytn"),
+  "world chain": constructParams("wc"),
+  morph: constructParams("morph"),
+  bob: constructParams("bob"),
+  ink: constructParams("ink"),
+  bsquared: constructParams("bsquared"),
+  opbnb: constructParams("op_bnb"),
+  bouncebit: constructParams("bouncebit"),
+  zora: constructParams("zora"),
+  kroma: constructParams("kroma"),
+  zetachain: constructParams("zeta"),
+  zkfair: constructParams("zkfair"),
+  'x layer': constructParams("xlayer"),
+  mode: constructParams("mode"),
+  manta: constructParams("manta"),
+  avalanche: constructParams("avax"),
 };
 export default adapter;
