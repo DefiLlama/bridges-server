@@ -506,7 +506,7 @@ export const runAdapterHistorical = async (
 
               let solanaTimestampsMap = {} as { [blockNumber: number]: number };
 
-              if (chain === "solana" && !["debridgedln", "portal", "relay"].includes(bridgeDbName)) {
+              if (chain === "solana" && !["debridgedln", "portal"].includes(bridgeDbName)) {
                 latestSolanaBlock = await getLatestBlock("solana");
                 const connection = getConnection();
 

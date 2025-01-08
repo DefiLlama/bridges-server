@@ -75,7 +75,6 @@ import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
 import thresholdnetwork from "./threshold-network";
 import zircuit from "./zircuit";
-import relay from "./relay";
 import hyperliquid from "./hyperliquid";
 import flyover from "./rootstock-flyover";
 
@@ -156,7 +155,6 @@ export default {
   wormhole,
   thresholdnetwork,
   zircuit,
-  relay,
   hyperliquid,
   flyover
 } as {
