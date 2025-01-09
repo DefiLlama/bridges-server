@@ -105,7 +105,7 @@ const depositParams: PartialContractEventParams = {
 type SupportedChains = keyof typeof contractsAddress;
 
 const constructParams = (chain: SupportedChains) => {
-    const address = "0x5e809A85Aa182A9921EDD10a4163745bb3e36284";
+    const address = "0x1f49a3fa2b5B5b61df8dE486aBb6F3b9df066d86";
     const chainContracts = contractsAddress[chain];
     let eventParams: PartialContractEventParams[] = [];
 
