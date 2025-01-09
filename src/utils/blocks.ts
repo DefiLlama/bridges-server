@@ -10,6 +10,7 @@ import {
   getLatestBlockForZoneFromMoz,
   ibcGetBlockFromTimestamp,
 } from "../adapters/ibc";
+import bridgeNetworkData from "../data/bridgeNetworkData";
 const retry = require("async-retry");
 
 const connection = getConnection();
@@ -133,3 +134,41 @@ export async function getTimestampBySolanaSlot(
   const { timestamp: latestTimestamp, number: latestSlot } = latestBlock;
   return latestTimestamp - ((latestSlot - slot) * 400) / 1000;
 }
+
+const allChains = bridgeNetworkData.flatMap((x) => x.chains.map((y) => y.toLowerCase()));
+const allMappings = bridgeNetworkData.reduce((acc: Record<string, string>, x: any) => {
+  if (x.chainMapping) {
+    Object.keys(x.chainMapping).forEach((y) => (acc[y.toLowerCase()] = x.chainMapping[y]));
+  }
+  return acc;
+}, {});
+
+const allMappedChains = [...new Set(allChains.map((x) => allMappings[x] || x))];
+export const getBlocksByAllChains = async (startTs: number, endTs: number) => {
+  const blockByChain: Record<string, { startBlock: number; endBlock: number }> = {};
+  const errorChains: string[] = [];
+  await Promise.all(
+    allMappedChains.map(async (chain) => {
+      try {
+        const startBlock = await retry(() => getBlockByTimestamp(startTs, chain as Chain), {
+          retries: 3,
+          factor: 1,
+        });
+        const endBlock = await retry(() => getBlockByTimestamp(endTs, chain as Chain), {
+          retries: 3,
+          factor: 1,
+        });
+        blockByChain[chain] = {
+          startBlock: startBlock.block,
+          endBlock: endBlock.block,
+        };
+        console.log(`Set blocks for ${chain}: ${startBlock.block} to ${endBlock.block}`);
+      } catch (e) {
+        errorChains.push(chain);
+      }
+    })
+  );
+  console.log(blockByChain);
+  console.log(`Error chains: ${errorChains.join(", ")}`);
+  return blockByChain;
+};
