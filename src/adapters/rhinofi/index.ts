@@ -3,7 +3,6 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 export const bridgesAddress = {
   arbitrum: "0x10417734001162Ea139e8b044DFe28DbB8B28ad0",
-  arbitrum_nova: "0x0bca65bf4b4c8803d2f0b49353ed57caaf3d66dc",
   bsc: "0xb80a582fa430645a043bb4f6135321ee01005fef",
   polygon: "0xBA4EEE20F434bC3908A0B18DA496348657133A7E",
   optimism: "0x0bca65bf4b4c8803d2f0b49353ed57caaf3d66dc",
@@ -20,6 +19,16 @@ export const bridgesAddress = {
   blast: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
   xlayer: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
   taiko: "0x1df2de291f909baa50c1456c87c71edf9fb199d5",
+  starknet: "0x0259fec57cd26d27385cd8948d3693bbf26bed68ad54d7bdd1fdb901774ff0e8",
+  sonic: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  zircuit: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  ink: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  ape_chain: "0x5e023c31e1d3dcd08a1b3e8c96f6ef8aa8fcacd1",
+  cronos_zkevm: "0xdd6a084b563731be8ed039df29fa73bebdaaea2c",
+  paradex: "0x0779de82C8724e8A30553a1250aAA7109734eb69414c9CC815526a21960E9C6C",
+  ton: "EQAj3SoOk4MPzjn816Crw1b4RxW79fB_Z549tyCd9HIQV6b7",
+  tron: "TT3kgJohTQJNKDUWwTxtRDMHNNWNvNG3i4",
+  solana: "FCW1uBM3pZ7fQWvEL9sxTe4fNiH41bu9DWX4ErTZ6aMq",
 } as const;
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -79,7 +88,6 @@ const constructParams = (chain: SupportedChains) => {
 
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
-  "arbitrum nova": constructParams("arbitrum_nova"),
   bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
   optimism: constructParams("optimism"),
@@ -96,6 +104,16 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   'x layer': constructParams("xlayer"),
   taiko: constructParams("taiko"),
+  starknet: constructParams("starknet"),
+  sonic: constructParams("sonic"),
+  zircuit: constructParams("zircuit"),
+  ink: constructParams("ink"),
+  "ape chain": constructParams("ape_chain"),
+  "cronos zkevm": constructParams("cronos_zkevm"),
+  paradex: constructParams("paradex"),
+  ton: constructParams("ton"),
+  tron: constructParams("tron"),
+  solana: constructParams("solana"),
 };
 
 export default adapter;
