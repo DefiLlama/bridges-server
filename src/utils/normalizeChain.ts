@@ -968,13 +968,58 @@ export const chainCoingeckoIds = {
     geckoId: null,
     symbol: null,
     cmcId: null,
-    categories: ["EVM", "Rollup"],
+    categories: ["EVM","Rollup"],
   },
   "Taiko": {
     geckoId: null,
     symbol: null,
     cmcId: null,
     categories: ["EVM","Rollup"],
+  },
+  Sonic: {
+    geckoId: "sonic-3",
+    symbol: "S",
+    cmcId: "32684",
+    categories: ["EVM"],
+    chainId: 146,
+  },
+  Zircuit: {
+    geckoId: "zircuit",
+    symbol: "ZRC",
+    cmcId: "29711",
+    categories: ["EVM"],
+    chainId: 48900,
+  },
+  Ink: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+    chainId: 57073,
+  },
+  "Ape Chain": {
+    geckoId: "apechain",
+    symbol: "APE",
+    cmcId: "18876",
+    categories: ["EVM"],
+    chainId: 33139
+  },
+  "Cronos zkEVM": {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    chainId: 388
+  },
+  Paradex: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+  },
+  Ton: {
+    geckoId: "toncoin",
+    symbol: "TON",
+    cmcId: "11419",
   },
 } as {
   [chain: string]: {
@@ -1221,6 +1266,10 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "opBNB"
     case "taiko":
       return "Taiko"
+    case "ape_chain":
+      return "Ape Chain";
+    case "cronos_zkevm":
+      return "Cronos zkEVM";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
