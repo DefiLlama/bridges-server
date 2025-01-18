@@ -13,6 +13,7 @@ import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
 import cron from "./cron";
 import { generateApiCacheKey, cache, registerCacheHandler, warmCache, needsWarming } from "../utils/cache";
+import { startHealthMonitoring, getHealthStatus } from "./health";
 
 dotenv.config();
 
@@ -22,15 +23,8 @@ const server: FastifyInstance = fastify({
   keepAliveTimeout: 65000,
 });
 
-server.addHook("onRequest", async (request, reply) => {
+server.addHook("onRequest", async (_, reply) => {
   reply.raw.setTimeout(55000);
-
-  const startTime = process.hrtime();
-  request.raw.on("end", () => {
-    const [seconds, nanoseconds] = process.hrtime(startTime);
-    const duration = seconds * 1000 + nanoseconds / 1000000;
-    request.log.info(`Request to ${request.url} took ${duration.toFixed(2)}ms`);
-  });
 });
 
 const lambdaToFastify = (handler: Function) => async (request: any, reply: any) => {
@@ -96,10 +90,13 @@ const start = async () => {
     server.get("/netflows/:period", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
     server.post("/run-adapter", lambdaToFastify(runAdapter));
-    server.get("/healthcheck", (_, reply) => {
-      return reply.send("OK");
+    server.get("/healthcheck", async (_, reply) => {
+      const { health, statusCode } = getHealthStatus();
+      return reply.code(statusCode).send(health);
     });
     cron();
+
+    startHealthMonitoring();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     await server.listen({ port, host: "0.0.0.0" });
