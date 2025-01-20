@@ -7,7 +7,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
 import { store } from "./s3";
-import { BridgeAdapter } from "../helpers/bridgeAdapter.type";
+import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
 import { wait } from "../helpers/etherscan";
@@ -17,6 +17,7 @@ import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
+import { chainMappings } from "../helpers/tokenMappings";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -117,7 +118,8 @@ export const runAdapterToCurrentBlock = async (
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
 
-  const adapter = adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
     console.error(`[ERROR] ${errString}`);
@@ -145,9 +147,7 @@ export const runAdapterToCurrentBlock = async (
 
   const adapterPromises = Promise.all(
     Object.keys(adapter).map(async (chain) => {
-      const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-        ? bridgeNetwork.chainMapping?.[chain as Chain]
-        : chain;
+      const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
 
       let bridgeID: string;
       try {
@@ -257,7 +257,8 @@ export const runAllAdaptersToCurrentBlock = async (
 
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -272,9 +273,7 @@ export const runAllAdaptersToCurrentBlock = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
-        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-          ? bridgeNetwork.chainMapping?.[chain as Chain]
-          : chain;
+        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
           bridgeDbName,
           chain,
@@ -311,7 +310,8 @@ export const runAllAdaptersTimestampRange = async (
 ) => {
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
-    const adapter = adapters[bridgeDbName];
+    let adapter = adapters[bridgeDbName];
+    adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
     if (!adapter) {
       const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
       await insertErrorRow({
@@ -326,9 +326,7 @@ export const runAllAdaptersTimestampRange = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(100 * i); // attempt to space out API calls
-        const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-          ? bridgeNetwork.chainMapping?.[chain as Chain]
-          : chain;
+        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui" || chainContractsAreOn === "solana") {
           console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
           return;
@@ -356,7 +354,6 @@ export const runAllAdaptersTimestampRange = async (
     );
     await adapterPromises;
   }
-  await sql.end();
   // need better error catching
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
@@ -373,7 +370,14 @@ export const runAdapterHistorical = async (
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
-  const adapter = adapters[bridgeDbName];
+
+  if (bridgeDbName === "wormhole") {
+    console.log("Skipping Wormhole adapter, handled separately");
+    return;
+  }
+
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
 
@@ -414,9 +418,7 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
-  const chainContractsAreOn = bridgeNetwork.chainMapping?.[chain as Chain]
-    ? bridgeNetwork.chainMapping?.[chain as Chain]
-    : chain;
+  const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
 
   const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
@@ -704,3 +706,7 @@ export const insertConfigEntriesForAdapter = async (
     })
   );
 };
+
+export function isAsyncAdapter(adapter: BridgeAdapter | AsyncBridgeAdapter): adapter is AsyncBridgeAdapter {
+  return (adapter as AsyncBridgeAdapter).isAsync;
+}

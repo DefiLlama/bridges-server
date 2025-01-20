@@ -16,8 +16,6 @@ const handler = async (event: any) => {
     console.log(`Adapters of ${bridgesToRun.map((bridge: any) => bridge.bridgeDbName).join(", ")} ran successfully`);
   } catch (e) {
     console.error(`Adapter ${bridgeNetworks[event.bridgeIndex].bridgeDbName} failed ${JSON.stringify(e)}`);
-  } finally {
-    await sql.end();
   }
 };
 

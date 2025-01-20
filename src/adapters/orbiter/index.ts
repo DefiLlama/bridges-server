@@ -36,8 +36,13 @@ const eoaAddressErc = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
-
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
+  "0x3bDB03ad7363152DFBc185Ee23eBC93F0CF93fd1",
+  "0xACc517ea627CEb71Cf25e002AdAa9761623837b9",
+  "0x9C6750D463aD17Deec97A630aF766F0A78F95127",
+  "0xA8bD77769c875f8490E4B49f4c02A1Dd83D21a18",
+  "0xa383A72e000C056ccEaa9305B7B5d2D90887fbFd",
+  "0xed01d58Fe6433A5Fe69720a0aa0Ab1d1fdB15212"
 ];
 
 const eoaAddressNative = [
@@ -53,8 +58,14 @@ const eoaAddressNative = [
   "0x8086061cf07c03559fbb4aa58f191f9c4a5df2b2",
   "0x732efacd14b0355999aebb133585787921aba3a9",
   "0x34723b92ae9708ba33843120a86035d049da7dfa",
-  "0x095d2918b03b2e86d68551dcf11302121fb626c9"
-
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
+  "0x095d2918b03b2e86d68551dcf11302121fb626c9",
+  "0x3bDB03ad7363152DFBc185Ee23eBC93F0CF93fd1",
+  "0xACc517ea627CEb71Cf25e002AdAa9761623837b9",
+  "0x9C6750D463aD17Deec97A630aF766F0A78F95127",
+  "0xA8bD77769c875f8490E4B49f4c02A1Dd83D21a18",
+  "0xa383A72e000C056ccEaa9305B7B5d2D90887fbFd",
+  "0xed01d58Fe6433A5Fe69720a0aa0Ab1d1fdB15212"
 ];
 
 const nativeTokens: Record<string, string> = {
@@ -205,13 +216,30 @@ const adapter: BridgeAdapter = {
   bsc: constructParams("bsc"),
   taiko: constructParams("taiko"),
   bitlayer: constructParams("btr"),
-  // mantle: constructParams("mantle"), // no etherscan
-  // zkfair: constructParams("zkfair"), // no etherscan
-  // bsquared: constructParams("b2-mainnet"), // no etherscan
-  // bouncebit: constructParams("bouncebit-mainnet"), // no etherscan
-  // 'x layer': constructParams("xlayer"), // no etherscan
-  // opbnb: constructParams("op_bnb"), //no etherscan
-  // mode: constructParams("mode"), // no etherscan
-  // manta: constructParams("manta"), // no etherscan
+  mantle: constructParams("mantle"),
+  cyber: constructParams("cyeth"),
+  mint: constructParams("mint"),
+  zircuit: constructParams("zircuit"),
+  fraxtal: constructParams("fraxtal"),
+  fuse: constructParams("fuse"),
+  gravity: constructParams("gravity"),
+  matchain: constructParams("matchain"),
+  lisk: constructParams("lisk"),
+  kaia: constructParams("klaytn"),
+  "world chain": constructParams("wc"),
+  morph: constructParams("morph"),
+  bob: constructParams("bob"),
+  ink: constructParams("ink"),
+  bsquared: constructParams("bsquared"),
+  opbnb: constructParams("op_bnb"),
+  bouncebit: constructParams("bouncebit"),
+  zora: constructParams("zora"),
+  kroma: constructParams("kroma"),
+  zetachain: constructParams("zeta"),
+  zkfair: constructParams("zkfair"),
+  'x layer': constructParams("xlayer"),
+  mode: constructParams("mode"),
+  manta: constructParams("manta"),
+  avalanche: constructParams("avax"),
 };
 export default adapter;

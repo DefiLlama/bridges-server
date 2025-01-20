@@ -1,5 +1,4 @@
-import type { Chain } from "@defillama/sdk/build/general";
-import { sql } from "../../db";
+import { querySql as sql } from "../../db";
 
 interface IConfig {
   id: string;
@@ -42,6 +41,8 @@ interface IAggregatedData {
   total_address_deposited: string[];
   total_address_withdrawn: string[];
 }
+
+type TimePeriod = "day" | "week" | "month";
 
 const getBridgeID = async (bridgNetworkName: string, chain: string) => {
   return (
@@ -117,48 +118,38 @@ const queryAggregatedDailyTimestampRange = async (
   chain?: string,
   bridgeNetworkName?: string
 ) => {
-  let bridgeNetworkNameEqual = sql``;
-  let chainEqual = sql``;
-  if (bridgeNetworkName && chain) {
-    bridgeNetworkNameEqual = sql`
-    WHERE bridge_name = ${bridgeNetworkName} AND
-    chain = ${chain}
-    `;
-  } else {
-    bridgeNetworkNameEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : sql``;
-    chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
+  let conditions = sql`WHERE date_trunc('day', dv.ts) >= to_timestamp(${startTimestamp})::date 
+    AND date_trunc('day', dv.ts) <= to_timestamp(${endTimestamp})::date`;
+
+  if (chain) {
+    conditions = sql`${conditions} AND dv.chain = ${chain}`;
   }
 
-  return await sql<IAggregatedData[]>`
-  SELECT 
-    bridge_id, 
-    date_trunc('day', ts) AS ts, 
-    CAST(SUM(total_deposited_usd) AS BIGINT) AS total_deposited_usd, 
-    CAST(SUM(total_withdrawn_usd) AS BIGINT) AS total_withdrawn_usd, 
-    CAST(SUM(total_deposit_txs) AS INT) AS total_deposit_txs, 
-    CAST(SUM(total_withdrawal_txs) AS INT) AS total_withdrawal_txs 
-  FROM 
-    bridges.hourly_aggregated
-  WHERE
-  ts >= to_timestamp(${startTimestamp}) AND 
-  ts <= to_timestamp(${endTimestamp}) AND 
-   ts < DATE_TRUNC('day', NOW()) AND
-    bridge_id IN (
-      SELECT id FROM
-        bridges.config
-      ${bridgeNetworkNameEqual}
-      ${chainEqual}
-    )
-    AND
-    (total_deposited_usd IS NOT NULL AND total_deposited_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
-    (total_withdrawn_usd IS NOT NULL AND total_withdrawn_usd::text ~ '^[0-9]+(\.[0-9]+)?$') AND 
-    (total_deposit_txs IS NOT NULL AND total_deposit_txs::text ~ '^[0-9]+$') AND 
-    (total_withdrawal_txs IS NOT NULL AND total_withdrawal_txs::text ~ '^[0-9]+$')
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+
+  const result = await sql<IAggregatedData[]>`
+    SELECT 
+      dv.bridge_id,
+      dv.ts,
+      CAST(SUM(dv.total_deposited_usd) AS TEXT) as total_deposited_usd,
+      CAST(SUM(dv.total_withdrawn_usd) AS TEXT) as total_withdrawn_usd,
+      CAST(COALESCE(SUM(dv.total_deposit_txs), 0) AS INTEGER) as total_deposit_txs,
+      CAST(COALESCE(SUM(dv.total_withdrawal_txs), 0) AS INTEGER) as total_withdrawal_txs,
+      dv.chain
+    FROM 
+      bridges.daily_volume dv
+    JOIN
+      bridges.config c ON dv.bridge_id = c.id
+    ${conditions}
     GROUP BY 
-       bridge_id, 
-       date_trunc('day', ts)
+      dv.bridge_id,
+      dv.ts,
+      dv.chain
     ORDER BY ts;
   `;
+  return result;
 };
 
 const queryAggregatedHourlyTimestampRange = async (
@@ -330,7 +321,7 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
 type VolumeType = "deposit" | "withdrawal" | "both";
 
 const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "both"): Promise<number> => {
-  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 25 * 60 * 60;
+  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 26 * 60 * 60;
 
   let volumeColumn = sql``;
   switch (volumeType) {
@@ -348,13 +339,94 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
 
   const result = await sql<{ total_volume: string }[]>`
     SELECT COALESCE(SUM(${volumeColumn}), 0) as total_volume
-    FROM bridges.hourly_aggregated ha
+    FROM bridges.hourly_volume ha
     JOIN bridges.config c ON ha.bridge_id = c.id
     WHERE c.bridge_name = ${bridgeName}
       AND ha.ts >= to_timestamp(${twentyFourHoursAgo})
   `;
 
   return parseFloat((+result[0].total_volume / 2).toString());
+};
+
+const getNetflows = async (period: TimePeriod) => {
+  let intervalPeriod = sql``;
+  switch (period) {
+    case "day":
+      intervalPeriod = sql`interval '1 day'`;
+      break;
+    case "week":
+      intervalPeriod = sql`interval '1 week'`;
+      break;
+    case "month":
+      intervalPeriod = sql`interval '1 month'`;
+      break;
+  }
+
+  return await sql<{ chain: string; net_flow: string }[]>`
+    WITH period_flows AS (
+      SELECT 
+        hv.chain,
+        SUM(CASE 
+          WHEN c.destination_chain IS NULL THEN (hv.total_withdrawn_usd - hv.total_deposited_usd)
+          ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
+        END) as net_flow
+      FROM bridges.daily_volume hv
+      JOIN bridges.config c ON hv.bridge_id = c.id
+      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
+      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')
+      AND LOWER(hv.chain) NOT LIKE '%dydx%'
+      GROUP BY hv.chain
+    )
+    SELECT 
+      chain,
+      net_flow::text
+    FROM period_flows
+    WHERE net_flow IS NOT NULL
+    ORDER BY ABS(net_flow::numeric) DESC;
+  `;
+};
+
+const queryAggregatedTokensInRange = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  chain?: string,
+  bridgeNetworkName?: string
+) => {
+  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})::date 
+    AND ha.ts <= to_timestamp(${endTimestamp})::date`;
+
+  if (chain) {
+    conditions = sql`${conditions} AND c.chain = ${chain}`;
+  }
+
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+
+  return await sql<
+    {
+      bridge_id: string;
+      ts: Date;
+      total_tokens_deposited: string[];
+      total_tokens_withdrawn: string[];
+      total_address_deposited: string[];
+      total_address_withdrawn: string[];
+    }[]
+  >`
+    SELECT 
+      ha.bridge_id,
+      ha.ts,
+      ha.total_tokens_deposited,
+      ha.total_tokens_withdrawn,
+      ha.total_address_deposited,
+      ha.total_address_withdrawn
+    FROM 
+      bridges.hourly_aggregated ha
+    JOIN
+      bridges.config c ON ha.bridge_id = c.id
+    ${conditions}
+    ORDER BY ts;
+  `;
 };
 
 export {
@@ -370,4 +442,6 @@ export {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
+  getNetflows,
+  queryAggregatedTokensInRange,
 };

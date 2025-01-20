@@ -20,6 +20,7 @@ import {
   insertOrUpdateTokenWithoutPrice,
 } from "./wrappa/postgres/write";
 import adapters from "../adapters";
+import { isAsyncAdapter } from "../utils/adapter";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
@@ -66,7 +67,8 @@ export const runAggregateDataHistorical = async (
   }
 
   const { bridgeDbName, largeTxThreshold } = bridgeNetwork!;
-  const adapter = adapters[bridgeDbName];
+  let adapter = adapters[bridgeDbName];
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   if (!adapter) {
     const errString = `Adapter for ${bridgeDbName} not found, check it is exported correctly.`;
@@ -121,11 +123,12 @@ export const runAggregateDataHistorical = async (
 };
 
 export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boolean = false) => {
-  await PromisePool.withConcurrency(2)
+  await PromisePool.withConcurrency(5)
     .for(bridgeNetworks)
     .process(async (bridgeNetwork) => {
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
-      const adapter = adapters[bridgeDbName];
+      let adapter = adapters[bridgeDbName];
+      adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
       const chains = Object.keys(adapter);
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
@@ -146,8 +149,21 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       await chainsPromises;
     });
 
-  await sql.end();
   console.log("Finished aggregating job.");
+};
+
+export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: number, endTimestamp: number) => {
+  const promises = Promise.all(
+    bridgeNetworks.map(async (bridgeNetwork) => {
+      const { id } = bridgeNetwork;
+      try {
+        await runAggregateDataHistorical(startTimestamp, endTimestamp, id, true);
+      } catch (e) {
+        console.error(`Error aggregating data for bridge network ${id}:`, e);
+      }
+    })
+  );
+  await promises;
 };
 
 const checkSolanaAddress = (address: string) => {

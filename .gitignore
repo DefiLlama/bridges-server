@@ -24,4 +24,6 @@ src/utils/filljobs2.ts
 
 .idea
 
-.vscode
+.vscoded
+
+dist
