@@ -288,3 +288,78 @@ export const insertOrUpdateTokenWithoutPrice = async (token: string, symbol: str
     console.error(`Could not insert or update token without price: ${token}`, e);
   }
 };
+
+export const insertTransactionRows = async (
+  sql: postgres.TransactionSql<{}>,
+  allowNullTxValues: boolean,
+  rows: {
+    bridge_id: string;
+    chain: string;
+    tx_hash: string | null;
+    ts: number;
+    tx_block: number | null;
+    tx_from: string | null;
+    tx_to: string | null;
+    token: string;
+    amount: string;
+    is_deposit: boolean;
+    is_usd_volume: boolean;
+    txs_counted_as: number | null;
+    origin_chain: string | null;
+  }[]
+) => {
+  if (rows.length === 0) return;
+
+  rows.forEach((params) => {
+    Object.entries(params).forEach(([key, val]) => {
+      if (val == null) {
+        if (!allowNullTxValues) {
+          throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
+        }
+      } else if (typeof val !== txTypes[key]) {
+        throw new Error(
+          `Transaction for bridgeID ${params.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
+        );
+      }
+    });
+  });
+
+  const chunkSize = 500;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+
+    for (let retryCount = 0; retryCount < 5; retryCount++) {
+      try {
+        await sql`
+          INSERT INTO bridges.transactions ${sql(chunk)}
+          ON CONFLICT (bridge_id, chain, tx_hash, token, tx_from, tx_to)
+          DO UPDATE SET 
+            ts = EXCLUDED.ts,
+            tx_block = COALESCE(EXCLUDED.tx_block, bridges.transactions.tx_block),
+            amount = CASE 
+              WHEN EXCLUDED.amount::numeric > bridges.transactions.amount::numeric 
+              THEN EXCLUDED.amount 
+              ELSE bridges.transactions.amount 
+            END,
+            is_deposit = EXCLUDED.is_deposit,
+            is_usd_volume = EXCLUDED.is_usd_volume,
+            txs_counted_as = COALESCE(EXCLUDED.txs_counted_as, bridges.transactions.txs_counted_as),
+            origin_chain = COALESCE(EXCLUDED.origin_chain, bridges.transactions.origin_chain)
+          WHERE 
+            EXCLUDED.ts >= bridges.transactions.ts OR
+            EXCLUDED.amount::numeric > bridges.transactions.amount::numeric
+        `;
+        break;
+      } catch (e) {
+        if (retryCount >= 4) {
+          console.error("Failed chunk:", chunk[0], "Error:", e);
+          throw new Error(`Could not insert transaction rows in bulk after 5 retries.`);
+        } else {
+          console.error("Bulk insert error, retrying:", e);
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (retryCount + 1))); // Exponential backoff
+          continue;
+        }
+      }
+    }
+  }
+};
