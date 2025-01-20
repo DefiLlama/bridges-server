@@ -71,6 +71,7 @@ import mint from "./mint";
 import suibridge from "./suibridge";
 import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
+import layerswapV8 from "./layerswapV8";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
 import thresholdnetwork from "./threshold-network";
@@ -152,6 +153,7 @@ export default {
   suibridge,
   retrobridge,
   layerswap,
+  layerswapV8,
   hyperlane,
   wormhole,
   thresholdnetwork,

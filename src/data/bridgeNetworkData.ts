@@ -826,7 +826,7 @@ export default [
       "Paradex",
       "Ton",
       "Tron",
-      "Solana"
+      "Solana",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1174,8 +1174,8 @@ export default [
       "zksync era": "era",
       "polygon zkevm": "polygon_zkevm",
       bitlayer: "btr",
-      "cyber":"cyeth",
-      "kaia":"klaytn",
+      cyber: "cyeth",
+      kaia: "klaytn",
       "world chain": "wc",
       bsquared: "b2-mainnet",
       "x layer": "xlayer",
@@ -1289,12 +1289,12 @@ export default [
       avalanche: "avax",
       gnosis: "xdai",
       "cronos zkevm": "cronos_zkevm",
-      "zetachain": "zeta",
+      zetachain: "zeta",
       "astar zkevm": "astrzk",
       "zklink nova": "zklink",
       "world chain": "wc",
-      "cyber":"cyeth",
-      "kaia":"klaytn",
+      cyber: "cyeth",
+      kaia: "klaytn",
     },
   },
   {
@@ -1860,5 +1860,20 @@ export default [
     chainMapping: {
       avalanche: "avax",
     },
+  },
+  {
+    id: 83,
+    displayName: "LayerswapV8",
+    bridgeDbName: "layerswapV8",
+    iconLink: "icons:layerswap",
+    url: "https://layerswap.io/app",
+    largeTxThreshold: 10000,
+    chains: [
+      "Ethereum",
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Starknet",
+    ],
   },
 ] as BridgeNetwork[];
