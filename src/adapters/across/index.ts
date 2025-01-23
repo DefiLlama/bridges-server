@@ -64,6 +64,47 @@ const contracts = {
 
 type SupportedChains = keyof typeof contracts;
 
+// "Version 3.5" events
+const depositParamsv3p5: PartialContractEventParams = {
+  target: "",
+  topic: "FundsDeposited(bytes32,bytes32,uint256,uint256,uint256,uint256,uint32,uint32,uint32,bytes32,bytes32,bytes32,bytes)",
+  abi: [
+    "event FundsDeposited(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 indexed destinationChainId, uint256 indexed depositId, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 indexed depositor, bytes32 recipient, bytes32 exclusiveRelayer, bytes message)"
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    amount: "inputAmount",
+    to: "recipient",
+    from: "depositor",
+    token: "inputToken",
+  },
+  isDeposit: true,
+};
+
+const relaysParamsv3p5: PartialContractEventParams = {
+  target: "",
+  topic:
+    "FilledRelay(bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,uint32,uint32,bytes32,bytes32,bytes32,bytes32,bytes32,(bytes32,bytes32,uint256,uint8))",
+  abi: [
+    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo"
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    amount: "outputAmount",
+    to: "recipient",
+    from: "depositor",
+    token: "outputToken",
+  },
+  isDeposit: false,
+};
+
+// "Version 3" events
 const depositParamsv3: PartialContractEventParams = {
   target: "",
   topic: "V3FundsDeposited(address,address,uint256,uint256,uint256,uint32,uint32,uint32,uint32,address,address,address,bytes)",
@@ -103,6 +144,7 @@ const relaysParamsv3: PartialContractEventParams = {
   isDeposit: false,
 };
 
+// "Version 2.5" events
 const depositParamsv2p5: PartialContractEventParams = {
   target: "",
   topic: "FundsDeposited(uint256,uint256,uint256,int64,uint32,uint32,address,address,address,bytes)",
@@ -142,6 +184,7 @@ const relaysParamsv2p5: PartialContractEventParams = {
   isDeposit: false,
 };
 
+// "Version 2" events
 const depositParamsv2: PartialContractEventParams = {
   target: "",
   topic: "FundsDeposited(uint256,uint256,uint256,uint64,uint32,uint32,address,address,address)",
@@ -230,6 +273,21 @@ const constructParams = (chain: SupportedChains) => {
       target: chainConfig.spokePoolv2p5,
     };
     eventParams.push(finalRelaysParamsv3);
+
+    // "Version 3.5" events
+    // The v2.5 spoke pools are ProxyContracts that can be upgraded -- Across
+    // reuses these spoke addresses for v3.5 with the modified events
+    const finalDepositParamsv3p5 = {
+      ...depositParamsv3p5,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalDepositParamsv3p5);
+
+    const finalRelaysParamsv3p5 = {
+      ...relaysParamsv3p5,
+      target: chainConfig.spokePoolv2p5,
+    };
+    eventParams.push(finalRelaysParamsv3p5);
   }
 
   return async (fromBlock: number, toBlock: number) =>
