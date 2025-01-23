@@ -1873,7 +1873,6 @@ export default [
       "Arbitrum",
       "Optimism",
       "Base",
-      "Starknet",
     ],
   },
 ] as BridgeNetwork[];
