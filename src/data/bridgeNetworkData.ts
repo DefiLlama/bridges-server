@@ -1278,6 +1278,8 @@ export default [
       "Matchain",
       "Shape",
       "Fraxtal",
+      "Sonic",
+      "Soneium",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
