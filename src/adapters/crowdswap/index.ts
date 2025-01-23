@@ -9,8 +9,8 @@ const gatewayAddresses = {
   polygon: "0x9092fCF5Ea1E22f2922eEa132D2931CDd795ab53",
   optimism: "0x1B3aE33ff0241999854C05B0CdF821DE55A4404A",
   arbitrum: "0x99a68649E927774680e9D3387BF8cCbF93B45230",
-  defi: "0x9092fCF5Ea1E22f2922eEa132D2931CDd795ab53",
-  rsk: "0x9Ff74eEA1e7f0f8eE437b70d68F7Cdc1a1030642"
+  rsk: "0x9Ff74eEA1e7f0f8eE437b70d68F7Cdc1a1030642",
+  base: "0xCbe00062dd0a9d638F724a2771153bEd9Ba7E123"
 } as {
   [chain: string]: string;
 };
@@ -26,7 +26,7 @@ const activeChains = [
   "polygon", 
   "optimism", 
   "arbitrum", 
-  // "defi", 
+  "base", 
   // "rsk"
 ];
 
@@ -44,8 +44,10 @@ const constructParams = (chain: string) => {
   for (const router of Object.values(routers)) {
     const deposit :PartialContractEventParams = {
       target: router,
-      topic: "MessageSent(bytes32,uint256,uint256,uint256,address,address,address,uint64)",
-      abi: ["event MessageSent(bytes32 indexed messageId, uint256 sourceAmount, uint256 destinationAmount, uint256 destinationMinAmount, address sourceTokenAddress, address destinationTokenAddress, address sender, uint64 indexed destinationChainId)"],
+      topic: "MessageSent(bytes32,uint256,uint256,uint256,uint256,address,address,address,uint64)",
+      abi: [
+        "event MessageSent(bytes32 indexed messageId, uint256 sourceAmount, uint256 feeAmount, uint256 destinationAmount, uint256 destinationMinAmount, address sourceTokenAddress, address destinationTokenAddress, address sender, uint64 indexed destinationChainId)"
+      ],
       isDeposit: true,
       logKeys: {
         blockNumber:  "blockNumber",
@@ -92,7 +94,7 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
-  // defi: constructParams("Defichain"),
+  base: constructParams("base"),
   // rsk: constructParams("rsk"),
 };
 
