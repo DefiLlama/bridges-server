@@ -1550,7 +1550,7 @@ export default [
     iconLink: "icons:crowdswap",
     largeTxThreshold: 10000,
     url: "https://scanner.crowdswap.org/",
-    chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon", "DeFi", "RootStock"],
+    chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon", "Base", "RootStock"],
   },
   {
     id: 72,
