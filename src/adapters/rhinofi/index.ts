@@ -88,6 +88,7 @@ const constructParams = (chain: SupportedChains) => {
 };
 
 const adapter: BridgeAdapter = {
+  ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
