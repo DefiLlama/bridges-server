@@ -2,6 +2,7 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 export const bridgesAddress = {
+  ethereum: "0xbca3039a18c0d2f2f84ba8a028c67290bc045afa",
   arbitrum: "0x10417734001162Ea139e8b044DFe28DbB8B28ad0",
   bsc: "0xb80a582fa430645a043bb4f6135321ee01005fef",
   polygon: "0xBA4EEE20F434bC3908A0B18DA496348657133A7E",
@@ -38,8 +39,8 @@ const depositParams = (chain: SupportedChains): PartialContractEventParams => {
 
   return {
     target: bridgeAddress,
-    topic: "BridgedDeposit(address,address,uint256)",
-    abi: ["event BridgedDeposit(address indexed user, address indexed token, uint256 amount)"],
+    topic: "BridgedDepositWithId(address,address,address,uint256,uint256)",
+    abi: ["event BridgedDepositWithId(address sender, address origin, address token, uint256 amount, uint256 commitmentId)"],
     isDeposit: true,
     logKeys: {
       blockNumber: "blockNumber",
@@ -47,7 +48,7 @@ const depositParams = (chain: SupportedChains): PartialContractEventParams => {
     },
     argKeys: {
       token: "token",
-      from: "user",
+      from: "origin",
       amount: "amount",
     },
     fixedEventData: {
@@ -87,6 +88,7 @@ const constructParams = (chain: SupportedChains) => {
 };
 
 const adapter: BridgeAdapter = {
+  ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
