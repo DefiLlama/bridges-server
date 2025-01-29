@@ -1,6 +1,7 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { ethers } from "ethers";
 
 /*
 Contracts: https://github.com/across-protocol/contracts-v2/blob/master/deployments/README.md
@@ -64,6 +65,11 @@ const contracts = {
 
 type SupportedChains = keyof typeof contracts;
 
+// Add helper function
+function bytes32ToAddress(bytes32: string) {
+  return ethers.utils.getAddress('0x' + bytes32.slice(26));
+}
+
 // "Version 3.5" events
 const depositParamsv3p5: PartialContractEventParams = {
   target: "",
@@ -77,9 +83,11 @@ const depositParamsv3p5: PartialContractEventParams = {
   },
   argKeys: {
     amount: "inputAmount",
-    to: "recipient",
-    from: "depositor",
     token: "inputToken",
+  },
+  argGetters: {
+    to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
+    from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
   },
   isDeposit: true,
 };
@@ -89,7 +97,7 @@ const relaysParamsv3p5: PartialContractEventParams = {
   topic:
     "FilledRelay(bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,uint32,uint32,bytes32,bytes32,bytes32,bytes32,bytes32,(bytes32,bytes32,uint256,uint8))",
   abi: [
-    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo"
+    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo)"
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -97,9 +105,11 @@ const relaysParamsv3p5: PartialContractEventParams = {
   },
   argKeys: {
     amount: "outputAmount",
-    to: "recipient",
-    from: "depositor",
     token: "outputToken",
+  },
+  argGetters: {
+    to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
+    from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
   },
   isDeposit: false,
 };
