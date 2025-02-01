@@ -80,8 +80,35 @@ const withdrawalParams = (chain: SupportedChains): PartialContractEventParams =>
   };
 };
 
+const withdrawalWithNativeParams = (chain: SupportedChains): PartialContractEventParams => {
+  const bridgeAddress = bridgesAddress[chain];
+
+  return {
+    target: bridgeAddress,
+    topic: "BridgedWithdrawalWithNative(address,address,uint256,uint256)",
+    abi: ["event BridgedWithdrawalWithNative(address indexed user, address indexed token, uint256 amountToken, uint256 amountNative)"],
+    isDeposit: false,
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    argKeys: {
+      token: "token",
+      to: "user",
+      amount: "amountToken",
+    },
+    fixedEventData: {
+      from: bridgeAddress,
+    },
+  };
+};
+
 const constructParams = (chain: SupportedChains) => {
-  const eventParams = [depositParams(chain), withdrawalParams(chain)];
+  const eventParams = [
+    depositParams(chain),
+    withdrawalParams(chain),
+    withdrawalWithNativeParams(chain),
+  ];
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("rhinofi", chain, fromBlock, toBlock, eventParams);
@@ -106,16 +133,16 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   'x layer': constructParams("xlayer"),
   taiko: constructParams("taiko"),
-  starknet: constructParams("starknet"),
   sonic: constructParams("sonic"),
   zircuit: constructParams("zircuit"),
   ink: constructParams("ink"),
   "ape chain": constructParams("ape_chain"),
   "cronos zkevm": constructParams("cronos_zkevm"),
-  paradex: constructParams("paradex"),
-  ton: constructParams("ton"),
-  tron: constructParams("tron"),
-  solana: constructParams("solana"),
+  // starknet: constructParams("starknet"),
+  // paradex: constructParams("paradex"),
+  // ton: constructParams("ton"),
+  // tron: constructParams("tron"),
+  // solana: constructParams("solana"),
 };
 
 export default adapter;
