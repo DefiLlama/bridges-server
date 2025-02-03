@@ -39,7 +39,7 @@ const cron = () => {
   }).start();
 
   new CronJob("0 * * * *", async () => {
-    await withTimeout(runWormhole(), 30);
+    await withTimeout(runWormhole(), 55);
   }).start();
 
   new CronJob("20 * * * *", async () => {
