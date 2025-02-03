@@ -63,7 +63,7 @@ const withdrawalParams = (chain: SupportedChains): PartialContractEventParams =>
   return {
     target: bridgeAddress,
     topic: "BridgedWithdrawal(address,address,uint256,string)",
-    abi: ["event BridgedWithdrawal(address indexed user, address indexed token, uint256 amount, string withdrawalId)"],
+    abi: ["event BridgedWithdrawal(address user, address token, uint256 amount, string withdrawalId)"],
     isDeposit: false,
     logKeys: {
       blockNumber: "blockNumber",
@@ -86,7 +86,7 @@ const withdrawalWithNativeParams = (chain: SupportedChains): PartialContractEven
   return {
     target: bridgeAddress,
     topic: "BridgedWithdrawalWithNative(address,address,uint256,uint256)",
-    abi: ["event BridgedWithdrawalWithNative(address indexed user, address indexed token, uint256 amountToken, uint256 amountNative)"],
+    abi: ["event BridgedWithdrawalWithNative(address user, address token, uint256 amountToken, uint256 amountNative)"],
     isDeposit: false,
     logKeys: {
       blockNumber: "blockNumber",
