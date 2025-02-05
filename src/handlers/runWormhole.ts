@@ -10,6 +10,13 @@ import { cache, getCacheKey } from "../utils/cache";
 const WORMHOLE_CACHE_PREFIX = "wormhole";
 const LAST_PROCESSED_TS_KEY = `${WORMHOLE_CACHE_PREFIX}:last_processed_ts`;
 
+const getProcessedTxsKey = (timestamp: number) => {
+  const date = dayjs(timestamp * 1000)
+    .startOf("day")
+    .format("YYYY-MM-DD");
+  return `${WORMHOLE_CACHE_PREFIX}:processed_txs:${date}`;
+};
+
 export const handler = async () => {
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
@@ -62,6 +69,8 @@ const processTimeRange = async (startTs: number, endTs: number) => {
   }
 
   const BATCH_SIZE = 500;
+  const dayKey = getProcessedTxsKey(startTs);
+  let processedTxs = cache.get(dayKey) || {};
 
   await sql.begin(async (sql) => {
     for (let i = 0; i < events.length; i += BATCH_SIZE) {
@@ -80,8 +89,7 @@ const processTimeRange = async (startTs: number, endTs: number) => {
           destination_chain,
         } = event;
 
-        const txCacheKey = getCacheKey(WORMHOLE_CACHE_PREFIX, "tx", transaction_hash);
-        if (cache.has(txCacheKey)) {
+        if (processedTxs?.[transaction_hash]) {
           continue;
         }
 
@@ -146,7 +154,7 @@ const processTimeRange = async (startTs: number, endTs: number) => {
           }
         }
 
-        cache.set(txCacheKey, true, { ttl: 24 * 60 * 60 * 1000 });
+        processedTxs[transaction_hash] = true;
       }
 
       if (insertPromises.length > 0) {
@@ -155,6 +163,8 @@ const processTimeRange = async (startTs: number, endTs: number) => {
       }
     }
   });
+
+  cache.set(dayKey, processedTxs, { ttl: 48 * 60 * 60 * 1000 });
 };
 
 export default wrapScheduledLambda(handler);
