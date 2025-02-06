@@ -5,10 +5,16 @@ import { insertTransactionRow } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
+import { cache } from "../utils/cache";
+
+const END_TS_KEY = "wormhole_end_ts";
+
 export const handler = async () => {
+  const previousEndTs = cache.get(END_TS_KEY);
+  let currentEndTs = previousEndTs;
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
-    const startTs = dayjs().subtract(12, "hour").unix();
+    const startTs = previousEndTs ? previousEndTs : dayjs().subtract(24, "hour").unix();
     const endTs = dayjs().unix();
     const bridgeIds = Object.fromEntries(
       await Promise.all(
@@ -26,8 +32,10 @@ export const handler = async () => {
     );
     const events = await fetchWormholeEvents(startTs, endTs);
     const BATCH_SIZE = 500;
+    let bathesInserted = 1;
 
     const processBatch = async (sql: any, batch: any[]) => {
+      const start = dayjs().unix();
       const insertPromises: Promise<void>[] = [];
 
       for (const event of batch) {
@@ -105,7 +113,12 @@ export const handler = async () => {
       }
 
       await Promise.all(insertPromises);
-      console.log(`Inserted ${insertPromises.length} of ${events.length} Wormhole events`);
+      console.log(
+        `Inserted ${bathesInserted} of ${Math.ceil(events.length / BATCH_SIZE)} batches in ${
+          dayjs().unix() - start
+        } seconds`
+      );
+      bathesInserted++;
     };
 
     let start = 0;
@@ -118,6 +131,8 @@ export const handler = async () => {
       });
       start += BATCH_SIZE;
     }
+    currentEndTs = events[events.length - 1].block_timestamp;
+    cache.set(END_TS_KEY, currentEndTs);
   } catch (error) {
     console.error("Error processing Wormhole events:", error);
     throw error;
