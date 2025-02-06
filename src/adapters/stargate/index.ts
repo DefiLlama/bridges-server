@@ -429,6 +429,12 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
       pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
     },
   ],
+  lightlink: [
+    {
+      token: "0x7EbeF2A4b1B09381Ec5B9dF8C5c6f2dBECA59c73",
+      pool: "0x8731d54E9D02c286767d56ac03e8037C07e01e98",
+    },
+  ],
 };
 
 const ercV2DepositParams: PartialContractEventParams = {
@@ -605,6 +611,7 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   aurora: constructParams("aurora"),
   scroll: constructParams("scroll"),
+  lightlink: constructParams("lightlink"),
 };
 
 export default adapter;
