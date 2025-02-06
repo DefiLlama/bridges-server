@@ -109,19 +109,14 @@ export const handler = async () => {
     };
 
     let start = 0;
-    let end = events.length;
+    const end = events.length;
 
     while (start < end) {
+      const batchEnd = Math.min(start + BATCH_SIZE, end);
       await sql.begin(async (sql) => {
-        await processBatch(sql, events.slice(start, start + BATCH_SIZE));
+        await processBatch(sql, events.slice(start, batchEnd));
       });
-
-      await sql.begin(async (sql) => {
-        await processBatch(sql, events.slice(end - BATCH_SIZE, end));
-      });
-
       start += BATCH_SIZE;
-      end -= BATCH_SIZE;
     }
   } catch (error) {
     console.error("Error processing Wormhole events:", error);
