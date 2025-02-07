@@ -5,12 +5,12 @@ import { insertTransactionRow } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
-import { cache } from "../utils/cache";
+import { getCache, setCache } from "../utils/cache";
 
 const END_TS_KEY = "wormhole_end_ts";
 
 export const handler = async () => {
-  const previousEndTs = cache.get(END_TS_KEY);
+  const previousEndTs = await getCache(END_TS_KEY);
   let currentEndTs = previousEndTs;
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
@@ -132,7 +132,7 @@ export const handler = async () => {
       start += BATCH_SIZE;
     }
     currentEndTs = events[events.length - 1].block_timestamp;
-    cache.set(END_TS_KEY, currentEndTs);
+    await setCache(END_TS_KEY, currentEndTs);
   } catch (error) {
     console.error("Error processing Wormhole events:", error);
     throw error;
