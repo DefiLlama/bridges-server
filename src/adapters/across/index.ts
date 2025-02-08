@@ -67,7 +67,7 @@ type SupportedChains = keyof typeof contracts;
 
 // Add helper function
 function bytes32ToAddress(bytes32: string) {
-  return ethers.utils.getAddress('0x' + bytes32.slice(26));
+  return ethers.utils.getAddress('0x' + bytes32.slice(26))
 }
 
 // "Version 3.5" events
@@ -82,6 +82,9 @@ const depositParamsv3p5: PartialContractEventParams = {
     txHash: "transactionHash",
   },
   argKeys: {
+    to: "recipient",
+    from: "depositor",
+    token: "inputToken",
     amount: "inputAmount",
   },
   argGetters: {
@@ -104,9 +107,13 @@ const relaysParamsv3p5: PartialContractEventParams = {
     txHash: "transactionHash",
   },
   argKeys: {
+    to: "recipient",
+    from: "depositor",
+    token: "outputToken",
     amount: "outputAmount",
   },
   argGetters: {
+    // to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
     token: (logArgs: any) => bytes32ToAddress(logArgs.outputToken)
@@ -306,16 +313,16 @@ const constructParams = (chain: SupportedChains) => {
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  optimism: constructParams("optimism"),
-  polygon: constructParams("polygon"),
-  "zksync era": constructParams("era"),
+  // optimism: constructParams("optimism"),
+  // polygon: constructParams("polygon"),
+  // "zksync era": constructParams("era"),
   // lisk: constructParams("lisk"),
-  base: constructParams("base"),
-  mode: constructParams("mode"),
-  arbitrum: constructParams("arbitrum"),
-  linea: constructParams("linea"),
-  blast: constructParams("blast"),
-  scroll: constructParams("scroll"),
+  // base: constructParams("base"),
+  // mode: constructParams("mode"),
+  // arbitrum: constructParams("arbitrum"),
+  // linea: constructParams("linea"),
+  // blast: constructParams("blast"),
+  // scroll: constructParams("scroll"),
 };
 
 export default adapter;
