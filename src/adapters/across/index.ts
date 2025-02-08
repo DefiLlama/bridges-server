@@ -83,11 +83,11 @@ const depositParamsv3p5: PartialContractEventParams = {
   },
   argKeys: {
     amount: "inputAmount",
-    token: "inputToken",
   },
   argGetters: {
     to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
+    token: (logArgs: any) => bytes32ToAddress(logArgs.inputToken)
   },
   isDeposit: true,
 };
@@ -105,11 +105,11 @@ const relaysParamsv3p5: PartialContractEventParams = {
   },
   argKeys: {
     amount: "outputAmount",
-    token: "outputToken",
   },
   argGetters: {
     to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
+    token: (logArgs: any) => bytes32ToAddress(logArgs.outputToken)
   },
   isDeposit: false,
 };
