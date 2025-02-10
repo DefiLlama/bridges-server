@@ -50,7 +50,7 @@
     "fastify": "^4.26.2",
     "graphql": "^16.0.0",
     "graphql-request": "^6.1.0",
-    "lru-cache": "^11.0.2",
+    "ioredis": "^5.5.0",
     "node-fetch": "^2.6.7",
     "object-hash": "^3.0.0",
     "postgres": "^3.2.4",
