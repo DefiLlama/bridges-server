@@ -32,10 +32,10 @@ const contracts = {
   era: {
     spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
   },
-  // Chain id: 1135 (TODO: Add Lisk to llama-sdk first)
-  // lisk: {
-  //  spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
-  // },
+  // Chain id: 1135
+  lisk: {
+   spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
+  },
   // Chain id: 8453
   base: {
     spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
@@ -60,6 +60,10 @@ const contracts = {
   // Chain id: 534352
   scroll: {
     spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
+  },
+  // Chain id: 130
+  unichain: {
+   spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
   }
 } as const;
 
@@ -316,7 +320,8 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
   "zksync era": constructParams("era"),
-  // lisk: constructParams("lisk"),
+  lisk: constructParams("lisk"),
+  unichain: constructParams("unichain"),
   base: constructParams("base"),
   mode: constructParams("mode"),
   arbitrum: constructParams("arbitrum"),
