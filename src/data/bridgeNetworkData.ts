@@ -1854,4 +1854,14 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 83,
+    displayName: "Eclipse Canonical Bridge",
+    bridgeDbName: "eclipse",
+    iconLink: "chain:eclipse",
+    largeTxThreshold: 10000,
+    url: "https://app.eclipse.xyz/bridge",
+    chains: ["Ethereum", "Eclipse"],
+    destinationChain: "Eclipse",
+  },
 ] as BridgeNetwork[];
