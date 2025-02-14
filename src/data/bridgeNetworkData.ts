@@ -217,6 +217,7 @@ export default [
       "Linea",
       "Mantle",
       "Scroll",
+      "LightLink",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
