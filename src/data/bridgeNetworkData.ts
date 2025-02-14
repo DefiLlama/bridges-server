@@ -303,7 +303,7 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "https://across.to/",
-    chains: ["Ethereum", "Polygon", "Optimism", "ZKsync Era", "Base", "Arbitrum", "Linea", "Mode", "Blast", "Scroll"],
+    chains: ["Ethereum", "Polygon", "Optimism", "ZKsync Era", "Base", "Arbitrum", "Linea", "Mode", "Blast", "Scroll", "Lisk", "Unichain"],
     chainMapping: {
       "zksync era": "era",
     },
