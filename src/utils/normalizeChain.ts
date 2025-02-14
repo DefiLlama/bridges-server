@@ -1021,6 +1021,11 @@ export const chainCoingeckoIds = {
     symbol: "TON",
     cmcId: "11419",
   },
+  Eclipse: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
