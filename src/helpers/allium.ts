@@ -32,9 +32,16 @@ async function retrieveAlliumResults(queryId: string) {
   return results.data.data;
 }
 
+async function cancelAlliumQuery(queryId: string) {
+  const response = await axios.post(`https://api.allium.so/api/v1/explorer/query-runs/${queryId}/cancel`, {
+    headers: HEADERS,
+  });
+  return response.data;
+}
+
 async function queryAllium(sqlQuery: string) {
   const startTime = Date.now();
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 10; i++) {
     console.log(`Querying Allium. Attempt ${i}`);
     if (!token[sqlQuery]) {
       token[sqlQuery] = await startAlliumQuery(sqlQuery);
@@ -63,6 +70,7 @@ async function queryAllium(sqlQuery: string) {
     }
     await sleep(20e3);
   }
+  await cancelAlliumQuery(token[sqlQuery]);
   console.log(`Query ${sqlQuery} took ${(Date.now() - startTime) / 1000}s`);
   throw new Error("Not processed in time");
 }
