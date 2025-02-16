@@ -5,7 +5,7 @@ const warmAllCaches = async () => {
 
   for (const cacheKey of cacheKeys) {
     try {
-      if (needsWarming(cacheKey)) {
+      if (await needsWarming(cacheKey)) {
         await warmCache(cacheKey);
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }

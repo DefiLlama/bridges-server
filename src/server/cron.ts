@@ -26,7 +26,7 @@ const cron = () => {
     return;
   }
 
-  new CronJob("15,30,45 * * * *", async () => {
+  new CronJob("20,30,45 * * * *", async () => {
     await withTimeout(runAllAdapters(), 10);
   }).start();
 
@@ -39,7 +39,7 @@ const cron = () => {
   }).start();
 
   new CronJob("0 * * * *", async () => {
-    await withTimeout(runWormhole(), 55);
+    await withTimeout(runWormhole(), 40);
   }).start();
 
   new CronJob("20 * * * *", async () => {
