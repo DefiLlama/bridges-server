@@ -130,11 +130,10 @@ export const handler = async () => {
         await processBatch(sql, events.slice(start, batchEnd));
       });
       start += BATCH_SIZE;
+      currentEndTs = events[batchEnd - 1].block_timestamp;
+      await setCache(END_TS_KEY, currentEndTs);
     }
-    currentEndTs = events[events.length - 1].block_timestamp;
-    await setCache(END_TS_KEY, currentEndTs);
   } catch (error) {
-    console.error("Error processing Wormhole events:", error);
     throw error;
   }
 };
