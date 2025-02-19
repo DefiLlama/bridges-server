@@ -6,6 +6,7 @@ import { handler as runWormhole } from "../handlers/runWormhole";
 import { aggregateHourlyVolume } from "./jobs/aggregateHourlyVolume";
 import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
 import { warmAllCaches } from "./jobs/warmCache";
+import runLayerZero from "../handlers/runLayerZero";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -40,6 +41,10 @@ const cron = () => {
 
   new CronJob("0 * * * *", async () => {
     await withTimeout(runWormhole(), 40);
+  }).start();
+
+  new CronJob("0 * * * *", async () => {
+    await withTimeout(runLayerZero(), 40);
   }).start();
 
   new CronJob("20 * * * *", async () => {

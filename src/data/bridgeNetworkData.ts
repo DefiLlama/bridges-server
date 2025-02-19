@@ -1,3 +1,5 @@
+import { layerZeroChainMapping } from "../adapters/layerzero";
+import allChains from "../adapters/layerzero/allChains";
 import type { BridgeNetwork } from "./types";
 
 // TODO: FIX need to control chain naming here
@@ -1863,5 +1865,17 @@ export default [
     url: "https://app.eclipse.xyz/bridge",
     chains: ["Ethereum", "Eclipse"],
     destinationChain: "Eclipse",
+  },
+
+  {
+    id: 84,
+    displayName: "LayerZero",
+    bridgeDbName: "layerzero",
+    iconLink: "icons:layerzero",
+    largeTxThreshold: 10000,
+    url: "https://www.layerzero.network/",
+    chains: allChains.reduce((acc: string[], chain) => {
+      return acc.concat(layerZeroChainMapping[chain] || chain);
+    }, []),
   },
 ] as BridgeNetwork[];
