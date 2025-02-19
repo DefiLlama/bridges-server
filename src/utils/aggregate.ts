@@ -315,13 +315,17 @@ export const aggregateData = async (
         return;
       const rawBnAmount = BigNumber(amount);
       if (rawBnAmount.isEqualTo(0)) {
-        // console.log(`Skipping tx with 0 amount`);
         return;
       }
       let usdValue = null;
       let tokenKey = null;
       if (is_usd_volume) {
-        usdValue = rawBnAmount.toNumber();
+        const rawUsdValue = rawBnAmount.toNumber();
+        if (isNaN(rawUsdValue) || !isFinite(rawUsdValue)) {
+          console.error(`Invalid USD value for tx id ${id}: ${rawUsdValue}`);
+          return;
+        }
+        usdValue = rawUsdValue;
         tokenKey = `${chain}:${token}`;
       } else {
         const tokenL = chain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();

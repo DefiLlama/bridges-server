@@ -219,3 +219,4 @@ const adapter = Object.values(allChains).reduce((acc: any, chain: string) => {
 }, {});
 
 export { adapter };
+export default adapter;
