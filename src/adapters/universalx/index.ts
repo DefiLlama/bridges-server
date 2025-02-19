@@ -14,6 +14,7 @@ const contracts = {
   blast: "0xDE5af64Abc426d63C3BcF13D8f672948227A745a",
   manta: "0xDE5af64Abc426d63C3BcF13D8f672948227A745a",
   mode: "0xDE5af64Abc426d63C3BcF13D8f672948227A745a",
+  conflux: "0xDE5af64Abc426d63C3BcF13D8f672948227A745a",
   // "solana": "BuuP1rJXnVs5GHSPoUxLqeQzV4nBXQ7RFAJ7j4rt6jEk",
 };
 
@@ -97,6 +98,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   manta: constructParams("manta"),
   mode: constructParams("mode"),
+  conflux: constructParams("conflux"),
 };
 
 export default adapter;
