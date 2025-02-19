@@ -1026,6 +1026,21 @@ export const chainCoingeckoIds = {
     symbol: null,
     cmcId: null,
   },
+  "Sei": {
+    geckoId: "sei-network",
+    symbol: "SEI",
+    cmcId: "23149",
+  },
+  "Berachain": {
+    geckoId: "berachain-bera",
+    symbol: "BERA",
+    cmcId: "24647",
+  },
+  "Abstract": {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1275,6 +1290,20 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Ape Chain";
     case "cronos_zkevm":
       return "Cronos zkEVM";
+    case "paradex":
+      return "Paradex"
+    case "ton":
+      return "Ton"
+    case "eclipse":
+      return "Eclipse"
+    case "sei":
+      return "Sei"
+    case "sonic":
+      return "Sonic"
+    case "berachain":
+      return "Berachain"
+    case "abstract":
+      return "Abstract"
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }
