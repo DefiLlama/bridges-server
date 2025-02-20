@@ -14,7 +14,8 @@
     "build": "vite build",
     "start": "node ./dist/index.js",
     "start:dev": "node ./dist/index.js",
-    "cron": "tsx ./src/server/cron.ts"
+
+    "start:cron": "node ./dist/startCron.js"
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.8",
