@@ -11,7 +11,6 @@ import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
-import cron from "./cron";
 import { generateApiCacheKey, registerCacheHandler, warmCache, needsWarming, setCache, getCache } from "../utils/cache";
 import { startHealthMonitoring, getHealthStatus } from "./health";
 
@@ -94,7 +93,6 @@ const start = async () => {
       const { health, statusCode } = getHealthStatus();
       return reply.code(statusCode).send(health);
     });
-    cron();
 
     startHealthMonitoring();
 
