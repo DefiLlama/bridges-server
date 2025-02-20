@@ -16,9 +16,11 @@ const createTimeout = (minutes: number) =>
     setTimeout(() => reject(new Error(`Operation timed out after ${minutes} minutes`)), minutes * 60 * 1000)
   );
 
-const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
+const withTimeout = async (promise: Promise<any>, timeoutMinutes: number, name: string) => {
   try {
+    console.log(`Running ${name}`);
     const result = await Promise.race([promise, createTimeout(timeoutMinutes)]);
+    console.log(`${name} completed`);
     return result;
   } catch (error) {
     console.error("Job failed:", error);
@@ -26,11 +28,9 @@ const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
 };
 
 const cron = async () => {
-  if (process.env.NO_CRON) {
-    return;
-  }
-  console.log("Running cron");
-  const cronRuns = await getCache("cronRuns");
+  console.log("Cron started");
+
+  const cronRuns = JSON.parse((await getCache("cronRuns")) || "[]");
   const currentRunTs = dayjs().unix();
   await setCache("cronRuns", JSON.stringify([...cronRuns, { ts: currentRunTs }]), null);
 
@@ -41,14 +41,14 @@ const cron = async () => {
   }, 55 * 60 * 1000);
 
   const jobs = [
-    { schedule: "20,30,45 * * * *", handler: () => withTimeout(runAllAdapters(), 10) },
-    { schedule: "5 * * * *", handler: () => withTimeout(runAggregateAllAdapters(), 20) },
-    { schedule: "0 * * * *", handler: () => withTimeout(runAdaptersFromTo(), 15) },
-    { schedule: "0 * * * *", handler: () => withTimeout(runWormhole(), 40) },
-    { schedule: "0 * * * *", handler: () => withTimeout(runLayerZero(), 40) },
-    { schedule: "20 * * * *", handler: () => withTimeout(aggregateHourlyVolume(), 20) },
-    { schedule: "40 * * * *", handler: () => withTimeout(aggregateDailyVolume(), 20) },
-    { schedule: "*/5 * * * *", handler: () => withTimeout(warmAllCaches(), 4) },
+    { schedule: "20,30,45 * * * *", handler: () => withTimeout(runAllAdapters(), 10, "runAllAdapters") },
+    { schedule: "5 * * * *", handler: () => withTimeout(runAggregateAllAdapters(), 20, "runAggregateAllAdapters") },
+    { schedule: "0 * * * *", handler: () => withTimeout(runAdaptersFromTo(), 15, "runAdaptersFromTo") },
+    { schedule: "0 * * * *", handler: () => withTimeout(runWormhole(), 40, "runWormhole") },
+    { schedule: "0 * * * *", handler: () => withTimeout(runLayerZero(), 40, "runLayerZero") },
+    { schedule: "20 * * * *", handler: () => withTimeout(aggregateHourlyVolume(), 20, "aggregateHourlyVolume") },
+    { schedule: "40 * * * *", handler: () => withTimeout(aggregateDailyVolume(), 20, "aggregateDailyVolume") },
+    { schedule: "*/5 * * * *", handler: () => withTimeout(warmAllCaches(), 4, "warmAllCaches") },
   ];
 
   jobs.forEach(({ schedule, handler }) => {
@@ -68,4 +68,5 @@ const cron = async () => {
   });
 };
 
+console.log("Starting cron");
 cron().catch(console.error);
