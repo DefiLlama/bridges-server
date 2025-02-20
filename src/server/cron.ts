@@ -29,7 +29,7 @@ const cron = async () => {
   if (process.env.NO_CRON) {
     return;
   }
-
+  console.log("Running cron");
   const cronRuns = await getCache("cronRuns");
   const currentRunTs = dayjs().unix();
   await setCache("cronRuns", JSON.stringify([...cronRuns, { ts: currentRunTs }]), null);
