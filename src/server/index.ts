@@ -13,7 +13,6 @@ import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
 import { generateApiCacheKey, registerCacheHandler, warmCache, needsWarming, setCache, getCache } from "../utils/cache";
 import { startHealthMonitoring, getHealthStatus } from "./health";
-import cron from "./cron";
 
 dotenv.config();
 
@@ -96,7 +95,6 @@ const start = async () => {
     });
 
     startHealthMonitoring();
-    cron();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     await server.listen({ port, host: "0.0.0.0" });

@@ -8,7 +8,7 @@ import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import { adapter } from "../adapters/layerzero";
 
 const PROCESSED_FILES_KEY = "layerzero_processed_csv";
-const BATCH_SIZE = 250;
+const BATCH_SIZE = 3000;
 
 export const handler = async () => {
   try {
