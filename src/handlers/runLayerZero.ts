@@ -43,7 +43,7 @@ export const handler = async () => {
         for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
           const batch = transactions.slice(i, i + BATCH_SIZE);
 
-          const processBatchWithTimeout = async (timeoutMs = 60 * 1000 * 10) => {
+          const processBatchWithTimeout = async (timeoutMs = 60 * 1000 * 20) => {
             return new Promise(async (resolve, reject) => {
               const timer = setTimeout(() => {
                 reject(new Error(`Batch processing timeout after ${timeoutMs}ms`));
