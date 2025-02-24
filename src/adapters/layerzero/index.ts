@@ -163,23 +163,70 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
     for (const file of filesToProcess) {
       if (!file.Key) continue;
 
-      console.log(`Processing file: ${file.Key}`);
-      const command = new GetObjectCommand({
-        Bucket: bucketName,
-        Key: file.Key,
-      });
+      try {
+        console.log(`Processing file: ${file.Key}`);
+        const command = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: file.Key,
+        });
 
-      const response = await executeS3Command<GetObjectCommandOutput>(command);
-      if (response.Body) {
-        const gunzip = createGunzip();
-        const stream = Readable.from(response.Body as any).pipe(gunzip);
-        let data = "";
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`S3 operation timeout for ${file.Key}`)), 60000);
+        });
 
-        for await (const chunk of stream) {
-          data += chunk;
+        const response = (await Promise.race([
+          executeS3Command<GetObjectCommandOutput>(command),
+          timeoutPromise,
+        ])) as GetObjectCommandOutput;
+
+        if (!response.Body) {
+          console.error(`File ${file.Key} has no Body`);
+          continue;
         }
 
+        const data = await new Promise<string>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          const gunzip = createGunzip();
+
+          const timeout = setTimeout(() => {
+            reject(new Error(`Stream processing timeout for ${file.Key}`));
+          }, 300000);
+
+          const stream = Readable.from(response.Body as any).pipe(gunzip);
+
+          stream.on("data", (chunk) => {
+            chunks.push(Buffer.from(chunk));
+          });
+
+          stream.on("end", () => {
+            clearTimeout(timeout);
+            resolve(Buffer.concat(chunks).toString("utf8"));
+          });
+
+          stream.on("error", (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+
+          Readable.from(response.Body as any).on("error", (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+
+          gunzip.on("error", (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          });
+        });
+
+        console.log(`Data read from ${file.Key}, size: ${data.length} bytes`);
         const rows = data.split("\n").filter((row) => row.trim());
+
+        if (rows.length <= 1) {
+          console.warn(`File ${file.Key} has no data rows (only header?), skipping`);
+          processedFiles.add(file.Key);
+          continue;
+        }
 
         const transactions: LayerZeroTransaction[] = rows.slice(1).map((row) => {
           const values = row.split(",");
@@ -204,10 +251,15 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
           };
         });
 
+        console.log(`Yielding ${transactions.length} transactions from ${file.Key}`);
         yield { fileName: file.Key, transactions };
-        console.log(`Processed ${transactions.length} transactions from ${file.Key}`);
+        console.log(`Successfully yielded transactions from ${file.Key}, moving to next file`);
+      } catch (error) {
+        console.error(`Error processing individual file ${file.Key}:`, error);
+        continue;
       }
     }
+    console.log("Completed iterating through all files");
   } catch (error) {
     console.error("Error processing LayerZero files:", error);
     throw error;
@@ -217,6 +269,5 @@ const adapter = Object.values(allChains).reduce((acc: any, chain: string) => {
   acc[layerZeroChainMapping[chain] || chain?.toLowerCase()] = true;
   return acc;
 }, {});
-
 export { adapter };
 export default adapter;
