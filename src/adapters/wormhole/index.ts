@@ -1,6 +1,5 @@
 import dayjs from "dayjs";
 import { queryAllium } from "../../helpers/allium";
-
 type WormholeBridgeEvent = {
   block_timestamp: string;
   transaction_hash: string;
@@ -117,6 +116,7 @@ export const fetchWormholeEvents = async (
 
     const normalizedBatch = result.map((row: any) => ({
       ...row,
+      token_usd_amount: String(parseFloat(row.token_usd_amount || "0") || 0),
       block_timestamp: dayjs(row.block_timestamp).unix(),
     }));
 
