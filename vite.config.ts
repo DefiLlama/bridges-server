@@ -4,9 +4,12 @@ import path from "path";
 export default defineConfig({
   build: {
     lib: {
-      entry: path.resolve(__dirname, "src/server/index.ts"),
+      entry: {
+        index: path.resolve(__dirname, "src/server/index.ts"),
+        startCron: path.resolve(__dirname, "src/server/startCron.ts"),
+      },
       formats: ["cjs"],
-      fileName: () => "index.cjs",
+      fileName: (format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       external: ["fastify", "@fastify/cors", ...Object.keys(require("./package.json").dependencies)],

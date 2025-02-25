@@ -6,7 +6,7 @@ import {
   getConfigsWithDestChain,
 } from "./wrappa/postgres/query";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
-import { cache } from "./cache";
+import { getCache, setCache } from "./cache";
 
 const startTimestampToRestrictTo = 1661990400; // Sept. 01, 2022: timestamp data is backfilled to
 
@@ -85,6 +85,12 @@ export const getDailyBridgeVolume = async (
   historicalDailyData.map((dailyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       dailyData;
+    if (isNaN(parseFloat(total_deposited_usd)) || !isFinite(parseFloat(total_deposited_usd))) {
+      console.error(
+        `Invalid deposited USD value for bridge_id ${bridge_id} at timestamp ${ts}: ${total_deposited_usd}`
+      );
+      return;
+    }
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
     historicalDailySums[timestamp].depositUSD =
@@ -126,7 +132,7 @@ export const getHourlyBridgeVolume = async (
 ) => {
   let bridgeDbName = undefined as any;
   const cacheKey = `hourly_bridge_volume_${bridgeNetworkId}_${chain}_${startTimestamp}_${endTimestamp}`;
-  const cachedData = await cache.get(cacheKey);
+  const cachedData = await getCache(cacheKey);
   if (cachedData) {
     return cachedData as any[];
   }
@@ -225,7 +231,7 @@ export const getHourlyBridgeVolume = async (
     }
   }
   */
-  await cache.set(cacheKey, hourlyBridgeVolume);
+  await setCache(cacheKey, hourlyBridgeVolume);
 
   return hourlyBridgeVolume;
 };

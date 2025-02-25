@@ -1,3 +1,4 @@
+import bridgeNetworkData from "../../../data/bridgeNetworkData";
 import { querySql as sql } from "../../db";
 
 interface IConfig {
@@ -321,8 +322,10 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
 type VolumeType = "deposit" | "withdrawal" | "both";
 
 const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "both"): Promise<number> => {
-  const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 26 * 60 * 60;
-
+  const bridgeData = bridgeNetworkData.find((bridge) => bridge.bridgeDbName === bridgeName);
+  if (!bridgeData) {
+    throw new Error(`Bridge with name ${bridgeName} not found`);
+  }
   let volumeColumn = sql``;
   switch (volumeType) {
     case "deposit":
@@ -336,16 +339,38 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
       volumeColumn = sql`(total_deposited_usd + total_withdrawn_usd)`;
       break;
   }
-
-  const result = await sql<{ total_volume: string }[]>`
-    SELECT COALESCE(SUM(${volumeColumn}), 0) as total_volume
-    FROM bridges.hourly_volume ha
-    JOIN bridges.config c ON ha.bridge_id = c.id
-    WHERE c.bridge_name = ${bridgeName}
-      AND ha.ts >= to_timestamp(${twentyFourHoursAgo})
+  const hours = bridgeName === "wormhole" ? 28 : 24; // wormhole has 3h delay
+  const result = await sql<{ volume: string; ts: Date; chain: string }[]>`
+    WITH RankedVolumes AS (
+      SELECT 
+        ${volumeColumn} as volume, 
+        ha.ts,
+        c.chain,
+        ROW_NUMBER() OVER (PARTITION BY c.chain ORDER BY ha.ts DESC) as rn
+      FROM bridges.hourly_volume ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      WHERE c.bridge_name = ${bridgeName}
+    )
+    SELECT volume, ts, chain
+    FROM RankedVolumes
+    WHERE rn <= ${hours}
+    ORDER BY ts DESC
   `;
 
-  return parseFloat((+result[0].total_volume / 2).toString());
+  const volumeByChain = result.reduce((acc, { volume, chain }) => {
+    if (!acc[chain]) {
+      acc[chain] = [];
+    }
+    acc[chain].push(parseFloat(volume));
+    return acc;
+  }, {} as Record<string, number[]>);
+
+  const totalVolume = Object.values(volumeByChain).reduce((sum, chainVolumes) => {
+    const chainSum = chainVolumes.reduce((a, b) => a + b, 0);
+    return sum + chainSum;
+  }, 0);
+
+  return totalVolume / 2;
 };
 
 const getNetflows = async (period: TimePeriod) => {

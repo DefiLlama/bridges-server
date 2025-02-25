@@ -1,14 +1,20 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import adapter, { fetchWormholeEvents, normalizeChainName } from "../adapters/wormhole";
 import { sql } from "../utils/db";
-import { insertTransactionRow } from "../utils/wrappa/postgres/write";
+import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
+import { getCache, setCache } from "../utils/cache";
+
+const END_TS_KEY = "wormhole_end_ts";
+
 export const handler = async () => {
+  const previousEndTs = await getCache(END_TS_KEY);
+  let currentEndTs = previousEndTs;
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
-    const startTs = dayjs().subtract(12, "hour").unix();
+    const startTs = previousEndTs ? previousEndTs : dayjs().subtract(24, "hour").unix();
     const endTs = dayjs().unix();
     const bridgeIds = Object.fromEntries(
       await Promise.all(
@@ -26,9 +32,12 @@ export const handler = async () => {
     );
     const events = await fetchWormholeEvents(startTs, endTs);
     const BATCH_SIZE = 500;
+    let bathesInserted = 1;
 
     const processBatch = async (sql: any, batch: any[]) => {
-      const insertPromises: Promise<void>[] = [];
+      const start = dayjs().unix();
+      const sourceTransactions = [];
+      const destinationTransactions = [];
 
       for (const event of batch) {
         const {
@@ -46,85 +55,74 @@ export const handler = async () => {
         const destinationChain = normalizeChainName(destination_chain);
 
         if (bridgeIds[sourceChain]) {
-          try {
-            insertPromises.push(
-              insertTransactionRow(
-                sql,
-                true,
-                {
-                  bridge_id: bridgeIds[sourceChain],
-                  chain: sourceChain,
-                  tx_hash: transaction_hash,
-                  ts: parseInt(block_timestamp) * 1000,
-                  tx_block: null,
-                  tx_from: token_transfer_from_address ?? "0x",
-                  tx_to: token_transfer_to_address ?? "0x",
-                  token: token_address ?? "0x0000000000000000000000000000000000000000",
-                  amount: token_usd_amount || "0",
-                  is_deposit: true,
-                  is_usd_volume: true,
-                  txs_counted_as: 1,
-                  origin_chain: null,
-                },
-                "upsert"
-              )
-            );
-          } catch (error) {
-            console.error(`Error inserting Wormhole event: ${error}`, event);
-          }
+          sourceTransactions.push({
+            bridge_id: bridgeIds[sourceChain],
+            chain: sourceChain,
+            tx_hash: transaction_hash,
+            ts: parseInt(block_timestamp) * 1000,
+            tx_block: null,
+            tx_from: token_transfer_from_address ?? "0x",
+            tx_to: token_transfer_to_address ?? "0x",
+            token: token_address ?? "0x0000000000000000000000000000000000000000",
+            amount: token_usd_amount || "0",
+            is_deposit: true,
+            is_usd_volume: true,
+            txs_counted_as: 1,
+            origin_chain: null,
+          });
         }
 
         if (bridgeIds[destinationChain]) {
-          try {
-            insertPromises.push(
-              insertTransactionRow(
-                sql,
-                true,
-                {
-                  bridge_id: bridgeIds[destinationChain],
-                  chain: destinationChain,
-                  tx_hash: `${transaction_hash}_destination`,
-                  ts: parseInt(block_timestamp) * 1000,
-                  tx_block: null,
-                  tx_from: token_transfer_to_address ?? "0x",
-                  tx_to: token_transfer_from_address ?? "0x",
-                  token: token_address ?? "0x0000000000000000000000000000000000000000",
-                  amount: token_usd_amount || "0",
-                  is_deposit: false,
-                  is_usd_volume: true,
-                  txs_counted_as: 1,
-                  origin_chain: null,
-                },
-                "upsert"
-              )
-            );
-          } catch (error) {
-            console.error(`Error inserting Wormhole event: ${error}`, event);
-          }
+          destinationTransactions.push({
+            bridge_id: bridgeIds[destinationChain],
+            chain: destinationChain,
+            tx_hash: `${transaction_hash}_destination`,
+            ts: parseInt(block_timestamp) * 1000,
+            tx_block: null,
+            tx_from: token_transfer_to_address ?? "0x",
+            tx_to: token_transfer_from_address ?? "0x",
+            token: token_address ?? "0x0000000000000000000000000000000000000000",
+            amount: token_usd_amount || "0",
+            is_deposit: false,
+            is_usd_volume: true,
+            txs_counted_as: 1,
+            origin_chain: null,
+          });
         }
       }
 
-      await Promise.all(insertPromises);
-      console.log(`Inserted ${insertPromises.length} of ${events.length} Wormhole events`);
+      try {
+        if (sourceTransactions.length > 0) {
+          await insertTransactionRows(sql, true, sourceTransactions, "upsert");
+        }
+        if (destinationTransactions.length > 0) {
+          await insertTransactionRows(sql, true, destinationTransactions, "upsert");
+        }
+        await setCache(END_TS_KEY, batch[batch.length - 1].block_timestamp, null);
+      } catch (error) {
+        console.error(`Error inserting Wormhole batch:`, error);
+        throw error;
+      }
+
+      console.log(
+        `Inserted ${bathesInserted} of ${Math.ceil(events.length / BATCH_SIZE)} batches in ${
+          dayjs().unix() - start
+        } seconds`
+      );
+      bathesInserted++;
     };
 
     let start = 0;
-    let end = events.length;
+    const end = events.length;
 
     while (start < end) {
+      const batchEnd = Math.min(start + BATCH_SIZE, end);
       await sql.begin(async (sql) => {
-        await processBatch(sql, events.slice(start, start + BATCH_SIZE));
+        await processBatch(sql, events.slice(start, batchEnd));
       });
-
-      await sql.begin(async (sql) => {
-        await processBatch(sql, events.slice(end - BATCH_SIZE, end));
-      });
-
       start += BATCH_SIZE;
-      end -= BATCH_SIZE;
     }
   } catch (error) {
-    console.error("Error processing Wormhole events:", error);
     throw error;
   }
 };

@@ -79,6 +79,8 @@ import zircuit from "./zircuit";
 import hyperliquid from "./hyperliquid";
 import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
+import eclipse from "./eclipse";
+import layerzero from "./layerzero";
 
 export default {
   polygon,
@@ -161,6 +163,8 @@ export default {
   hyperliquid,
   flyover,
   universalx,
+  eclipse,
+  layerzero,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

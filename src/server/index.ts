@@ -11,8 +11,7 @@ import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
-import cron from "./cron";
-import { generateApiCacheKey, cache, registerCacheHandler, warmCache, needsWarming } from "../utils/cache";
+import { generateApiCacheKey, registerCacheHandler, warmCache, needsWarming, setCache, getCache } from "../utils/cache";
 import { startHealthMonitoring, getHealthStatus } from "./health";
 
 dotenv.config();
@@ -35,12 +34,12 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
   };
 
   const cacheKey = generateApiCacheKey(event);
-  const cachedData = cache.get(cacheKey);
+  const cachedData = await getCache(cacheKey);
 
   registerCacheHandler(cacheKey, () => handler(event));
 
   if (cachedData) {
-    if (needsWarming(cacheKey)) {
+    if (await needsWarming(cacheKey)) {
       warmCache(cacheKey);
     }
     return reply.code(200).send(cachedData);
@@ -55,7 +54,7 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
 
     const result = await Promise.race([handler(event), timeout]);
     const parsedBody = JSON.parse(result.body);
-    cache.set(cacheKey, parsedBody);
+    await setCache(cacheKey, parsedBody);
     return reply.code(result.statusCode).send(parsedBody);
   } catch (error: any) {
     request.log.error(error);
@@ -94,7 +93,6 @@ const start = async () => {
       const { health, statusCode } = getHealthStatus();
       return reply.code(statusCode).send(health);
     });
-    cron();
 
     startHealthMonitoring();
 

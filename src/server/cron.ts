@@ -6,6 +6,8 @@ import { handler as runWormhole } from "../handlers/runWormhole";
 import { aggregateHourlyVolume } from "./jobs/aggregateHourlyVolume";
 import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
 import { warmAllCaches } from "./jobs/warmCache";
+import runLayerZero from "../handlers/runLayerZero";
+import { querySql, sql } from "../utils/db";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -21,12 +23,21 @@ const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
   }
 };
 
+const exit = () => {
+  setTimeout(async () => {
+    console.log("Timeout! Shutting down. Bye bye!");
+    await sql.end();
+    await querySql.end();
+    process.exit(0);
+  }, 1000 * 60 * 54);
+};
+
 const cron = () => {
   if (process.env.NO_CRON) {
     return;
   }
 
-  new CronJob("15,30,45 * * * *", async () => {
+  new CronJob("20,30,45 * * * *", async () => {
     await withTimeout(runAllAdapters(), 10);
   }).start();
 
@@ -39,7 +50,11 @@ const cron = () => {
   }).start();
 
   new CronJob("0 * * * *", async () => {
-    await withTimeout(runWormhole(), 30);
+    await withTimeout(runWormhole(), 40);
+  }).start();
+
+  new CronJob("0 * * * *", async () => {
+    await withTimeout(runLayerZero(), 40);
   }).start();
 
   new CronJob("20 * * * *", async () => {
@@ -53,6 +68,8 @@ const cron = () => {
   new CronJob("*/5 * * * *", async () => {
     await withTimeout(warmAllCaches(), 4);
   }).start();
+
+  exit();
 };
 
 export default cron;

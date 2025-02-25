@@ -25,6 +25,7 @@ export const maxBlocksToQueryByChain = {
   sui: 2400, // sui creates a checkpoint about every 3 seconds
   solana: 6000,
   taiko: 100,
+  sonic: 10000,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter

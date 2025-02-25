@@ -1,3 +1,5 @@
+import { layerZeroChainMapping } from "../adapters/layerzero";
+import allChains from "../adapters/layerzero/allChains";
 import type { BridgeNetwork } from "./types";
 
 // TODO: FIX need to control chain naming here
@@ -316,7 +318,19 @@ export default [
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
     url: "https://debridge.finance/",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base", "Solana"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Arbitrum",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Optimism",
+      "Linea",
+      "Base",
+      "Solana",
+      "Sonic",
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -720,15 +734,6 @@ export default [
     destinationChain: "Manta",
   },
 
-  // {
-  //   id: 31,
-  //   displayName: "neuron🧠",
-  //   bridgeDbName: "neuron",
-  //   iconLink: "protocols:neuron",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: ["Arbitrum", "Linea", "Optimism", "Base"],
-  // },
   {
     id: 32,
     displayName: "Squid (Powered by Axelar)",
@@ -1278,6 +1283,8 @@ export default [
       "Matchain",
       "Shape",
       "Fraxtal",
+      "Sonic",
+      "Soneium",
     ],
     chainMapping: {
       "arbitrum nova": "arbitrum_nova",
@@ -1863,16 +1870,24 @@ export default [
   },
   {
     id: 83,
-    displayName: "LayerswapV8",
-    bridgeDbName: "layerswapV8",
-    iconLink: "icons:layerswap",
-    url: "https://layerswap.io/app",
+    displayName: "Eclipse Canonical Bridge",
+    bridgeDbName: "eclipse",
+    iconLink: "chain:eclipse",
     largeTxThreshold: 10000,
-    chains: [
-      "Ethereum",
-      "Arbitrum",
-      "Optimism",
-      "Base",
-    ],
+    url: "https://app.eclipse.xyz/bridge",
+    chains: ["Ethereum", "Eclipse"],
+    destinationChain: "Eclipse",
+  },
+
+  {
+    id: 84,
+    displayName: "LayerZero",
+    bridgeDbName: "layerzero",
+    iconLink: "icons:layerzero",
+    largeTxThreshold: 10000,
+    url: "https://www.layerzero.network/",
+    chains: allChains.reduce((acc: string[], chain) => {
+      return acc.concat(layerZeroChainMapping[chain] || chain);
+    }, []),
   },
 ] as BridgeNetwork[];

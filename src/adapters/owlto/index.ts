@@ -59,6 +59,8 @@ export const contractsAddress = {
     matchain: ["0x3F0F0E6411F859Da1A1BbF8bD6217cA93820Bb98"],
     fraxtal: ["0xC626845BF4E6a5802Ef774dA0B3DfC6707F015F7"],
     shape: ["0x7CFE8Aa0d8E92CCbBDfB12b95AEB7a54ec40f0F5"],
+    sonic: ["0x7CFE8Aa0d8E92CCbBDfB12b95AEB7a54ec40f0F5"],
+    soneium: ["0x0896cc10F7fa09127eE6060AD56D34D2d80306a4"],
 } as const;
 
 const nativeTokens: Record<string, string> = {
@@ -198,6 +200,8 @@ const adapter: BridgeAdapter = {
     matchain: constructParams("matchain"),
     shape: constructParams("shape"),
     fraxtal: constructParams("fraxtal"),
+    sonic: constructParams("sonic"),
+    soneium: constructParams("soneium"),
     "cronos zkevm": constructParams("cronos_zkevm"),
     'x layer': constructParams("xlayer"),
     "arbitrum nova": constructParams("arbitrum_nova"),
