@@ -16,7 +16,7 @@ export default [
   },
   {
     id: 2,
-    displayName: "Arbitrum Bridge",
+    displayName: "Arbitrum Bridge", 
     bridgeDbName: "arbitrum",
     iconLink: "chain:arbitrum",
     largeTxThreshold: 10000,
@@ -1889,5 +1889,17 @@ export default [
     chains: allChains.reduce((acc: string[], chain) => {
       return acc.concat(layerZeroChainMapping[chain] || chain);
     }, []),
+  },
+  {
+    id: 85,
+    displayName: "TRAIN Protocol",
+    bridgeDbName: "train",
+    iconLink: "icons:train",
+    url: "https://app.train.tech/",
+    largeTxThreshold: 10000,
+    chains: ["Ethereum", "Arbitrum", "Optimism", "Base", "ZKsync Era"],
+    chainMapping: {
+      "zksync era": "era",
+    },
   },
 ] as BridgeNetwork[];

@@ -8,10 +8,11 @@ import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 const contractsByChain: Record<string, string[]> = {
-  ethereum: ["0xe2dDb832c0ed81b7ec097E9c9d3b20CEbbe01407", "0xa4106a85B2897b808d3B17d70045C3761D3be374"],
-  arbitrum: ["0xd40Fd3870067292E3AE1b26445419bd9CF0C7595"],
-  optimism: ["0x24B55020dF66FB3dA349d551294f0d57B8266e97"],
-  base: ["0x320818EEFCF46ED1ec722f3bbC5B463EA1F5B619"],
+  ethereum: ["0x7E6f983f93fd12114DaFE0C69d1e55023EE0abCB"],
+  arbitrum: ["0x126Fc543AA75D1D8511390aEb0a5E49Ad8a245BC"],
+  optimism: ["0x126Fc543AA75D1D8511390aEb0a5E49Ad8a245BC"],
+  base: ["0xAE90b87324DA77113075E149455C53a88F6a01fb"],
+  era: ["0xB4863f53332C89078575320C01E270032f71e486"],
 };
 
 const nativeTokens: Record<string, string> = {
@@ -19,6 +20,7 @@ const nativeTokens: Record<string, string> = {
   arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
   optimism: "0x4200000000000000000000000000000000000006",
   base: "0x4200000000000000000000000000000000000006",
+  era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
 };
 
 const constructParams = (chain: string) => {
@@ -107,14 +109,14 @@ const constructParams = (chain: string) => {
     });
 
     const eventLogData = await getTxDataFromEVMEventLogs(
-      "layerswapV8",
+      "train",
       chain as Chain,
       fromBlock,
       toBlock,
       eventParams
     );
     let ercTransferTxHashes = eventLogData.map((tx: any) => tx.txHash);
-    
+
     // Preserve hashes in ercTransferTxHashes that exist in matchingTxHashesSet, remove others
     ercTransferTxHashes = ercTransferTxHashes.filter((txHash) => {
       if (matchingTxHashesSet.has(txHash)) {
@@ -160,6 +162,7 @@ const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   optimism: constructParams("optimism"),
+  "zksync era": constructParams("era"),
   base: constructParams("base"),
 };
 export default adapter;

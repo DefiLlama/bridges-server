@@ -71,7 +71,6 @@ import mint from "./mint";
 import suibridge from "./suibridge";
 import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
-import layerswapV8 from "./layerswapV8";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
 import thresholdnetwork from "./threshold-network";
@@ -81,6 +80,7 @@ import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
+import train from "./train"
 
 export default {
   polygon,
@@ -155,7 +155,6 @@ export default {
   suibridge,
   retrobridge,
   layerswap,
-  layerswapV8,
   hyperlane,
   wormhole,
   thresholdnetwork,
@@ -165,6 +164,7 @@ export default {
   universalx,
   eclipse,
   layerzero,
+  train,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
