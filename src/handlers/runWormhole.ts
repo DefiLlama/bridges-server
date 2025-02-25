@@ -98,7 +98,7 @@ export const handler = async () => {
         if (destinationTransactions.length > 0) {
           await insertTransactionRows(sql, true, destinationTransactions, "upsert");
         }
-        await setCache(END_TS_KEY, batch[batch.length - 1].block_timestamp);
+        await setCache(END_TS_KEY, batch[batch.length - 1].block_timestamp, null);
       } catch (error) {
         console.error(`Error inserting Wormhole batch:`, error);
         throw error;
