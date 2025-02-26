@@ -5,16 +5,14 @@ import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
-import { getCache, setCache } from "../utils/cache";
+import { setCache } from "../utils/cache";
 
-const END_TS_KEY = "wormhole_end_ts";
+const END_TS_KEY = "24h_wormhole_volume";
 
 export const handler = async () => {
-  const previousEndTs = await getCache(END_TS_KEY);
-  let currentEndTs = previousEndTs;
   try {
     await insertConfigEntriesForAdapter(adapter, "wormhole");
-    const startTs = previousEndTs ? previousEndTs : dayjs().subtract(24, "hour").unix();
+    const startTs = dayjs().subtract(24, "hour").unix();
     const endTs = dayjs().unix();
     const bridgeIds = Object.fromEntries(
       await Promise.all(
@@ -98,7 +96,6 @@ export const handler = async () => {
         if (destinationTransactions.length > 0) {
           await insertTransactionRows(sql, true, destinationTransactions, "upsert");
         }
-        await setCache(END_TS_KEY, batch[batch.length - 1].block_timestamp, null);
       } catch (error) {
         console.error(`Error inserting Wormhole batch:`, error);
         throw error;
@@ -122,6 +119,8 @@ export const handler = async () => {
       });
       start += BATCH_SIZE;
     }
+    const totalVolume = events.reduce((acc: number, curr: any) => acc + parseFloat(curr.token_usd_amount || "0"), 0);
+    await setCache(END_TS_KEY, totalVolume, null);
   } catch (error) {
     throw error;
   }
