@@ -1886,8 +1886,10 @@ export default [
     iconLink: "icons:layerzero",
     largeTxThreshold: 10000,
     url: "https://www.layerzero.network/",
-    chains: allChains.reduce((acc: string[], chain) => {
-      return acc.concat(layerZeroChainMapping[chain] || chain);
-    }, []),
+    chains: allChains
+      .reduce((acc: string[], chain) => {
+        return acc.concat(layerZeroChainMapping[chain] || chain);
+      }, [])
+      .map((c) => c?.toLowerCase()),
   },
 ] as BridgeNetwork[];
