@@ -8,30 +8,84 @@ import { getItsToken } from "./utils";
 import { Part } from "@aws-sdk/client-s3";
 
 const addresses = {
-  ethereum: {
+  arbitrum: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
-  },
-  bsc: {
-    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
-  },
-  polygon: {
-    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
   avax: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
   },
+  base: {
+   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+  },
+  blast: {
+   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+  },
+  bsc: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
+  },
+  celo: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+  },
+  centrifuge: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+  },
+  ethereum: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
+  },
   fantom: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0x304acf330bbE08d1e512eefaa92F6a57871fD895",
   },
-  arbitrum: {
+  filecoin: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
+  fraxtal: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  immutable: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  kava: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  linea: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  mantle: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  moonbeam: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
+  },
+  optimism: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  polygon: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
+  },
+  scroll: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+
+
 } as const;
 
 type SupportedChains = keyof typeof addresses;
@@ -197,7 +251,7 @@ const constructParams = async (chain: SupportedChains) => {
   };
 
   const callContractWithTokenEvent = {
-    ...TokenReceivedParams,
+    ...CallContractWithTokenParams,
     target: gatewayAddy,
     argGetters: {
       amount: (log: any) => BigNumber.from(log.amount),
@@ -259,12 +313,25 @@ const constructParams = async (chain: SupportedChains) => {
 };
 
 const adapter: BridgeAdapter = {
-  polygon: await constructParams("polygon"),
-  fantom: await constructParams("fantom"),
-  avalanche: await constructParams("avax"),
-  bsc: await constructParams("bsc"),
-  ethereum: await constructParams("ethereum"),
   arbitrum: await constructParams("arbitrum"),
+  avalanche: await constructParams("avax"),
+  base: await constructParams("base"),
+  blast: await constructParams("blast"),
+  bsc: await constructParams("bsc"),
+  celo: await constructParams("celo"),
+  centrifuge: await constructParams("centrifuge"),
+  ethereum: await constructParams("ethereum"),
+  fantom: await constructParams("fantom"),
+  filecoin: await constructParams("filecoin"),
+  fraxtal: await constructParams("fraxtal"),
+  immutable: await constructParams("immutable"),
+  kava: await constructParams("kava"),
+  linea: await constructParams("linea"),
+  mantle: await constructParams("mantle"),
+  moonbeam: await constructParams("moonbeam"),
+  optimism: await constructParams("optimism"),
+  polygon: await constructParams("polygon"),
+  scroll: await constructParams("scroll"),
 };
 
 export default adapter;
