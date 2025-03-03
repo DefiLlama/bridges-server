@@ -288,3 +288,118 @@ export const insertOrUpdateTokenWithoutPrice = async (token: string, symbol: str
     console.error(`Could not insert or update token without price: ${token}`, e);
   }
 };
+
+export const insertTransactionRows = async (
+  sql: postgres.TransactionSql<{}>,
+  allowNullTxValues: boolean,
+  transactions: Array<{
+    bridge_id: string;
+    chain: string;
+    tx_hash: string | null;
+    ts: number;
+    tx_block: number | null;
+    tx_from: string | null;
+    tx_to: string | null;
+    token: string;
+    amount: string;
+    is_deposit: boolean;
+    is_usd_volume: boolean;
+    txs_counted_as: number | null;
+    origin_chain: string | null;
+  }>,
+  onConflict: "ignore" | "error" | "upsert" = "error"
+) => {
+  const validTransactions = transactions.filter((tx) => {
+    if (typeof tx.ts !== "number" && typeof tx.ts !== "string") {
+      console.error(
+        `Invalid timestamp type ${typeof tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
+      );
+      return false;
+    }
+    if (Number.isNaN(tx.ts)) {
+      console.error(
+        `Invalid timestamp value ${tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
+      );
+      return false;
+    }
+    const isValidTimestamp = tx.ts > 0 && tx.ts < 2147483647000;
+    if (!isValidTimestamp) {
+      console.error(
+        `Invalid timestamp value ${tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
+      );
+      return false;
+    }
+    return true;
+  });
+
+  const uniqueTransactions = validTransactions.reduce((acc, tx) => {
+    const key = `${tx.bridge_id}-${tx.chain}-${tx.tx_hash}-${tx.token}-${tx.tx_from}-${tx.tx_to}`;
+    if (!acc.has(key)) {
+      acc.set(key, tx);
+    }
+    return acc;
+  }, new Map());
+
+  const dedupedTransactions = Array.from(uniqueTransactions.values());
+
+  if (dedupedTransactions.length === 0) {
+    console.warn("No valid transactions to insert after validation and deduplication");
+    return;
+  }
+
+  dedupedTransactions.forEach((params) => {
+    Object.entries(params).forEach(([key, val]) => {
+      if (val == null) {
+        if (allowNullTxValues) {
+        } else {
+          throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
+        }
+      } else {
+        if (typeof val !== txTypes[key])
+          throw new Error(
+            `Transaction for bridgeID ${params.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
+          );
+      }
+    });
+  });
+
+  let sqlCommand;
+  if (onConflict === "ignore") {
+    sqlCommand = sql`
+      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+      ON CONFLICT DO NOTHING
+    `;
+  } else if (onConflict === "upsert") {
+    sqlCommand = sql`
+      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+      ON CONFLICT (bridge_id, chain, tx_hash, token, tx_from, tx_to)
+      DO UPDATE SET
+        ts = EXCLUDED.ts,
+        tx_block = EXCLUDED.tx_block,
+        amount = EXCLUDED.amount,
+        is_deposit = EXCLUDED.is_deposit,
+        is_usd_volume = EXCLUDED.is_usd_volume,
+        txs_counted_as = EXCLUDED.txs_counted_as,
+        origin_chain = EXCLUDED.origin_chain
+    `;
+  } else {
+    sqlCommand = sql`
+      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+    `;
+  }
+
+  for (let i = 0; i < 5; i++) {
+    try {
+      await sqlCommand;
+      console.log(`Inserted ${dedupedTransactions.length} transactions of ${transactions.length}`);
+      return;
+    } catch (e) {
+      if (i >= 4) {
+        throw new Error(`Could not insert transaction rows in batch.`);
+      } else {
+        console.error(`Failed batch insert attempt ${i + 1}:`, e);
+        continue;
+      }
+    }
+  }
+};

@@ -1,3 +1,5 @@
+import { layerZeroChainMapping } from "../adapters/layerzero";
+import allChains from "../adapters/layerzero/allChains";
 import type { BridgeNetwork } from "./types";
 
 // TODO: FIX need to control chain naming here
@@ -316,7 +318,19 @@ export default [
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
     url: "https://debridge.finance/",
-    chains: ["Ethereum", "Polygon", "Arbitrum", "Avalanche", "BSC", "Fantom", "Optimism", "Linea", "Base", "Solana"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Arbitrum",
+      "Avalanche",
+      "BSC",
+      "Fantom",
+      "Optimism",
+      "Linea",
+      "Base",
+      "Solana",
+      "Sonic",
+    ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
     },
@@ -1864,5 +1878,19 @@ export default [
     url: "https://app.eclipse.xyz/bridge",
     chains: ["Ethereum", "Eclipse"],
     destinationChain: "Eclipse",
+  },
+
+  {
+    id: 84,
+    displayName: "LayerZero",
+    bridgeDbName: "layerzero",
+    iconLink: "icons:layerzero",
+    largeTxThreshold: 10000,
+    url: "https://www.layerzero.network/",
+    chains: allChains
+      .reduce((acc: string[], chain) => {
+        return acc.concat(layerZeroChainMapping[chain] || chain);
+      }, [])
+      .map((c) => c?.toLowerCase()),
   },
 ] as BridgeNetwork[];

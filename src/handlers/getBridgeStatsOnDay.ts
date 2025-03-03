@@ -53,6 +53,11 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
   if (!tokenTotals) return;
   let dailyTokensRecordBn = {} as TokenRecordBn;
   const tokenSet = new Set<string>();
+  const prices = (await Promise.race([
+    getLlamaPrices(Array.from(tokenSet)),
+    new Promise((resolve) => setTimeout(() => resolve({}), 5000)),
+  ])) as any;
+
   tokenTotals.map((tokenString) => {
     const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
     const token = tokenData[0];
@@ -66,9 +71,6 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
     dailyTokensRecord[token] = dailyTokensRecord[token] || {};
     dailyTokensRecord[token].usdValue = (dailyTokensRecord[token].usdValue ?? 0) + usdValue;
   });
-
-  const prices = await getLlamaPrices(Array.from(tokenSet));
-
   Object.entries(dailyTokensRecordBn).map(([token, tokenData]) => {
     dailyTokensRecord[token].amount = tokenData.amountBn?.toFixed() ?? "0";
     dailyTokensRecord[token].symbol = normlizeTokenSymbol(prices?.[token]?.symbol ?? "");
@@ -149,7 +151,6 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
   );
   await dailyDataPromises;
 
-  // deposits and withdrawals are swapped here
   const sourceChainsPromises = Promise.all(
     sourceChainsDailyData.map(async (dayData) => {
       const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =

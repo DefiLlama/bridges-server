@@ -69,8 +69,12 @@ export const getCache = async (key: string): Promise<any> => {
   return value ? JSON.parse(value) : null;
 };
 
-export const setCache = async (key: string, value: any, ttl: number = DEFAULT_TTL): Promise<void> => {
-  await redis.set(key, JSON.stringify(value), "EX", ttl);
+export const setCache = async (key: string, value: any, ttl: number | null = DEFAULT_TTL): Promise<void> => {
+  if (ttl === null) {
+    await redis.set(key, JSON.stringify(value));
+  } else {
+    await redis.set(key, JSON.stringify(value), "EX", ttl);
+  }
 };
 
 export const deleteCache = async (key: string): Promise<void> => {

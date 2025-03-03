@@ -85,6 +85,12 @@ export const getDailyBridgeVolume = async (
   historicalDailyData.map((dailyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       dailyData;
+    if (isNaN(parseFloat(total_deposited_usd)) || !isFinite(parseFloat(total_deposited_usd))) {
+      console.error(
+        `Invalid deposited USD value for bridge_id ${bridge_id} at timestamp ${ts}: ${total_deposited_usd}`
+      );
+      return;
+    }
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
     historicalDailySums[timestamp].depositUSD =
