@@ -32,42 +32,36 @@ const exit = () => {
   }, 1000 * 60 * 54);
 };
 
+const runAfterDelay = async (delayMinutes: number, fn: () => Promise<void>) => {
+  setTimeout(async () => {
+    await withTimeout(fn(), delayMinutes);
+  }, delayMinutes * 60 * 1000);
+};
+
+const runEvery = (minutes: number, fn: () => Promise<void>) => {
+  setInterval(async () => {
+    await fn();
+  }, minutes * 60 * 1000);
+};
+
 const cron = () => {
   if (process.env.NO_CRON) {
     return;
   }
+  warmAllCaches();
 
-  new CronJob("20,30,45 * * * *", async () => {
-    await withTimeout(runAllAdapters(), 10);
-  }).start();
+  runAfterDelay(5, runAggregateAllAdapters);
+  runAfterDelay(10, aggregateHourlyVolume);
+  runAfterDelay(10, aggregateDailyVolume);
 
-  new CronJob("5 * * * *", async () => {
-    await withTimeout(runAggregateAllAdapters(), 20);
-  }).start();
+  const run = async () => {
+    runEvery(10, runAllAdapters);
+    runEvery(15, runAdaptersFromTo);
+    runEvery(40, runWormhole);
+    runEvery(40, runLayerZero);
+  };
 
-  new CronJob("0 * * * *", async () => {
-    await withTimeout(runAdaptersFromTo(), 15);
-  }).start();
-
-  new CronJob("0 * * * *", async () => {
-    await withTimeout(runWormhole(), 40);
-  }).start();
-
-  new CronJob("0 * * * *", async () => {
-    await withTimeout(runLayerZero(), 40);
-  }).start();
-
-  new CronJob("20 * * * *", async () => {
-    await withTimeout(aggregateHourlyVolume(), 20);
-  }).start();
-
-  new CronJob("20 * * * *", async () => {
-    await withTimeout(aggregateDailyVolume(), 20);
-  }).start();
-
-  new CronJob("*/5 * * * *", async () => {
-    await withTimeout(warmAllCaches(), 4);
-  }).start();
+  runAfterDelay(15, run);
 
   exit();
 };
