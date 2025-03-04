@@ -109,17 +109,19 @@ const TokenSentParams: PartialContractEventParams = {
   target: "",
   topic: "TokenSent(address,string,string,string,uint256)",
   abi: [
-    "event TokenSent(address sender, string destinationChain, string destinationAddress, string symbol, uint256 amount)",
+    "event TokenSent(address indexed sender, string destinationChain, string destinationAddress, string symbol, uint256 amount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
+    from: "sender",
     to: "destinationAddress",
     token: "symbol",
     amount: "amount",
   },
+  argGetters: {},
   isDeposit: true,
 };
 
@@ -130,7 +132,7 @@ const CallContractWithTokenParams: PartialContractEventParams = {
   target: "",
   topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
   abi: [
-    "event ContractCallWithToken(address sender, string destinationChain, string destinationContractAddress, bytes32 payloadHash, bytes payload, string symbol, uint256 amount)",
+    "event ContractCallWithToken(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload, string symbol, uint256 amount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -142,6 +144,7 @@ const CallContractWithTokenParams: PartialContractEventParams = {
     token: "symbol",
     amount: "amount",
   },
+  argGetters: {},
   isDeposit: true,
 };
 
@@ -179,6 +182,7 @@ const InterchainTransferSentParams: PartialContractEventParams = {
 */
 // deposit address receive
 // ex used: https://axelarscan.io/transfer/028D8D7A481FAEE057AAD1818B386D712A6011C617BE163081BD965833411EE1
+//this should also track gmp with token received events
 const TokenReceivedParams: PartialContractEventParams = {
   target: "",
   topic: "ContractCallApprovedWithMint(bytes32,string,string,address,bytes32,string,uint256,bytes32,uint256)",
@@ -191,6 +195,7 @@ const TokenReceivedParams: PartialContractEventParams = {
     to: "contractAddress",
     token: "symbol",
   },
+  argGetters: {},
   isDeposit: false,
 };
 
@@ -209,6 +214,7 @@ const ExpressExecutionWithTokenParams: PartialContractEventParams = {
     amount: "amount",
     token: "symbol",
   },
+  argGetters: {},
   isDeposit: false,
 };
 
@@ -338,12 +344,12 @@ const constructParams = (chain: SupportedChains) => {
     eventParams.push(
       // depositV1,
       // withdrawV1,
-      // tokenSentEvent,
+      tokenSentEvent,
       // callContractWithTokenEvent,
       // tokenReceivedEvent,
       // expressExecutedWithTokenEvent,
       // interchainTransferSentEvent,
-      interchainTransferReceivedEvent
+      // interchainTransferReceivedEvent
     );
     // });
     return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
