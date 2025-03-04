@@ -261,9 +261,6 @@ const constructParams = (chain: SupportedChains) => {
     });
 
 
-
-
-    // fetchAssets().then((assets: any[]) => {
     const tokenSentEvent = {
       ...TokenSentParams,
       target: gatewayAddy,
@@ -346,7 +343,6 @@ const constructParams = (chain: SupportedChains) => {
       interchainTransferSentEvent,
       interchainTransferReceivedEvent
     );
-    // });
     return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
   }
 };
