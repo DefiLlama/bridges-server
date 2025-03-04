@@ -5,9 +5,14 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { BigNumber } from "ethers";
 import { fetchAssets, getTokenAddress } from "../squid/utils";
 import { getItsToken } from "./utils";
-import { Part } from "@aws-sdk/client-s3";
+import { ethers } from "ethers";
 
-const addresses = {
+// Add helper function
+function bytes32ToAddress(bytes32: string) {
+  return ethers.utils.getAddress("0x" + bytes32.slice(26));
+}
+
+const axelarChains = {
   arbitrum: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -17,12 +22,12 @@ const addresses = {
     gateway: "0x5029C0EFf6C34351a0CEc334542cDb22c7928f78",
   },
   base: {
-   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
   blast: {
-   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
   bsc: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
@@ -30,12 +35,12 @@ const addresses = {
   },
   celo: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
-  centrifuge: {
-    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31" 
-  },
+  // centrifuge: {
+  //   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+  //   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  // },
   ethereum: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -52,10 +57,10 @@ const addresses = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
-  immutable: {
-    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
-  },
+  // immutable: {
+  //   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+  //   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  // },
   kava: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -84,11 +89,9 @@ const addresses = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
-
-
 } as const;
 
-type SupportedChains = keyof typeof addresses;
+type SupportedChains = keyof typeof axelarChains;
 
 const nullAddress = "0x0000000000000000000000000000000000000000";
 
@@ -144,12 +147,18 @@ const CallContractWithTokenParams: PartialContractEventParams = {
 
 //ITS interchain transfer send
 //ex used: https://axelarscan.io/gmp/0xd9ac6fa1243ad76b637b7c089eee3d96329c029372a5bdc773911bdca151a878-7
+
 const InterchainTransferSentParams: PartialContractEventParams = {
   target: "",
   topic: "InterchainTransfer(bytes32,address,string,bytes,uint256,bytes32)",
   abi: [
-    "event InterchainTransfer(bytes32 tokenId, address sourceAddress, string destinationChain, bytes destinationAddress, uint256 amount, bytes32 dataHash)",
+    "event InterchainTransfer(bytes32 indexed tokenId, address indexed sourceAddress, string destinationChain, bytes destinationAddress, uint256 amount, bytes32 indexed dataHash)",
   ],
+  chain: "",
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
   argKeys: {
     from: "sourceAddress",
     to: "destinationAddress",
@@ -208,6 +217,7 @@ const ExpressExecutionWithTokenParams: PartialContractEventParams = {
 const InterchainTransferReceivedParams: PartialContractEventParams = {
   target: "",
   topic: "InterchainTransferReceived (bytes32,bytes32,string,bytes,address,uint256,bytes32)",
+  chain: "",
   abi: [
     "event InterchainTransferReceived (bytes32 commandId, bytes32 tokenId, string sourceChain, bytes sourceAddress, address destinationAddress, uint256 amount, bytes32 dataHash)",
   ],
@@ -220,118 +230,128 @@ const InterchainTransferReceivedParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-const constructParams = async (chain: SupportedChains) => {
-  let eventParams = [] as PartialContractEventParams[];
-  const addy = addresses[chain];
+const constructParams = (chain: SupportedChains) => {
+  let eventParams: PartialContractEventParams[] = [];
+  const axelarContractAddress = axelarChains[chain];
 
-  const gatewayAddy = addy.gateway;
-  const itsAddy = addy.its;
+  const gatewayAddy = axelarContractAddress.gateway;
+  const itsAddy = axelarContractAddress.its;
 
+  //legacy
   const depositV1 = constructTransferParams(gatewayAddy, true, {
     excludeFrom: [gatewayAddy, nullAddress],
     excludeTo: [nullAddress],
     includeTo: [gatewayAddy],
   });
 
+  //legacy
   const withdrawV1 = constructTransferParams(gatewayAddy, false, {
     excludeFrom: [nullAddress],
     excludeTo: [nullAddress, gatewayAddy],
     includeFrom: [gatewayAddy],
   });
 
-  const assets = await fetchAssets();
+  fetchAssets().then((assets: any[]) => {
+    const tokenSentEvent = {
+      ...TokenSentParams,
+      target: gatewayAddy,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
+      },
+    };
 
-  const tokenSentEvent = {
-    ...TokenSentParams,
-    target: gatewayAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      token: (log: any) => getTokenAddress(log.symbol, chain, assets),
-    },
+    const callContractWithTokenEvent = {
+      ...CallContractWithTokenParams,
+      target: gatewayAddy,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
+      },
+    };
+
+    const tokenReceivedEvent = {
+      ...TokenReceivedParams,
+      target: gatewayAddy,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
+      },
+    };
+
+    const expressExecutedWithTokenEvent = {
+      ...ExpressExecutionWithTokenParams,
+      target: gatewayAddy,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
+      },
+    };
+
+    const interchainTransferSentEvent = {
+      ...InterchainTransferSentParams,
+      target: itsAddy,
+      chain: chain,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        to: (log: any) => log.destinationAddress,
+        token: (log: any) => {
+          getItsToken(log.tokenId).then((asset) =>
+            asset && asset.chains && asset.chains[chain] ? asset.chains[chain].tokenAddress : undefined
+          );
+        },
+      },
+    };
+
+    const interchainTransferReceivedEvent = {
+      ...InterchainTransferReceivedParams,
+      target: itsAddy,
+      argGetters: {
+        amount: (log: any) => BigNumber.from(log.amount),
+        to: (log: any) => log.destinationAddress,
+        token: (log: any) => {
+          getItsToken(log.tokenId).then((asset) =>
+            asset && asset.chains && asset.chains[chain] ? asset.chains[chain].tokenAddress : undefined
+          );
+        },
+      },
+    };
+
+    eventParams.push(
+      // depositV1,
+      // withdrawV1,
+      // tokenSentEvent,
+      // callContractWithTokenEvent,
+      // tokenReceivedEvent,
+      // expressExecutedWithTokenEvent,
+      interchainTransferSentEvent
+      // interchainTransferReceivedEvent
+    );
+  });
+  return async (fromBlock: number, toBlock: number) => {
+    return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
   };
-
-  const callContractWithTokenEvent = {
-    ...CallContractWithTokenParams,
-    target: gatewayAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      token: (log: any) => getTokenAddress(log.symbol, chain, assets),
-    },
-  };
-
-  const tokenReceivedEvent = {
-    ...TokenReceivedParams,
-    target: gatewayAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      token: (log: any) => getTokenAddress(log.symbol, chain, assets),
-    },
-  };
-
-  const expressExecutedWithTokenEvent = {
-    ...ExpressExecutionWithTokenParams,
-    target: gatewayAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      token: (log: any) => getTokenAddress(log.symbol, chain, assets),
-    },
-  };
-
-  const interchainTransferSentEvent = {
-    ...InterchainTransferSentParams,
-    target: itsAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      to: (log: any) => "0x" + log.destinationAddress,
-      token: (log: any) => getItsToken("0x" + log.tokenId),
-    },
-  };
-
-  const interchainTransferReceivedEvent = {
-    ...InterchainTransferReceivedParams,
-    target: itsAddy,
-    argGetters: {
-      amount: (log: any) => BigNumber.from(log.amount),
-      to: (log: any) => "0x" + log.destinationAddress,
-      token: (log: any) => getItsToken("0x" + log.tokenId),
-    },
-  };
-
-  eventParams.push(
-    depositV1,
-    withdrawV1,
-    tokenSentEvent,
-    callContractWithTokenEvent,
-    tokenReceivedEvent,
-    expressExecutedWithTokenEvent,
-    interchainTransferSentEvent,
-    interchainTransferReceivedEvent
-  );
-
-  return async (fromBlock: number, toBlock: number) =>
-    await getTxDataFromEVMEventLogs("axelar", chain as Chain, fromBlock, toBlock, eventParams);
 };
-
 const adapter: BridgeAdapter = {
-  arbitrum: await constructParams("arbitrum"),
-  avalanche: await constructParams("avax"),
-  base: await constructParams("base"),
-  blast: await constructParams("blast"),
-  bsc: await constructParams("bsc"),
-  celo: await constructParams("celo"),
-  centrifuge: await constructParams("centrifuge"),
-  ethereum: await constructParams("ethereum"),
-  fantom: await constructParams("fantom"),
-  filecoin: await constructParams("filecoin"),
-  fraxtal: await constructParams("fraxtal"),
-  immutable: await constructParams("immutable"),
-  kava: await constructParams("kava"),
-  linea: await constructParams("linea"),
-  mantle: await constructParams("mantle"),
-  moonbeam: await constructParams("moonbeam"),
-  optimism: await constructParams("optimism"),
-  polygon: await constructParams("polygon"),
-  scroll: await constructParams("scroll"),
+  arbitrum: constructParams("arbitrum"),
+  avalanche: constructParams("avax"),
+  base: constructParams("base"),
+  blast: constructParams("blast"),
+  bsc: constructParams("bsc"),
+  celo: constructParams("celo"),
+  // centrifuge: constructParams("centrifuge"),
+  ethereum: constructParams("ethereum"),
+  fantom: constructParams("fantom"),
+  filecoin: constructParams("filecoin"),
+  fraxtal: constructParams("fraxtal"),
+  // immutable: constructParams("immutable"),
+  kava: constructParams("kava"),
+  linea: constructParams("linea"),
+  mantle: constructParams("mantle"),
+  moonbeam: constructParams("moonbeam"),
+  optimism: constructParams("optimism"),
+  polygon: constructParams("polygon"),
+  scroll: constructParams("scroll"),
 };
 
 export default adapter;
