@@ -34,13 +34,12 @@ export const generateApiCacheKey = (event: APIEvent): string => {
 };
 
 export const CACHE_WARM_THRESHOLD = 1000 * 60 * 10;
-export const DEFAULT_TTL = 600;
+export const DEFAULT_TTL = 60 * 70; // 70 minutes
 
 export const needsWarming = async (cacheKey: string): Promise<boolean> => {
   const ttl = await redis.ttl(cacheKey);
-  if (ttl === -2) return true;
   if (ttl === -1) return false;
-  return ttl * 1000 < CACHE_WARM_THRESHOLD;
+  return true;
 };
 
 export const warmCache = async (cacheKey: string): Promise<void> => {
