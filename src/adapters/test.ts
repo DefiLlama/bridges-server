@@ -35,7 +35,6 @@ const testAdapter = async () => {
 
   const bridgeNetwork = importBridgeNetwork(adapterName);
   if (!bridgeNetwork) {
-    console.log('inside inside inside inside')
 
     throw new Error(`No entry for bridge found in src/data/bridgeNetworkData. Add an entry there before testing.`);
   }
