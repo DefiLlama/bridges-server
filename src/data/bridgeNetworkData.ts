@@ -281,7 +281,7 @@ export default [
     displayName: "Axelar",
     bridgeDbName: "axelar",
     iconLink: "icons:axelar",
-    largeTxThreshold: 10000, //<<<confirm this
+    largeTxThreshold: 10000, //TODO <<<confirm this
     url: "https://www.axelar.network/",
     chains: [
       "Arbitrum", 
@@ -289,12 +289,13 @@ export default [
       "Base", 
       "Blast", 
       "BSC", 
-      "Celo", 
+      "Celo",
+      "CFG", 
       "Ethereum", 
       "Fantom", 
       "Filecoin", 
       "Fraxtal", 
-      "Immutable", 
+      "IMX", 
       "Kava", 
       "Linea", 
       "Mantle", 

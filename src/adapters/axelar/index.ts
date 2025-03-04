@@ -1,16 +1,11 @@
-import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { BigNumber } from "ethers";
 import { fetchAssets, getTokenAddress } from "../squid/utils";
 import { getItsTokens } from "./utils";
-import { ethers } from "ethers";
 
-// Add helper function
-function bytes32ToAddress(bytes32: string) {
-  return ethers.utils.getAddress("0x" + bytes32.slice(26));
-}
+
 
 const axelarChains = {
   arbitrum: {
@@ -37,10 +32,10 @@ const axelarChains = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
-  // centrifuge: {
-  //   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-  //   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
-  // },
+  cfg: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
   ethereum: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
@@ -57,10 +52,10 @@ const axelarChains = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
-  // immutable: {
-  //   its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
-  //   gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
-  // },
+  imx: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
   kava: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -342,14 +337,14 @@ const constructParams = (chain: SupportedChains) => {
     };
 
     eventParams.push(
-      // depositV1,
-      // withdrawV1,
+      depositV1,
+      withdrawV1,
       tokenSentEvent,
-      // callContractWithTokenEvent,
-      // tokenReceivedEvent,
-      // expressExecutedWithTokenEvent,
-      // interchainTransferSentEvent,
-      // interchainTransferReceivedEvent
+      callContractWithTokenEvent,
+      tokenReceivedEvent,
+      expressExecutedWithTokenEvent,
+      interchainTransferSentEvent,
+      interchainTransferReceivedEvent
     );
     // });
     return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
@@ -362,12 +357,12 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   bsc: constructParams("bsc"),
   celo: constructParams("celo"),
-  // centrifuge: constructParams("centrifuge"),
+  cfg: constructParams("cfg"), //centrifuge
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
   filecoin: constructParams("filecoin"),
   fraxtal: constructParams("fraxtal"),
-  // immutable: constructParams("immutable"),
+  imx: constructParams("imx"), //immutable
   kava: constructParams("kava"),
   linea: constructParams("linea"),
   mantle: constructParams("mantle"),

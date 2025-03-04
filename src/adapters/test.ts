@@ -33,8 +33,6 @@ const testAdapter = async () => {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
 
-  console.log(adapterName, 'the adapter name')
-
   const bridgeNetwork = importBridgeNetwork(adapterName);
   if (!bridgeNetwork) {
     console.log('inside inside inside inside')
