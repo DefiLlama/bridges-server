@@ -4,7 +4,7 @@ import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { BigNumber } from "ethers";
 import { fetchAssets, getTokenAddress } from "../squid/utils";
-import { getItsToken } from "./utils";
+import { getItsTokens } from "./utils";
 import { ethers } from "ethers";
 
 // Add helper function
@@ -165,6 +165,7 @@ const InterchainTransferSentParams: PartialContractEventParams = {
     amount: "amount",
     token: "tokenId",
   },
+  argGetters: {},
   isDeposit: true,
 };
 
@@ -216,10 +217,10 @@ const ExpressExecutionWithTokenParams: PartialContractEventParams = {
 // InterchainTransferReceived (index_topic_1 bytes32 commandId, index_topic_2 bytes32 tokenId, string sourceChain, bytes sourceAddress, index_topic_3 address destinationAddress, uint256 amount, bytes32 dataHash)
 const InterchainTransferReceivedParams: PartialContractEventParams = {
   target: "",
-  topic: "InterchainTransferReceived (bytes32,bytes32,string,bytes,address,uint256,bytes32)",
+  topic: "InterchainTransferReceived(bytes32,bytes32,string,bytes,address,uint256,bytes32)",
   chain: "",
   abi: [
-    "event InterchainTransferReceived (bytes32 commandId, bytes32 tokenId, string sourceChain, bytes sourceAddress, address destinationAddress, uint256 amount, bytes32 dataHash)",
+    "event InterchainTransferReceived(bytes32 indexed commandId, bytes32 indexed tokenId, string sourceChain, bytes sourceAddress, address indexed destinationAddress, uint256 amount, bytes32 dataHash)",
   ],
   argKeys: {
     from: "sourceAddress",
@@ -227,6 +228,7 @@ const InterchainTransferReceivedParams: PartialContractEventParams = {
     to: "destinationAddress",
     token: "tokenId",
   },
+  argGetters: {},
   isDeposit: false,
 };
 
@@ -237,21 +239,30 @@ const constructParams = (chain: SupportedChains) => {
   const gatewayAddy = axelarContractAddress.gateway;
   const itsAddy = axelarContractAddress.its;
 
-  //legacy
-  const depositV1 = constructTransferParams(gatewayAddy, true, {
-    excludeFrom: [gatewayAddy, nullAddress],
-    excludeTo: [nullAddress],
-    includeTo: [gatewayAddy],
-  });
+  return async (fromBlock: number, toBlock: number) => {
 
-  //legacy
-  const withdrawV1 = constructTransferParams(gatewayAddy, false, {
-    excludeFrom: [nullAddress],
-    excludeTo: [nullAddress, gatewayAddy],
-    includeFrom: [gatewayAddy],
-  });
+    const assets = await fetchAssets();
+    const itsAssets = await getItsTokens();
 
-  fetchAssets().then((assets: any[]) => {
+
+    //legacy
+    const depositV1 = constructTransferParams(gatewayAddy, true, {
+      excludeFrom: [gatewayAddy, nullAddress],
+      excludeTo: [nullAddress],
+      includeTo: [gatewayAddy],
+    });
+
+    //legacy
+    const withdrawV1 = constructTransferParams(gatewayAddy, false, {
+      excludeFrom: [nullAddress],
+      excludeTo: [nullAddress, gatewayAddy],
+      includeFrom: [gatewayAddy],
+    });
+
+
+
+
+    // fetchAssets().then((assets: any[]) => {
     const tokenSentEvent = {
       ...TokenSentParams,
       target: gatewayAddy,
@@ -296,24 +307,31 @@ const constructParams = (chain: SupportedChains) => {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
-          getItsToken(log.tokenId).then((asset) =>
-            asset && asset.chains && asset.chains[chain] ? asset.chains[chain].tokenAddress : undefined
+          const asset = itsAssets.find((item: any) =>
+            item.id.toLowerCase() === log.tokenId.toLowerCase()
           );
-        },
-      },
-    };
+          return asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
+            ? asset.chains[chain].tokenAddress
+            : '';
+        }
+      }
+    }
 
     const interchainTransferReceivedEvent = {
       ...InterchainTransferReceivedParams,
       target: itsAddy,
+      chain: chain,
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
-          getItsToken(log.tokenId).then((asset) =>
-            asset && asset.chains && asset.chains[chain] ? asset.chains[chain].tokenAddress : undefined
+          const asset = itsAssets.find((item: any) =>
+            item.id.toLowerCase() === log.tokenId.toLowerCase()
           );
-        },
+          return asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
+            ? asset.chains[chain].tokenAddress
+            : '';
+        }
       },
     };
 
@@ -324,13 +342,12 @@ const constructParams = (chain: SupportedChains) => {
       // callContractWithTokenEvent,
       // tokenReceivedEvent,
       // expressExecutedWithTokenEvent,
-      interchainTransferSentEvent
-      // interchainTransferReceivedEvent
+      // interchainTransferSentEvent,
+      interchainTransferReceivedEvent
     );
-  });
-  return async (fromBlock: number, toBlock: number) => {
+    // });
     return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
-  };
+  }
 };
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
