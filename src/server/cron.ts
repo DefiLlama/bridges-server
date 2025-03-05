@@ -8,6 +8,8 @@ import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
 import { warmAllCaches } from "./jobs/warmCache";
 import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
+import { runAggregateHistoricalByName } from "../utils/aggregate";
+import dayjs from "dayjs";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -34,13 +36,21 @@ const exit = () => {
 
 const runAfterDelay = async (delayMinutes: number, fn: () => Promise<void>) => {
   setTimeout(async () => {
-    await withTimeout(fn(), delayMinutes);
+    try {
+      await withTimeout(fn(), delayMinutes);
+    } catch (error) {
+      console.error("Job failed:", error);
+    }
   }, delayMinutes * 60 * 1000);
 };
 
 const runEvery = (minutes: number, fn: () => Promise<void>) => {
   setInterval(async () => {
-    await fn();
+    try {
+      await fn();
+    } catch (error) {
+      console.error("Job failed:", error);
+    }
   }, minutes * 60 * 1000);
 };
 
@@ -50,6 +60,7 @@ const cron = () => {
   }
   warmAllCaches();
 
+  runAfterDelay(10, () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"));
   runAfterDelay(5, runAggregateAllAdapters);
   runAfterDelay(10, aggregateHourlyVolume);
   runAfterDelay(10, aggregateDailyVolume);

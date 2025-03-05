@@ -166,6 +166,18 @@ export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: numb
   await promises;
 };
 
+export const runAggregateHistoricalByName = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  bridgeName: string
+) => {
+  const bridgeNetwork = bridgeNetworks.find((bridgeNetwork) => bridgeNetwork.bridgeDbName === bridgeName);
+  if (!bridgeNetwork) {
+    throw new Error(`Bridge network ${bridgeName} not found`);
+  }
+  await runAggregateDataHistorical(startTimestamp, endTimestamp, bridgeNetwork.id, true);
+};
+
 const checkSolanaAddress = (address: string) => {
   try {
     return PublicKey.isOnCurve(address);
