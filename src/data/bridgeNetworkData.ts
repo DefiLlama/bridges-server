@@ -1862,6 +1862,9 @@ export default [
       "Blast",
       "Manta",
       "Mode",
+      "Conflux",
+      "Berachain",
+      "Sonic",
       "Solana",
     ],
     chainMapping: {
