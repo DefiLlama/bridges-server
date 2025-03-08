@@ -16,40 +16,48 @@ const createTimeout = (minutes: number) =>
     setTimeout(() => reject(new Error(`Operation timed out after ${minutes} minutes`)), minutes * 60 * 1000)
   );
 
-const withTimeout = async (promise: Promise<any>, timeoutMinutes: number) => {
+const withTimeout = async (jobName: string, promise: Promise<any>, timeoutMinutes: number) => {
   try {
+    console.log(`[INFO] Starting job: ${jobName}`);
+
+    const startTime = Date.now();
     const result = await Promise.race([promise, createTimeout(timeoutMinutes)]);
+
+    const duration = (Date.now() - startTime) / 1000;
+    console.log(`[INFO] Job ${jobName} completed successfully in ${duration.toFixed(2)}s`);
+
     return result;
   } catch (error) {
-    console.error("Job failed:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[ERROR] Job ${jobName} failed: ${errorMsg}`);
   }
 };
 
 const exit = () => {
   setTimeout(async () => {
-    console.log("Timeout! Shutting down. Bye bye!");
+    console.log("[INFO] Timeout! Shutting down. Bye bye!");
     await sql.end();
     await querySql.end();
     process.exit(0);
   }, 1000 * 60 * 54);
 };
 
-const runAfterDelay = async (delayMinutes: number, fn: () => Promise<void>) => {
+const runAfterDelay = async (jobName: string, delayMinutes: number, fn: () => Promise<void>) => {
   setTimeout(async () => {
     try {
-      await withTimeout(fn(), delayMinutes);
+      await withTimeout(jobName, fn(), delayMinutes);
     } catch (error) {
-      console.error("Job failed:", error);
+      console.error(`[ERROR] Job ${jobName} failed:`, error);
     }
   }, delayMinutes * 60 * 1000);
 };
 
-const runEvery = (minutes: number, fn: () => Promise<void>) => {
+const runEvery = (jobName: string, minutes: number, fn: () => Promise<void>) => {
   setInterval(async () => {
     try {
-      await fn();
+      await withTimeout(jobName, fn(), minutes);
     } catch (error) {
-      console.error("Job failed:", error);
+      console.error(`[ERROR] Job ${jobName} failed:`, error);
     }
   }, minutes * 60 * 1000);
 };
@@ -58,21 +66,22 @@ const cron = () => {
   if (process.env.NO_CRON) {
     return;
   }
-  warmAllCaches();
 
-  runAfterDelay(10, () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"));
-  runAfterDelay(5, runAggregateAllAdapters);
-  runAfterDelay(10, aggregateHourlyVolume);
-  runAfterDelay(10, aggregateDailyVolume);
+  console.log(`[INFO] Starting cron service at ${new Date().toISOString()}`);
 
-  const run = async () => {
-    runEvery(10, runAllAdapters);
-    runEvery(15, runAdaptersFromTo);
-    runEvery(40, runWormhole);
-    runEvery(40, runLayerZero);
-  };
+  withTimeout("warmCache", warmAllCaches(), 5);
 
-  runAfterDelay(15, run);
+  runAfterDelay("aggregateLayerZero", 5, () =>
+    runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero")
+  );
+
+  runAfterDelay("aggregateAll", 5, runAggregateAllAdapters);
+  runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume);
+  runAfterDelay("aggregateDaily", 5, aggregateDailyVolume);
+  runAfterDelay("runAllAdapters", 10, runAllAdapters);
+  runAfterDelay("runAdaptersFromTo", 50, runAdaptersFromTo);
+  runEvery("runWormhole", 30, runWormhole);
+  runEvery("runLayerZero", 30, runLayerZero);
 
   exit();
 };
