@@ -3,12 +3,16 @@ import hash from "object-hash";
 
 const REDIS_URL = process.env.REDIS_URL;
 
-export const redis = new Redis(REDIS_URL!, {
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-});
+let redis: Redis;
+
+if (REDIS_URL) {
+  redis = new Redis(REDIS_URL, {
+    retryStrategy: (times) => {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+  });
+}
 
 interface APIEvent {
   pathParameters?: Record<string, any>;
