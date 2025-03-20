@@ -9,6 +9,9 @@ export const normalizedChainReplacements = {
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
   shimmerevm: "shimmer_evm",
+  "world%20chain": "wc",
+  "x%20layer": "xlayer",
+  zetachain: "zeta",
 } as {
   [chain: string]: string;
 };
@@ -1046,6 +1049,89 @@ export const chainCoingeckoIds = {
     symbol: "HYPE",
     cmcId: null,
   },
+  Fraxtal: {
+    geckoId: "frax",
+    symbol: "FRAX",
+    cmcId: "6952",
+    categories: ["EVM"],
+    chainId: 252,
+  },
+  Blast: {
+    geckoId: "blast",
+    symbol: "BLAST",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 81457,
+  },
+  Lisk: {
+    geckoId: "lisk",
+    symbol: "LSK",
+    cmcId: "1214",
+    categories: ["EVM"],
+  },
+  Soneium: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  "World Chain": {
+    geckoId: null,
+    symbol: "WC",
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Redstone: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Zora: {
+    geckoId: "zora",
+    symbol: "ZORA",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 7777777,
+  },
+  Kroma: {
+    geckoId: "kroma",
+    symbol: "KROMA",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+  },
+  ZetaChain: {
+    geckoId: "zetachain",
+    symbol: "ZETA",
+    cmcId: "23919",
+    categories: ["EVM"],
+    chainId: 7000,
+  },
+  BOB: {
+    geckoId: null,
+    symbol: "BOB",
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Scroll: {
+    geckoId: "scroll",
+    symbol: "SCRL",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 534352,
+  },
+  Linea: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 59144,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1285,8 +1371,6 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "BounceBit";
     case "europa":
       return "SKALE Europa";
-    case "xlayer":
-      return "X Layer";
     case "opbnb":
       return "opBNB";
     case "taiko":
@@ -1309,6 +1393,37 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Berachain";
     case "abstract":
       return "Abstract";
+    case "fraxtal":
+      return "Fraxtal";
+    case "blast":
+      return "Blast";
+    case "lisk":
+      return "Lisk";
+    case "soneium":
+      return "Soneium";
+    case "ink":
+      return "Ink";
+    case "world_chain":
+    case "wc":
+      return "World Chain";
+    case "redstone":
+      return "Redstone";
+    case "zora":
+      return "Zora";
+    case "kroma":
+      return "Kroma";
+    case "zetachain":
+    case "zeta":
+      return "ZetaChain";
+    case "xlayer":
+    case "x_layer":
+      return "X Layer";
+    case "bob":
+      return "BOB";
+    case "scroll":
+      return "Scroll";
+    case "linea":
+      return "Linea";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

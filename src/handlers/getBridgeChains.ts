@@ -7,19 +7,28 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
 
 export async function craftBridgeChainsResponse() {
-  const chainsSet = new Set<string>();
+  const chainsMap = new Map<string, string>();
   const currentTimestamp = getCurrentUnixTimestamp();
+
   await Promise.all(
     bridgeNetworks.map(async (bridgeNetwork) => {
       const { chains, destinationChain } = bridgeNetwork;
-      if (destinationChain) chainsSet.add(destinationChain);
-      chains.map((chain) => chainsSet.add(chain));
+
+      if (destinationChain) {
+        const normalizedName = normalizeChain(destinationChain);
+        chainsMap.set(normalizedName, destinationChain);
+      }
+
+      chains.forEach((chain) => {
+        const normalizedName = normalizeChain(chain);
+        chainsMap.set(normalizedName, chain);
+      });
     })
   );
 
   const chainPromises = Promise.all(
-    Array.from(chainsSet).map(async (chain) => {
-      const chainName = getChainDisplayName(chain, true);
+    Array.from(chainsMap.keys()).map(async (normalizedChain) => {
+      const chainName = getChainDisplayName(normalizedChain, true);
       if (chainCoingeckoIds[chainName] === undefined) {
         return;
       }
@@ -27,8 +36,9 @@ export async function craftBridgeChainsResponse() {
       const lastWeekDailyBridgeVolume = await getDailyBridgeVolume(
         currentTimestamp - 7 * secondsInDay,
         currentTimestamp,
-        normalizeChain(chain)
+        normalizedChain
       );
+
       let volumePrevDay = 0;
       if (lastWeekDailyBridgeVolume.length > 1) {
         const lastDailyBridgeVolume = lastWeekDailyBridgeVolume[lastWeekDailyBridgeVolume.length - 1];
