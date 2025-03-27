@@ -19,7 +19,9 @@ enum Chains {
   kava = "kava",
   fraxtal = "fraxtal",
   metis = "metis",
-  mode = "mode"
+  mode = "mode",
+  sonic = "sonic",
+  manta = "manta",
 }
 
 const depositPortalEventParams: ContractEventParams = {
@@ -160,6 +162,8 @@ const adapter: BridgeAdapter = {
   [Chains.fraxtal]: constructParams(Chains.fraxtal),
   [Chains.metis]: constructParams(Chains.metis),
   [Chains.mode]: constructParams(Chains.mode),
+  [Chains.manta]: constructParams(Chains.manta),
+  [Chains.sonic]: constructParams(Chains.sonic),
 };
 
 export default adapter;
