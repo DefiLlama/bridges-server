@@ -70,6 +70,12 @@ export const chainNameMapping: { [key: string]: string } = {
   terra2: "Terra",
   "terra classic": "Terra Classic",
   near: "Near",
+  karura: "Karura",
+  acala: "Acala",
+  wormchain: "Wormchain",
+  xlayer: "xLayer",
+  blast: "Blast",
+  xpla: "XPLA",
 };
 
 export function normalizeChainName(chainName: string): string {
