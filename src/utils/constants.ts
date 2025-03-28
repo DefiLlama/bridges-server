@@ -26,6 +26,7 @@ export const maxBlocksToQueryByChain = {
   solana: 6000,
   taiko: 100,
   sonic: 10000,
+  base: 3000,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter
