@@ -13,6 +13,7 @@ const contractsByChain: Record<string, string[]> = {
   optimism: ["0x126Fc543AA75D1D8511390aEb0a5E49Ad8a245BC"],
   base: ["0xAE90b87324DA77113075E149455C53a88F6a01fb"],
   era: ["0xB4863f53332C89078575320C01E270032f71e486"],
+  linea: ["0x320818EEFCF46ED1ec722f3bbC5B463EA1F5B619"],
 };
 
 const nativeTokens: Record<string, string> = {
@@ -21,6 +22,7 @@ const nativeTokens: Record<string, string> = {
   optimism: "0x4200000000000000000000000000000000000006",
   base: "0x4200000000000000000000000000000000000006",
   era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
+  linea: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
 };
 
 const constructParams = (chain: string) => {
@@ -164,5 +166,6 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   "zksync era": constructParams("era"),
   base: constructParams("base"),
+  linea: constructParams("linea"),
 };
 export default adapter;

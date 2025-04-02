@@ -16,7 +16,7 @@ export default [
   },
   {
     id: 2,
-    displayName: "Arbitrum Bridge", 
+    displayName: "Arbitrum Bridge",
     bridgeDbName: "arbitrum",
     iconLink: "chain:arbitrum",
     largeTxThreshold: 10000,
@@ -1897,7 +1897,7 @@ export default [
     iconLink: "icons:train",
     url: "https://app.train.tech/",
     largeTxThreshold: 10000,
-    chains: ["Ethereum", "Arbitrum", "Optimism", "Base", "ZKsync Era"],
+    chains: ["Ethereum", "Arbitrum", "Optimism", "Base", "ZKsync Era", "Linea"],
     chainMapping: {
       "zksync era": "era",
     },
