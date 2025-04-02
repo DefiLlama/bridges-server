@@ -64,7 +64,28 @@ const contracts = {
   // Chain id: 130
   unichain: {
    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+  },
+  // Chain id: 1868
+  soneium: {
+   spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
+  },
+  // Chain id: 57073
+  ink: {
+   spokePoolv2p5: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
+  },
+  // Chain id: 7777777
+  zora: {
+   spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+  },
+  // Chain id: 480
+  wc: {
+   spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+  },
+  // Chain id: 690
+  redstone: {
+   spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
   }
+  
 } as const;
 
 type SupportedChains = keyof typeof contracts;
@@ -328,6 +349,11 @@ const adapter: BridgeAdapter = {
   linea: constructParams("linea"),
   blast: constructParams("blast"),
   scroll: constructParams("scroll"),
+  soneium: constructParams("soneium"),
+  "world chain": constructParams("wc"),
+  ink: constructParams("ink"),
+  zora: constructParams("zora"),
+  redstone: constructParams("redstone"),
 };
 
 export default adapter;

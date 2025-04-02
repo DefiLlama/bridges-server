@@ -9,6 +9,9 @@ export const normalizedChainReplacements = {
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
   shimmerevm: "shimmer_evm",
+  "world%20chain": "wc",
+  "x%20layer": "xlayer",
+  zetachain: "zeta",
 } as {
   [chain: string]: string;
 };
@@ -940,7 +943,7 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  "Bitlayer": {
+  Bitlayer: {
     geckoId: null,
     symbol: null,
     cmcId: null,
@@ -952,7 +955,7 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  "BounceBit": {
+  BounceBit: {
     geckoId: "BB",
     symbol: "bouncebit",
     cmcId: "30746",
@@ -964,17 +967,17 @@ export const chainCoingeckoIds = {
     cmcId: null,
     categories: ["EVM"],
   },
-  "opBNB": {
+  opBNB: {
     geckoId: null,
     symbol: null,
     cmcId: null,
-    categories: ["EVM","Rollup"],
+    categories: ["EVM", "Rollup"],
   },
-  "Taiko": {
+  Taiko: {
     geckoId: null,
     symbol: null,
     cmcId: null,
-    categories: ["EVM","Rollup"],
+    categories: ["EVM", "Rollup"],
   },
   Sonic: {
     geckoId: "sonic-3",
@@ -1002,14 +1005,14 @@ export const chainCoingeckoIds = {
     symbol: "APE",
     cmcId: "18876",
     categories: ["EVM"],
-    chainId: 33139
+    chainId: 33139,
   },
   "Cronos zkEVM": {
     geckoId: null,
     symbol: null,
     cmcId: null,
     categories: ["EVM", "Rollup"],
-    chainId: 388
+    chainId: 388,
   },
   Paradex: {
     geckoId: null,
@@ -1026,20 +1029,108 @@ export const chainCoingeckoIds = {
     symbol: null,
     cmcId: null,
   },
-  "Sei": {
+  Sei: {
     geckoId: "sei-network",
     symbol: "SEI",
     cmcId: "23149",
   },
-  "Berachain": {
+  Berachain: {
     geckoId: "berachain-bera",
     symbol: "BERA",
     cmcId: "24647",
   },
-  "Abstract": {
+  Abstract: {
     geckoId: null,
     symbol: null,
     cmcId: null,
+  },
+  Hyperliquid: {
+    geckoId: "hyperliquid",
+    symbol: "HYPE",
+    cmcId: null,
+  },
+  Fraxtal: {
+    geckoId: "frax",
+    symbol: "FRAX",
+    cmcId: "6952",
+    categories: ["EVM"],
+    chainId: 252,
+  },
+  Blast: {
+    geckoId: "blast",
+    symbol: "BLAST",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 81457,
+  },
+  Lisk: {
+    geckoId: "lisk",
+    symbol: "LSK",
+    cmcId: "1214",
+    categories: ["EVM"],
+  },
+  Soneium: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  "World Chain": {
+    geckoId: null,
+    symbol: "WC",
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Redstone: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Zora: {
+    geckoId: "zora",
+    symbol: "ZORA",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 7777777,
+  },
+  Kroma: {
+    geckoId: "kroma",
+    symbol: "KROMA",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+  },
+  ZetaChain: {
+    geckoId: "zetachain",
+    symbol: "ZETA",
+    cmcId: "23919",
+    categories: ["EVM"],
+    chainId: 7000,
+  },
+  BOB: {
+    geckoId: null,
+    symbol: "BOB",
+    cmcId: null,
+    categories: ["EVM"],
+  },
+  Scroll: {
+    geckoId: "scroll",
+    symbol: "SCRL",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 534352,
+  },
+  Linea: {
+    geckoId: null,
+    symbol: null,
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 59144,
   },
 } as {
   [chain: string]: {
@@ -1272,38 +1363,67 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Zkfair";
     case "bsquared":
       return "BSquared";
-     case "btr":
-      return "Bitlayer"
+    case "btr":
+      return "Bitlayer";
     case "zklink":
-      return "zkLink Nova"
+      return "zkLink Nova";
     case "bouncebit":
-      return "BounceBit"
+      return "BounceBit";
     case "europa":
-      return "SKALE Europa"
-    case "xlayer":
-      return "X Layer"
+      return "SKALE Europa";
     case "opbnb":
-      return "opBNB"
+      return "opBNB";
     case "taiko":
-      return "Taiko"
+      return "Taiko";
     case "ape_chain":
       return "Ape Chain";
     case "cronos_zkevm":
       return "Cronos zkEVM";
     case "paradex":
-      return "Paradex"
+      return "Paradex";
     case "ton":
-      return "Ton"
+      return "Ton";
     case "eclipse":
-      return "Eclipse"
+      return "Eclipse";
     case "sei":
-      return "Sei"
+      return "Sei";
     case "sonic":
-      return "Sonic"
+      return "Sonic";
     case "berachain":
-      return "Berachain"
+      return "Berachain";
     case "abstract":
-      return "Abstract"
+      return "Abstract";
+    case "fraxtal":
+      return "Fraxtal";
+    case "blast":
+      return "Blast";
+    case "lisk":
+      return "Lisk";
+    case "soneium":
+      return "Soneium";
+    case "ink":
+      return "Ink";
+    case "world_chain":
+    case "wc":
+      return "World Chain";
+    case "redstone":
+      return "Redstone";
+    case "zora":
+      return "Zora";
+    case "kroma":
+      return "Kroma";
+    case "zetachain":
+    case "zeta":
+      return "ZetaChain";
+    case "xlayer":
+    case "x_layer":
+      return "X Layer";
+    case "bob":
+      return "BOB";
+    case "scroll":
+      return "Scroll";
+    case "linea":
+      return "Linea";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

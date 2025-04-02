@@ -276,18 +276,38 @@ export default [
       gnosis: "xdai", // this is needed temporarily, need to fix and remove
     },
   },
-  // {
-  //   id: 17,
-  //   displayName: "Axelar",
-  //   bridgeDbName: "axelar",
-  //   iconLink: "icons:axelar",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: ["Ethereum", "Polygon", "Avalanche", "BSC", "Fantom", "Arbitrum"],
-  //   chainMapping: {
-  //     avalanche: "avax", // this is needed temporarily, need to fix and remove
-  //   },
-  // },
+  {
+    id: 17,
+    displayName: "Axelar",
+    bridgeDbName: "axelar",
+    iconLink: "icons:axelar",
+    largeTxThreshold: 10000, //TODO <<<confirm this
+    url: "https://www.axelar.network/",
+    chains: [
+      "Arbitrum", 
+      "Avalanche", 
+      "Base", 
+      "Blast", 
+      "BSC", 
+      "Celo",
+      "CFG", 
+      "Ethereum", 
+      "Fantom", 
+      "Filecoin", 
+      "Fraxtal", 
+      "IMX", 
+      "Kava", 
+      "Linea", 
+      "Mantle", 
+      "Moonbeam", 
+      "Optimism", 
+      "Polygon", 
+      "Scroll"
+    ],
+    chainMapping: {
+      avalanche: "avax", // this is needed temporarily, need to fix and remove
+    },
+  },
   {
     id: 18,
     displayName: "Rainbow Bridge",
@@ -305,9 +325,28 @@ export default [
     iconLink: "icons:across",
     largeTxThreshold: 10000,
     url: "https://across.to/",
-    chains: ["Ethereum", "Polygon", "Optimism", "ZKsync Era", "Base", "Arbitrum", "Linea", "Mode", "Blast", "Scroll"],
+    chains: [
+      "Ethereum",
+      "Polygon",
+      "Optimism",
+      "ZKsync Era",
+      "Base",
+      "Arbitrum",
+      "Linea",
+      "Mode",
+      "Blast",
+      "Scroll",
+      "Lisk",
+      "Unichain",
+      "Soneium",
+      "Ink",
+      "Zora",
+      "World Chain",
+      "Redstone",
+    ],
     chainMapping: {
       "zksync era": "era",
+      "world chain": "wc",
     },
   },
 
@@ -1862,6 +1901,9 @@ export default [
       "Blast",
       "Manta",
       "Mode",
+      "Conflux",
+      "Berachain",
+      "Sonic",
       "Solana",
     ],
     chainMapping: {
@@ -1886,9 +1928,11 @@ export default [
     iconLink: "icons:layerzero",
     largeTxThreshold: 10000,
     url: "https://www.layerzero.network/",
-    chains: allChains.reduce((acc: string[], chain) => {
-      return acc.concat(layerZeroChainMapping[chain] || chain);
-    }, []),
+    chains: allChains
+      .reduce((acc: string[], chain) => {
+        return acc.concat(layerZeroChainMapping[chain] || chain);
+      }, [])
+      .map((c) => c?.toLowerCase()),
   },
   {
     id: 85,

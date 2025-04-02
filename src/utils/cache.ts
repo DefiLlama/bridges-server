@@ -3,12 +3,16 @@ import hash from "object-hash";
 
 const REDIS_URL = process.env.REDIS_URL;
 
-export const redis = new Redis(REDIS_URL!, {
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-});
+let redis: Redis;
+
+if (REDIS_URL) {
+  redis = new Redis(REDIS_URL, {
+    retryStrategy: (times) => {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+  });
+}
 
 interface APIEvent {
   pathParameters?: Record<string, any>;
@@ -34,13 +38,12 @@ export const generateApiCacheKey = (event: APIEvent): string => {
 };
 
 export const CACHE_WARM_THRESHOLD = 1000 * 60 * 10;
-export const DEFAULT_TTL = 600;
+export const DEFAULT_TTL = 60 * 70; // 70 minutes
 
 export const needsWarming = async (cacheKey: string): Promise<boolean> => {
   const ttl = await redis.ttl(cacheKey);
-  if (ttl === -2) return true;
   if (ttl === -1) return false;
-  return ttl * 1000 < CACHE_WARM_THRESHOLD;
+  return true;
 };
 
 export const warmCache = async (cacheKey: string): Promise<void> => {
