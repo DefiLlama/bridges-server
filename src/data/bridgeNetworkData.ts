@@ -829,6 +829,8 @@ export default [
       "Fraxtal",
       "Metis",
       "Mode",
+      "Manta",
+      "Sonic",
     ],
     chainMapping: {
       avalanche: "avax",
