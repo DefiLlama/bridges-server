@@ -8,13 +8,9 @@ import { EventData } from "../../utils/types";
 import { BigNumber } from "ethers";
 import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
 
-const blackListedAddresses = [
-  "0xe2e1808ed4cc4a6f701696086838f511ee187d57",
-].map((a) => a.toLowerCase());
+const blackListedAddresses = ["0xe2e1808ed4cc4a6f701696086838f511ee187d57"].map((a) => a.toLowerCase());
 
-const solverAddressesEOA = [
-  "0x2fc617e933a52713247ce25730f6695920b3befe"
-];
+const solverAddressesEOA = ["0x2fc617e933a52713247ce25730f6695920b3befe"];
 
 const solverAddressesEOAerc = [
   "0x2fc617e933a52713247ce25730f6695920b3befe",
@@ -46,10 +42,37 @@ const nativeTokens: Record<string, string> = {
   zkfair: "0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b",
   bsquared: "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
   taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
+  abstract: "0x3439153eb7af838ad19d56e1571fbd09333c2809",
+  ancient8: "0x4200000000000000000000000000000000000006",
+  astar: "0x81ecac0d6be0550a00ff064a4f9dd2400585fe9c",
+  avax: "0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab",
+  berachain: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
+  bob: "0x4200000000000000000000000000000000000006",
+  celo: "0x66803FB87aBd4aaC3cbB3fAd7C3aa01f6F3FB207",
+  fraxtal: "0xfc00000000000000000000000000000000000006",
+  fuse: "0xa722c13135930332eb3d749b2f0906559d2c5b99",
+  gnosis: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
+  gravity: "0xf6f832466cd6c21967e0d954109403f36bc8ceaa",
+  immutable_zkevm: "0x52A6c53869Ce09a731CD772f245b97A4401d3348",
+  kcc: "0xf55af137a98607f7ed2efefa4cd2dfe70e4253b1",
+  kroma: "0x4200000000000000000000000000000000000001",
+  lisk: "0x4200000000000000000000000000000000000006",
+  mint: "0x4200000000000000000000000000000000000006",
+  morph: "0x5300000000000000000000000000000000000011",
+  redstone: "0x4200000000000000000000000000000000000006",
+  ronin: "0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5",
+  sei: "0x160345fc359604fc6e70e3c5facbde5f7a9342d8",
+  soneium: "0x4200000000000000000000000000000000000006",
+  superseed: "0x4200000000000000000000000000000000000006",
+  unichain: "0x4200000000000000000000000000000000000006",
+  wc: "0x4200000000000000000000000000000000000006",
+  zetachain: "0xd97B1de3619ed2c6BEb3860147E30cA8A7dC9891",
+  zircuit: "0x4200000000000000000000000000000000000006",
+  zora: "0x4200000000000000000000000000000000000006",
+  // fuel: "0x4ea6ccef1215d9479f1024dff70fc055ca538215d2c8c348beddffd54583d0e8",
 };
 
 const constructParams = (chain: string) => {
-
   let eventParams = [] as any;
   solverAddressesEOAerc.map((address: string) => {
     const transferWithdrawalParams: PartialContractEventParams = constructTransferParams(address, false);
@@ -58,7 +81,6 @@ const constructParams = (chain: string) => {
   });
 
   return async (fromBlock: number, toBlock: number) => {
-
     const eventLogData = await getTxDataFromEVMEventLogs("layerswap", chain as Chain, fromBlock, toBlock, eventParams);
 
     const nativeEvents = await Promise.all(
@@ -117,7 +139,7 @@ const adapter: BridgeAdapter = {
   opbnb: constructParams("op_bnb"),
   bouncebit: constructParams("bouncebit-mainnet"),
   mint: constructParams("mint"),
-  'x layer': constructParams("xlayer"),
+  "x layer": constructParams("xlayer"),
   "arbitrum nova": constructParams("arbitrum_nova"),
   "polygon zkevm": constructParams("polygon_zkevm"),
   "zksync era": constructParams("era"),
@@ -131,5 +153,34 @@ const adapter: BridgeAdapter = {
   kcc: constructParams("kcc"),
   astar: constructParams("astar"),
   fuse: constructParams("fuse"),
+  ancient8: constructParams("ancient8"),
+  celo: constructParams("celo"),
+  "immutable zkevm": constructParams("immutable_zkevm"),
+  kaia: constructParams("klaytn"),
+  lisk: constructParams("lisk"),
+  "OKXChain Mainnet": constructParams("okx"),
+  paradex: constructParams("paradex"),
+  "PGN (Public Goods Network)": constructParams("pgn"),
+  rari: constructParams("rari"),
+  redstone: constructParams("redstone"),
+  rollux: constructParams("rollux"),
+  ronin: constructParams("ronin"),
+  sei: constructParams("sei"),
+  shape: constructParams("shape"),
+  superseed: constructParams("superseed"),
+  "World Chain": constructParams("wc"),
+  xai: constructParams("xai"),
+  zetachain: constructParams("zeta"),
+  zircuit: constructParams("zircuit"),
+  // sophon: constructParams("sophon"),
+  // abstract: constructParams("abstract"),
+  // soneium: constructParams("soneium"),
+  // unichain: constructParams("unichain"),
+  // berachain: constructParams("berachain"),
+  // morph: constructParams("morph"),
+  // fuel: constructParams("fuel"),
+  // ton: constructParams("ton"),
+  // tron: constructParams("tron"),
+  // starknet: constructParams("starknet"),
 };
 export default adapter;
