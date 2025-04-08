@@ -4,7 +4,6 @@ import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 import { BigNumber } from "ethers";
 import { getLogs, GetLogsOptions } from "@defillama/sdk/build/util/logs";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 const contractsByChain: Record<string, string[]> = {
@@ -103,20 +102,41 @@ const constructParams = (chain: string) => {
 
     const matchingTxHashesSet = new Set(matchingTxHashes);
 
+    // commit event params
+    const commitParams: PartialContractEventParams = {
+      target: "",
+      topic:
+        "TokenCommitted(bytes32,string[],string[],string[],string,string,string,address,address,string,uint256,uint48)",
+      abi: [
+        "event TokenCommitted(bytes32 indexed Id,string[] hopChains,string[] hopAssets,string[] hopAddresses,string dstChain,string dstAddress,string dstAsset,address indexed sender,address indexed srcReceiver,string srcAsset,uint256 amount,uint48 timelock)",
+      ],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      argKeys: {
+        amount: "amount",
+        from: "sender",
+      },
+      fixedEventData: {
+        token: nativeTokens[chain.toString()],
+        to: contractsByChain[chain.toString()][0],
+      },
+      isDeposit: true,
+    };
+
     // Fetch all deposit token transfer events and store tx hashes
     let eventParams = [] as any;
     contracts.map((address: string) => {
-      const transferDepositParams: PartialContractEventParams = constructTransferParams(address, true);
-      eventParams.push(transferDepositParams);
+      const finalCommitParams = {
+        ...commitParams,
+        target: address,
+      };
+
+      eventParams.push(finalCommitParams);
     });
 
-    const eventLogData = await getTxDataFromEVMEventLogs(
-      "train",
-      chain as Chain,
-      fromBlock,
-      toBlock,
-      eventParams
-    );
+    const eventLogData = await getTxDataFromEVMEventLogs("train", chain as Chain, fromBlock, toBlock, eventParams);
     let ercTransferTxHashes = eventLogData.map((tx: any) => tx.txHash);
 
     // Preserve hashes in ercTransferTxHashes that exist in matchingTxHashesSet, remove others
