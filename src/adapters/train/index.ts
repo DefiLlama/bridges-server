@@ -59,6 +59,39 @@ const constructParams = (chain: string) => {
     };
     await fetchCommitLogs();
 
+    // Fetches contract Lock logs and maps `Id` to its transaction hash.
+    const lockIdToTxHash = new Map<string, string>();
+
+    const fetchLockLogs = async () => {
+      try {
+        const argsLockEvent = await Promise.all(
+          contracts.map(async (contract) => {
+            const options: GetLogsOptions = {
+              target: contract,
+              eventAbi:
+                "event TokenLocked(bytes32 indexed Id, bytes32 hashlock, string dstChain, string dstAddress, string dstAsset, address indexed sender, address indexed srcReceiver, string srcAsset, uint256 amount, uint256 reward, uint48 rewardTimelock, uint48 timelock)",
+              fromBlock: fromBlock,
+              toBlock: toBlock,
+              chain: chain as Chain,
+              entireLog: true,
+            };
+            const logs = await getLogs(options);
+            return logs;
+          })
+        );
+
+        argsLockEvent.flat().forEach((log: any) => {
+          const id = log.topics[1];
+          const txHash = log.transactionHash;
+          lockIdToTxHash.set(id, txHash);
+        });
+      } catch (error) {
+        console.error("Error fetching lock logs:", error);
+      }
+    };
+
+    await fetchLockLogs();
+
     // Fetches contract Redeem logs and stores `Id`
     const redeemIds: string[] = [];
 
@@ -91,16 +124,28 @@ const constructParams = (chain: string) => {
     await fetchRedeemLogs();
 
     // Loop over Redeem Ids, check if an entry exists in commitIdToTxHash, and store the corresponding txHash
-    const matchingTxHashes: string[] = [];
+    const matchingCommitTxHashes: string[] = [];
 
     redeemIds.forEach((redeemId) => {
       if (commitIdToTxHash.has(redeemId)) {
         const txHash = commitIdToTxHash.get(redeemId);
-        matchingTxHashes.push(txHash!);
+        matchingCommitTxHashes.push(txHash!);
       }
     });
 
-    const matchingTxHashesSet = new Set(matchingTxHashes);
+    const matchingCommitTxHashesSet = new Set(matchingCommitTxHashes);
+
+    // Loop over Redeem Ids, check if an entry exists in lockIdToTxHash, and store the corresponding txHash
+    const matchingLockTxHashes: string[] = [];
+
+    redeemIds.forEach((redeemId) => {
+      if (lockIdToTxHash.has(redeemId)) {
+        const txHash = lockIdToTxHash.get(redeemId);
+        matchingLockTxHashes.push(txHash!);
+      }
+    });
+
+    const matchingLockTxHashesSet = new Set(matchingLockTxHashes);
 
     // commit event params
     const commitParams: PartialContractEventParams = {
@@ -125,57 +170,82 @@ const constructParams = (chain: string) => {
       isDeposit: true,
     };
 
-    // Fetch all deposit token transfer events and store tx hashes
-    let eventParams = [] as any;
-    contracts.map((address: string) => {
-      const finalCommitParams = {
-        ...commitParams,
-        target: address,
-      };
+    //lock event params
+    const lockParams: PartialContractEventParams = {
+      target: "",
+      topic: "TokenLocked(bytes32,bytes32,string,string,string,address,address,string,uint256,uint256,uint48,uint48)",
+      abi: [
+        "event TokenLocked(bytes32 indexed Id, bytes32 hashlock, string dstChain, string dstAddress, string dstAsset, address indexed sender, address indexed srcReceiver, string srcAsset, uint256 amount, uint256 reward, uint48 rewardTimelock, uint48 timelock)",
+      ],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      argKeys: {
+        amount: "amount",
+        from: "sender",
+      },
+      fixedEventData: {
+        token: nativeTokens[chain.toString()],
+        to: contractsByChain[chain.toString()][0],
+      },
+      isDeposit: false,
+    };
 
-      eventParams.push(finalCommitParams);
+    // Combine both sets for filtering:
+    const combinedMatchingTxHashesSet = new Set([...matchingCommitTxHashesSet, ...matchingLockTxHashesSet]);
+
+    // Build unified event parameters for both commit and lock events for all contracts
+    const allEventParams: PartialContractEventParams[] = [];
+    contracts.forEach((address: string) => {
+      // Append commit event params with target address
+      allEventParams.push({ ...commitParams, target: address });
+      // Append lock event params with target address
+      allEventParams.push({ ...lockParams, target: address });
     });
 
-    const eventLogData = await getTxDataFromEVMEventLogs("train", chain as Chain, fromBlock, toBlock, eventParams);
-    let ercTransferTxHashes = eventLogData.map((tx: any) => tx.txHash);
+    // Fetch all event logs (for both commit and lock events)
+    const eventLogData = await getTxDataFromEVMEventLogs("train", chain as Chain, fromBlock, toBlock, allEventParams);
 
-    // Preserve hashes in ercTransferTxHashes that exist in matchingTxHashesSet, remove others
-    ercTransferTxHashes = ercTransferTxHashes.filter((txHash) => {
-      if (matchingTxHashesSet.has(txHash)) {
-        matchingTxHashesSet.delete(txHash);
+    // Extract tx hashes from the fetched event logs and filter those present in the combined set:
+    let allTxHashes = eventLogData.map((tx: any) => tx.txHash);
+    allTxHashes = allTxHashes.filter((txHash) => {
+      if (combinedMatchingTxHashesSet.has(txHash)) {
+        combinedMatchingTxHashesSet.delete(txHash);
         return true;
       }
       return false;
     });
 
-    const filteredEventLogData = eventLogData.filter((event) => ercTransferTxHashes.includes(event.txHash));
+    const filteredEventLogData = eventLogData.filter((event) => allTxHashes.includes(event.txHash));
 
-    // Fetch and filter transactions, mapping matching hashes to EventData objects.
-    const nativeEvents = await Promise.all(
+    // Fetch transactions from Etherscan and map to unified EventData objects.
+    // Differentiate between events by checking which set contains the tx hash.
+    const unifiedEvents = await Promise.all(
       contracts.map(async (address: string, i: number) => {
         await wait(500 * i);
         const txs: any[] = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {});
 
         const eventsRes: EventData[] = txs
-          .filter((tx) => matchingTxHashesSet.has(tx.hash))
+          .filter((tx) => matchingCommitTxHashesSet.has(tx.hash) || matchingLockTxHashesSet.has(tx.hash))
           .map((tx: any) => {
-            const event: EventData = {
+            // If the hash is in the commit set, mark isDeposit as true; otherwise, mark it false.
+            const isDeposit = matchingCommitTxHashesSet.has(tx.hash);
+            return {
               txHash: tx.hash,
               blockNumber: +tx.blockNumber,
               from: tx.from,
               to: tx.to,
               token: nativeTokens[chain],
               amount: BigNumber.from(tx.value),
-              isDeposit: true,
+              isDeposit: isDeposit,
             };
-            return event;
           });
-
         return eventsRes;
       })
     );
 
-    const allEvents: EventData[] = [...nativeEvents.flat(), ...filteredEventLogData];
+    const allEvents: EventData[] = [...unifiedEvents.flat(), ...filteredEventLogData];
     return allEvents;
   };
 };
