@@ -158,7 +158,7 @@ const adapter: BridgeAdapter = {
   "immutable zkevm": constructParams("immutable_zkevm"),
   kaia: constructParams("klaytn"),
   lisk: constructParams("lisk"),
-  "OKXChain Mainnet": constructParams("okx"),
+  "okxchain mainnet": constructParams("okx"),
   paradex: constructParams("paradex"),
   "PGN (Public Goods Network)": constructParams("pgn"),
   rari: constructParams("rari"),

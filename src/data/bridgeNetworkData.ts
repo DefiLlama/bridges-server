@@ -1749,6 +1749,9 @@ export default [
       bitlayer: "btr",
       "World Chain": "wc",
       zetachain: "zeta",
+      kaia: "klaytn",
+      "okxchain mainnet": "okx",
+      "PGN (Public Goods Network)": "pgn",
     },
   },
   {
