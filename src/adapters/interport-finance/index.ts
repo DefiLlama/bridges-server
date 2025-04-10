@@ -1,26 +1,24 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { BigNumber } from "ethers";
 import { getTxDataFromEVMEventLogsCustom } from "./processTransactionsCustom";
 import {
-    ACTION_EXECUTOR_ADDRESSES,
-    VAULT_TYPE_USDC,
-    VAULT_TYPE_USDT,
-    VAULT_ASSET_ADDRESSES,
     CCIP_TOKEN_BRIDGE,
     NATIVE_TOKENS,
     CCIP_NATIVE_BRIDGE,
+    CCIP_BACKED_TOKEN_BRIDGE,
+    ACTION_EXECUTOR,
+    CUSTOM_BRIDGE,
+    CUSTOM_NON_EVM_BRIDGE
 } from "./constants";
+import { Chain } from "@defillama/sdk/build/general";
 
-type SupportedChains = keyof typeof ACTION_EXECUTOR_ADDRESSES;
-
-const ccipDepositParams = (chain: SupportedChains): PartialContractEventParams => {
+const ccipDepositParams = (chain: Chain): PartialContractEventParams => {
     const ccipTokenBridge = CCIP_TOKEN_BRIDGE[chain] as string;
 
     return {
         target: ccipTokenBridge,
-        topic: "TokenBridgeActionSource(uint256,address,address,(address,uint256)[],uint256,bytes32,uint256)",
+        topic: "TokenBridgeActionSource(uint256,address,address,(address,uint256)[],bytes32,uint256)",
         abi: [
-            "event TokenBridgeActionSource(uint256 targetChainId, address indexed sourceSender, address targetRecipient, tuple(address token, uint256 amount)[] tokenAmounts, uint256 reserve, bytes32 indexed ccipMessageId, uint256 timestamp)"
+            "event TokenBridgeActionSource(uint256 targetChainId, address indexed sourceSender, address targetRecipient, tuple(address token, uint256 amount)[] tokenAmounts, bytes32 indexed ccipMessageId, uint256 timestamp)"
         ],
         isDeposit: true,
         logKeys: {
@@ -36,14 +34,14 @@ const ccipDepositParams = (chain: SupportedChains): PartialContractEventParams =
     };
 };
 
-const ccipNativeDepositParams = (chain: SupportedChains): PartialContractEventParams => {
+const ccipNativeDepositParams = (chain: Chain): PartialContractEventParams => {
     const ccipTokenBridge = CCIP_NATIVE_BRIDGE[chain] as string;
 
     return {
         target: ccipTokenBridge,
-        topic: "NativeBridgeActionSource(uint256,uint256,address,address,bool,bool,uint256,uint256,bytes32,uint256)",
+        topic: "NativeBridgeActionSource(uint256,uint256,address,address,bool,bool,uint256,bytes32,uint256)",
         abi: [
-            "event NativeBridgeActionSource(uint256 indexed actionId, uint256 targetChainId, address indexed sourceSender, address targetRecipient, bool fromWrapped, bool toWrapped, uint256 amount, uint256 reserve, bytes32 indexed ccipMessageId, uint256 timestamp)"
+            "event NativeBridgeActionSource(uint256 indexed actionId, uint256 targetChainId, address indexed sourceSender, address targetRecipient, bool fromWrapped, bool toWrapped, uint256 amount, bytes32 indexed ccipMessageId, uint256 timestamp)"
         ],
         isDeposit: true,
         logKeys: {
@@ -61,14 +59,14 @@ const ccipNativeDepositParams = (chain: SupportedChains): PartialContractEventPa
     };
 };
 
-const depositParams = (chain: SupportedChains): PartialContractEventParams => {
-    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
+const ccipBackedDepositParams = (chain: Chain): PartialContractEventParams => {
+    const ccipTokenBridge = CCIP_BACKED_TOKEN_BRIDGE[chain] as string;
 
     return {
-        target: actionExecutorAddress,
-        topic: "SourceProcessed(uint256,bool,address,uint256,address,address,uint256,uint256)",
+        target: ccipTokenBridge,
+        topic: "BackedTokenBridgeActionSource(uint256,address,address,address,uint256,bytes32,uint256)",
         abi: [
-            "event SourceProcessed(uint256 indexed actionId, bool indexed isLocal, address indexed sender, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
+            "event BackedTokenBridgeActionSource(uint256 targetChainId, address indexed sourceSender, address targetRecipient, address tokenAddress, uint256 tokenAmount, bytes32 indexed ccipMessageId, uint256 timestamp)"
         ],
         isDeposit: true,
         logKeys: {
@@ -76,27 +74,45 @@ const depositParams = (chain: SupportedChains): PartialContractEventParams => {
             txHash: "transactionHash",
         },
         argKeys: {
-            token: "toTokenAddress",
-            from: "sender",
-            amount: "resultAmount",
-        },
-        fixedEventData: {
-            to: actionExecutorAddress,
-        },
-        filter: {
-            includeArg: [{ isLocal: false as unknown as string }],
+            from: "sourceSender",
+            to: "targetRecipient",
+            amount: "tokenAmount",
+            token: "tokenAddress"
         },
     };
 };
 
-const withdrawParams = (chain: SupportedChains): PartialContractEventParams => {
-    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
+const depositParams = (chain: Chain): PartialContractEventParams => {
+    const actionExecutorAddress = ACTION_EXECUTOR[chain];
 
     return {
         target: actionExecutorAddress,
-        topic: "TargetProcessed(uint256,address,uint256,address,address,uint256,uint256)",
+        topic: "ActionSource(uint256,uint256,address,address,uint256,uint256,uint256,(address,uint256),(address,uint256),address,uint256)",
         abi: [
-            "event TargetProcessed(uint256 indexed actionId, address indexed recipient, uint256 routerType, address fromTokenAddress, address toTokenAddress, uint256 fromAmount, uint256 resultAmount)"
+            "event ActionSource(uint256 indexed actionId, uint256 indexed targetChainId, address indexed sourceSender, address targetRecipient, uint256 gatewayType, uint256 assetType, uint256 routerType, tuple(address tokenAddress, uint256 amount) inputTokenAmountData, tuple(address tokenAddress, uint256 amount) assetTokenAmountData, address targetToken, uint256 timestamp)"
+        ],
+        isDeposit: true,
+        logKeys: {
+            blockNumber: "blockNumber",
+            txHash: "transactionHash",
+        },
+        argKeys: {
+            token: "inputTokenAmountData.tokenAddress",
+            from: "sourceSender",
+            amount: "inputTokenAmountData.amount",
+            to: "targetRecipient"
+        },
+    };
+};
+
+const withdrawParams = (chain: Chain): PartialContractEventParams => {
+    const actionExecutorAddress = ACTION_EXECUTOR[chain];
+
+    return {
+        target: actionExecutorAddress,
+        topic: "ActionTarget(uint256,uint256,address,uint256,uint256,uint256,(address,uint256),(address,uint256),uint256,bool,uint256)",
+        abi: [
+            "event ActionTarget(uint256 indexed actionId, uint256 indexed sourceChainId, address indexed recipient, uint256 gatewayType, uint256 assetType, uint256 routerType, tuple(address tokenAddress, uint256 amount) assetTokenAmountData, tuple(address tokenAddress, uint256 amount) outputTokenAmountData, uint256 outputExtraAmount, bool isSuccess, uint256 timestamp)"
         ],
         isDeposit: false,
         logKeys: {
@@ -104,82 +120,74 @@ const withdrawParams = (chain: SupportedChains): PartialContractEventParams => {
             txHash: "transactionHash",
         },
         argKeys: {
-            token: "fromTokenAddress",
+            token: "outputTokenAmountData.tokenAddress",
             to: "recipient",
-            amount: "fromAmount",
+            amount: "outputTokenAmountData.amount",
         },
         fixedEventData: {
             from: actionExecutorAddress,
         },
+        filter: {
+            includeArg: [{ isSuccess: true as unknown as string }],
+        },
     };
 };
 
-const variableBalanceUsdcParams = (chain: SupportedChains): PartialContractEventParams => {
-    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
+const customBridgeDeposit = (chain: Chain): PartialContractEventParams => {
+    const customBridgeAddress = CUSTOM_BRIDGE[chain];
 
     return {
-        target: actionExecutorAddress,
-        topic: "VariableBalanceAllocated(uint256,address,uint256,uint256)",
+        target: customBridgeAddress,
+        topic: "CCTPV2BridgeActionSource(uint32,address,bytes32,address,uint256,uint256,uint256)",
         abi: [
-            "event VariableBalanceAllocated(uint256 indexed actionId, address indexed recipient, uint256 vaultType, uint256 amount)"
+            "event CCTPV2BridgeActionSource(uint32 destinationDomain, address indexed sourceSender, bytes32 targetRecipient, address token, uint256 amount, uint256 reserve, uint256 timestamp)"
         ],
-        isDeposit: false,
+        isDeposit: true,
         logKeys: {
             blockNumber: "blockNumber",
             txHash: "transactionHash",
         },
         argKeys: {
+            token: "token",
+            to: "targetRecipient",
             amount: "amount",
-            to: "recipient",
-        },
-        fixedEventData: {
-            token: VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDC][chain],
-            from: actionExecutorAddress,
-        },
-        filter: {
-            includeArg: [{ vaultType: BigNumber.from(VAULT_TYPE_USDC) as unknown as string }],
+            from: "sourceSender",
         },
     };
 };
 
-const variableBalanceUsdtParams = (chain: SupportedChains): PartialContractEventParams => {
-    const actionExecutorAddress = ACTION_EXECUTOR_ADDRESSES[chain];
+const customNonEvmBridgeDeposit = (chain: Chain): PartialContractEventParams => {
+    const customBridgeAddress = CUSTOM_NON_EVM_BRIDGE[chain];
 
     return {
-        target: actionExecutorAddress,
-        topic: "VariableBalanceAllocated(uint256,address,uint256,uint256)",
+        target: customBridgeAddress,
+        topic: "BridgeActionSource(uint32,address,bytes32,address,uint256,uint256,uint64,uint256)",
         abi: [
-            "event VariableBalanceAllocated(uint256 indexed actionId, address indexed recipient, uint256 vaultType, uint256 amount)"
+            "event BridgeActionSource(uint32 destinationDomain, address indexed sourceSender, bytes32 targetRecipient, address token, uint256 amount, uint256 reserve, uint64 indexed messageNonce, uint256 timestamp)"
         ],
-        isDeposit: false,
+        isDeposit: true,
         logKeys: {
             blockNumber: "blockNumber",
             txHash: "transactionHash",
         },
         argKeys: {
+            token: "token",
             amount: "amount",
-            to: "recipient",
+            from: "sourceSender"
         },
         fixedEventData: {
-            token: VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDT][chain],
-            from: actionExecutorAddress,
-        },
-        filter: {
-            includeArg: [{ vaultType: BigNumber.from(VAULT_TYPE_USDT) as unknown as string }],
+            to: customBridgeAddress,
         },
     };
 };
 
 
-const constructParams = (chain: SupportedChains) => {
-    const eventParams = [depositParams(chain), withdrawParams(chain)];
+const constructParams = (chain: Chain) => {
+    const eventParams: PartialContractEventParams[] = [];
 
-    if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDC][chain]) {
-        eventParams.push(variableBalanceUsdcParams(chain));
-    }
-
-    if (VAULT_ASSET_ADDRESSES[VAULT_TYPE_USDT][chain]) {
-        eventParams.push(variableBalanceUsdtParams(chain));
+    if(ACTION_EXECUTOR[chain]) {
+        eventParams.push(depositParams(chain));
+        eventParams.push(withdrawParams(chain));
     }
 
     if(CCIP_TOKEN_BRIDGE[chain]) {
@@ -190,25 +198,68 @@ const constructParams = (chain: SupportedChains) => {
         eventParams.push(ccipNativeDepositParams(chain));
     }
 
+    if(CCIP_BACKED_TOKEN_BRIDGE[chain]) {
+        eventParams.push(ccipBackedDepositParams(chain));
+    }
+
+    if(CUSTOM_NON_EVM_BRIDGE[chain]) {
+        eventParams.push(customNonEvmBridgeDeposit(chain));
+    }
+
+    if(CUSTOM_BRIDGE[chain]) {
+        eventParams.push(customBridgeDeposit(chain));
+    }
+
     return async (fromBlock: number, toBlock: number) =>
         getTxDataFromEVMEventLogsCustom("interport", chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
+    avalanche: constructParams("avax"),
     arbitrum: constructParams("arbitrum"),
+    base: constructParams("base"),
     bsc: constructParams("bsc"),
     "zksync era": constructParams("era"),
-    base: constructParams("base"),
     scroll: constructParams("scroll"),
     linea: constructParams("linea"),
     polygon: constructParams("polygon"),
-    "polygon zkevm": constructParams("polygon_zkevm"),
     optimism: constructParams("optimism"),
     opbnb: constructParams("opbnb"),
-    avalanche: constructParams("avax"),
     eon: constructParams("eon"),
     fantom: constructParams("fantom"),
+    astar: constructParams("astar"),
+    blast: constructParams("blast"),
+    celo: constructParams("celo"),
+    gnosis: constructParams("gnosis"),
+    kroma: constructParams("kroma"),
+    metis: constructParams("metis"),
+    mode: constructParams("mode"),
+    wemix: constructParams("wemix"),
+    zircuit: constructParams("zircuit"),
+    sonic: constructParams("sonic"),
+    soneium: constructParams("soneium"),
+    ronin: constructParams("ronin"),
+    sei: constructParams("sei"),
+    bob: constructParams("bob"),
+    shibarium: constructParams("shibarium"),
+    bsquared: constructParams("bsquared"),
+    berachain: constructParams("berachain"),
+    kava: constructParams("kava"),
+    mantle: constructParams("mantle"),
+    aurora: constructParams("aurora"),
+    core: constructParams("core"),
+    kaia: constructParams("kaia"),
+    iota: constructParams("iota"),
+    taiko: constructParams("taiko"),
+    rari: constructParams("rari"),
+    flare: constructParams("flare"),
+    gravity: constructParams("gravity"),
+    lightlink: constructParams("lightlink"),
+    plume: constructParams("plume"),
+    flow: constructParams("flow"),
+    abstract: constructParams("abstract"),
+    mind: constructParams("mind"),
 };
 
 export default adapter;
