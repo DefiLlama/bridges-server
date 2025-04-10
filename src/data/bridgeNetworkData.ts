@@ -1998,16 +1998,16 @@ export default [
       }, [])
       .map((c) => c?.toLowerCase()),
   },
-  {
-    id: 85,
-    displayName: "TRAIN Protocol",
-    bridgeDbName: "train",
-    iconLink: "icons:train",
-    url: "https://app.train.tech/",
-    largeTxThreshold: 10000,
-    chains: ["Ethereum", "Arbitrum", "Optimism", "Base", "ZKsync Era", "Linea"],
-    chainMapping: {
-      "zksync era": "era",
-    },
-  },
+  // {
+  //   id: 85,
+  //   displayName: "TRAIN Protocol",
+  //   bridgeDbName: "train",
+  //   iconLink: "icons:train",
+  //   url: "https://app.train.tech/",
+  //   largeTxThreshold: 10000,
+  //   chains: ["Ethereum", "Arbitrum", "Optimism", "Base", "ZKsync Era", "Linea"],
+  //   chainMapping: {
+  //     "zksync era": "era",
+  //   },
+  // },
 ] as BridgeNetwork[];
