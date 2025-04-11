@@ -219,33 +219,7 @@ const constructParams = (chain: string) => {
 
     const filteredEventLogData = eventLogData.filter((event) => allTxHashes.includes(event.txHash));
 
-    // Fetch transactions from Etherscan and map to unified EventData objects.
-    // Differentiate between events by checking which set contains the tx hash.
-    const unifiedEvents = await Promise.all(
-      contracts.map(async (address: string, i: number) => {
-        await wait(500 * i);
-        const txs: any[] = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {});
-
-        const eventsRes: EventData[] = txs
-          .filter((tx) => matchingCommitTxHashesSet.has(tx.hash) || matchingLockTxHashesSet.has(tx.hash))
-          .map((tx: any) => {
-            // If the hash is in the commit set, mark isDeposit as true; otherwise, mark it false.
-            const isDeposit = matchingCommitTxHashesSet.has(tx.hash);
-            return {
-              txHash: tx.hash,
-              blockNumber: +tx.blockNumber,
-              from: tx.from,
-              to: tx.to,
-              token: nativeTokens[chain],
-              amount: BigNumber.from(tx.value),
-              isDeposit: isDeposit,
-            };
-          });
-        return eventsRes;
-      })
-    );
-
-    const allEvents: EventData[] = [...unifiedEvents.flat(), ...filteredEventLogData];
+    const allEvents: EventData[] = [...filteredEventLogData];
     return allEvents;
   };
 };
