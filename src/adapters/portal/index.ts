@@ -102,7 +102,7 @@ const portalNativeAndWrappedTransfersFromHashes = async (chain: Chain, hashes: s
             if (to === ethers.constants.AddressZero) {
               // if this is a wrapped token being burned and not being sent to its origin chain,
               // then it should be included in the volume by fixing the to address
-              // https://docs.wormhole.com/wormhole/explore-wormhole/vaa#token-transfer
+              // https://wormhole.com/docs/learn/infrastructure/vaas/#token-transfer
               const originChain = payload.readUint16BE(65);
               const toChain = payload.readUInt16BE(99);
               if (toChain !== originChain) {
