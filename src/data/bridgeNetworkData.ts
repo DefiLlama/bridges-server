@@ -750,7 +750,7 @@ export default [
     bridgeDbName: "base",
     iconLink: "chain:base",
     largeTxThreshold: 10000,
-    url: "https://bridge.base.org/deposit",
+    url: "https://docs.base.org/chain/bridges-mainnet",
     chains: ["Ethereum", "Base"],
     destinationChain: "Base",
   },
