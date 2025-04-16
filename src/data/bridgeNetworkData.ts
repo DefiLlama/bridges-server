@@ -2073,4 +2073,16 @@ export default [
       "zksync era": "era",
     },
   },
+  {
+    id: 86,
+    displayName: "InterSoon",
+    bridgeDbName: "intersoon",
+    iconLink: "icons:intersoon",
+    largeTxThreshold: 10000,
+    url: "https://intersoon.soo.network",
+    chains: [
+      "Solana",
+      "Ton"
+    ],
+  },
 ] as BridgeNetwork[];
