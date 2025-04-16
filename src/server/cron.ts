@@ -9,6 +9,7 @@ import { warmAllCaches } from "./jobs/warmCache";
 import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
+import { handler as runInterSoon } from "../handlers/runInterSoon";
 import dayjs from "dayjs";
 
 const createTimeout = (minutes: number) =>
@@ -82,6 +83,7 @@ const cron = () => {
   runAfterDelay("runAdaptersFromTo", 50, runAdaptersFromTo);
   runEvery("runWormhole", 30, runWormhole);
   runEvery("runLayerZero", 30, runLayerZero);
+  runEvery("runInterSoon", 30, runInterSoon);
 
   exit();
 };
