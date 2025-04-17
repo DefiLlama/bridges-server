@@ -81,7 +81,8 @@ export const getTxsBlockRangeEtherscan = async (
       )
     ).data as any;
   }
-  if (res.message === "OK") {
+
+  if (res && res.message === "OK") {
     const filteredResults = res.result.filter((tx: any) => {
       if (functionSignatureFilter) {
         const signature = tx.input.slice(0, 10); // 0x + 4 bytes of method id @todo bug to be reported
@@ -106,6 +107,7 @@ export const getTxsBlockRangeEtherscan = async (
     console.info(`No Etherscan txs found for address ${address}.`);
     return [];
   }
+
   console.log(res);
   console.error(`WARNING: Etherscan did not return valid response for address ${address}.`);
   return [];
