@@ -10,6 +10,7 @@ import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
 import dayjs from "dayjs";
+import runHyperlane from "../handlers/runHyperlane";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -82,6 +83,7 @@ const cron = () => {
   runAfterDelay("runAdaptersFromTo", 50, runAdaptersFromTo);
   runEvery("runWormhole", 30, runWormhole);
   runEvery("runLayerZero", 30, runLayerZero);
+  runEvery("runHyperlane", 30, runHyperlane);
 
   exit();
 };
