@@ -1186,7 +1186,7 @@ export default [
     bridgeDbName: "tokenbridge",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
-    url: "https://tokenbridge.rsk.co/",
+    url: "https://dapp.tokenbridge.rootstock.io/",
     chains: ["Rootstock", "Ethereum"],
     chainMapping: {
       rootstock: "rsk",
