@@ -85,7 +85,7 @@ export function getDay(timestamp: number | undefined): string {
     return "none";
   }
   var dt = new Date(timestamp * 1000);
-  return `${dt.getUTCDate()}-${dt.getUTCMonth()}-${dt.getUTCFullYear()}`;
+  return `${dt.getUTCDate()}-${dt.getUTCMonth() + 1}-${dt.getUTCFullYear()}`;
 }
 
 export function getClosestDayStartTimestamp(timestamp: number) {
