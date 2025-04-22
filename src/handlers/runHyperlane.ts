@@ -4,8 +4,6 @@ import dayjs from "dayjs";
 import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { sql } from "../utils/db";
-import { getCache, setCache } from "../utils/cache";
-const LATEST_INSERTED_TS_KEY = "latest_inserted_ts_hyperlane";
 
 export const handler = async () => {
   try {
@@ -19,7 +17,7 @@ export const handler = async () => {
       )
     );
     console.log(bridgeIds);
-    let startTs = (await getCache(LATEST_INSERTED_TS_KEY)) || dayjs().subtract(48, "hour").unix();
+    let startTs = dayjs().subtract(48, "hours").unix();
     const endTs = dayjs().unix();
 
     while (startTs < endTs) {
@@ -44,7 +42,6 @@ export const handler = async () => {
       await sql.begin(async (sql) => {
         await insertTransactionRows(sql, true, transactions, "upsert");
       });
-      await setCache(LATEST_INSERTED_TS_KEY, startTs);
       console.log(`Inserted ${transactions.length} transactions for ${startTs} to ${endTs}`);
     }
   } catch (error) {
@@ -52,5 +49,4 @@ export const handler = async () => {
     throw error;
   }
 };
-
 export default handler;
