@@ -5,7 +5,7 @@ import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
 export type BridgeAdapter = {
-  [chain: string]: (fromBlock: number, toBlock: number) => Promise<EventData[]>;
+  [chain: string]: (fromTimestamp: number, toTimestamp: number) => Promise<EventData[]>;
 };
 
 export type AsyncBridgeAdapter = {
@@ -43,7 +43,9 @@ export type ContractEventParams = {
   topic: string;
   abi: string[];
   logKeys?: EventKeyMapping; // retrieve data from event log
-  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
+  logGetters?: Partial<
+    Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>
+  >;
   argKeys?: EventKeyMapping; // retrieve data from parsed event log
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping; // retrieve data from transaction referenced in event log
@@ -69,7 +71,9 @@ export type PartialContractEventParams = {
   topic?: string;
   abi?: string[];
   logKeys?: EventKeyMapping;
-  logGetters?: Partial<Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>>;
+  logGetters?: Partial<
+    Record<keyof EventKeyMapping, (provider: LlamaProvider, iface: ethers.utils.Interface, log: any) => Promise<any>>
+  >;
   argKeys?: EventKeyMapping;
   argGetters?: Partial<Record<keyof EventKeyMapping, (log: any) => any>>;
   txKeys?: EventKeyMapping;

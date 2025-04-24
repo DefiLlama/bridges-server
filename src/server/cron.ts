@@ -11,6 +11,7 @@ import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
 import { handler as runInterSoon } from "../handlers/runInterSoon";
 import dayjs from "dayjs";
+import runHyperlane from "../handlers/runHyperlane";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -84,6 +85,7 @@ const cron = () => {
   runEvery("runWormhole", 30, runWormhole);
   runEvery("runLayerZero", 30, runLayerZero);
   runEvery("runInterSoon", 30, runInterSoon);
+  runEvery("runHyperlane", 30, runHyperlane);
 
   exit();
 };
