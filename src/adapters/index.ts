@@ -81,6 +81,7 @@ import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
 import train from "./train"
+import assetchainbridge from "./assetchain-bridge"
 
 export default {
   polygon,
@@ -165,6 +166,7 @@ export default {
   eclipse,
   layerzero,
   train,
+  assetchainbridge
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

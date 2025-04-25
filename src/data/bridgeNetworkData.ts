@@ -2073,4 +2073,13 @@ export default [
       "zksync era": "era",
     },
   },
+  {
+    id: 86,
+    displayName: "Asset Chain Bridge",
+    bridgeDbName: "assetchainbridge",
+    iconLink: "chain:assetchain",
+    largeTxThreshold: 10000,
+    url: "https://bridge.assetchain.org/",
+    chains: ["Assetchain"],
+  },
 ] as BridgeNetwork[];
