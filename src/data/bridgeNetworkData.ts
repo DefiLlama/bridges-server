@@ -1057,7 +1057,7 @@ export default [
       "Aptos",
       "Ink",
       "Zora",
-      "Kroma"
+      "Kroma",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1066,8 +1066,8 @@ export default [
       opbnb: "op_bnb",
       gnosis: "xdai",
       kaia: "klaytn",
-      "iota": 'iotaevm',
-      "lightlink": "lightlink_phoenix",
+      iota: "iotaevm",
+      lightlink: "lightlink_phoenix",
     },
   },
   {
@@ -2076,5 +2076,15 @@ export default [
     chainMapping: {
       "zksync era": "era",
     },
+  },
+  {
+    id: 86,
+    displayName: "Fuel",
+    bridgeDbName: "fuel",
+    iconLink: "chain:fuel ignition",
+    largeTxThreshold: 10000,
+    url: "https://fuel.network/",
+    chains: ["Ethereum", "Fuel Ignition"],
+    destinationChain: "Fuel Ignition",
   },
 ] as BridgeNetwork[];
