@@ -275,7 +275,7 @@ const constructParams = (chain: SupportedChains) => {
       target: gatewayAddy,
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
-        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets)
       },
     };
 
@@ -326,7 +326,7 @@ const constructParams = (chain: SupportedChains) => {
           const asset = itsAssets.find((item: any) =>
             item.id.toLowerCase() === log.tokenId.toLowerCase()
           );
-          return asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
+         asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
             ? asset.chains[chain].tokenAddress
             : '';
         }
@@ -348,24 +348,24 @@ const constructParams = (chain: SupportedChains) => {
 };
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
-  avalanche: constructParams("avax"),
-  base: constructParams("base"),
-  blast: constructParams("blast"),
-  bsc: constructParams("bsc"),
-  celo: constructParams("celo"),
-  cfg: constructParams("cfg"), //centrifuge
-  ethereum: constructParams("ethereum"),
-  fantom: constructParams("fantom"),
-  filecoin: constructParams("filecoin"),
-  fraxtal: constructParams("fraxtal"),
-  imx: constructParams("imx"), //immutable
-  kava: constructParams("kava"),
-  linea: constructParams("linea"),
-  mantle: constructParams("mantle"),
-  moonbeam: constructParams("moonbeam"),
-  optimism: constructParams("optimism"),
-  polygon: constructParams("polygon"),
-  scroll: constructParams("scroll"),
+  // avalanche: constructParams("avax"),
+  // base: constructParams("base"),
+  // blast: constructParams("blast"),
+  // bsc: constructParams("bsc"),
+  // celo: constructParams("celo"),
+  // cfg: constructParams("cfg"), //centrifuge
+  // ethereum: constructParams("ethereum"),
+  // fantom: constructParams("fantom"),
+  // filecoin: constructParams("filecoin"),
+  // fraxtal: constructParams("fraxtal"),
+  // // imx: constructParams("imx"), //immutable >>> TODO we call it immutable they call it imx
+  // kava: constructParams("kava"),
+  // linea: constructParams("linea"),
+  // mantle: constructParams("mantle"),
+  // moonbeam: constructParams("moonbeam"),
+  // optimism: constructParams("optimism"),
+  // polygon: constructParams("polygon"),
+  // scroll: constructParams("scroll"),
 };
 
 export default adapter;

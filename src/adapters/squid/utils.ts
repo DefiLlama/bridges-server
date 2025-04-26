@@ -64,19 +64,18 @@ export const getTokenId = (token: string, chain: string): string => {
   return `${chain}:${token.toLowerCase()}`;
 }
 
-export const getTokenAddress = (symbol: string, chain: string, assets: any[]) =>  {
-    // Handle native token address
-    if (symbol === "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE") {
-      return symbol;
-    }
+export const getTokenAddress = (symbol: string, chain: string, assets: any[]) => {
+  // Handle native token address
+  if (symbol === "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE") {
+    return symbol;
+  }
+  symbol = getSymbol(symbol);
+  chain = getChain(chain);
+  let tokenAddress = assets.find((asset) => asset.symbol === symbol
+  )?.addresses?.[chain]?.address
+  if (tokenAddress == undefined) tokenAddress = "0x000000000000000000000000000000000000dEaD"
 
-    symbol = getSymbol(symbol);
-    chain = getChain(chain);
-    let tokenAddress = assets.find((asset) => asset.symbol === symbol)?.addresses?.[chain]?.address;
-
-    if (tokenAddress == undefined) tokenAddress = "0x000000000000000000000000000000000000dEaD"
-
-    return tokenAddress;
+  return tokenAddress;
 }
 
 const getChain = (chain: string) => {
@@ -98,8 +97,8 @@ const getSymbol = (rawSymbol: string) => {
   let symbol: string = rawSymbol;
   if (symbol.startsWith("axl-")) symbol = symbol.slice(4);
   if (symbol.startsWith("axl")) symbol = symbol.slice(3);
-  
-  const nativeTokenMap: {[key: string]: string} = {
+
+  const nativeTokenMap: { [key: string]: string } = {
     "AVAX": "WAVAX",
     "FTM": "WFTM",
     "BNB": "WBNB",
@@ -120,19 +119,31 @@ const getSymbol = (rawSymbol: string) => {
   return symbol.charAt(0) === symbol.toUpperCase().charAt(0) ? symbol.toUpperCase() : symbol;
 }
 
-export const fetchAssets = () => {
-    return retry(() =>
-      fetch("https://api.axelarscan.io/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          method: "getAssets",
-        }),
-      }).then((res) => res.json())
-    );
-}
+// export const fetchAssets = () => {
+//     return retry(() =>
+//       fetch("https://api.axelarscan.io/", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           method: "getAssets",
+//         }),
+//       }).then((res: any) => {
+//         console.log(res, 'the res')
+//         res.json()
+//       })
+//     );
+// }
+
+export const fetchAssets = () =>
+  retry(() =>
+    fetch("https://api.axelarscan.io/api/getAssets", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    }).then((res) => res.json())
+  );
+
 
 export const isStablecoin = (tokenAddress: string, chain: string) => {
   // If it's the native token address, it's not a stablecoin
@@ -189,8 +200,8 @@ export const isStablecoin = (tokenAddress: string, chain: string) => {
 // Add helper function to convert chain ID to name
 export const getChainNameFromId = (chainId: string | number): string => {
   // Convert number to hex string if needed
-  const hexChainId = typeof chainId === "number" ? 
-    "0x" + chainId.toString(16) : 
+  const hexChainId = typeof chainId === "number" ?
+    "0x" + chainId.toString(16) :
     chainId.toLowerCase();
 
   return chainIdToName[hexChainId] || "unknown";
@@ -215,10 +226,10 @@ export const fetchWithRetry = async (url: string, maxRetries = 5) => {
       const response = await fetch(url);
       if (response.status === 429) {
         // Get retry-after header or use exponential backoff
-        const retryAfter = response.headers.get('retry-after') ? 
-          parseInt(response.headers.get('retry-after') || '1') : 
+        const retryAfter = response.headers.get('retry-after') ?
+          parseInt(response.headers.get('retry-after') || '1') :
           Math.pow(2, retries) * 1000;
-        
+
         console.log(`Rate limited. Retrying after ${retryAfter}ms...`);
         await new Promise(resolve => setTimeout(resolve, retryAfter));
         retries++;
