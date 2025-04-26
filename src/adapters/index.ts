@@ -1,4 +1,5 @@
 import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
+import everclear from "./everclear";
 import polygon from "./polygon";
 import synapse from "./synapse";
 import hop from "./hop";
@@ -167,6 +168,7 @@ export default {
   layerzero,
   train,
   fuel,
+  everclear,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
