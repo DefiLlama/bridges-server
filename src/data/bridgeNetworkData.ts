@@ -2087,4 +2087,14 @@ export default [
     chains: ["Ethereum", "Fuel Ignition"],
     destinationChain: "Fuel Ignition",
   },
+  {
+    id: 87,
+    displayName: "Lighter",
+    bridgeDbName: "lighter",
+    iconLink: "icons:lighter",
+    largeTxThreshold: 10000,
+    url: "https://lighter.xyz/",
+    chains: ["Ethereum", "Lighter"],
+    destinationChain: "Lighter",
+  },
 ] as BridgeNetwork[];
