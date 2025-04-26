@@ -82,6 +82,7 @@ import eclipse from "./eclipse";
 import layerzero from "./layerzero";
 import train from "./train";
 import intersoon from "./intersoon"
+import fuel from "./fuel";
 
 export default {
   polygon,
@@ -167,6 +168,7 @@ export default {
   layerzero,
   train,
   intersoon,
+  fuel,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

@@ -453,6 +453,7 @@ export default [
       "e-money",
       "elys",
       "empowerchain",
+      "ethereum",
       "evmos",
       "fetch.ai",
       "firmachain",
@@ -472,6 +473,7 @@ export default [
       "kyve",
       "lava",
       "likecoin",
+      "lombard",
       "lum network",
       "mars",
       "mantra",
@@ -561,6 +563,7 @@ export default [
       "e-money": "emoney-3",
       elys: "elys-1",
       empowerchain: "empowerchain-1",
+      ethereum: "1",
       evmos: "evmos_9001-2",
       "fetch.ai": "fetchhub-4",
       firmachain: "colosseum-1",
@@ -580,6 +583,7 @@ export default [
       kyve: "kyve-1",
       lava: "lava-mainnet-1",
       likecoin: "likecoin-mainnet-2",
+      lombard: "ledger-mainnet-1",
       "lum network": "lum-network-1",
       mars: "mars-1",
       medibloc: "panacea-3",
@@ -1053,7 +1057,7 @@ export default [
       "Aptos",
       "Ink",
       "Zora",
-      "Kroma"
+      "Kroma",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1062,8 +1066,8 @@ export default [
       opbnb: "op_bnb",
       gnosis: "xdai",
       kaia: "klaytn",
-      "iota": 'iotaevm',
-      "lightlink": "lightlink_phoenix",
+      iota: "iotaevm",
+      lightlink: "lightlink_phoenix",
     },
   },
   {
@@ -2075,6 +2079,16 @@ export default [
   },
   {
     id: 86,
+    displayName: "Fuel",
+    bridgeDbName: "fuel",
+    iconLink: "chain:fuel ignition",
+    largeTxThreshold: 10000,
+    url: "https://fuel.network/",
+    chains: ["Ethereum", "Fuel Ignition"],
+    destinationChain: "Fuel Ignition",
+  },
+  {
+    id: 87,
     displayName: "InterSoon",
     bridgeDbName: "intersoon",
     iconLink: "icons:intersoon",
@@ -2084,5 +2098,5 @@ export default [
       "Solana",
       "Ton"
     ],
-  },
+  }
 ] as BridgeNetwork[];
