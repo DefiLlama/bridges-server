@@ -2,8 +2,8 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { BigNumber } from "ethers";
-import { fetchAssets, getTokenAddress } from "../squid/utils";
-import { getItsTokens } from "./utils";
+import { getTokenAddress } from "../squid/utils";
+import { getAssets, getItsTokens } from "./utils";
 
 
 
@@ -242,7 +242,7 @@ const constructParams = (chain: SupportedChains) => {
 
   return async (fromBlock: number, toBlock: number) => {
 
-    const assets = await fetchAssets();
+    const assets = await getAssets();
     const itsAssets = await getItsTokens();
 
 
@@ -348,24 +348,24 @@ const constructParams = (chain: SupportedChains) => {
 };
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
-  // avalanche: constructParams("avax"),
-  // base: constructParams("base"),
-  // blast: constructParams("blast"),
-  // bsc: constructParams("bsc"),
-  // celo: constructParams("celo"),
-  // cfg: constructParams("cfg"), //centrifuge
-  // ethereum: constructParams("ethereum"),
-  // fantom: constructParams("fantom"),
-  // filecoin: constructParams("filecoin"),
-  // fraxtal: constructParams("fraxtal"),
-  // // imx: constructParams("imx"), //immutable >>> TODO we call it immutable they call it imx
-  // kava: constructParams("kava"),
-  // linea: constructParams("linea"),
-  // mantle: constructParams("mantle"),
-  // moonbeam: constructParams("moonbeam"),
-  // optimism: constructParams("optimism"),
-  // polygon: constructParams("polygon"),
-  // scroll: constructParams("scroll"),
+  avalanche: constructParams("avax"),
+  base: constructParams("base"),
+  blast: constructParams("blast"),
+  bsc: constructParams("bsc"),
+  celo: constructParams("celo"),
+  cfg: constructParams("cfg"), //cfg
+  ethereum: constructParams("ethereum"),
+  fantom: constructParams("fantom"),
+  filecoin: constructParams("filecoin"),
+  fraxtal: constructParams("fraxtal"),
+  imx: constructParams("imx"),
+  kava: constructParams("kava"),
+  linea: constructParams("linea"),
+  mantle: constructParams("mantle"),
+  moonbeam: constructParams("moonbeam"),
+  optimism: constructParams("optimism"),
+  polygon: constructParams("polygon"),
+  scroll: constructParams("scroll"),
 };
 
 export default adapter;

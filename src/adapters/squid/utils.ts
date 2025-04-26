@@ -72,7 +72,7 @@ export const getTokenAddress = (symbol: string, chain: string, assets: any[]) =>
   symbol = getSymbol(symbol);
   chain = getChain(chain);
   let tokenAddress = assets.find((asset) => asset.symbol === symbol
-  )?.addresses?.[chain]?.address
+  )?.addresses?.[chain == 'imx' ? 'immutable' : chain]?.address
   if (tokenAddress == undefined) tokenAddress = "0x000000000000000000000000000000000000dEaD"
 
   return tokenAddress;
@@ -119,31 +119,22 @@ const getSymbol = (rawSymbol: string) => {
   return symbol.charAt(0) === symbol.toUpperCase().charAt(0) ? symbol.toUpperCase() : symbol;
 }
 
-// export const fetchAssets = () => {
-//     return retry(() =>
-//       fetch("https://api.axelarscan.io/", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           method: "getAssets",
-//         }),
-//       }).then((res: any) => {
-//         console.log(res, 'the res')
-//         res.json()
-//       })
-//     );
-// }
-
-export const fetchAssets = () =>
-  retry(() =>
-    fetch("https://api.axelarscan.io/api/getAssets", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    }).then((res) => res.json())
-  );
-
+export const fetchAssets = () => {
+    return retry(() =>
+      fetch("https://api.axelarscan.io/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          method: "getAssets",
+        }),
+      }).then((res: any) => {
+        console.log(res, 'the res')
+        res.json()
+      })
+    );
+}
 
 export const isStablecoin = (tokenAddress: string, chain: string) => {
   // If it's the native token address, it's not a stablecoin
