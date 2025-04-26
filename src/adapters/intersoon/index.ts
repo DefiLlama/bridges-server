@@ -37,7 +37,7 @@ export const fetchInterSoonEvents = async (
 
   while (currentTimestamp < toTimestamp) {
     const response = await axios.get<InterSoonBridgeEvent[]>(
-      `https://api.ccb-relayer.soo.network/transaction/get_bridge_history?from_timestamp=${fromTimestamp}&end_timestamp=${toTimestamp}&limit=${BATCH_SIZE}`
+      `https://api.ccb-relayer.soo.network/transaction/get_bridge_history?start_timestamp=${fromTimestamp}&end_timestamp=${toTimestamp}&limit=${BATCH_SIZE}`
     );
     const { data } = response.data;
 
