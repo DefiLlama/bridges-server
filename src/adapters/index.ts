@@ -83,7 +83,8 @@ import layerzero from "./layerzero";
 import train from "./train";
 import intersoon from "./intersoon"
 import fuel from "./fuel";
-
+import lighter from "./lighter";
+import movement from "./movement";
 export default {
   polygon,
   synapse,
@@ -169,6 +170,8 @@ export default {
   train,
   intersoon,
   fuel,
+  lighter,
+  movement,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
