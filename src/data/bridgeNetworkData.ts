@@ -2097,4 +2097,14 @@ export default [
     chains: ["Ethereum", "Lighter"],
     destinationChain: "Lighter",
   },
+  {
+    id: 88,
+    displayName: "Movement",
+    bridgeDbName: "movement",
+    iconLink: "chain:movement",
+    largeTxThreshold: 10000,
+    url: "https://bridge.movementnetwork.xyz/",
+    chains: ["Ethereum", "Movement"],
+    destinationChain: "Movement",
+  },
 ] as BridgeNetwork[];
