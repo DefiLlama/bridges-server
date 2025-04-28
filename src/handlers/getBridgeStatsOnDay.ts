@@ -53,6 +53,10 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
   if (!tokenTotals) return;
   let dailyTokensRecordBn = {} as TokenRecordBn;
   const tokenSet = new Set<string>();
+  tokenTotals.map((tokenString) => {
+    const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
+    tokenSet.add(tokenData[0]);
+  });
   const prices = (await Promise.race([
     getLlamaPrices(Array.from(tokenSet)),
     new Promise((resolve) => setTimeout(() => resolve({}), 5000)),

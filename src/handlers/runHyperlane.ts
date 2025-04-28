@@ -1,6 +1,7 @@
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
-import hyperlane, { build, getEvents } from "../adapters/hyperlane";
+import { build, getEvents } from "../adapters/hyperlane";
 import dayjs from "dayjs";
+import _ from "lodash";
 import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { sql } from "../utils/db";
@@ -40,7 +41,11 @@ export const handler = async () => {
       }));
       startTs = toTs;
       await sql.begin(async (sql) => {
-        await insertTransactionRows(sql, true, transactions, "upsert");
+        const batchSize = 200;
+        const transactionChunks = _.chunk(transactions, batchSize);
+        for (const batch of transactionChunks) {
+          await insertTransactionRows(sql, true, batch, "upsert");
+        }
       });
       console.log(`Inserted ${transactions.length} transactions for ${startTs} to ${endTs}`);
     }
@@ -49,4 +54,5 @@ export const handler = async () => {
     throw error;
   }
 };
+
 export default handler;

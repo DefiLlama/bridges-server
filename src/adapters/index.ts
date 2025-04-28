@@ -80,9 +80,11 @@ import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
-import train from "./train"
 import assetchainbridge from "./assetchain-bridge"
-
+import train from "./train";
+import fuel from "./fuel";
+import lighter from "./lighter";
+import movement from "./movement";
 export default {
   polygon,
   synapse,
@@ -166,7 +168,10 @@ export default {
   eclipse,
   layerzero,
   train,
-  assetchainbridge
+  assetchainbridge,
+  fuel,
+  lighter,
+  movement,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
