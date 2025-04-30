@@ -120,17 +120,17 @@ const getSymbol = (rawSymbol: string) => {
 }
 
 export const fetchAssets = () => {
-  return retry(() =>
-    fetch("https://api.axelarscan.io/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        method: "getAssets",
-      }),
-    }).then((res: any) => res.json())
-  );
+    return retry(() =>
+      fetch("https://api.axelarscan.io/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          method: "getAssets",
+        }),
+      }).then((res: any) => res.json())
+    );
 }
 
 export const isStablecoin = (tokenAddress: string, chain: string) => {
