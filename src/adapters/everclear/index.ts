@@ -2,9 +2,10 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
-// CLINE-Added contract addresses and event topics for Everclear
+
+//Check addys on Docs
 const contractAddresses = {
-  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
+  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"], //EverclearSpoke contract address
   optimism: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   bsc: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   unichain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
@@ -22,6 +23,8 @@ const contractAddresses = {
   scroll: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   taiko: ["0x9ADA72CCbAfe94248aFaDE6B604D1bEAacc899A7"],
 } as const;
+
+// wait on inputs from James:
 
 const depositParams: PartialContractEventParams = {
   // TODO: Fill in the correct event parameters
@@ -75,17 +78,25 @@ const constructParams = (chain: Chain) => {
 };
 
 const adapter: BridgeAdapter = {
-  // TODO: Add the correct chains for Everclear
-  ethereum: constructParams("ethereum"),
-  optimism: constructParams("optimism"),
-  polygon: constructParams("polygon"),
-  arbitrum: constructParams("arbitrum"),
-  bsc: constructParams("bsc"),
-  gnosis: constructParams("xdai"),
-  linea: constructParams("linea"),
-  base: constructParams("base"),
-  metis: constructParams("metis"),
-  mode: constructParams("mode"),
+  ethereum:  constructParams("ethereum"),
+  optimism:  constructParams("optimism"),
+  bsc:       constructParams("bsc"),
+  unichain:  constructParams("unichain"),
+  polygon:   constructParams("polygon"),
+  zksync:    constructParams("zksync"),
+  ronin:     constructParams("ronin"),
+  base:      constructParams("base"),
+  apechain:  constructParams("apechain"),
+  mode:      constructParams("mode"),
+  arbitrum:  constructParams("arbitrum"),
+  avalanche: constructParams("avalanche"),
+  zircuit:   constructParams("zircuit"),
+  linea:     constructParams("linea"),
+  blast:     constructParams("blast"),
+  scroll:    constructParams("scroll"),
+  taiko:     constructParams("taiko"),
+  gnosis:    constructParams("xdai"),
+  metis:     constructParams("metis"),
 };
 
 export default adapter;
