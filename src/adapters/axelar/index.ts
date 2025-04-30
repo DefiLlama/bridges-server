@@ -353,7 +353,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   bsc: constructParams("bsc"),
   celo: constructParams("celo"),
-  cfg: constructParams("cfg"), //cfg
+  cfg: constructParams("centrifuge"), //cfg
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
   filecoin: constructParams("filecoin"),
