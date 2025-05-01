@@ -27,6 +27,66 @@ const contractAddresses = {
       },
     ],
   },
+  bsc: {
+    tokens: [
+      {
+        token: "0x0FFE2dA242E959a7446Abb56A8f2626D0DC4fce7", // USDT
+        bridgeContract: "0x55d398326f99059fF775485246999027B3197955",
+      },
+    ],
+  },
+  arbitrum: {
+    tokens: [
+      {
+        token: "0x0FFE2dA242E959a7446Abb56A8f2626D0DC4fce7", // WNT
+        bridgeContract: "0xAD4b9c1FbF4923061814dD9d5732EB703FaA53D4",
+      },
+      {
+        token: "0x5116990d844bda038DBD037D943FcB7481b5Fee7", // RWA
+        bridgeContract: "0x3096e7BFd0878Cc65be71f8899Bc4CFB57187Ba3",
+      },
+      {
+        token: "0x6377C8cC083d7CEB49fD3eE1244351BFB86C961e", // WETH
+        bridgeContract: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+      },
+      {
+        token: "0x475d2Ff7955c5359D31B19DC275be3a466f035D5", // USDT
+        bridgeContract: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      },
+    ],
+  },
+  base: {
+    tokens: [
+      {
+        token: "0x5E007f834b6Ee2fcdA41631AD444b4dAAEc372b0", // USDC
+        bridgeContract: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      },
+      {
+        token: "0xEd87e9170152A12a4D3904F5cdE323b35d880858", // WETH
+        bridgeContract: "0x4200000000000000000000000000000000000006",
+      },
+    ],
+  },
+  ethereum: {
+    tokens: [
+      {
+        token: "0x85FCf4D25895Eeb5306643777F1205331415F51a", // USDC
+        bridgeContract: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      },
+      {
+        token: "0x26fa2991f15473B3502D767b49e5805753b8F7F8", // USDT
+        bridgeContract: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      },
+      {
+        token: "0x1B2322a56f43DBDcB19fcd97527EeB734EEeD119", // WETH
+        bridgeContract: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      },
+      {
+        token: "0xc415231cc96d20d99248706403B7580bE560c140", // WBTC
+        bridgeContract: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+      },
+    ],
+  },
 } as {
   [chain: string]: {
     bridgeToken?: string;
@@ -283,8 +343,8 @@ const constructParams = (chain: string) => {
 };
 
 // Step 6: Export the adapter
-const adapter: BridgeAdapter = {
-  assetchain: constructParams("assetchain"),
-};
+const adapter: BridgeAdapter = Object.fromEntries(
+  Object.keys(contractAddresses).map((chain) => [chain, constructParams(chain)])
+);
 
 export default adapter;
