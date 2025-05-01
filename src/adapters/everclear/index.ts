@@ -3,9 +3,9 @@ import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 
-//Check addys on Docs
 const contractAddresses = {
-  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"], //EverclearSpoke contract address
+  //EverclearSpoke contract addresses for each chain
+  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"], 
   optimism: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   bsc: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   unichain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
@@ -24,25 +24,32 @@ const contractAddresses = {
   taiko: ["0x9ADA72CCbAfe94248aFaDE6B604D1bEAacc899A7"],
 } as const;
 
+
 // wait on inputs from James:
 
-const depositParams: PartialContractEventParams = {
-  // TODO: Fill in the correct event parameters
+const newIntent: PartialContractEventParams = {
   target: "",
-  topic: "",
-  abi: [],
+  topic:
+    "Settled(bytes32 _intentId, address _account, address _asset, uint256 _amount);",
+  abi: [
+    "event Settled(bytes32 _intentId, address _account, address _asset, uint256 _amount);",
+  ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "",
-    from: "",
-    token: "",
-    amount: "",
+    amount: "_amount",
+    to: "_account",
+    from: "_account",
+    token: "_asset",
   },
-  isDeposit: true,
+  isDeposit: true, // Unclear whether this should be T/F --> will leave as true for now
 };
+
+
+/*
+Withdrawal function is not needed for this use case.
 
 const withdrawalParams: PartialContractEventParams = {
   // TODO: Fill in the correct event parameters
@@ -61,16 +68,14 @@ const withdrawalParams: PartialContractEventParams = {
   },
   isDeposit: false,
 };
+*/
+
 
 const constructParams = (chain: Chain) => {
-  // const chainConfig = contractAddresses[chain as keyof typeof contractAddresses];
+  const chainConfig = contractAddresses[chain as keyof typeof contractAddresses];
 
-  const eventParams: PartialContractEventParams[] = [
-    // { ...depositParams, target: chainConfig.depositContract },
-    // { ...withdrawalParams, target: chainConfig.withdrawalContract },
-  ];
+  const eventParams: PartialContractEventParams[] = chainConfig.map(address => ({...newIntent, target: address}));
 
-  // TODO: Implement the logic to fetch and process transaction data from Everclear
   return async (fromBlock: number, toBlock: number) => {
     console.log("Fetching Everclear bridge volume from block:", fromBlock, "to block:", toBlock)
     return getTxDataFromEVMEventLogs("everclear", chain, fromBlock, toBlock, eventParams);
