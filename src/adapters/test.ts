@@ -68,7 +68,6 @@ const testAdapter = async () => {
         const startBlock = number - parseInt(numberOfBlocks);
         console.log(`Getting event logs on chain ${contractsChain} from block ${startBlock} to ${number}.`);
         const eventLogs = await adapterChainEventsFn(startBlock, number);
-        // console.log(eventLogs)
         console.log(`Found ${eventLogs.length} event logs on chain ${contractsChain}.`);
         for (const log of eventLogs) {
           console.log(`[${contractsChain}] ${log.isDeposit ? "Deposit" : "Withdrawal"} ${log.txHash}`);

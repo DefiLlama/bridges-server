@@ -358,6 +358,8 @@ export const runAllAdaptersTimestampRange = async (
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
 
+const bridgesToSkip = ["wormhole", "layerzero", "hyperlane"];
+
 export const runAdapterHistorical = async (
   startBlock: number,
   endBlock: number,
@@ -371,8 +373,8 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName } = bridgeNetwork;
 
-  if (bridgeDbName === "wormhole") {
-    console.log("Skipping Wormhole adapter, handled separately");
+  if (bridgesToSkip.includes(bridgeDbName)) {
+    console.log(`Skipping ${bridgeDbName} adapter, handled separately`);
     return;
   }
 
