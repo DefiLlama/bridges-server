@@ -5,8 +5,6 @@ import { BigNumber } from "ethers";
 import { getTokenAddress } from "../squid/utils";
 import { getAssets, getItsTokens } from "./utils";
 
-
-
 const axelarChains = {
   arbitrum: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
@@ -241,10 +239,8 @@ const constructParams = (chain: SupportedChains) => {
   const itsAddy = axelarContractAddress.its;
 
   return async (fromBlock: number, toBlock: number) => {
-
     const assets = await getAssets();
     const itsAssets = await getItsTokens();
-
 
     //legacy
     const depositV1 = constructTransferParams(gatewayAddy, true, {
@@ -260,7 +256,6 @@ const constructParams = (chain: SupportedChains) => {
       includeFrom: [gatewayAddy],
     });
 
-
     const tokenSentEvent = {
       ...TokenSentParams,
       target: gatewayAddy,
@@ -275,7 +270,7 @@ const constructParams = (chain: SupportedChains) => {
       target: gatewayAddy,
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
-        token: (log: any) => getTokenAddress(log.symbol, chain, assets)
+        token: (log: any) => getTokenAddress(log.symbol, chain, assets),
       },
     };
 
@@ -305,15 +300,13 @@ const constructParams = (chain: SupportedChains) => {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
-          const asset = itsAssets.find((item: any) =>
-            item.id.toLowerCase() === log.tokenId.toLowerCase()
-          );
+          const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
           return asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
             ? asset.chains[chain].tokenAddress
-            : '';
-        }
-      }
-    }
+            : "";
+        },
+      },
+    };
 
     const interchainTransferReceivedEvent = {
       ...InterchainTransferReceivedParams,
@@ -323,13 +316,11 @@ const constructParams = (chain: SupportedChains) => {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
-          const asset = itsAssets.find((item: any) =>
-            item.id.toLowerCase() === log.tokenId.toLowerCase()
-          );
-         asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
+          const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
+          asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
             ? asset.chains[chain].tokenAddress
-            : '';
-        }
+            : "";
+        },
       },
     };
 
@@ -344,7 +335,7 @@ const constructParams = (chain: SupportedChains) => {
       interchainTransferReceivedEvent
     );
     return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
-  }
+  };
 };
 const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
@@ -353,7 +344,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   bsc: constructParams("bsc"),
   celo: constructParams("celo"),
-  cfg: constructParams("centrifuge"), //cfg
+  cfg: constructParams("cfg"), //cfg
   ethereum: constructParams("ethereum"),
   fantom: constructParams("fantom"),
   filecoin: constructParams("filecoin"),
