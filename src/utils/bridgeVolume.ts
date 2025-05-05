@@ -43,6 +43,13 @@ export const getDailyBridgeVolume = async (
   chain?: string,
   bridgeNetworkId?: number
 ) => {
+  const cacheKey = `daily_bridge_volume_${bridgeNetworkId ?? "all"}_${chain ?? "all"}_${startTimestamp ?? "default"}_${
+    endTimestamp ?? "default"
+  }`;
+  const cachedData = await getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
   let bridgeDbName = undefined as any;
   if (bridgeNetworkId) {
     const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
@@ -86,9 +93,6 @@ export const getDailyBridgeVolume = async (
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       dailyData;
     if (isNaN(parseFloat(total_deposited_usd)) || !isFinite(parseFloat(total_deposited_usd))) {
-      console.error(
-        `Invalid deposited USD value for bridge_id ${bridge_id} at timestamp ${ts}: ${total_deposited_usd}`
-      );
       return;
     }
     const timestamp = convertToUnixTimestamp(ts);
@@ -101,7 +105,6 @@ export const getDailyBridgeVolume = async (
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
   });
-  // the deposits and withdrawals are swapped here
   sourceChainsHistoricalDailyData.map((dailyData) => {
     const { ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = dailyData;
     const timestamp = convertToUnixTimestamp(ts);
@@ -121,6 +124,7 @@ export const getDailyBridgeVolume = async (
     };
   });
 
+  await setCache(cacheKey, dailyBridgeVolume, 3600);
   return dailyBridgeVolume;
 };
 
