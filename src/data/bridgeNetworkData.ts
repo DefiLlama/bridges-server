@@ -2106,5 +2106,14 @@ export default [
     url: "https://bridge.movementnetwork.xyz/",
     chains: ["Ethereum", "Movement"],
     destinationChain: "Movement",
-  },
+  }, {
+    id: 89,
+    displayName: "Asset Chain Bridge",
+    bridgeDbName: "assetchainbridge",
+    iconLink: "chain:assetchain",
+    largeTxThreshold: 10000,
+    url: "https://bridge.assetchain.org/",
+    chains: ["Ethereum", "Arbitrum", "BSC", "Base", "Assetchain"],
+    destinationChain: "Assetchain",
+  }
 ] as BridgeNetwork[];
