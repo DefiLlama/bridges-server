@@ -2107,4 +2107,23 @@ export default [
     chains: ["Ethereum", "Movement"],
     destinationChain: "Movement",
   },
+  {
+    id: 89,
+    displayName: "Asset Chain Bridge",
+    bridgeDbName: "assetchainbridge",
+    iconLink: "chain:assetchain",
+    largeTxThreshold: 10000,
+    url: "https://bridge.assetchain.org/",
+    chains: ["Ethereum", "Arbitrum", "BSC", "Base", "Assetchain"],
+    destinationChain: "Assetchain",
+  },
+  {
+    id: 90,
+    displayName: "InterSoon",
+    bridgeDbName: "intersoon",
+    iconLink: "icons:intersoon",
+    largeTxThreshold: 10000,
+    url: "https://intersoon.soo.network",
+    chains: ["Solana", "Ton"],
+  },
 ] as BridgeNetwork[];
