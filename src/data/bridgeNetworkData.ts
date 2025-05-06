@@ -2106,8 +2106,7 @@ export default [
     url: "https://bridge.movementnetwork.xyz/",
     chains: ["Ethereum", "Movement"],
     destinationChain: "Movement",
-  },
-  {
+  }, {
     id: 89,
     displayName: "Asset Chain Bridge",
     bridgeDbName: "assetchainbridge",

@@ -80,6 +80,7 @@ import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
+import assetchainbridge from "./assetchain-bridge"
 import train from "./train";
 import fuel from "./fuel";
 import lighter from "./lighter";
@@ -169,6 +170,7 @@ export default {
   eclipse,
   layerzero,
   train,
+  assetchainbridge,
   fuel,
   lighter,
   movement,
