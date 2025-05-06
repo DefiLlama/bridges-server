@@ -2113,7 +2113,7 @@ export default [
     iconLink: "chain:assetchain",
     largeTxThreshold: 10000,
     url: "https://bridge.assetchain.org/",
-    chains: ["Ethereum", "Arbitrum", "BSC", "Base"],
+    chains: ["Ethereum", "Arbitrum", "BSC", "Base", "Assetchain"],
     destinationChain: "Assetchain",
   }
 ] as BridgeNetwork[];
