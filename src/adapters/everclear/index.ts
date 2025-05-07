@@ -25,8 +25,6 @@ const contractAddresses = {
 } as const;
 
 
-// wait on inputs from James:
-
 const newIntent: PartialContractEventParams = {
   target: "",
   topic:
