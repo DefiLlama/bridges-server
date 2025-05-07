@@ -28,9 +28,9 @@ const contractAddresses = {
 const newIntent: PartialContractEventParams = {
   target: "",
   topic:
-    "Settled(bytes32 _intentId, address _account, address _asset, uint256 _amount);",
+    "Settled(bytes32,address,address,uint256)",
   abi: [
-    "event Settled(bytes32 _intentId, address _account, address _asset, uint256 _amount);",
+    "event Settled(bytes32 indexed _intentId, address _account, address _asset, uint256 _amount)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
