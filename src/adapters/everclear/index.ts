@@ -44,30 +44,12 @@ const newIntent: PartialContractEventParams = {
     from: "_account",
     token: "_asset",
   },
-  isDeposit: true, // Unclear whether this should be T/F --> will leave as true for now
+  isDeposit: true,
 };
 
 
 /*
 Withdrawal function is not needed for this use case.
-
-const withdrawalParams: PartialContractEventParams = {
-  // TODO: Fill in the correct event parameters
-  target: "",
-  topic: "",
-  abi: [],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    to: "",
-    from: "",
-    token: "",
-    amount: "",
-  },
-  isDeposit: false,
-};
 */
 
 
@@ -100,8 +82,8 @@ const adapter: BridgeAdapter = {
   blast:     constructParams("blast"),
   scroll:    constructParams("scroll"),
   taiko:     constructParams("taiko"),
-  gnosis:    constructParams("xdai"),
-  metis:     constructParams("metis"),
+  //gnosis:    constructParams("xdai"),
+  //metis:     constructParams("metis"),
 };
 
 export default adapter;
