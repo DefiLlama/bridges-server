@@ -80,8 +80,6 @@ const adapter: BridgeAdapter = {
   blast:     constructParams("blast"),
   scroll:    constructParams("scroll"),
   taiko:     constructParams("taiko"),
-  //gnosis:    constructParams("xdai"),
-  //metis:     constructParams("metis"),
 };
 
 export default adapter;
