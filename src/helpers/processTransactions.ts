@@ -288,6 +288,7 @@ export const getTxDataFromEVMEventLogs = async (
             let toFilter = await filter.custom(provider, iface, txLog.transactionHash);
             if (toFilter) dataKeysToFilter.push(i);
           }
+
           if (getTokenFromReceipt && getTokenFromReceipt.token) {
             const txReceipt = await provider.getTransactionReceipt(txLog.transactionHash);
             if (!txReceipt) {

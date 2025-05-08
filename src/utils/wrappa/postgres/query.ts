@@ -1,5 +1,6 @@
 import bridgeNetworkData from "../../../data/bridgeNetworkData";
 import { querySql as sql } from "../../db";
+import { getCache, setCache } from "../../cache";
 
 interface IConfig {
   id: string;
@@ -244,11 +245,14 @@ const queryLargeTransactionsTimestampRange = async (
   startTimestamp: number,
   endTimestamp: number
 ) => {
+  const cacheKey = `largeTxs:${chain ?? "all"}:${startTimestamp}:${endTimestamp}`;
+  const cached = await getCache(cacheKey);
+  if (cached) return cached;
   let chainEqual = sql``;
   if (chain) {
     chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`;
   }
-  return await sql<ITransaction[]>`
+  const result = await sql<ITransaction[]>`
   SELECT transactions.id, transactions.bridge_id, transactions.ts, transactions.tx_block, transactions.tx_hash, transactions.tx_from, transactions.tx_to, transactions.token, transactions.amount, transactions.is_deposit, transactions.chain, large_transactions.usd_value
   FROM       bridges.transactions
   INNER JOIN bridges.large_transactions
@@ -265,6 +269,8 @@ const queryLargeTransactionsTimestampRange = async (
                     FROM   bridges.config ${chainEqual})
   ORDER BY   ts DESC
   `;
+  await setCache(cacheKey, result, 3600);
+  return result;
 };
 
 const queryTransactionsTimestampRangeByBridgeNetwork = async (
