@@ -301,9 +301,11 @@ const constructParams = (chain: SupportedChains) => {
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
           const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
-          return asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
-            ? asset.chains[chain].tokenAddress
+          const chainName = chain === "avax" ? "avalanche" : chain;
+            return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
+            ? asset.chains[chainName].tokenAddress
             : "";
+
         },
       },
     };
@@ -317,7 +319,8 @@ const constructParams = (chain: SupportedChains) => {
         to: (log: any) => log.destinationAddress,
         token: (log: any) => {
           const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
-          asset && asset.chains && asset.chains[chain] && asset.chains[chain].tokenAddress
+          const chainName = chain === "avax" ? "avalanche" : chain;
+           return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
             ? asset.chains[chain].tokenAddress
             : "";
         },
