@@ -28,6 +28,10 @@ const contracts = {
     spokePoolv2: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
     spokePoolv2p5: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
   },
+   // Chain id: 232
+  lens: {
+    spokePoolv2p5: "0xe7cb3e167e7475dE1331Cf6E0CEb187654619E12",
+  },
   // Chain id: 324
   era: {
     spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
