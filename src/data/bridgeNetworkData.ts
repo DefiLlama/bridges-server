@@ -2151,6 +2151,10 @@ export default [
       "Blast",
       "Scroll",
       "Taiko",
+      "Sonic",
+      "Berachain",
+      "Mantle",
+      "Ink",
     ],
   },
 ] as BridgeNetwork[];

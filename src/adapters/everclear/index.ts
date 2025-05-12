@@ -11,7 +11,7 @@ const contractAddresses = {
   unichain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   polygon: ["0x7189C59e245135696bFd2906b56607755F84F3fD"],
   zksync: ["0x7F5e085981C93C579c865554B9b723B058AaE4D3"],
-  ronin: ["0xdCA40903E271Cc76AECd62dF8d6c19f3Ac873E64"],
+  ronin: ["0xdCA40903E271Cc76AECd62dF8D6c19f3Ac873E64"],
   base: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   apechain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   mode: ["0xeFa6Ac3F931620fD0449eC8c619f2A14A0A78E99"],
@@ -22,6 +22,10 @@ const contractAddresses = {
   blast: ["0x9ADA72CCbAfe94248aFaDE6B604D1bEAacc899A7"],
   scroll: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   taiko: ["0x9ADA72CCbAfe94248aFaDE6B604D1bEAacc899A7"],
+  sonic: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
+  berachain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
+  mantle: ["0xe0F010e465f15dcD42098dF9b99F1038c11B3056"],
+  ink: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
 } as const;
 
 
@@ -80,6 +84,10 @@ const adapter: BridgeAdapter = {
   blast:     constructParams("blast"),
   scroll:    constructParams("scroll"),
   taiko:     constructParams("taiko"),
+  sonic:     constructParams("sonic"),
+  berachain: constructParams("berachain"),
+  mantle:    constructParams("mantle"),
+  ink:       constructParams("ink"),
 };
 
 export default adapter;
