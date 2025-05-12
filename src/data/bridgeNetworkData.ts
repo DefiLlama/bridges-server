@@ -344,6 +344,7 @@ export default [
       "Zora",
       "World Chain",
       "Redstone",
+      "Lens"
     ],
     chainMapping: {
       "zksync era": "era",
