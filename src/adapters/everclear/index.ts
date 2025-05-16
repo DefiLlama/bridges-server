@@ -1,7 +1,7 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-
+import { ethers } from "ethers";
 
 const contractAddresses = {
   //EverclearSpoke contract addresses for each chain
@@ -28,11 +28,38 @@ const contractAddresses = {
   ink: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
 } as const;
 
+// Helper function to convert bytes32 to address
+function bytes32ToAddress(bytes32: string) {
+  return ethers.utils.getAddress('0x' + bytes32.slice(26));
+}
 
-const newIntent: PartialContractEventParams = {
+// Deposit event (IntentAdded)
+const depositIntent: PartialContractEventParams = {
   target: "",
-  topic:
-    "Settled(bytes32,address,address,uint256)",
+  topic: "IntentAdded(bytes32,bytes32,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
+  abi: [
+    "event IntentAdded(bytes32 indexed _intentId, bytes32 indexed _queueId, tuple(bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data) _intent)",
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    amount: "_intent.amount",
+    from: "_intent.initiator",
+    token: "_intent.inputAsset",
+  },
+  argGetters: {
+    from: (logArgs: any) => bytes32ToAddress(logArgs._intent.initiator),
+    token: (logArgs: any) => bytes32ToAddress(logArgs._intent.inputAsset)
+  },
+  isDeposit: true,
+};
+
+// Withdrawal event (Settled)
+const withdrawalIntent: PartialContractEventParams = {
+  target: "",
+  topic: "Settled(bytes32,address,address,uint256)",
   abi: [
     "event Settled(bytes32 indexed _intentId, address _account, address _asset, uint256 _amount)",
   ],
@@ -46,19 +73,24 @@ const newIntent: PartialContractEventParams = {
     from: "_account",
     token: "_asset",
   },
-  isDeposit: true,
+  isDeposit: false,
 };
-
-
-/*
-Withdrawal function is not needed for this use case.
-*/
-
 
 const constructParams = (chain: Chain) => {
   const chainConfig = contractAddresses[chain as keyof typeof contractAddresses];
 
-  const eventParams: PartialContractEventParams[] = chainConfig.map(address => ({...newIntent, target: address}));
+  // Create event params for both deposit and withdrawal events for each contract address
+  const eventParams: PartialContractEventParams[] = [];
+  
+  // Add deposit (IntentAdded) events
+  chainConfig.forEach(address => {
+    eventParams.push({...depositIntent, target: address});
+  });
+  
+  // Add withdrawal (Settled) events
+  chainConfig.forEach(address => {
+    eventParams.push({...withdrawalIntent, target: address});
+  });
 
   return async (fromBlock: number, toBlock: number) => {
     console.log("Fetching Everclear bridge volume from block:", fromBlock, "to block:", toBlock)
