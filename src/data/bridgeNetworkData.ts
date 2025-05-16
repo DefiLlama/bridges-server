@@ -220,6 +220,7 @@ export default [
       "Mantle",
       "Scroll",
       "LightLink",
+      "Plume Mainnet",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -371,6 +372,7 @@ export default [
       "Base",
       "Solana",
       "Sonic",
+      "Plume Mainnet",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -907,6 +909,7 @@ export default [
       "Ton",
       "Tron",
       "Solana",
+      "Plume Mainnet",
     ],
     chainMapping: {
       "zksync era": "era",

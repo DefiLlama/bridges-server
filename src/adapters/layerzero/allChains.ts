@@ -75,7 +75,7 @@ const allChains = [
   "unknown",
   "Etherlink",
   "Rootstock",
-  "Plume",
+  "Plume Mainnet",
   "Shrapnel Subnet",
   "Real",
   "Astar zkEVM",
