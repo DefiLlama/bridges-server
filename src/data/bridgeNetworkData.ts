@@ -24,7 +24,7 @@ export default [
     url: "https://bridge.arbitrum.io/",
     chains: ["Ethereum", "Arbitrum"],
     destinationChain: "Arbitrum",
-    slug: "arbitrum-bridge" // id: "3777",
+    slug: "arbitrum-bridge", // id: "3777",
   },
   {
     id: 3,
@@ -45,7 +45,7 @@ export default [
     url: "https://app.optimism.io/bridge/deposit",
     chains: ["Ethereum", "Optimism"],
     destinationChain: "Optimism",
-    slug: "optimism-bridge"
+    slug: "optimism-bridge",
   },
 
   // {
@@ -244,7 +244,6 @@ export default [
       "Manta",
       "Nibiru",
       "Peaq",
-      "Plume",
       "Plume Mainnet",
       "Rarible",
       "Rootstock",
@@ -426,6 +425,7 @@ export default [
       "Base",
       "Solana",
       "Sonic",
+      "Plume Mainnet",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -972,6 +972,7 @@ export default [
       "Ton",
       "Tron",
       "Solana",
+      "Plume Mainnet",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1239,7 +1240,7 @@ export default [
     url: "https://garden.finance",
     chains: ["Ethereum", "Arbitrum", "Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin"],
     destinationChain: "Bitcoin",
-    slug: "garden"
+    slug: "garden",
   },
   {
     id: 50,
