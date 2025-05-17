@@ -87,6 +87,7 @@ import fuel from "./fuel";
 import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
+import ccip from "./ccip";
 
 export default {
   polygon,
@@ -177,6 +178,7 @@ export default {
   lighter,
   movement,
   intersoon,
+  ccip,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
