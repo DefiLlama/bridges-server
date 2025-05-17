@@ -178,6 +178,7 @@ export default {
   lighter,
   movement,
   intersoon,
+  ccip,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

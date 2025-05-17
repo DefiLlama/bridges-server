@@ -10,6 +10,7 @@ import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
 import { handler as runInterSoon } from "../handlers/runInterSoon";
+import { runCCIPDefaultMode as runCCIP } from "../handlers/runCCIP";
 import dayjs from "dayjs";
 import runHyperlane from "../handlers/runHyperlane";
 
@@ -86,6 +87,7 @@ const cron = () => {
   runEvery("runLayerZero", 30, runLayerZero);
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
+  runEvery("runCCIP", 60 * 24, runCCIP)
 
   exit();
 };

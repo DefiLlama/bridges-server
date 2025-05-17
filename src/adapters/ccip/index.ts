@@ -1,13 +1,16 @@
+import dayjs from 'dayjs';
+import { BridgeAdapter } from '../../helpers/bridgeAdapter.type';
+
 export type CCIPEvent = {
   chain: string;
   tx_hash: string;
-  ts: number;
+  ts: number; // In milliseconds
   tx_from: string;
   tx_to: string;
   token: string;
   amount: string;
   is_deposit: boolean;
-  is_usd_volume: boolean; // Per requirements, always false for CCIP
+  is_usd_volume: boolean; // always false for CCIP
 };
 
 interface CCIPTransaction {
@@ -15,13 +18,13 @@ interface CCIPTransaction {
   destChain: string;
   sourceTxHash: string;
   destTxHash: string;
-  blockTimestamp: number; // In seconds from API
+  blockTimestamp: number; 
   messageID: string;
   tokenTransferFrom: string;
   tokenTransferTo: string;
   tokenAddressSource: string;
   tokenAddressDest: string;
-  tokenAmount: number; // Number from API, converted to string for CCIPEvent
+  tokenAmount: number;
 }
 
 interface ApiResponse {
@@ -29,27 +32,16 @@ interface ApiResponse {
 }
 
 // --- Constants ---
-const API_BASE_URL = "https://dsa-metrics-api-dev-81875351881.europe-west2.run.app/v1/ccip_transactions";
-const API_KEY = ""; // API Key, currently an empty string
+const API_BASE_URL = "" // Base URL for the CCIP API
+const API_KEY = ""; // API Key, currently an empty string during testing
 
-// --- Main function ---
-export async function fetchCCIPEvents(dateString: string): Promise<CCIPEvent[]> {
-  console.log(`[fetchCCIPEvents] Starting for date: ${dateString}`);
 
-  // Basic validation for dateString format (optional but good practice)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    const errorMsg = `[fetchCCIPEvents] Invalid date format: "${dateString}". Expected YYYY-MM-DD.`;
-    console.error(errorMsg);
-    throw new Error(errorMsg);
-  }
-
+export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[]> {
+  console.log(`[fetchEventsForDate] Starting for date: ${dateString}`);
   const apiUrlWithDate = `${API_BASE_URL}?date=${dateString}`;
-  console.log(`[fetchCCIPEvents] Constructed API URL: ${apiUrlWithDate}`);
-
-  const allEvents: CCIPEvent[] = [];
 
   try {
-    console.log(`[fetchCCIPEvents] Making API request to ${apiUrlWithDate}...`);
+    console.log(`[fetchEventsForDate] Making API request to ${apiUrlWithDate}...`);
     const response = await fetch(apiUrlWithDate, {
       method: 'GET',
       headers: {
@@ -58,45 +50,27 @@ export async function fetchCCIPEvents(dateString: string): Promise<CCIPEvent[]> 
       },
     });
 
-    console.log(`[fetchCCIPEvents] API response status: ${response.status}`);
+    console.log(`[fetchEventsForDate] API response status: ${response.status}`);
 
     if (!response.ok) {
       const errorBody = await response.text();
-      const errorMsg = `[fetchCCIPEvents] API Error ${response.status}: ${response.statusText}. URL: ${apiUrlWithDate}. Body: ${errorBody}`;
+      const errorMsg = `[fetchEventsForDate] API Error ${response.status}: ${response.statusText}. URL: ${apiUrlWithDate}. Body: ${errorBody}`;
       console.error(errorMsg);
-      throw new Error(`Failed to fetch CCIP events: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch CCIP events for date ${dateString}: ${response.status} ${response.statusText}`);
     }
 
-    const apiData: ApiResponse = await response.json();
-    console.log("[fetchCCIPEvents] Successfully parsed API response.");
+    const apiData: ApiResponse = await response.json() as ApiResponse;
+    console.log("[fetchEventsForDate] Successfully parsed API response.");
 
-    const rawTransactions = apiData?.transactions;
-    if (!Array.isArray(rawTransactions)) {
-      const errorMsg = `[fetchCCIPEvents] Invalid data format: 'transactions' array not found or not an array. URL: ${apiUrlWithDate}. Response: ${JSON.stringify(apiData)}`;
-      console.error(errorMsg);
-      throw new Error(errorMsg);
-    }
-    console.log(`[fetchCCIPEvents] Received ${rawTransactions.length} raw transactions from API.`);
+    const rawTransactions = (apiData && Array.isArray(apiData.transactions)) ? apiData.transactions : [];
+    console.log(`[fetchEventsForDate] Received ${rawTransactions.length} raw transactions from API for ${dateString}.`);
 
-    let processedCount = 0;
+    const dailyEvents: CCIPEvent[] = [];
     for (const transaction of rawTransactions) {
-      console.log(`[fetchCCIPEvents] Processing raw transaction with messageID: ${transaction.messageID}`);
-      if (
-        !transaction.sourceChain || !transaction.destChain ||
-        !transaction.sourceTxHash || !transaction.destTxHash ||
-        typeof transaction.blockTimestamp !== 'number' ||
-        !transaction.tokenTransferFrom || !transaction.tokenTransferTo ||
-        !transaction.tokenAddressSource || !transaction.tokenAddressDest ||
-        typeof transaction.tokenAmount !== 'number'
-      ) {
-        console.warn("[fetchCCIPEvents] Skipping incomplete raw transaction data:", transaction);
-        continue;
-      }
-
-      const timestampMs = transaction.blockTimestamp * 1000;
+      const timestampMs = transaction.blockTimestamp * 1000; // API returns timestamp in seconds
       const amountStr = String(transaction.tokenAmount);
 
-      const withdrawalEvent: CCIPEvent = {
+      dailyEvents.push({
         chain: transaction.sourceChain,
         tx_hash: transaction.sourceTxHash,
         ts: timestampMs,
@@ -106,10 +80,9 @@ export async function fetchCCIPEvents(dateString: string): Promise<CCIPEvent[]> 
         amount: amountStr,
         is_deposit: false,
         is_usd_volume: false,
-      };
-      allEvents.push(withdrawalEvent);
+      });
 
-      const depositEvent: CCIPEvent = {
+      dailyEvents.push({
         chain: transaction.destChain,
         tx_hash: transaction.destTxHash,
         ts: timestampMs,
@@ -119,19 +92,101 @@ export async function fetchCCIPEvents(dateString: string): Promise<CCIPEvent[]> 
         amount: amountStr,
         is_deposit: true,
         is_usd_volume: false,
-      };
-      allEvents.push(depositEvent);
-      processedCount++;
+      });
     }
-    console.log(`[fetchCCIPEvents] Successfully processed ${processedCount} raw transactions, created ${allEvents.length} CCIPEvent objects.`);
+    console.log(`[fetchEventsForDate] Processed ${rawTransactions.length} raw transactions, created ${dailyEvents.length} CCIPEvent objects for ${dateString}.`);
+    return dailyEvents;
 
   } catch (error) {
-    // Ensure error is an instance of Error for consistent message access
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`[fetchCCIPEvents] Error during processing for date ${dateString}: ${errorMessage}`, error);
-    throw error; // Re-throw the original error or a new error encapsulating it
+    console.error(`[fetchEventsForDate] Error during processing for date ${dateString}: ${errorMessage}`);
+    throw error;
+  }
+}
+
+
+// --- Main function modified as per requirements ---
+export async function fetchCCIPEvents(
+  fromTimestamp: number, // Unix timestamp in seconds
+  toTimestamp: number // Unix timestamp in seconds
+): Promise<CCIPEvent[]> {
+  console.log(`[fetchCCIPEvents] Starting for timestamp range: ${fromTimestamp} to ${toTimestamp}`);
+
+  // Validate input timestamps
+  if (typeof fromTimestamp !== 'number' || typeof toTimestamp !== 'number' || fromTimestamp <= 0 || toTimestamp <= 0) {
+    const errorMsg = `[fetchCCIPEvents] Invalid timestamps: Both fromTimestamp and toTimestamp must be positive numbers. Received: from=${fromTimestamp}, to=${toTimestamp}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
-  console.log(`[fetchCCIPEvents] Finished for date: ${dateString}. Returning ${allEvents.length} events.`);
-  return allEvents;
+  const fromDate = dayjs.unix(fromTimestamp).startOf('day');
+  const toDate = dayjs.unix(toTimestamp).startOf('day');
+
+  if (!fromDate.isValid() || !toDate.isValid()) {
+    const errorMsg = `[fetchCCIPEvents] Invalid date objects created from timestamps: fromTimestamp=${fromTimestamp}, toTimestamp=${toTimestamp}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  if (toTimestamp < fromTimestamp) {
+    const errorMsg = `[fetchCCIPEvents] 'toTimestamp' (${toTimestamp}) cannot be before 'fromTimestamp' (${fromTimestamp}).`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  const datesToFetch: string[] = [];
+  let currentDateIteration = fromDate;
+  // Iterate from the start of the 'fromTimestamp' day to the start of the 'toTimestamp' day
+  while (!currentDateIteration.isAfter(toDate)) {
+    datesToFetch.push(currentDateIteration.format('YYYY-MM-DD'));
+    currentDateIteration = currentDateIteration.add(1, 'day');
+  }
+
+  if (datesToFetch.length === 0) {
+      // This could happen if fromTimestamp and toTimestamp are on the same day,
+      // but the above logic should still add one date.
+      // Or if fromDate somehow became after toDate due to extreme timestamp values.
+      // As a fallback, if from/to timestamps are valid, ensure at least the fromDate is fetched.
+      const singleDate = dayjs.unix(fromTimestamp).format('YYYY-MM-DD');
+      console.warn(`[fetchCCIPEvents] Date range resulted in no dates. Defaulting to fetch for: ${singleDate}`);
+      datesToFetch.push(singleDate);
+  }
+
+
+  console.log(`[fetchCCIPEvents] Dates to fetch: ${datesToFetch.join(', ')}`);
+
+  const allEventsPromises: Promise<CCIPEvent[]>[] = datesToFetch.map(dateString =>
+    fetchEventsForDate(dateString)
+  );
+
+  let allRawEvents: CCIPEvent[] = [];
+  try {
+    const results = await Promise.all(allEventsPromises);
+    allRawEvents = results.flat();
+    console.log(`[fetchCCIPEvents] Fetched a total of ${allRawEvents.length} events before filtering.`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[fetchCCIPEvents] Error fetching events for one or more dates: ${errorMessage}`);
+    throw new Error(`Failed to fetch all CCIP events for the range: ${errorMessage}`);
+  }
+
+  // Filter events to be within the precise fromTimestamp and toTimestamp
+  // Timestamps from user are in seconds, event.ts is in milliseconds
+  const fromTimestampMs = fromTimestamp * 1000;
+  const toTimestampMs = toTimestamp * 1000;
+
+  const filteredEvents = allRawEvents.filter(event => {
+    return event.ts >= fromTimestampMs && event.ts <= toTimestampMs;
+  });
+
+  console.log(`[fetchCCIPEvents] Finished. Returning ${filteredEvents.length} events after filtering for the timestamp range.`);
+  return filteredEvents;
 }
+
+// The CCIP adapter returns data for all chains at once, so we effectively ignore the 
+// chain parameter by mapping everything to 'Ethereum'
+const adapter: BridgeAdapter = {
+  "Ethereum": fetchCCIPEvents as any
+};
+
+export default adapter;
