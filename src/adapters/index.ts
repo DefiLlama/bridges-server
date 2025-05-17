@@ -1,4 +1,5 @@
 import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
+import everclear from "./everclear";
 import polygon from "./polygon";
 import synapse from "./synapse";
 import hop from "./hop";
@@ -172,6 +173,7 @@ export default {
   train,
   assetchainbridge,
   fuel,
+  everclear,
   lighter,
   movement,
   intersoon,
