@@ -344,7 +344,7 @@ export default [
       "Zora",
       "World Chain",
       "Redstone",
-      "Lens"
+      "Lens",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -2107,7 +2107,7 @@ export default [
     url: "https://bridge.movementnetwork.xyz/",
     chains: ["Ethereum", "Movement"],
     destinationChain: "Movement",
-  }, 
+  },
   {
     id: 89,
     displayName: "Asset Chain Bridge",
@@ -2133,7 +2133,7 @@ export default [
     bridgeDbName: "everclear",
     iconLink: "icons:everclear",
     largeTxThreshold: 10000,
-    url:"https://explorer.everclear.org/",                  
+    url: "https://explorer.everclear.org/",
     chains: [
       "Ethereum",
       "Optimism",
@@ -2157,5 +2157,9 @@ export default [
       "Mantle",
       "Ink",
     ],
+    chainMapping: {
+      "zksync era": "era",
+      avalanche: "avax",
+    },
   },
 ] as BridgeNetwork[];
