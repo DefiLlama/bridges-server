@@ -26,6 +26,7 @@ const contractAddresses = {
   berachain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   mantle: ["0xe0F010e465f15dcD42098dF9b99F1038c11B3056"],
   ink: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
+  solana: ["everUnMiUkvZG8EyXAtW8HfMavCBTVeMhQszbrtpUQm"],
 } as const;
 
 // Helper function to convert bytes32 to address
@@ -120,6 +121,7 @@ const adapter: BridgeAdapter = {
   berachain: constructParams("berachain"),
   mantle:    constructParams("mantle"),
   ink:       constructParams("ink"),
+  solana:    constructParams("solana"),
 };
 
 export default adapter;

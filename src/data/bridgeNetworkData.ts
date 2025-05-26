@@ -2156,6 +2156,7 @@ export default [
       "Berachain",
       "Mantle",
       "Ink",
+      "Solana",
     ],
     chainMapping: {
       "zksync era": "era",
