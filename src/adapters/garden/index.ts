@@ -4,8 +4,13 @@ import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 const bridgeAddresses: Record<string, string> = {
-  ethereum: "0xA5E38d098b54C00F10e32E51647086232a9A0afD",
-  arbitrum: "0x203DAC25763aE783Ad532A035FfF33d8df9437eE",
+  ethereum: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  arbitrum: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  bera: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  unichain: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  hyperliquid: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  starknet: "0x047AEEC489b9f722A3afB8482109538CeFA547C096141b04f808214826E8Fc71",
+  base: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49"
 };
 
 const constructParams = (chain: string) => {
