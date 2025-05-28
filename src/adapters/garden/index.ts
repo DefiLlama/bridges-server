@@ -10,7 +10,8 @@ const bridgeAddresses: Record<string, string> = {
   unichain: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
   hyperliquid: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
   starknet: "0x047AEEC489b9f722A3afB8482109538CeFA547C096141b04f808214826E8Fc71",
-  base: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49"
+  base: "0x3fDEe07b0756651152BF11c8D170D72d7eBbEc49",
+  bitcoin: "bc1qj3h9wazx6dh3lkm6u8cka8krdm36tujtgw0uv9"
 };
 
 const constructParams = (chain: string) => {
