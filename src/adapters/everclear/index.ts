@@ -39,7 +39,7 @@ const depositIntent: PartialContractEventParams = {
   target: "",
   topic: "IntentAdded(bytes32,uint256,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
   abi: [
-    "event IntentAdded(bytes32 indexed _intentId, uint256 indexed _queueId, (bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data))",
+    "event IntentAdded(bytes32 indexed _intentId, uint256 _queueId, (bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data) _intent)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
