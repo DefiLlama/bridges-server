@@ -26,6 +26,7 @@ const contractAddresses = {
   berachain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   mantle: ["0xe0F010e465f15dcD42098dF9b99F1038c11B3056"],
   ink: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
+  solana: ["everUnMiUkvZG8EyXAtW8HfMavCBTVeMhQszbrtpUQm"],
 } as const;
 
 // Helper function to convert bytes32 to address
@@ -36,9 +37,9 @@ function bytes32ToAddress(bytes32: string) {
 // Deposit event (IntentAdded)
 const depositIntent: PartialContractEventParams = {
   target: "",
-  topic: "IntentAdded(bytes32,bytes32,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
+  topic: "IntentAdded(bytes32,uint256,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
   abi: [
-    "event IntentAdded(bytes32 indexed _intentId, bytes32 indexed _queueId, tuple(bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data) _intent)",
+    "event IntentAdded(bytes32 indexed _intentId, uint256 _queueId, (bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data) _intent)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -47,6 +48,7 @@ const depositIntent: PartialContractEventParams = {
   argKeys: {
     amount: "_intent.amount",
     from: "_intent.initiator",
+    to: "_intent.receiver",
     token: "_intent.inputAsset",
   },
   argGetters: {
@@ -81,12 +83,12 @@ const constructParams = (chain: Chain) => {
 
   // Create event params for both deposit and withdrawal events for each contract address
   const eventParams: PartialContractEventParams[] = [];
-  
+
   // Add deposit (IntentAdded) events
   chainConfig.forEach(address => {
     eventParams.push({...depositIntent, target: address});
   });
-  
+
   // Add withdrawal (Settled) events
   chainConfig.forEach(address => {
     eventParams.push({...withdrawalIntent, target: address});
@@ -120,6 +122,7 @@ const adapter: BridgeAdapter = {
   berachain: constructParams("berachain"),
   mantle:    constructParams("mantle"),
   ink:       constructParams("ink"),
+  solana:    constructParams("solana"),
 };
 
 export default adapter;
