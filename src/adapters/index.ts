@@ -87,6 +87,7 @@ import fuel from "./fuel";
 import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
+import usdt0 from "./usdt0";
 
 export default {
   polygon,
@@ -177,6 +178,7 @@ export default {
   lighter,
   movement,
   intersoon,
+  usdt0,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

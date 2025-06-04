@@ -2206,4 +2206,24 @@ export default [
       avalanche: "avax",
     },
   },
+  {
+    id: 92,
+    displayName: "USDT0",
+    bridgeDbName: "usdt0",
+    iconLink: "protocols:usdt0",
+    largeTxThreshold: 10000,
+    url: "https://usdt0.to",
+    chains: [
+      "Arbitrum",
+      "Berachain",
+      "Corn",
+      "Ethereum",
+      "Flare",
+      "Hyperliquid",
+      "Ink",
+      "Optimism",
+      "Sei",
+      "Unichain"
+    ],
+  },
 ] as BridgeNetwork[];
