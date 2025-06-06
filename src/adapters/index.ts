@@ -88,6 +88,7 @@ import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
 import ccip from "./ccip";
+import usdt0 from "./usdt0";
 
 export default {
   polygon,
@@ -179,6 +180,7 @@ export default {
   movement,
   intersoon,
   ccip,
+  usdt0,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

@@ -377,7 +377,10 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0x201eba5cc46d216ce6dc03f6a759e8e766e956ae", pool: "0xB715B85682B731dB9D5063187C450095c91C57FC" }, // usdt
     { token: "0xcDA86A272531e8640cD7F1a92c01839911B90bb0", pool: "0xF7628d84a2BbD9bb9c8E686AC95BB5d55169F3F1" }, // mEth
   ],
-  bsc: [{ token: "0x55d398326f99059ff775485246999027b3197955", pool: "0x138EB30f73BC423c6455C53df6D89CB01d9eBc63" }], // usdt
+  bsc: [
+    { token: "0x55d398326f99059ff775485246999027b3197955", pool: "0x138EB30f73BC423c6455C53df6D89CB01d9eBc63" }, // usdt
+    { token: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", pool: "0x962Bd449E630b0d928f308Ce63f1A21F02576057" }, // usdc
+  ],
   avax: [
     { token: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", pool: "0x5634c4a5FEd09819E3c46D86A965Dd9447d86e47" }, // usdc
     { token: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7", pool: "0x12dC9256Acc9895B076f6638D628382881e62CeE" }, // usdt
@@ -388,52 +391,171 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0xbB06DCA3AE6887fAbF931640f67cab3e3a16F4dC", pool: "0x4dCBFC0249e8d5032F89D6461218a9D2eFff5125" }, // usdt
   ],
   aurora: [
-    {
-      token: "0x368EBb46ACa6b8D0787C96B2b20bD3CC3F2c45F7",
-      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
-    },
+    { token: "0x368EBb46ACa6b8D0787C96B2b20bD3CC3F2c45F7", pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075" }, // usdc
   ],
   base: [
-    {
-      token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      pool: "0x27a16dc786820B16E5c9028b75B99F6f604b5d26",
-    },
-    {
-      token: "0x4200000000000000000000000000000000000006",
-      pool: "0xdc181Bd607330aeeBEF6ea62e03e5e1Fb4B6F7C7",
-    },
+    { token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", pool: "0x27a16dc786820B16E5c9028b75B99F6f604b5d26" }, // usdc
+    { token: "0x4200000000000000000000000000000000000006", pool: "0xdc181Bd607330aeeBEF6ea62e03e5e1Fb4B6F7C7" }, // weth
   ],
   kava: [
-    {
-      token: "0x919C1c267BC06a7039e03fcc2eF738525769109c",
-      pool: "0x41A5b0470D96656Fb3e8f68A218b39AdBca3420b",
-    },
+    { token: "0x919C1c267BC06a7039e03fcc2eF738525769109c", pool: "0x41A5b0470D96656Fb3e8f68A218b39AdBca3420b" }, // usdt
   ],
   klaytn: [
-    {
-      token: "0xE2053BCf56D2030d2470Fb454574237cF9ee3D4B",
-      pool: "0x01A7c805cc47AbDB254CD8AaD29dE5e447F59224",
-    },
-    {
-      token: "0x9025095263d1E548dc890A7589A4C78038aC40ab",
-      pool: "0x8619bA1B324e099CB2227060c4BC5bDEe14456c6",
-    },
-    {
-      token: "0x55Acee547DF909CF844e32DD66eE55a6F81dC71b",
-      pool: "0xBB4957E44401a31ED81Cab33539d9e8993FA13Ce",
-    },
+    { token: "0xE2053BCf56D2030d2470Fb454574237cF9ee3D4B", pool: "0x01A7c805cc47AbDB254CD8AaD29dE5e447F59224" }, // usdc
+    { token: "0x9025095263d1E548dc890A7589A4C78038aC40ab", pool: "0x8619bA1B324e099CB2227060c4BC5bDEe14456c6" }, // usdt
+    { token: "0x55Acee547DF909CF844e32DD66eE55a6F81dC71b", pool: "0xBB4957E44401a31ED81Cab33539d9e8993FA13Ce" }, // weth
   ],
   linea: [
-    {
-      token: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
-      pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075",
-    },
+    { token: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f", pool: "0x81F6138153d473E8c5EcebD3DC8Cd4903506B075" }, // usdc
   ],
   lightlink: [
-    {
-      token: "0x7EbeF2A4b1B09381Ec5B9dF8C5c6f2dBECA59c73",
-      pool: "0x8731d54E9D02c286767d56ac03e8037C07e01e98",
-    },
+    { token: "0x7EbeF2A4b1B09381Ec5B9dF8C5c6f2dBECA59c73", pool: "0x8731d54E9D02c286767d56ac03e8037C07e01e98" }, // usdc
+    { token: "0x808d7c71ad2ba3FA531b068a2417C63106BC0949", pool: "0x06D538690AF257Da524f25D0CD52fD85b1c2173E" }, // usdt
+    { token: "0x0000000000000000000000000000000000000000", pool: "0x8731d54E9D02c286767d56ac03e8037C07e01e98" }, // eth
+  ],
+  abstract: [
+    { token: "0x84A71ccD554Cc1b02749b35d22F684CC8ec987e1", pool: "0x91a5Fe991ccB876d22847967CEd24dCd7A426e0E" }, // usdc
+    { token: "0x0709F39376dEEe2A2dfC94A58EdEb2Eb9DF012bD", pool: "0x943C484278b8bE05D119DfC73CfAa4c9D8f11A76" }, // usdt
+    { token: "0x0000000000000000000000000000000000000000", pool: "0x221F0E1280Ec657503ca55c708105F1e1529527D" }, // eth
+  ],
+  ape: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x2086f755A6d9254045C257ea3d382ef854849B0f" }, // usdc
+    { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0xEb8d955d8Ae221E5b502851ddd78E6C4498dB4f6" }, // usdt
+    { token: "0xf4D9235269a96aaDaFc9aDAe454a0618eBE37949", pool: "0x28E0f0eed8d6A6a96033feEe8b2D7F32EB5CCc48" }, // weth
+  ],
+  bera: [
+    { token: "0x549943e04f40284185054145c6E4e9568C1D3241", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdc
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // weth
+  ],
+  coredao: [
+    { token: "0xa4151B2B3e269645181dCcF2D426cE75fcbDeca9", pool: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590" }, // usdc
+    { token: "0x900101d06A7426441Ae63e9AB3B9b0F63Be145F1", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // usdt
+  ],
+  cronosevm: [
+    { token: "0xf951eC28187D9E5Ca673Da8FE6757E6f0Be5F77C", pool: "0x57687Bd10D3c2889BB112B36d0AFbfAa0686f7fa" }, // usdc
+    { token: "0xf44acfdC916898449E39062934C2b496799B6abe", pool: "0x816f6e3CB269712Eb199f146Db7c3Fb590ae6af2" }, // weth
+  ],
+  cronoszkevm: [
+    { token: "0xaa5b845F8C9c047779bEDf64829601d8B264076c", pool: "0x74491Aa7187c34Fce7D54ff4Fe640b57C9146713" }, // usdc
+    { token: "0x898B3560AFFd6D955b1574D87EE09e46669c60eA", pool: "0xA214ce0aC3b4a9225f74bCf9A9AFBA78255942B7" }, // eth
+  ],
+  degen: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdc
+    { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6" }, // usdt
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // weth
+  ],
+  flare: [
+    { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0x77C71633C34C3784ede189d74223122422492a0f" }, // usdc
+    { token: "0x0B38e83B86d491735fEaa0a791F65c2B99535396", pool: "0x1C10CC06DC6D35970d1D53B2A23c76ef370d4135" }, // usdt
+    { token: "0x1502FA4be69d526124D453619276FacCab275d3D", pool: "0x8e8539e4CcD69123c623a106773F2b0cbbc58746" }, // weth
+  ],
+  flow: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdc
+    { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6" }, // usdt
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // weth
+  ],
+  fuse: [
+    { token: "0xc6Bc407706B7140EE8Eef2f86F9504651b63e7f9", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdc
+    { token: "0x3695Dd1D1D43B794C0B13eb8be8419Eb3ac22bf7", pool: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6" }, // usdt
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // weth
+  ],
+  gnosis: [
+    { token: "0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0", pool: "0xB1EeAD6959cb5bB9B20417d6689922523B2B86C3" }, // usdc
+    { token: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1", pool: "0xe9aBA835f813ca05E50A6C0ce65D0D74390F7dE7" }, // weth
+  ],
+  gravity: [
+    { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0xC1B8045A6ef2934Cf0f78B0dbD489969Fa9Be7E4" }, // usdc
+    { token: "0x816E810f9F787d669FB71932DeabF6c83781Cd48", pool: "0x0B38e83B86d491735fEaa0a791F65c2B99535396" }, // usdt
+    { token: "0xf6f832466Cd6C21967E0D954109403f36Bc8ceaA", pool: "0x17d65bF79E77B6Ab21d8a0afed3bC8657d8Ee0B2" }, // weth
+  ],
+  hemi: [
+    { token: "0xad11a8BEb98bbf61dbb1aa0F6d6F2ECD87b35afA", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // usdc
+    { token: "0xbB0D083fb1be0A9f6157ec484b6C79E0A4e31C2e", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdt
+    { token: "0x0000000000000000000000000000000000000000", pool: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590" }, // eth
+  ],
+  ink: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590" }, // usdc
+  ],
+  iota: [
+    { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0x8e8539e4CcD69123c623a106773F2b0cbbc58746" }, // usdc
+    { token: "0xC1B8045A6ef2934Cf0f78B0dbD489969Fa9Be7E4", pool: "0x77C71633C34C3784ede189d74223122422492a0f" }, // usdt
+    { token: "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8", pool: "0x9c2dc7377717603eB92b2655c5f2E7997a4945BD" }, // weth
+  ],
+  islander: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd" }, // usdc
+    { token: "0x88853D410299BCBfE5fCC9Eef93c03115E908279", pool: "0xF2c0e57f48276112a596e141817D93bE472Ed6c5" }, // usdt
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6" }, // weth
+  ],
+  manta: [
+    { token: "0x0000000000000000000000000000000000000000", pool: "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB" }, // eth
+  ],
+  nibiru: [
+    { token: "0x0829F361A05D993d5CEb035cA6DF3446b060970b", pool: "0x12a272A581feE5577A5dFa371afEB4b2F3a8C2F8" }, // usdc
+    { token: "0x43F2376D5D03553aE72F4A8093bbe9de4336EB08", pool: "0xC16977205c53Cd854136031BD2128F75D6ff63C9" }, // usdt
+    { token: "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555", pool: "0x108f4c02C9fcDF862e5f5131054c50f13703f916" }, // weth
+  ],
+  peaq: [
+    { token: "0xbbA60da06c2c5424f03f7434542280FCAd453d10", pool: "0x5c1a97C144A97E9b370F833a06c70Ca8F2f30DE5" }, // usdc
+    { token: "0xf4D9235269a96aaDaFc9aDAe454a0618eBE37949", pool: "0x07cd5A2702394E512aaaE54f7a250ea0576E5E8C" }, // usdt
+    { token: "0x6694340fc020c5E6B96567843da2df01b2CE1eb6", pool: "0xe7Ec689f432f29383f217e36e680B5C855051f25" }, // weth
+  ],
+  plume: [
+    { token: "0x3938A812c54304fEffD266C7E2E70B48F9475aD6", pool: "0x8943cb63EEF1B3Dba5F455bFB704477436E31c1A" }, // usdc
+    { token: "0xA849026cDA282eeeBC3C39Afcbe87a69424F16B4", pool: "0xE67F75484C69d4A597f6e50eA6F5BB929e3a3d0E" }, // usdt
+  ],
+  plumephoenix: [
+    { token: "0x78adD880A697070c1e765Ac44D65323a0DcCE913", pool: "0x9909fa99b7F7ee7F1c0CBf133f411D43083631E6" }, // usdc
+    { token: "0xda6087E69C51E7D31b6DBAD276a3c44703DFdCAd", pool: "0x2D870D17e640eD6c057afBAA0DF56B8DEa5Cf2F6" }, // usdt
+    { token: "0xca59cA09E5602fAe8B629DeE83FfA819741f14be", pool: "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066" }, // weth
+  ],
+  rarible: [
+    { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0x875bee36739e7Ce6b60E056451c556a88c59b086" }, // usdc
+    { token: "0x362FAE9A75B27BBc550aAc28a7c1F96C8D483120", pool: "0x17d65bF79E77B6Ab21d8a0afed3bC8657d8Ee0B2" }, // usdt
+  ],
+  rootstock: [
+    { token: "0x74c9f2b00581F1B11AA7ff05aa9F608B7389De67", pool: "0xAF54BE5B6eEc24d6BFACf1cce4eaF680A8239398" }, // usdc
+    { token: "0xAf368c91793CB22739386DFCbBb2F1A9e4bCBeBf", pool: "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6" }, // usdt
+    { token: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // weth
+  ],
+  sei: [
+    { token: "0x3894085Ef7Ff0f0aeDf52E2A2704928d1Ec074F1", pool: "0x45d417612e177672958dC0537C45a8f8d754Ac2E" }, // usdc
+    { token: "0xB75D0B03c06A926e488e2659DF1A861F860bD3d1", pool: "0x0dB9afb4C33be43a0a0e396Fd1383B4ea97aB10a" }, // usdt
+    { token: "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8", pool: "0x5c386D85b1B82FD9Db681b9176C8a4248bb6345B" }, // weth
+  ],
+  soneium: [
+    { token: "0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369", pool: "0x45f1A95A4D3f3836523F5c83673c797f4d4d263B" }, // usdc
+    { token: "0x0000000000000000000000000000000000000000", pool: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590" }, // eth
+  ],
+  sonic: [
+    { token: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894", pool: "0xA272fFe20cFfe769CdFc4b63088DCD2C82a2D8F9" }, // usdc
+  ],
+  story: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x2086f755A6d9254045C257ea3d382ef854849B0f" }, // usdc
+    { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0x3a1293Bdb83bBbDd5Ebf4fAc96605aD2021BbC0f" }, // usdt
+    { token: "0xBAb93B7ad7fE8692A878B95a8e689423437cc500", pool: "0xA272fFe20cFfe769CdFc4b63088DCD2C82a2D8F9" }, // weth
+  ],
+  superposition: [
+    { token: "0x6c030c5CC283F791B26816f325b9C632d964F8A1", pool: "0x8EE21165Ecb7562BA716c9549C1dE751282b9B33" }, // usdc
+  ],
+  taiko: [
+    { token: "0x19e26B0638bf63aa9fa4d14c6baF8D52eBE86C5C", pool: "0x77C71633C34C3784ede189d74223122422492a0f" }, // usdc
+    { token: "0x9c2dc7377717603eB92b2655c5f2E7997a4945BD", pool: "0x1C10CC06DC6D35970d1D53B2A23c76ef370d4135" }, // usdt
+  ],
+  telos: [
+    { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x2086f755A6d9254045C257ea3d382ef854849B0f" }, // usdc
+    { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0x3a1293Bdb83bBbDd5Ebf4fAc96605aD2021BbC0f" }, // usdt
+    { token: "0xBAb93B7ad7fE8692A878B95a8e689423437cc500", pool: "0xA272fFe20cFfe769CdFc4b63088DCD2C82a2D8F9" }, // weth
+  ],
+  unichain: [
+    { token: "0x0000000000000000000000000000000000000000", pool: "0xe9aBA835f813ca05E50A6C0ce65D0D74390F7dE7" }, // eth
+  ],
+  xchain: [
+    { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0x17d65bF79E77B6Ab21d8a0afed3bC8657d8Ee0B2" }, // usdc
+  ],
+  xdc: [
+    { token: "0xCc0587aeBDa397146cc828b445dB130a94486e74", pool: "0x8E2E38711080bF8AAb9C74f434d2bae70e67ae44" }, // usdc
+    { token: "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555", pool: "0xA4272ad93AC5d2FF048DD6419c88Eb4C1002Ec6b" }, // usdt
+    { token: "0xa7348290de5cf01772479c48D50dec791c3fC212", pool: "0xB0d27478A40223e427697Da523c6A3DAF29AaFfB" }, // weth
   ],
 };
 
@@ -612,6 +734,40 @@ const adapter: BridgeAdapter = {
   aurora: constructParams("aurora"),
   scroll: constructParams("scroll"),
   lightlink: constructParams("lightlink"),
+  // New Stargate chains
+  abstract: constructParams("abstract"),
+  ape: constructParams("ape"),
+  bera: constructParams("bera"),
+  coredao: constructParams("core"),
+  cronosevm: constructParams("cronos"),
+  cronoszkevm: constructParams("cronos_zkevm"),
+  degen: constructParams("degen"),
+  flare: constructParams("flare"),
+  flow: constructParams("flow"),
+  fuse: constructParams("fuse"),
+  gnosis: constructParams("xdai"),
+  gravity: constructParams("gravity"),
+  hemi: constructParams("hemi"),
+  ink: constructParams("ink"),
+  iota: constructParams("iotaevm"),
+  islander: constructParams("vana"),
+  manta: constructParams("manta"),
+  nibiru: constructParams("nibiru"),
+  peaq: constructParams("peaq"),
+  plume: constructParams("plume"),
+  plumephoenix: constructParams("plume_mainnet"),
+  rarible: constructParams("rarible"),
+  rootstock: constructParams("rsk"),
+  sei: constructParams("sei"),
+  soneium: constructParams("soneium"),
+  sonic: constructParams("sonic"),
+  story: constructParams("sty"),
+  superposition: constructParams("spn"),
+  taiko: constructParams("taiko"),
+  telos: constructParams("telos"),
+  unichain: constructParams("unichain"),
+  xchain: constructParams("idex"),
+  xdc: constructParams("xdc"),
 };
 
 export default adapter;
