@@ -10,7 +10,7 @@ export type CCIPEvent = {
   token: string;
   amount: string;
   is_deposit: boolean;
-  is_usd_volume: boolean; // always false for CCIP
+  is_usd_volume: boolean;
 };
 
 interface CCIPTransaction {
@@ -23,8 +23,11 @@ interface CCIPTransaction {
   tokenTransferFrom: string;
   tokenTransferTo: string;
   tokenAddressSource: string;
+  tokenDecimalsSource: number;
   tokenAddressDest: string;
+  tokenDecimalsDest: number;
   tokenAmount: number;
+  tokenAmountUsd: number;
 }
 
 interface ApiResponse {
@@ -32,8 +35,23 @@ interface ApiResponse {
 }
 
 // --- Constants ---
-const API_BASE_URL = "" // Base URL for the CCIP API
+const API_BASE_URL = "https://dsa-metrics-api-dev-81875351881.europe-west2.run.app/v1/ccip_transactions" // Base URL for the CCIP API
 const API_KEY = ""; // API Key, currently an empty string during testing
+
+function formatAmount(tokenAmount: number, decimals: number): string {
+  // If decimals is zero, it means the token amount is already in the smallest unit (like wei for ETH)
+  if (decimals === 0) {
+    return String(Math.floor(tokenAmount));
+  }
+
+  // Calculate the divisor based on the number of decimals
+  const divisor = Math.pow(10, decimals);
+  
+  // Divide the raw tokenAmount by the divisor
+  const humanReadableAmount = tokenAmount / divisor;
+
+  return String(humanReadableAmount);
+}
 
 
 export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[]> {
@@ -68,8 +86,25 @@ export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[
     const dailyEvents: CCIPEvent[] = [];
     for (const transaction of rawTransactions) {
       const timestampMs = transaction.blockTimestamp * 1000; // API returns timestamp in seconds
-      const amountStr = String(transaction.tokenAmount);
-
+    
+      let sourceAmount: string;
+      let destAmount: string;
+      let isUsdVolume: boolean;
+    
+      // If USD volume is provided, use it.
+      if (transaction.tokenAmountUsd && transaction.tokenAmountUsd > 0) {
+        sourceAmount = transaction.tokenAmountUsd.toFixed(2);
+        destAmount = transaction.tokenAmountUsd.toFixed(2);
+        isUsdVolume = true;
+      }
+      // If no USD volume, use token amount as 'wei' or whatever the smallest unit is.  
+      else {
+        sourceAmount = formatAmount(transaction.tokenAmount, transaction.tokenDecimalsSource);
+        destAmount = formatAmount(transaction.tokenAmount, transaction.tokenDecimalsDest);
+        isUsdVolume = false;
+      }
+    
+      // Push source event
       dailyEvents.push({
         chain: transaction.sourceChain,
         tx_hash: transaction.sourceTxHash,
@@ -77,11 +112,12 @@ export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[
         tx_from: transaction.tokenTransferFrom,
         tx_to: transaction.tokenTransferTo,
         token: transaction.tokenAddressSource,
-        amount: amountStr,
+        amount: sourceAmount,
         is_deposit: false,
-        is_usd_volume: false,
+        is_usd_volume: isUsdVolume,
       });
-
+    
+      // Push destination event
       dailyEvents.push({
         chain: transaction.destChain,
         tx_hash: transaction.destTxHash,
@@ -89,11 +125,11 @@ export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[
         tx_from: transaction.tokenTransferFrom,
         tx_to: transaction.tokenTransferTo,
         token: transaction.tokenAddressDest,
-        amount: amountStr,
+        amount: destAmount,
         is_deposit: true,
-        is_usd_volume: false,
+        is_usd_volume: isUsdVolume,
       });
-    }
+    }    
     console.log(`[fetchEventsForDate] Processed ${rawTransactions.length} raw transactions, created ${dailyEvents.length} CCIPEvent objects for ${dateString}.`);
     return dailyEvents;
 

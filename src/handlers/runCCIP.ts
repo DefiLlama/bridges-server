@@ -8,13 +8,13 @@
  * 1. Default Mode (Recent Data):
  * - Fetches data for the last 'N' days (default defined by `DEFAULT_DAYS_TO_PROCESS`),
  * excluding the current day. Used for regular, scheduled updates.
- * - CLI: `ts-node src/jobs/runCCIP.ts`
+ * - CLI: `ts-node src/handlers/runCCIP.ts`
  * - Programmatic: `await runCCIPDefaultMode();`
  *
  * 2. Backfill Mode (Specific Date Range):
  * - Fetches data for a specified historical date range (YYYY-MM-DD format, inclusive).
  * Useful for initial population or filling data gaps.
- * - CLI: `ts-node src/jobs/runCCIP.ts --startDate YYYY-MM-DD --endDate YYYY-MM-DD`
+ * - CLI: `ts-node src/handlers/runCCIP.ts --startDate YYYY-MM-DD --endDate YYYY-MM-DD`
  * - Programmatic: `await runCCIPBackfillMode("YYYY-MM-DD", "YYYY-MM-DD");`
 **/
 
