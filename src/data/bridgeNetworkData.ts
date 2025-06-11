@@ -1106,6 +1106,8 @@ export default [
       "Redstone",
       "RootStock",
       "Hemi",
+      "Solana",
+      "Hyperliquid"
     ],
     chainMapping: {
       "zksync era": "era",
