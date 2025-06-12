@@ -1,5 +1,5 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogsCustom } from "./processTransactionsCustom";
+import { getTxDataFromEVMEventLogsCustom, getTxDataFromSolana } from "./processTransactionsCustom";
 import {
   CCIP_TOKEN_BRIDGE,
   NATIVE_TOKENS,
@@ -209,6 +209,11 @@ const customNonEvmBridgeDeposit = (chain: Chain): PartialContractEventParams => 
 
 
 const constructParams = (chain: Chain) => {
+    if(chain === 'solana') {
+      return async (fromBlock: number, toBlock: number) =>
+        getTxDataFromSolana(fromBlock, toBlock);
+    }
+
     const eventParams: PartialContractEventParams[] = [];
 
     if(ACTION_EXECUTOR[chain]) {
@@ -293,6 +298,7 @@ const adapter: BridgeAdapter = {
     rootstock: constructParams("rootstock"),
     hemi: constructParams("hemi"),
     "world chain": constructParams("world"),
+    solana: constructParams("solana"),
 };
 
 export default adapter;
