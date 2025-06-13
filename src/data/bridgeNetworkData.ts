@@ -2234,4 +2234,13 @@ export default [
       "Unichain"
     ],
   },
+  {
+    id: 92,
+    displayName: "Chainlink CCIP",
+    bridgeDbName: "ccip",
+    iconLink: "icons:ccip",
+    largeTxThreshold: 10000,
+    url: "https://ccip.chain.link/",
+    chains: ["Ethereum"],
+  },
 ] as BridgeNetwork[];
