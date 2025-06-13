@@ -1102,6 +1102,12 @@ export default [
       "Ink",
       "Zora",
       "Kroma",
+      "World Chain",
+      "Redstone",
+      "RootStock",
+      "Hemi",
+      "Solana",
+      "Hyperliquid"
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1112,6 +1118,8 @@ export default [
       kaia: "klaytn",
       iota: "iotaevm",
       lightlink: "lightlink_phoenix",
+      "world chain": "wc",
+      rootstock: "rsk",
     },
   },
   {
