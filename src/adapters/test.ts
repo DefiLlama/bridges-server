@@ -87,7 +87,8 @@ const testAdapter = async () => {
               }
             });
 
-            const { amount, isUSDVolume } = log;
+            let { amount, isUSDVolume } = log;
+            amount = await Promise.resolve(amount);
 
             if (!isUSDVolume) {
               if (!amount._isBigNumber) {
