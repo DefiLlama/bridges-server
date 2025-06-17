@@ -1,7 +1,8 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import { getLlamaPrices } from "../../utils/prices";
 
 const contractAddresses = {
   //EverclearSpoke contract addresses for each chain
@@ -81,12 +82,47 @@ const withdrawalIntent: PartialContractEventParams = {
 const constructParams = (chain: Chain) => {
   const chainConfig = contractAddresses[chain as keyof typeof contractAddresses];
 
+  // This function calculates the amount of decimals for each contract/chain pair
+  // This is because Everclear's events are being parsed with 18 decimals for all tokens for the sake of simplicity to analyze the data on the Hub
+  // This solves the incorrect tracking and sudden spikes in volume do to very small amounts being interpreted as millions of dollars due to incorrect parsing.
+  const depositIntentWithAmountGetter: PartialContractEventParams = {
+    ...depositIntent,
+    argGetters: {
+      ...depositIntent.argGetters,
+      amount: async (logArgs: any) => {
+        const amount = BigNumber.from(logArgs._intent.amount);
+        const outputAssetAddress = bytes32ToAddress(logArgs._intent.outputAsset);
+        const tokenKey = `${chain}:${outputAssetAddress}`;
+
+        try {
+          const prices = await getLlamaPrices([tokenKey]);
+          const priceData = prices[tokenKey];
+
+          if (priceData && priceData.decimals) {
+            const decimals = priceData.decimals;
+            if (decimals < 18) {
+              const diff = 18 - decimals;
+              return amount.div(BigNumber.from(10).pow(diff));
+            } else if (decimals > 18) {
+              const diff = decimals - 18;
+              return amount.mul(BigNumber.from(10).pow(diff));
+            }
+          }
+        } catch (e) {
+          console.error(`Could not fetch prices for ${tokenKey}`, e);
+        }
+
+        return amount;
+      },
+    },
+  };
+
   // Create event params for both deposit and withdrawal events for each contract address
   const eventParams: PartialContractEventParams[] = [];
 
   // Add deposit (IntentAdded) events
   chainConfig.forEach(address => {
-    eventParams.push({...depositIntent, target: address});
+    eventParams.push({...depositIntentWithAmountGetter, target: address});
   });
 
   // Add withdrawal (Settled) events
