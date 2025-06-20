@@ -1129,7 +1129,7 @@ export default [
       "RootStock",
       "Hemi",
       "Solana",
-      "Hyperliquid"
+      "Hyperliquid",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1232,7 +1232,7 @@ export default [
     iconLink: "protocols:garden",
     largeTxThreshold: 10000,
     url: "https://garden.finance",
-    chains: ["Ethereum", "Arbitrum","Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin"],
+    chains: ["Ethereum", "Arbitrum", "Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin"],
     destinationChain: "Bitcoin",
   },
   {
@@ -2229,7 +2229,6 @@ export default [
       "Berachain",
       "Mantle",
       "Ink",
-      "Solana",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -2243,17 +2242,6 @@ export default [
     iconLink: "protocols:usdt0",
     largeTxThreshold: 10000,
     url: "https://usdt0.to",
-    chains: [
-      "Arbitrum",
-      "Berachain",
-      "Corn",
-      "Ethereum",
-      "Flare",
-      "Hyperliquid",
-      "Ink",
-      "Optimism",
-      "Sei",
-      "Unichain"
-    ],
+    chains: ["Arbitrum", "Berachain", "Corn", "Ethereum", "Flare", "Hyperliquid", "Ink", "Optimism", "Sei", "Unichain"],
   },
 ] as BridgeNetwork[];
