@@ -963,9 +963,9 @@ export default [
   },
   {
     id: 41,
-    displayName: "WanBridge",
+    displayName: "Wan Bridge",
     bridgeDbName: "wanbridge",
-    iconLink: "icons:wanbridge",
+    iconLink: "icons:wan-bridge",
     largeTxThreshold: 10000,
     url: "https://bridge.wanchain.org",
     chains: [
