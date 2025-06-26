@@ -13,6 +13,7 @@ export default [
     url: "https://portal.polygon.technology/",
     chains: ["Ethereum", "Polygon"],
     destinationChain: "Polygon",
+    //slug : the listing we have is old with category chain meaning its exlucded from UI
   },
   {
     id: 2,
@@ -23,6 +24,7 @@ export default [
     url: "https://bridge.arbitrum.io/",
     chains: ["Ethereum", "Arbitrum"],
     destinationChain: "Arbitrum",
+    slug: "arbitrum-bridge" // id: "3777",
   },
   {
     id: 3,
@@ -43,6 +45,7 @@ export default [
     url: "https://app.optimism.io/bridge/deposit",
     chains: ["Ethereum", "Optimism"],
     destinationChain: "Optimism",
+    slug: "optimism-bridge"
   },
 
   // {
@@ -132,6 +135,7 @@ export default [
     iconLink: "icons:cbridge",
     largeTxThreshold: 10000,
     url: "https://cbridge.celer.network/",
+    slug: "cbridge",
     chains: [
       "Ethereum",
       "Polygon",
@@ -166,6 +170,7 @@ export default [
     bridgeDbName: "synapse",
     iconLink: "icons:synapse",
     largeTxThreshold: 10000,
+    slug: "synapse",
     url: "https://synapseprotocol.com/",
     chains: [
       "Ethereum",
@@ -200,6 +205,7 @@ export default [
     displayName: "Stargate",
     bridgeDbName: "stargate",
     iconLink: "icons:stargate",
+    slug: "stargate-finance", //parentprotocol
     largeTxThreshold: 10000,
     url: "https://stargate.finance/",
     chains: [
@@ -274,6 +280,7 @@ export default [
     bridgeDbName: "hop",
     iconLink: "icons:hop-protocol",
     largeTxThreshold: 10000,
+    slug: "hop-protocol",
     url: "https://hop.exchange/",
     chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Gnosis", "Base", "Arbitrum Nova", "Polygon zkEVM"],
     chainMapping: {
@@ -302,6 +309,7 @@ export default [
     largeTxThreshold: 10000,
     url: "https://core.app/",
     chains: ["Avalanche", "Bitcoin"],
+    slug: "core-bitcoin-bridge",
     destinationChain: "Bitcoin", // not sure the effect this will have, need to double-check everything works
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -325,6 +333,7 @@ export default [
     displayName: "Axelar",
     bridgeDbName: "axelar",
     iconLink: "icons:axelar",
+    slug: "axelar-network",
     largeTxThreshold: 10000, //TODO <<<confirm this
     url: "https://www.axelar.network/",
     chains: [
@@ -356,9 +365,10 @@ export default [
     id: 18,
     displayName: "Rainbow Bridge",
     bridgeDbName: "rainbowbridge",
+    slug: "rainbow-bridge",
     iconLink: "chain:aurora",
     largeTxThreshold: 10000,
-    url: "",
+    url: "rainbow-bridge",
     chains: ["Ethereum", "Aurora"],
     destinationChain: "Aurora",
   },
@@ -367,6 +377,7 @@ export default [
     displayName: "Across",
     bridgeDbName: "across",
     iconLink: "icons:across",
+    slug: "across",
     largeTxThreshold: 10000,
     url: "https://across.to/",
     chains: [
@@ -401,6 +412,7 @@ export default [
     bridgeDbName: "debridgedln",
     iconLink: "icons:debridge",
     largeTxThreshold: 10000,
+    slug: "debridge",
     url: "https://debridge.finance/",
     chains: [
       "Ethereum",
@@ -434,6 +446,7 @@ export default [
     displayName: "Allbridge Classic",
     bridgeDbName: "allbridge",
     iconLink: "icons:allbridge",
+    slug: "allbridge-classic",
     largeTxThreshold: 10000,
     url: "https://app.allbridge.io/bridge",
     chains: ["Ethereum", "BSC", "Avalanche", "Fantom", "Polygon"],
@@ -451,12 +464,14 @@ export default [
     url: "https://portal.polygon.technology/",
     chainMapping: { "polygon zkevm": "polygon_zkevm" },
     chains: ["Ethereum", "Polygon zkEVM"],
+    slug: "polygon-zkevm-bridge",
     destinationChain: "Polygon zkEVM",
   },
   {
     id: 24,
     displayName: "IBC",
     bridgeDbName: "ibc",
+    slug: "ibc",
     iconLink: "icons:ibc",
     largeTxThreshold: 10000,
     url: "https://mapofzones.com/",
@@ -714,6 +729,7 @@ export default [
     displayName: "Symbiosis",
     bridgeDbName: "symbiosis",
     iconLink: "icons:symbiosis",
+    slug: "symbiosis",
     largeTxThreshold: 10000,
     url: "https://symbiosis.finance/",
     chains: [
@@ -755,6 +771,7 @@ export default [
     bridgeDbName: "meson",
     iconLink: "icons:meson",
     largeTxThreshold: 10000,
+    slug: "meson",
     url: "https://meson.fi/",
     chains: [
       "Ethereum",
@@ -800,6 +817,7 @@ export default [
     largeTxThreshold: 10000,
     url: "https://docs.base.org/chain/bridges-mainnet",
     chains: ["Ethereum", "Base"],
+    slug: "base-bridge",
     destinationChain: "Base",
   },
   {
@@ -807,6 +825,7 @@ export default [
     displayName: "Mantle Bridge",
     bridgeDbName: "mantle",
     iconLink: "chain:mantle",
+    slug: "mantle-bridge",
     largeTxThreshold: 10000,
     url: "https://bridge.mantle.xyz/",
     chains: ["Ethereum", "Mantle"],
@@ -844,6 +863,7 @@ export default [
     displayName: "Manta Pacific Bridge",
     bridgeDbName: "manta",
     iconLink: "icons:manta-pacific-bridge",
+    slug: "manta-pacific",
     largeTxThreshold: 10000,
     url: "https://pacific-bridge.manta.network/",
     chains: ["Ethereum", "Manta"],
@@ -885,6 +905,7 @@ export default [
     displayName: "Eywa",
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
+    slug: "crosscurve-(by-eywa)",
     largeTxThreshold: 10000,
     url: "https://crosscurve.fi/",
     chains: [
@@ -919,6 +940,7 @@ export default [
     displayName: "rhino.fi",
     bridgeDbName: "rhinofi",
     iconLink: "icons:rhino.fi",
+    slug: "rhino.fi",
     largeTxThreshold: 10000,
     url: "https://app.rhino.fi/bridge",
     chains: [
@@ -966,6 +988,7 @@ export default [
     displayName: "Wan Bridge",
     bridgeDbName: "wanbridge",
     iconLink: "icons:wan-bridge",
+    slug: "wan-bridge",
     largeTxThreshold: 10000,
     url: "https://bridge.wanchain.org",
     chains: [
@@ -1008,6 +1031,7 @@ export default [
     bridgeDbName: "pnetwork",
     iconLink: "icons:pnetwork",
     largeTxThreshold: 10000,
+    slug: "pnetwork",
     url: "https://p.network",
     chains: ["Ethereum", "BSC"],
   },
@@ -1027,6 +1051,7 @@ export default [
     bridgeDbName: "interport",
     iconLink: "icons:interport-finance",
     largeTxThreshold: 10000,
+    slug: "interport-finance",
     url: "https://app.interport.fi",
     chains: [
       "Ethereum",
@@ -1126,6 +1151,7 @@ export default [
     id: 45,
     displayName: "Shimmer Bridge",
     bridgeDbName: "shimmerbridge",
+    slug: "shimmerbridge",
     iconLink: "chain:shimmerevm",
     largeTxThreshold: 10000,
     url: "https://shimmerbridge.org/bridge",
@@ -1196,6 +1222,7 @@ export default [
     bridgeDbName: "rootstock",
     iconLink: "chain:rootstock",
     largeTxThreshold: 10000,
+    slug: "rsk-bridge",
     url: "https://rootstock.io/",
     chains: ["Rootstock", "Bitcoin"],
     chainMapping: {
@@ -1212,12 +1239,14 @@ export default [
     url: "https://garden.finance",
     chains: ["Ethereum", "Arbitrum", "Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin"],
     destinationChain: "Bitcoin",
+    slug: "garden"
   },
   {
     id: 50,
     displayName: "Mode Network",
     bridgeDbName: "mode",
     iconLink: "chain:mode",
+    slug: "mode-bridge",
     largeTxThreshold: 10000,
     url: "https://app.mode.network/",
     chains: ["Ethereum", "Mode"],
@@ -1228,6 +1257,7 @@ export default [
     displayName: "Circle CCTP",
     bridgeDbName: "circle",
     iconLink: "protocols:circle_cctp",
+    slug: "circle",
     largeTxThreshold: 10000,
     url: "https://www.circle.com/en/cross-chain-transfer-protocol",
     chains: ["Ethereum", "Optimism", "Polygon", "Base", "Arbitrum", "Avalanche"],
@@ -1254,6 +1284,7 @@ export default [
     displayName: "Nitro (by Router Protocol)",
     bridgeDbName: "router",
     iconLink: "protocols:nitro",
+    slug: "router-protocol",
     url: "https://www.routerprotocol.com/",
     largeTxThreshold: 10000,
     chains: [
@@ -1383,6 +1414,7 @@ export default [
     displayName: "Connext",
     bridgeDbName: "connext",
     iconLink: "icons:connext",
+    slug: "connext",
     url: "https://connext.network",
     largeTxThreshold: 10000,
     chains: ["Ethereum", "Optimism", "Polygon", "Arbitrum", "BSC", "Gnosis", "Linea", "Base", "Metis", "Mode"],
@@ -1395,6 +1427,7 @@ export default [
     displayName: "Allbridge Core",
     bridgeDbName: "allbridge-core",
     iconLink: "icons:allbridge-core",
+    slug: "allbridge-core",
     largeTxThreshold: 10000,
     url: "https://core.allbridge.io/",
     chains: ["Arbitrum", "Avalanche", "BSC", "Base", "Ethereum", "Optimism", "Polygon", "Solana"],
@@ -1622,6 +1655,7 @@ export default [
     displayName: "Bunnyfi",
     bridgeDbName: "bunnyfi",
     iconLink: "icons:bunnyfi",
+    slug: "bunnyfi",
     largeTxThreshold: 10000,
     url: "https://bunnyfi.network",
     chains: [
@@ -1744,6 +1778,7 @@ export default [
     displayName: "Crowdswap",
     bridgeDbName: "crowdswap",
     iconLink: "icons:crowdswap",
+    slug: "crowdswap",
     largeTxThreshold: 10000,
     url: "https://scanner.crowdswap.org/",
     chains: ["Ethereum", "Arbitrum", "Optimism", "BSC", "Polygon", "Base", "RootStock"],
@@ -1753,6 +1788,7 @@ export default [
     displayName: "Mint",
     bridgeDbName: "mint",
     iconLink: "icons:mint",
+    slug: "mint-bridge",
     largeTxThreshold: 10000,
     url: "https://bridge.mintchain.io/",
     chains: ["Ethereum", "Mint"],
@@ -1763,6 +1799,7 @@ export default [
     displayName: "Sui Bridge",
     bridgeDbName: "suibridge",
     iconLink: "icons:sui",
+    slug: "suibridge",
     largeTxThreshold: 10000,
     url: "https://bridge.sui.io/",
     chains: ["Ethereum", "Sui"],
@@ -1986,6 +2023,7 @@ export default [
     id: 77,
     displayName: "Wormhole",
     bridgeDbName: "wormhole",
+    slug: "portal", // //rebrand from Wormhole
     iconLink: "icons:wormhole",
     largeTxThreshold: 10000,
     url: "https://portalbridge.com/",
@@ -2026,6 +2064,7 @@ export default [
     displayName: "Threshold Network",
     bridgeDbName: "thresholdnetwork",
     iconLink: "icons:threshold-network",
+    slug: "threshold-network", // parent
     largeTxThreshold: 10000,
     url: "https://threshold.network/",
     chains: ["Ethereum", "Bitcoin"],
@@ -2036,6 +2075,7 @@ export default [
     displayName: "Zircuit Bridge",
     bridgeDbName: "zircuit",
     iconLink: "chain:zircuit",
+    slug: "zircuit",
     largeTxThreshold: 10000,
     url: "https://bridge.zircuit.com/",
     chains: ["Ethereum", "Zircuit"],
@@ -2045,6 +2085,7 @@ export default [
     id: 80,
     displayName: "Hyperliquid",
     bridgeDbName: "hyperliquid",
+    slug: "hyperliquid-bridge",
     iconLink: "icons:hyperliquid",
     largeTxThreshold: 10000,
     url: "https://app.hyperliquid.xyz/trade",
@@ -2056,6 +2097,7 @@ export default [
     displayName: "PowPeg Fast Mode (Flyover)",
     bridgeDbName: "flyover",
     iconLink: "icons:flyover",
+    slug: "powpeg",
     largeTxThreshold: 10000,
     url: "https://powpeg.rootstock.io/",
     chains: ["Rootstock", "Bitcoin"],
@@ -2098,6 +2140,7 @@ export default [
     displayName: "Eclipse Canonical Bridge",
     bridgeDbName: "eclipse",
     iconLink: "chain:eclipse",
+    slug: "eclipse-bridge",
     largeTxThreshold: 10000,
     url: "https://app.eclipse.xyz/bridge",
     chains: ["Ethereum", "Eclipse"],
@@ -2109,6 +2152,7 @@ export default [
     displayName: "LayerZero",
     bridgeDbName: "layerzero",
     iconLink: "icons:layerzero",
+    slug: "layerzero",
     largeTxThreshold: 10000,
     url: "https://www.layerzero.network/",
     chains: allChains
@@ -2134,6 +2178,7 @@ export default [
     displayName: "Fuel",
     bridgeDbName: "fuel",
     iconLink: "chain:fuel ignition",
+    slug: "fuel-bridge",
     largeTxThreshold: 10000,
     url: "https://fuel.network/",
     chains: ["Ethereum", "Fuel Ignition"],
@@ -2144,6 +2189,7 @@ export default [
     displayName: "Lighter",
     bridgeDbName: "lighter",
     iconLink: "icons:lighter",
+    slug: "lighter-v2",
     largeTxThreshold: 10000,
     url: "https://lighter.xyz/",
     chains: ["Ethereum", "Lighter"],
@@ -2154,6 +2200,7 @@ export default [
     displayName: "Movement",
     bridgeDbName: "movement",
     iconLink: "chain:movement",
+    slug: "movement",
     largeTxThreshold: 10000,
     url: "https://bridge.movementnetwork.xyz/",
     chains: ["Ethereum", "Movement"],
@@ -2217,6 +2264,7 @@ export default [
     id: 92,
     displayName: "USDT0",
     bridgeDbName: "usdt0",
+    slug: "usdt0",
     iconLink: "protocols:usdt0",
     largeTxThreshold: 10000,
     url: "https://usdt0.to",
