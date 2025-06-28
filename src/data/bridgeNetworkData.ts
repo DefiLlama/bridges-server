@@ -2271,4 +2271,13 @@ export default [
     url: "https://usdt0.to",
     chains: ["Arbitrum", "Berachain", "Corn", "Ethereum", "Flare", "Hyperliquid", "Ink", "Optimism", "Sei", "Unichain"],
   },
+  {
+    id: 92,
+    displayName: "Chainlink CCIP",
+    bridgeDbName: "ccip",
+    iconLink: "icons:ccip",
+    largeTxThreshold: 10000,
+    url: "https://ccip.chain.link/",
+    chains: ["Ethereum"],
+  },
 ] as BridgeNetwork[];
