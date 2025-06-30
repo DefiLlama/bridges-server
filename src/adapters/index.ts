@@ -81,13 +81,14 @@ import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
-import assetchainbridge from "./assetchain-bridge"
+import assetchainbridge from "./assetchain-bridge";
 import train from "./train";
 import fuel from "./fuel";
 import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
 import usdt0 from "./usdt0";
+import pheasantNetwork from "./pheasant-network";
 
 export default {
   polygon,
@@ -179,6 +180,7 @@ export default {
   movement,
   intersoon,
   usdt0,
+  pheasantNetwork,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

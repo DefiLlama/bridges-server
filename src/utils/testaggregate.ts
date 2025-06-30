@@ -6,6 +6,28 @@ const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
 const chain = process.argv[5];
 
+function splitIntoDailyIntervals(startTimestamp: number, endTimestamp: number): Array<{ start: number; end: number }> {
+  const intervals = [];
+  const oneDay = 24 * 60 * 60;
+
+  let currentStart = startTimestamp;
+
+  while (currentStart < endTimestamp) {
+    const startOfDay = Math.floor(currentStart / oneDay) * oneDay;
+    const endOfDay = startOfDay + oneDay - 1;
+    const currentEnd = Math.min(endOfDay, endTimestamp);
+
+    intervals.push({
+      start: currentStart,
+      end: currentEnd,
+    });
+
+    currentStart = endOfDay + 1;
+  }
+
+  return intervals;
+}
+
 async function aggregateHistorical(
   startTimestamp: number,
   endTimestamp: number,
@@ -38,8 +60,15 @@ const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: nu
     });
 };
 
-if (bridgeName) {
-  aggregateHistorical(startTs, endTs, bridgeName, chain ? [chain] : undefined);
-} else {
-  runAllAdaptersHistorical(startTs, endTs);
-}
+(async () => {
+  if (bridgeName) {
+    const dailyIntervals = splitIntoDailyIntervals(startTs, endTs);
+    await PromisePool.withConcurrency(60)
+      .for(dailyIntervals.reverse())
+      .process(async (interval) => {
+        await aggregateHistorical(interval.start, interval.end, bridgeName, chain ? [chain] : undefined);
+      });
+  } else {
+    await runAllAdaptersHistorical(startTs, endTs);
+  }
+})();
