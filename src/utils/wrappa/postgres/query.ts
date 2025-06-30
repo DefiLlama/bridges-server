@@ -398,14 +398,14 @@ const getNetflows = async (period: TimePeriod) => {
       SELECT 
         hv.chain,
         SUM(CASE 
-          WHEN c.destination_chain IS NULL THEN (hv.total_withdrawn_usd - hv.total_deposited_usd)
+          WHEN c.destination_chain IS NULL THEN (hv.total_deposited_usd - hv.total_withdrawn_usd)
           ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
         END) as net_flow
       FROM bridges.daily_volume hv
       JOIN bridges.config c ON hv.bridge_id = c.id
       WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
       AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')
-      AND LOWER(hv.chain) NOT LIKE '%dydx%'
+      AND LOWER(hv.chain) NOT LIKE '%dydx%' AND hv.chain != 'bera'
       GROUP BY hv.chain
     )
     SELECT 
