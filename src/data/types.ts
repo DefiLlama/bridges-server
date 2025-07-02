@@ -2,6 +2,7 @@ import { Chain } from "@defillama/sdk/build/general";
 
 export type BridgeNetwork = {
   id: number;
+  slug: string;
   displayName: string;
   bridgeDbName: string;
   iconLink: string;
