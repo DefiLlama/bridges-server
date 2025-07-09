@@ -1260,7 +1260,7 @@ export default [
     iconLink: "protocols:garden",
     largeTxThreshold: 10000,
     url: "https://garden.finance",
-    chains: ["Ethereum", "Arbitrum", "Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin"],
+    chains: ["Ethereum", "Arbitrum", "Base", "Unichain", "Berachain", "Hyperliquid", "Bitcoin", "Corn", "Solana"],
     destinationChain: "Bitcoin",
     slug: "garden",
   },
