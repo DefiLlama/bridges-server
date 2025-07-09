@@ -161,6 +161,9 @@ const contractAddresses = {
   hyperliquid: {
     uBTC: "0x39f3294352208905fc6ebf033954E6c6455CdB4C",
   },
+  corn : {
+    BTCN : "0xeaE7721d779276eb0f5837e2fE260118724a2Ba4"
+  }
   
 } as any;
 const tokenAddresses = {
@@ -189,6 +192,9 @@ const tokenAddresses = {
   hyperliquid: {
     uBTC: "0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463",
   },
+  corn : {
+    BTCN : "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+  }
   
 } as any;
 
@@ -216,6 +222,7 @@ const adapter: BridgeAdapter = {
   unichain: constructParams("unichain"),
   berachain: constructParams("berachain"),
   hyperliquid: constructParams("hyperliquid"),
+  corn : constructParams("corn"),
   solana : getSolanaEvents
 };
 
