@@ -22,8 +22,34 @@ const axios = require("axios");
 const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
+const SECONDS_IN_SIX_HOURS = SECONDS_IN_DAY / 4;
+const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds default timeout
+const BLOCK_FETCH_TIMEOUT_MS = 10000; // 10 seconds for block fetching
 
-// FIX timeout problems throughout functions here
+// Helper function to get timestamp with timeout
+const getTimestamp = async (blockNumber: number, chain: string, timeoutMs: number = BLOCK_FETCH_TIMEOUT_MS): Promise<number> => {
+  const provider = getProvider(chain as Chain);
+  if (!provider) {
+    throw new Error(`No provider available for chain ${chain}`);
+  }
+  
+  return Promise.race([
+    provider.getBlock(blockNumber).then(block => block.timestamp),
+    new Promise<number>((_, reject) => 
+      setTimeout(() => reject(new Error(`Timeout fetching timestamp for block ${blockNumber} on ${chain}`)), timeoutMs)
+    )
+  ]);
+};
+
+// Helper function to get block by timestamp with timeout
+const getBlock = async (chain: string, timestamp: number, timeoutMs: number = BLOCK_FETCH_TIMEOUT_MS): Promise<number> => {
+  return Promise.race([
+    lookupBlock(timestamp, { chain: chain as Chain }).then(result => result.block),
+    new Promise<number>((_, reject) => 
+      setTimeout(() => reject(new Error(`Timeout fetching block for timestamp ${timestamp} on ${chain}`)), timeoutMs)
+    )
+  ]);
+};
 
 const getBlocksForRunningAdapter = async (
   bridgeDbName: string,
@@ -32,19 +58,23 @@ const getBlocksForRunningAdapter = async (
   recordedBlocks: RecordedBlocks
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
-  // todo: fix this line
-  const useChainBlocks = !nonBlocksChains.includes(chainContractsAreOn);
+  
+  const useChainBlocks = bridgeDbName === "ibc" ? false : !nonBlocksChains.includes(chainContractsAreOn);
   let startBlock = undefined;
   let endBlock = undefined;
   let useRecordedBlocks = undefined;
   if (useChainBlocks) {
-    // probably need timeouts here
     try {
-      if (bridgeDbName === "ibc") {
-        endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName);
-      } else {
-        endBlock = await getLatestBlockNumber(chainContractsAreOn);
-      }
+      const endBlockPromise = bridgeDbName === "ibc" 
+        ? getLatestBlockNumber(chainContractsAreOn, bridgeDbName)
+        : getLatestBlockNumber(chainContractsAreOn);
+
+      endBlock = await Promise.race([
+        endBlockPromise,
+        new Promise<number | undefined>((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout fetching latest block for ${chainContractsAreOn}`)), DEFAULT_TIMEOUT_MS)
+        )
+      ]);
 
       if (!endBlock) {
         const errString = `Unable to get blocks for ${bridgeDbName} adapter on chain ${chainContractsAreOn}. `;
@@ -74,13 +104,27 @@ const getBlocksForRunningAdapter = async (
         }.`
       );
     } else {
-      // try {
-      //   const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
-      //   const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
-      //   lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY ? sixHoursBlock : lastRecordedEndBlock;
-      // } catch (e: any) {
-      //   console.error("Get start block error");
-      // }
+      try {
+        const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
+        const timeSinceLastBlock = currentTimestamp - lastTs;
+        
+        // If more than 24 hours have passed, use a block from 6 hours ago
+        if (timeSinceLastBlock > SECONDS_IN_DAY) {
+          const sixHoursAgoTimestamp = currentTimestamp - SECONDS_IN_SIX_HOURS;
+          const sixHoursBlock = await getBlock(chain, Number(sixHoursAgoTimestamp.toFixed()));
+          lastRecordedEndBlock = sixHoursBlock;
+          console.log(
+            `Last recorded block for ${bridgeDbName} on ${chain} is older than 24 hours. ` +
+            `Adjusting start block to 6 hours ago: ${lastRecordedEndBlock}`
+          );
+        }
+      } catch (e: any) {
+        console.error(
+          `Failed to validate timestamp for last recorded block ${lastRecordedEndBlock} on ${chain}. ` +
+          `Proceeding with recorded value. Error: ${e.message}`
+        );
+        // Don't throw - continue with the lastRecordedEndBlock value
+      }
     }
     startBlock = lastRecordedEndBlock + 1;
     useRecordedBlocks = true;
@@ -297,8 +341,20 @@ export const runAllAdaptersToCurrentBlock = async (
     );
     await adapterPromises;
   }
-  // need better error catching
-  await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
+  try {
+    await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
+    console.log("Successfully stored recordedBlocks.json to S3");
+  } catch (e: any) {
+    const errString = `Failed to store recordedBlocks.json to S3: ${e.message}`;
+    console.error(errString);
+    await insertErrorRow({
+      ts: currentTimestamp,
+      target_table: "blocks",
+      keyword: "critical",
+      error: errString,
+    });
+    // Don't throw - allow the process to complete even if S3 storage fails
+  }
   console.log("runAllAdaptersToCurrentBlock successfully ran.");
 };
 
@@ -308,6 +364,8 @@ export const runAllAdaptersTimestampRange = async (
   startTimestamp: number,
   endTimestamp: number
 ) => {
+  const startTime = Date.now();
+  
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
     let adapter = adapters[bridgeDbName];
@@ -354,8 +412,9 @@ export const runAllAdaptersTimestampRange = async (
     );
     await adapterPromises;
   }
-  // need better error catching
-  console.log("runAllAdaptersTimestampRange successfully ran.");
+  // completion logging
+  const duration = (Date.now() - startTime) / 1000;
+  console.log(`runAllAdaptersTimestampRange completed successfully in ${duration.toFixed(2)} seconds`);
 };
 
 const bridgesToSkip = ["wormhole", "layerzero", "hyperlane", "intersoon"];
@@ -453,9 +512,15 @@ export const runAdapterHistorical = async (
     const maxRetries = 3;
     while (retryCount < maxRetries) {
       try {
+        // Add timeout for adapter event fetching
         const eventLogs = await retry(
           () =>
-            adapterChainEventsFn(block, endBlockForQuery).catch((e) => {
+            Promise.race([
+              adapterChainEventsFn(block, endBlockForQuery),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error(`Timeout fetching events for ${bridgeDbName} on ${chain}`)), DEFAULT_TIMEOUT_MS)
+              )
+            ]).catch((e) => {
               console.error(
                 `[ERROR] Failed to fetch event logs for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}. Error: ${e.message}`
               );
@@ -533,7 +598,13 @@ export const runAdapterHistorical = async (
                   try {
                     if (useChainBlocks && chain !== "solana") {
                       await wait(100);
-                      block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
+                      // Add timeout for individual block fetching
+                      block = await Promise.race([
+                        retry(async () => provider.getBlock(blockNumber), { retries: 3 }),
+                        new Promise<any>((_, reject) => 
+                          setTimeout(() => reject(new Error(`Timeout fetching block ${blockNumber}`)), BLOCK_FETCH_TIMEOUT_MS)
+                        )
+                      ]);
                       if (block.timestamp) {
                         blockTimestamps[i] = block.timestamp;
                         break;
@@ -712,3 +783,6 @@ export const insertConfigEntriesForAdapter = async (
 export function isAsyncAdapter(adapter: BridgeAdapter | AsyncBridgeAdapter): adapter is AsyncBridgeAdapter {
   return (adapter as AsyncBridgeAdapter).isAsync;
 }
+
+// Export the getBlocksForRunningAdapter function so it can be tested
+export { getBlocksForRunningAdapter };
