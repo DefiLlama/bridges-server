@@ -6,7 +6,7 @@ import * as yaml from "js-yaml";
 import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
 
 const baseUri = "https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main";
-const kyveApiBaseUri = "https://hyperlane.services.kyve.network";
+const kyveApiBaseUri = "https://data.services.hyperlane.xyz";
 
 export async function setUp(): Promise<string[]> {
   const chains = [];
