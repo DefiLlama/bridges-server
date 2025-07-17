@@ -42,6 +42,10 @@ const deployments = {
     oapp: "0xF03b4d9AC1D5d1E7c4cEf54C2A313b9fe051A0aD",
     token: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
   }],
+  rootstock: [{
+    oapp: "0x1a594d5d5d1c426281C1064B07f23F57B2716B61",
+    token: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+  }],
   sei: [{
     oapp: "0x56Fe74A2e3b484b921c447357203431a3485CC60",
     token: "0x9151434b16b9763660705744891fA906F660EcC5",

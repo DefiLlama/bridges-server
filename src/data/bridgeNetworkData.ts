@@ -2291,7 +2291,10 @@ export default [
     iconLink: "protocols:usdt0",
     largeTxThreshold: 10000,
     url: "https://usdt0.to",
-    chains: ["Arbitrum", "Berachain", "Corn", "Ethereum", "Flare", "Hyperliquid", "Ink", "Optimism", "Sei", "Unichain"],
+    chains: ["Arbitrum", "Berachain", "Corn", "Ethereum", "Flare", "Hyperliquid", "Ink", "Optimism", "Sei", "Unichain", "Rootstock"],
+    chainMapping: {
+      rootstock: "rsk",
+    },
   },
   {
     id: 93,
