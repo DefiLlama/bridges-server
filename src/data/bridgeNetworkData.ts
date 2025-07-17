@@ -903,7 +903,7 @@ export default [
   {
     id: 35,
     displayName: "CrossCurve",
-    bridgeDbName: "crosscurve",
+    bridgeDbName: "eywa",
     iconLink: "icons:eywa",
     slug: "crosscurve",
     largeTxThreshold: 10000,
