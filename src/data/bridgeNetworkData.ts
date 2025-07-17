@@ -902,10 +902,10 @@ export default [
   },
   {
     id: 35,
-    displayName: "Eywa",
+    displayName: "CrossCurve",
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
-    slug: "crosscurve-(by-eywa)",
+    slug: "crosscurve",
     largeTxThreshold: 10000,
     url: "https://crosscurve.fi/",
     chains: [
