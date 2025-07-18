@@ -87,6 +87,7 @@ import fuel from "./fuel";
 import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
+import ccip from "./ccip";
 import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 
@@ -179,6 +180,7 @@ export default {
   lighter,
   movement,
   intersoon,
+  ccip,
   usdt0,
   pheasantNetwork,
 } as {
