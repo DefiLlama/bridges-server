@@ -11,6 +11,7 @@ interface SwapData {
   source_swap: SourceSwap;
   destination_swap: DestinationSwap;
   create_order: CreateOrder;
+  created_at: string;
 }
 
 // Source swap details (only required fields)
@@ -67,6 +68,7 @@ interface SolanaEvent {
   token: string;
   amount: string;
   isDeposit: boolean;
+  timestamp: number;
 }
 
 // Export the main interface

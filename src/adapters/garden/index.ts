@@ -105,7 +105,8 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
                     isDeposit: isSourceSolana,
                     token: isSourceSolana
                         ? source_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : source_swap.asset
-                        : destination_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : destination_swap.asset
+                        : destination_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : destination_swap.asset,
+                    timestamp: new Date(swap.created_at).getTime(),
                 };
 
                 events.push(event);
@@ -132,6 +133,7 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
         token: event.token,
         amount: ethers.BigNumber.from(event.amount), 
         isDeposit: event.isDeposit,
+        timestamp: event.timestamp,
     }));
 };
 
