@@ -1353,6 +1353,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Axelar";
     case "zkSync Era":
       return "zkSync Era";
+    case "zksync era":
+      return "zkSync Era";
     case "sui":
       return "Sui";
     case "solana":

@@ -402,10 +402,12 @@ const getNetflows = async (period: TimePeriod) => {
       break;
   }
 
-  return await sql<{ chain: string; net_flow: string }[]>`
+  return await sql<{ chain: string; net_flow: string; deposited_usd: string; withdrawn_usd: string }[]>`
     WITH period_flows AS (
       SELECT 
         hv.chain,
+        SUM(hv.total_deposited_usd) AS deposited_usd,
+        SUM(hv.total_withdrawn_usd) AS withdrawn_usd,
         SUM(CASE 
           WHEN c.destination_chain IS NULL THEN (hv.total_deposited_usd - hv.total_withdrawn_usd)
           ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
@@ -416,7 +418,9 @@ const getNetflows = async (period: TimePeriod) => {
     )
     SELECT 
       chain,
-      net_flow::text
+      net_flow::text,
+      deposited_usd::text,
+      withdrawn_usd::text
     FROM period_flows
     WHERE net_flow IS NOT NULL
     ORDER BY ABS(net_flow::numeric) DESC;
