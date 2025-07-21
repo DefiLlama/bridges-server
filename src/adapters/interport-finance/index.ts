@@ -251,6 +251,7 @@ const constructParams = (chain: Chain) => {
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
+    solana: constructParams("solana"),
     avalanche: constructParams("avax"),
     arbitrum: constructParams("arbitrum"),
     base: constructParams("base"),
@@ -267,7 +268,6 @@ const adapter: BridgeAdapter = {
     blast: constructParams("blast"),
     celo: constructParams("celo"),
     gnosis: constructParams("gnosis"),
-    kroma: constructParams("kroma"),
     metis: constructParams("metis"),
     mode: constructParams("mode"),
     wemix: constructParams("wemix"),
@@ -297,8 +297,9 @@ const adapter: BridgeAdapter = {
     mind: constructParams("mind"),
     rootstock: constructParams("rootstock"),
     hemi: constructParams("hemi"),
+    unichain: constructParams("unichain"),
+    botanix: constructParams("botanix"),
     "world chain": constructParams("world"),
-    solana: constructParams("solana"),
 };
 
 export default adapter;

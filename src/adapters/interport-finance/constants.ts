@@ -32,14 +32,17 @@ export const CCIP_TOKEN_BRIDGE: AddressList = {
 } as const;
 
 export const CCIP_V2_TOKEN_BRIDGE: AddressList = {
-  ethereum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  arbitrum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  bsc: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  base: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  optimism: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  linea: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  sonic: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
-  scroll: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    ethereum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    arbitrum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    bsc: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    base: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    optimism: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    linea: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    sonic: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    scroll: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    avax: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    botanix: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    unichain: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
 } as const;
 
 export const CCIP_BACKED_TOKEN_BRIDGE: AddressList = {
@@ -87,7 +90,8 @@ export const ACTION_EXECUTOR: AddressList = {
     soneium: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
     sonic: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
     hemi: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
-    rootstock: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c"
+    rootstock: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    unichain: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c"
 } as const;
 
 export const CUSTOM_BRIDGE: AddressList = {
