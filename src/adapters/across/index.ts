@@ -23,12 +23,20 @@ const contracts = {
     spokePoolv2: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
     spokePoolv2p5: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
   },
+  // Chain id: 56
+  bsc: {
+    spokePoolv2p5: "0x4e8E101924eDE233C13e2D8622DC8aED2872d505",
+  },
+  // Chain id: 130
+  unichain: {
+    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+  },
   // Chain id: 137
   polygon: {
     spokePoolv2: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
     spokePoolv2p5: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
   },
-   // Chain id: 232
+  // Chain id: 232
   lens: {
     spokePoolv2p5: "0xe7cb3e167e7475dE1331Cf6E0CEb187654619E12",
   },
@@ -36,9 +44,21 @@ const contracts = {
   era: {
     spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
   },
+  // Chain id: 480
+  wc: {
+    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
+  },
+  // Chain id: 690
+  redstone: {
+    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+  },
   // Chain id: 1135
   lisk: {
-   spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
+    spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
+  },
+  // Chain id: 1868
+  soneium: {
+    spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
   },
   // Chain id: 8453
   base: {
@@ -48,10 +68,22 @@ const contracts = {
   mode: {
     spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
   },
+  // Chain id: 41455
+  aleph_zero: {
+    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+  },
   // Chain id: 42161
   arbitrum: {
     spokePoolv2: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
     spokePoolv2p5: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
+  },
+  // Chain id: 56288
+  boba: {
+    spokePoolv2: "0xBbc6009fEfFc27ce705322832Cb2068F8C1e0A58",
+  },
+  // Chain id: 57073
+  ink: {
+    spokePoolv2p5: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
   },
   // Chain id: 59144
   linea: {
@@ -65,31 +97,10 @@ const contracts = {
   scroll: {
     spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
   },
-  // Chain id: 130
-  unichain: {
-   spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
-  // Chain id: 1868
-  soneium: {
-   spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
-  },
-  // Chain id: 57073
-  ink: {
-   spokePoolv2p5: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
-  },
   // Chain id: 7777777
   zora: {
-   spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
-  },
-  // Chain id: 480
-  wc: {
-   spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
-  // Chain id: 690
-  redstone: {
-   spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
+    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
   }
-  
 } as const;
 
 type SupportedChains = keyof typeof contracts;
