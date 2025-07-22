@@ -1078,6 +1078,7 @@ export default [
     url: "https://app.interport.fi",
     chains: [
       "Ethereum",
+      "Solana",
       "Arbitrum",
       "BSC",
       "ZKsync Era",
@@ -1095,7 +1096,6 @@ export default [
       "Blast",
       "Celo",
       "Gnosis",
-      "Kroma",
       "Metis",
       "Mode",
       "Wemix",
@@ -1154,8 +1154,11 @@ export default [
       "Redstone",
       "RootStock",
       "Hemi",
-      "Solana",
       "Hyperliquid",
+      "Botanix",
+      "TAC",
+      "Codex",
+      "Unichain"
     ],
     chainMapping: {
       "zksync era": "era",
