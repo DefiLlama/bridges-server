@@ -204,7 +204,7 @@ export default [
     id: 12,
     displayName: "Stargate",
     bridgeDbName: "stargate",
-    iconLink: "icons:stargate",
+    iconLink: "icons:stargate-finance",
     slug: "stargate-finance", //parentprotocol
     largeTxThreshold: 10000,
     url: "https://stargate.finance/",
