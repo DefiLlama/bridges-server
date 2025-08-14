@@ -37,9 +37,9 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
     synthesis: "0x0000000000000000000000000000000000000000",
   },
   {
-    chainId: 56288,
+    chainId: 13863860,
     portal: "0x0000000000000000000000000000000000000000",
-    synthesis: "0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8",
+    synthesis: "0x45CFd6FB7999328F189aaD2739Fba4Be6C45E5bf",
   },
   {
     chainId: 324,
@@ -114,7 +114,7 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
   {
     chainId: 30,
     portal: "0x5aa5f7f84ed0e5db0a4a85c3947ea16b53352fd4",
-    synthesis: "0x0000000000000000000000000000000000000000",
+    synthesis: "0xf8504d2ca2f0bbad9d36927e3d32e278abadada0",
   },
   {
     chainId: 81457,
@@ -182,11 +182,6 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
     synthesis: "0x0000000000000000000000000000000000000000",
   },
   {
-    chainId: 5426,
-    portal: "0x0000000000000000000000000000000000000000",
-    synthesis: "0x0000000000000000000000000000000000000000",
-  },
-  {
     chainId: 2345,
     portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
     synthesis: "0x0000000000000000000000000000000000000000",
@@ -208,6 +203,31 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
   },
   {
     chainId: 80094,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 130,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 1868,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 204,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 999,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 747474,
     portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
     synthesis: "0x0000000000000000000000000000000000000000",
   },
