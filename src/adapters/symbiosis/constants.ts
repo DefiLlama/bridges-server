@@ -40,6 +40,12 @@ export enum ChainId {
     ABSTRACT_MAINNET = 2741,
     GNOSIS_MAINNET = 100,
     BERACHAIN_MAINNET = 80094,
+    SYMBIOSIS_MAINNET = 13863860,
+    UNICHAIN_MAINNET = 130,
+    SONEIUM_MAINNET = 1868,
+    OPBNB_MAINNET = 204,
+    HYPEREVM_MAINNET = 999,
+    KATANA_MAINNET = 747474,
 
 }
 export const AddressZero = "0x0000000000000000000000000000000000000000"
@@ -83,9 +89,15 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.MORPH_MAINNET]: 'morph',
     [ChainId.GOAT_MAINNET]: 'goat', // TODO no chain on defillama bridges
     [ChainId.SONIC_MAINNET]: 'sonic',
-    [ChainId.ABSTRACT_MAINNET]: 'abstract', // TODO no chain on defillama bridges
+    [ChainId.ABSTRACT_MAINNET]: 'abstract',
     [ChainId.GNOSIS_MAINNET]: 'xdai',
-    [ChainId.BERACHAIN_MAINNET]: 'berachain', // TODO no chain on defillama bridges
+    [ChainId.BERACHAIN_MAINNET]: 'berachain',
+    [ChainId.SYMBIOSIS_MAINNET]: 'symbiosis',
+    [ChainId.UNICHAIN_MAINNET]: 'unichain',
+    [ChainId.SONEIUM_MAINNET]: 'soneium',
+    [ChainId.OPBNB_MAINNET]: 'op_bnb',
+    [ChainId.HYPEREVM_MAINNET]: 'hyperevm', // TODO no chain on defillama bridges
+    [ChainId.KATANA_MAINNET]: 'katana', // TODO no chain on defillama bridges
 }
 
 export const CHAIN_ADAPTER_MAP: Record<string, string> = {
