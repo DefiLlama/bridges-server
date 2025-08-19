@@ -1228,19 +1228,19 @@ export default [
       "cronos zkevm": "cronos_zkevm",
     },
   },
-  // {
-  //   id: 47,
-  //   displayName: "Butter Network",
-  //   bridgeDbName: "butternetwork",
-  //   iconLink: "icons:butternetwork",
-  //   largeTxThreshold: 10000,
-  //   url: "",
-  //   chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
-  //   chainMapping: {
-  //     "map relay chain": "map",
-  //   },
-  //   destinationChain: "MAP Relay Chain",
-  // },
+  {
+    id: 47,
+    displayName: "Butter Network",
+    bridgeDbName: "butternetwork",
+    iconLink: "icons:butternetwork",
+    largeTxThreshold: 10000,
+    url: "",
+    chains: ["Ethereum", "Polygon", "BSC", "MAP Relay Chain"],
+    chainMapping: {
+      "map relay chain": "map",
+    },
+    destinationChain: "MAP Relay Chain",
+  },
 
   {
     id: 48,
