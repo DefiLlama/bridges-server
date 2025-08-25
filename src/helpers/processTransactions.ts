@@ -1,4 +1,3 @@
-import { getLogs } from "@defillama/sdk/build/util";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
@@ -6,6 +5,7 @@ import { ContractEventParams, PartialContractEventParams } from "../helpers/brid
 import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
+import { getEventLogs } from "@defillama/sdk";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -125,18 +125,17 @@ export const getTxDataFromEVMEventLogs = async (
       let logs = [] as any[];
       for (let i = 0; i < 5; i++) {
         try {
-          logs = (
-            await getLogs({
-              target: target!,
-              topic: topic,
-              keys: [],
-              fromBlock: fromBlock,
-              toBlock: toBlock,
-              topics: topics as string[],
-              chain: overriddenChain,
-            })
-          ).output;
-          //console.log(logs)
+          logs = await getEventLogs({
+            target: target!,
+            topic: topic,
+            keys: [],
+            fromBlock: fromBlock,
+            toBlock: toBlock,
+            topics: topics as string[],
+            chain: overriddenChain,
+            noTarget: !target // set noTarget to true, if target is null
+          });
+
           if (logs.length === 0) {
             console.info(
               `No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic} (${
