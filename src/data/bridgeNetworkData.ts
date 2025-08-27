@@ -2361,7 +2361,6 @@ export default [
     chains: ["Polygon", "BSC", "BOB", "BSquared"],
     destinationChain: "Bitcoin",
     chainMapping: {
-      bob: "BOB",
       bsquared: "b2-mainnet",
     },
   },
