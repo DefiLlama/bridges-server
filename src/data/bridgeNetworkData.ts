@@ -2350,4 +2350,19 @@ export default [
       "zksync era": "era",
     },
   },
+  {
+    id: 94,
+    displayName: "Teleswap",
+    bridgeDbName: "teleswap",
+    iconLink: "icons:teleswap",
+    slug: "teleswap",
+    largeTxThreshold: 10000,
+    url: "https://teleswap.xyz/",
+    chains: ["Polygon", "BSC", "BOB", "BSquared"],
+    destinationChain: "Bitcoin",
+    chainMapping: {
+      bob: "BOB",
+      bsquared: "b2-mainnet",
+    },
+  },
 ] as BridgeNetwork[];
