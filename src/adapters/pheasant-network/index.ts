@@ -10,6 +10,7 @@ export const bridgesAddress = {
   taiko: "0x04e28F7244980d3280F3b485D9cDA4b58F6C99B5",
   morph: "0xbD45fC4826Fd0981F1A3d8330cf75309fBC9ce33",
   era: "0x85308f2393A8F49E64e3b71Bb24f57614844497c",
+  unichain: "0xbD192e039F3D1A9BC84A12679fdE2F40ae7b4FfF",
 } as const;
 
 type SupportedBridgeChains = keyof typeof bridgesAddress;
@@ -30,6 +31,10 @@ export const cctpBridgeAddress = {
   base: {
     bridge: "0xE33Bf689B53ae461bd253617B60408227182362b",
     tokenMessanger: "0x1682Ae6375C4E4A97e4B583BC394c861A46D8962"
+  },
+  unichain: {
+    bridge: "0x9476A404191a52aD48C0F486584fA8FdAD6f5cae",
+    tokenMessanger: "0x8ed94B8dAd2Dc5453862ea5e316A8e71AAed9782"
   },
 } as const;
 
@@ -341,6 +346,7 @@ const adapter: BridgeAdapter = {
   scroll: constructParams("scroll"),
   sei: constructParams("sei"),
   taiko: constructParams("taiko"),
+  unichain: constructParams("unichain"),
   "World Chain": constructParams("wc"),
   "zksync era": constructParams("era"),
 };
