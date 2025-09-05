@@ -84,7 +84,11 @@ const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
   const parsed = parseFloat(amountUsd);
   if (isNaN(parsed) || parsed <= 0) return ethers.BigNumber.from(0);
 
-  return ethers.BigNumber.from(Math.round(parsed));
+  const decimals = 18;
+  const multiplier = ethers.BigNumber.from(10).pow(decimals);
+  const parsedWithDecimals = Math.floor(parsed * Math.pow(10, decimals));
+
+  return ethers.BigNumber.from(parsedWithDecimals.toString());
 };
 
 const convertRequestToEvent = (
@@ -309,9 +313,11 @@ const constructParams = (chainId: number) => {
     requests?.forEach((request) => {
       try {
         const event = convertRequestToEvent(request);
+
         if (event.depositChainId === chainId && event.deposit) {
           events.push(event.deposit);
         }
+
         if (event.withdrawChainId === chainId && event.withdraw) {
           events.push(event.withdraw);
         }
