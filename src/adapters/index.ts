@@ -40,6 +40,7 @@ import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
 import rhinofi from "./rhinofi";
+import relay from "./relay";
 import pepeteam_bridge from "./pepeteam-bridge";
 import pnetwork from "./pnetwork";
 import interport from "./interport-finance";
@@ -132,6 +133,7 @@ export default {
   manta,
   eywa,
   rhinofi,
+  relay,
   pepeteam_bridge,
   pnetwork,
   interport,

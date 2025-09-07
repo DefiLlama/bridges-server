@@ -54,6 +54,36 @@ export const layerZeroChainMapping: { [key: string]: string } = {
   "Meter Mainnet": "meter",
   Real: "real",
   Xlayer: "x_layer",
+  Sepolia: "sepolia",
+  Hemi: "hemi",
+  Lisk: "lisk",
+  Hyperliquid: "hyperliquid",
+  zkConsensys: "zkconsensys",
+  Rarible: "rarible",
+  Unichain: "unichain",
+  Glue: "glue",
+  CoreDAO: "coredao",
+  PlumePhoenix: "plumephoenix",
+  Soneium: "soneium",
+  CronosEVM: "cronosevm",
+  XDC: "xdc",
+  Story: "story",
+  Nibiru: "nibiru",
+  TAC: "tac",
+  TRON: "tron",
+  Worldchain: "worldchain",
+  Tomo: "tomo",
+  TON: "ton",
+  Movement: "movement",
+  Botanix: "botanix",
+  Goat: "goat",
+  BOB: "bob",
+  MP1: "mp1",
+  Somnia: "somnia",
+  Sophon: "sophon",
+  Morph: "morph",
+  BB1: "bb1",
+  BounceBit: "bouncebit",
 };
 
 async function assumeRole(retryCount = 0, maxRetries = 3) {
@@ -249,8 +279,8 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
             bridge: values[15],
             _fileName: file.Key!,
           };
-        });
-
+          });
+        
         console.log(`Yielding ${transactions.length} transactions from ${file.Key}`);
         yield { fileName: file.Key, transactions };
         console.log(`Successfully yielded transactions from ${file.Key}, moving to next file`);
