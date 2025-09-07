@@ -52,7 +52,7 @@ const constructParams = (chain: string) => {
     abi: [
       "event NewUnwrap(bytes userScript, uint8 scriptType, address lockerTargetAddress, address indexed userTargetAddress, uint256 requestIdOfLocker, uint256 indexed deadline, uint256 thirdPartyId, address inputToken, uint256[3] amounts, uint256[4] fees)",
     ],
-    isDeposit: false, // This is a withdraw event
+    isDeposit: true, // This is a deposit event
     logKeys: {
       blockNumber: "blockNumber",
       txHash: "transactionHash",
@@ -60,11 +60,12 @@ const constructParams = (chain: string) => {
     argKeys: {
       amount: "amounts[0]", // First amount in the amounts array
       token: "inputToken",
+      from: "userTargetAddress",
+      to: "lockerTargetAddress",
     },
-    fixedEventData: {
-      from: config.burnRouter,
-      to: "0x0000000000000000000000000000000000000000", // Burn address
-    },
+    // argGetters: {
+    //   to: (logArgs: any) => logArgs.userScript + logArgs.scriptType,
+    // },
   };
 
   // NewWrapAndSwap event from exchangeRouter
@@ -83,11 +84,12 @@ const constructParams = (chain: string) => {
     argKeys: {
       amount: "inputAndOutputAmount[0]", // Input amount
       token: "inputAndOutputToken[0]", // Input token
+      from: "lockerTargetAddress",
+      to: "user",
     },
-    fixedEventData: {
-      from: "0x0000000000000000000000000000000000000000", // From address
-      to: config.exchangeRouter,
-    },
+    // argGetters: {
+    //   from: (logArgs: any) => logArgs.lockerTargetAddress,
+    // },
   };
 
   // NewWrap event from transferRouter
@@ -105,11 +107,12 @@ const constructParams = (chain: string) => {
     argKeys: {
       amount: "amounts[0]", // First amount in the amounts array
       token: config.teleBTC, // Use teleBTC address from config
+      from: "lockerTargetAddress",
+      to: "user",
     },
-    fixedEventData: {
-      from: "0x0000000000000000000000000000000000000000", // From address
-      to: config.transferRouter,
-    },
+    // argGetters: {
+    //   from: (logArgs: any) => logArgs.lockerTargetAddress,
+    // },
   };
 
   eventParams.push(unwrapEvent, wrapAndSwapEvent, wrapEvent);
