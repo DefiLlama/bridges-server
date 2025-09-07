@@ -1,131 +1,227 @@
-import { Chain } from "@defillama/sdk/build/general";
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { ethers } from "ethers";
+import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { EventData } from "../../utils/types";
 
-interface ChainConfig {
-  burnRouter: string;
-  exchangeRouter: string;
-  transferRouter: string;
-  teleBTC: string;
+const API_BASE_URL = "https://api.teleportdao.xyz/api/v2/teleswap/requests";
+
+export interface TeleswapRequest {
+  id: string;
+  sourceTransactionId: number;
+  targetEventId: string;
+  fromNetworkId: string;
+  fromAddress: string;
+  inputTokenContractId: string;
+  inputTokenAmount: string;
+  inputTokenAmountUSD: string;
+  toNetworkId: string;
+  outputTokenContractId: string;
+  outputTokenAmount: string;
+  outputTokenAmountUSD: string;
+  toAddress: string;
+  lockerId: string;
+  networkFee: string;
+  lockerFee: string;
+  protocolFee: string;
+  thirdPartyFee: string;
+  bridgeFee: string;
+  totalFee: string;
+  thirdPartyId: number;
+  crossChainId?: string;
+  type: "Wrap" | "Unwrap" | "WrapAndSwap" | "SwapAndUnwrap";
+  tokenType: "BTC" | "Rune" | "BRC20";
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  fromNetwork: FromNetwork;
+  toNetwork: ToNetwork;
+  sourceTransaction: SourceTransaction;
+  targetEvent: TargetEvent;
+  inputToken: InputToken;
+  outputToken: OutputToken;
+  state: string;
 }
 
-// Configuration from index copy.ts
-const CHAIN_CONFIGS: Partial<Record<string, ChainConfig>> = {
-  polygon: {
-    burnRouter: "0x0009876C47F6b2f0BCB41eb9729736757486c75f",
-    exchangeRouter: "0xD1E9Ff33EC28f9Dd8D99E685a2B0F29dCaa095a3",
-    transferRouter: "0x04367D74332137908BEF9acc0Ab00a299A823707",
-    teleBTC: "0x3BF668Fe1ec79a84cA8481CEAD5dbb30d61cC685",
-  },
-  bsc: {
-    burnRouter: "0x2787D48e0B74125597DD479978a5DE09Bb9a3C15",
-    exchangeRouter: "0xcA5416364720c7324A547d39b1db496A2DCd4F0D",
-    transferRouter: "0xA38aD0d52B89C20c2229E916358D2CeB45BeC5FF",
-    teleBTC: "0xC58C1117DA964aEbe91fEF88f6f5703e79bdA574",
-  },
-  bob: {
-    burnRouter: "0x754DC006F4a748f80CcaF27C0efBfF412e54160D",
-    exchangeRouter: "0xd724e5709dF7DC4B4dDd14B644118774146b9492",
-    transferRouter: "0x25BEf4b1Ca5985661657B3B71f29c0994C36Bbba",
-    teleBTC: "0x0670bEeDC28E9bF0748cB254ABd946c87f033D9d",
-  },
-  bsquared: {
-    burnRouter: "0x84da07E1B81e3125A66124F37bEA4897e0bB4b90",
-    exchangeRouter: "0xE0166434A2ad67536B5FdAFCc9a6C1B41CC5e085",
-    transferRouter: "0x9042B082A31343dFf352412136fA52157ff7fdC8",
-    teleBTC: "0x05698eaD40cD0941e6E5B04cDbd56CB470Db762A",
-  },
+export interface FromNetwork {
+  id: string;
+  name: string;
+  title: string;
+  lastBlock: string;
+  chainId: number;
+  status: string;
+}
+
+export interface ToNetwork {
+  id: string;
+  name: string;
+  title: string;
+  lastBlock: string;
+  chainId: number;
+  status: string;
+}
+
+export interface SourceTransaction {
+  txId: string;
+  blockNumber: string;
+}
+
+export interface TargetEvent {
+  targetTransaction: TargetTransaction;
+  networkId: string;
+  name: string;
+}
+
+export interface TargetTransaction {
+  txId: string;
+  from: string;
+  blockNumber: string;
+}
+
+export interface InputToken {
+  id: string;
+  contractAddress: string;
+  name: string;
+  symbol: string;
+  type: string;
+  coinId: string;
+  networkId: string;
+  decimal: number;
+  status: string;
+}
+
+export interface OutputToken {
+  id: string;
+  contractAddress: string;
+  name: string;
+  symbol: string;
+  type: string;
+  coinId: string;
+  networkId: string;
+  decimal: number;
+  status: string;
+}
+
+interface ApiResponse {
+  data: TeleswapRequest[];
+  total: number;
+}
+
+export const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<EventData[]> => {
+  console.log(`Fetching Teleswap data`);
+  const fromDate = new Date(fromTimestamp * 1000).toISOString();
+  const toDate = new Date(toTimestamp * 1000).toISOString();
+
+  console.log(`Fetching Teleswap data from ${fromDate} to ${toDate}`);
+
+  const allEvents: TeleswapRequest[] = [];
+  let offset = 0;
+  const limit = 100;
+  let hasMore = true;
+
+  try {
+    // Fetch all events using pagination
+    while (hasMore) {
+      const apiUrl = `${API_BASE_URL}?createdAtAfter=${fromDate}&createdAtBefore=${toDate}&filter=done&limit=${limit}&offset=${offset}&order=desc`;
+
+      console.log(`Fetching page ${Math.floor(offset / limit) + 1} with offset ${offset}`);
+
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        console.error(`Error fetching data from Teleswap API: ${response.statusText}`);
+        break;
+      }
+
+      const apiResponse: ApiResponse = await response.json();
+      const events = apiResponse.data;
+
+      if (events.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      allEvents.push(...events);
+      console.log(`Fetched ${events.length} events, total so far: ${allEvents.length}`);
+
+      // If we got less than the limit, we've reached the end
+      if (events.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+
+      // Add a small delay to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    console.log(`Total events found: ${allEvents.length}`);
+
+    const txData: EventData[] = allEvents.map((event) => {
+      // Determine if it's a deposit or withdrawal
+      const isWrap = event.type === "Wrap" || event.type === "WrapAndSwap";
+
+      // Parse amount
+      let amount: number | undefined = undefined;
+      try {
+        amount = parseFloat(isWrap ? event.outputTokenAmount : event.inputTokenAmount);
+        if (isNaN(amount)) {
+          amount = undefined;
+        }
+      } catch {
+        amount = undefined;
+      }
+
+      let amountUSD: number | undefined = undefined;
+      try {
+        amountUSD = parseFloat(isWrap ? event.outputTokenAmountUSD : event.inputTokenAmountUSD);
+        if (isNaN(amountUSD)) {
+          amountUSD = undefined;
+        }
+      } catch {
+        amountUSD = undefined;
+      }
+
+      // Map network to chain format
+      let chain = isWrap ? event.toNetwork.name.toLowerCase() : event.fromNetwork.name.toLowerCase();
+      if (chain === "polygon") chain = "polygon";
+      else if (chain === "bsc") chain = "bsc";
+      else if (chain === "bob") chain = "bob";
+      else if (chain === "bsquared") chain = "bsquared";
+      else chain = "polygon";
+
+      const req: EventData = {
+        blockNumber: parseInt(event.targetEvent.targetTransaction.blockNumber), //TODO: is cross chain
+        chain: chain,
+        from: event.fromAddress,
+        to: event.toAddress,
+        token: isWrap ? event.outputToken.contractAddress : event.inputToken.contractAddress,
+        // amount: amount as unknown as ethers.BigNumber,
+        // isUSDVolume: false,
+        amount: amountUSD as unknown as ethers.BigNumber,
+        isUSDVolume: true,
+        isDeposit: true,
+        txHash: event.targetEvent.targetTransaction.txId, //TODO: is cross chain
+        timestamp: new Date(event.createdAt).getTime() / 1000,
+      };
+
+      return req;
+    });
+
+    return txData;
+  } catch (error) {
+    console.error(`Error processing Teleswap API response:`, error);
+    return [] as EventData[];
+  }
 };
 
-const constructParams = (chain: string) => {
-  let eventParams = [] as PartialContractEventParams[];
-  const config = CHAIN_CONFIGS[chain];
+export async function build(): Promise<BridgeAdapter> {
+  const adapter: BridgeAdapter = {};
+  const chains = ["polygon", "bsc", "bob", "bsquared"];
 
-  if (!config) {
-    throw new Error(`Configuration not found for chain: ${chain}`);
+  for (const chain of chains) {
+    adapter[chain] = getEvents;
   }
 
-  // NewUnwrap event from burnRouter
-  const unwrapEvent: PartialContractEventParams = {
-    target: config.burnRouter,
-    topic: "NewUnwrap(bytes,uint8,address,address,uint256,uint256,uint256,address,uint256[3],uint256[4])",
-    abi: [
-      "event NewUnwrap(bytes userScript, uint8 scriptType, address lockerTargetAddress, address indexed userTargetAddress, uint256 requestIdOfLocker, uint256 indexed deadline, uint256 thirdPartyId, address inputToken, uint256[3] amounts, uint256[4] fees)",
-    ],
-    isDeposit: true, // This is a deposit event
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      amount: "amounts[0]", // First amount in the amounts array
-      token: "inputToken",
-      from: "userTargetAddress",
-      to: "lockerTargetAddress",
-    },
-    // argGetters: {
-    //   to: (logArgs: any) => logArgs.userScript + logArgs.scriptType,
-    // },
-  };
+  return adapter;
+}
 
-  // NewWrapAndSwap event from exchangeRouter
-  const wrapAndSwapEvent: PartialContractEventParams = {
-    target: config.exchangeRouter,
-    topic:
-      "NewWrapAndSwap(address,address,address[2],uint256[2],uint256,address,bytes32,uint256,uint256,uint256[5],uint256)",
-    abi: [
-      "event NewWrapAndSwap(address lockerTargetAddress, address indexed user, address[2] inputAndOutputToken, uint256[2] inputAndOutputAmount, uint256 indexed speed, address indexed teleporter, bytes32 bitcoinTxId, uint256 appId, uint256 thirdPartyId, uint256[5] fees, uint256 destinationChainId)",
-    ],
-    isDeposit: true, // This is a deposit event
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      amount: "inputAndOutputAmount[0]", // Input amount
-      token: "inputAndOutputToken[0]", // Input token
-      from: "lockerTargetAddress",
-      to: "user",
-    },
-    // argGetters: {
-    //   from: (logArgs: any) => logArgs.lockerTargetAddress,
-    // },
-  };
-
-  // NewWrap event from transferRouter
-  const wrapEvent: PartialContractEventParams = {
-    target: config.transferRouter,
-    topic: "NewWrap(bytes32,bytes,address,address,address,uint256[2],uint256[4],uint256,uint256)",
-    abi: [
-      "event NewWrap(bytes32 bitcoinTxId, bytes indexed lockerLockingScript, address lockerTargetAddress, address indexed user, address teleporter, uint256[2] amounts, uint256[4] fees, uint256 thirdPartyId, uint256 destinationChainId)",
-    ],
-    isDeposit: true, // This is a deposit event
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      amount: "amounts[0]", // First amount in the amounts array
-      token: config.teleBTC, // Use teleBTC address from config
-      from: "lockerTargetAddress",
-      to: "user",
-    },
-    // argGetters: {
-    //   from: (logArgs: any) => logArgs.lockerTargetAddress,
-    // },
-  };
-
-  eventParams.push(unwrapEvent, wrapAndSwapEvent, wrapEvent);
-
-  return async (fromBlock: number, toBlock: number) =>
-    await getTxDataFromEVMEventLogs("teleswap", chain as Chain, fromBlock, toBlock, eventParams);
-};
-
-const adapter: BridgeAdapter = {
-  polygon: constructParams("polygon"),
-  bsc: constructParams("bsc"),
-  bob: constructParams("bob"),
-  bsquared: constructParams("bsquared"),
-};
-
-export default adapter;
+export default { isAsync: true, build };
