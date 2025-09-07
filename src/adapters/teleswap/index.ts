@@ -155,56 +155,51 @@ export const getEvents = async (fromTimestamp: number, toTimestamp: number): Pro
 
     console.log(`Total events found: ${allEvents.length}`);
 
-    const txData: EventData[] = allEvents.map((event) => {
-      // Determine if it's a deposit or withdrawal
-      const isWrap = event.type === "Wrap" || event.type === "WrapAndSwap";
+    const txData: EventData[] = allEvents
+      .filter((event) => event?.targetEvent?.targetTransaction)
+      .map((event) => {
+        const isWrap = event.type === "Wrap" || event.type === "WrapAndSwap";
 
-      // Parse amount
-      let amount: number | undefined = undefined;
-      try {
-        amount = parseFloat(isWrap ? event.outputTokenAmount : event.inputTokenAmount);
-        if (isNaN(amount)) {
+        // Parse amount
+        let amount: number | undefined = undefined;
+        try {
+          amount = parseFloat(isWrap ? event.outputTokenAmount : event.inputTokenAmount);
+          if (isNaN(amount)) {
+            amount = undefined;
+          }
+        } catch {
           amount = undefined;
         }
-      } catch {
-        amount = undefined;
-      }
 
-      let amountUSD: number | undefined = undefined;
-      try {
-        amountUSD = parseFloat(isWrap ? event.outputTokenAmountUSD : event.inputTokenAmountUSD);
-        if (isNaN(amountUSD)) {
+        let amountUSD: number | undefined = undefined;
+        try {
+          amountUSD = parseFloat(event.inputTokenAmountUSD);
+          if (isNaN(amountUSD)) {
+            amountUSD = undefined;
+          }
+        } catch {
           amountUSD = undefined;
         }
-      } catch {
-        amountUSD = undefined;
-      }
 
-      // Map network to chain format
-      let chain = isWrap ? event.toNetwork.name.toLowerCase() : event.fromNetwork.name.toLowerCase();
-      if (chain === "polygon") chain = "polygon";
-      else if (chain === "bsc") chain = "bsc";
-      else if (chain === "bob") chain = "bob";
-      else if (chain === "bsquared") chain = "bsquared";
-      else chain = "polygon";
+        const chain = isWrap ? event.toNetwork.name.toLowerCase() : event.fromNetwork.name.toLowerCase();
 
-      const req: EventData = {
-        blockNumber: parseInt(event.targetEvent.targetTransaction.blockNumber), //TODO: is cross chain
-        chain: chain,
-        from: event.fromAddress,
-        to: event.toAddress,
-        token: isWrap ? event.outputToken.contractAddress : event.inputToken.contractAddress,
-        // amount: amount as unknown as ethers.BigNumber,
-        // isUSDVolume: false,
-        amount: amountUSD as unknown as ethers.BigNumber,
-        isUSDVolume: true,
-        isDeposit: true,
-        txHash: event.targetEvent.targetTransaction.txId, //TODO: is cross chain
-        timestamp: new Date(event.createdAt).getTime() / 1000,
-      };
+        const req: EventData = {
+          blockNumber: parseInt(event.targetEvent.targetTransaction.blockNumber),
+          chain: chain,
+          from: event.fromAddress,
+          to: event.toAddress,
+          token: isWrap ? event.outputToken.contractAddress : event.inputToken.contractAddress,
+          // amount: amount as unknown as ethers.BigNumber,
+          // isUSDVolume: false,
+          amount: amountUSD as unknown as ethers.BigNumber,
+          isUSDVolume: true,
+          isDeposit: true,
+          txHash: event.targetEvent.targetTransaction.txId,
+          timestamp: new Date(event.createdAt).getTime() / 1000,
+        };
 
-      return req;
-    });
+        return req;
+      });
 
     return txData;
   } catch (error) {
