@@ -210,7 +210,7 @@ export const getEvents = async (fromTimestamp: number, toTimestamp: number): Pro
 
 export async function build(): Promise<BridgeAdapter> {
   const adapter: BridgeAdapter = {};
-  const chains = ["polygon", "bsc", "bob", "bsquared"];
+  const chains = ["polygon", "bsc", "ethereum", "arbitrum", "base", "optimism", "bob", "bsquared"];
 
   for (const chain of chains) {
     adapter[chain] = getEvents;
