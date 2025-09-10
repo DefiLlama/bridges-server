@@ -91,6 +91,7 @@ import intersoon from "./intersoon";
 import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
+import snowbridge from "./snowbridge";
 
 export default {
   polygon,
@@ -185,6 +186,7 @@ export default {
   usdt0,
   pheasantNetwork,
   teleswap,
+  snowbridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
