@@ -12,6 +12,7 @@ import { runAggregateHistoricalByName } from "../utils/aggregate";
 import { handler as runInterSoon } from "../handlers/runInterSoon";
 import dayjs from "dayjs";
 import runHyperlane from "../handlers/runHyperlane";
+import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
 
 const createTimeout = (minutes: number) =>
@@ -88,6 +89,7 @@ const cron = () => {
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
   runEvery("runRelay", 30, runRelay);
+  runEvery("runTeleswap", 60 * 6, runTeleswap);
 
   exit();
 };

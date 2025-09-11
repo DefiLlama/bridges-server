@@ -2376,7 +2376,7 @@ export default [
     slug: "teleswap",
     largeTxThreshold: 10000,
     url: "https://teleswap.xyz/",
-    chains: ["Polygon", "BSC", "BOB", "BSquared"],
+    chains: ["Polygon", "BSC", "BOB", "BSquared", "Ethereum", "Arbitrum", "Base", "Optimism"],
     destinationChain: "Bitcoin",
     chainMapping: {
       bsquared: "b2-mainnet",
