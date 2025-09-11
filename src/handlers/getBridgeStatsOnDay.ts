@@ -50,25 +50,21 @@ interface IAggregatedData {
   total_address_withdrawn: string[];
 }
 
-const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord) => {
+const sumTokenTxs = async (
+	tokenTotals: string[],
+	dailyTokensRecord: TokenRecord,
+	  prices: Record<string, any>,
+	lzSymbols: Record<string, string>
+) => {
   if (!tokenTotals) return;
   let dailyTokensRecordBn = {} as TokenRecordBn;
-  const tokenSet = new Set<string>();
-  tokenTotals.map((tokenString) => {
-    const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
-    tokenSet.add(tokenData[0]);
-  });
-  const prices = (await Promise.race([
-    getLlamaPrices(Array.from(tokenSet)),
-    new Promise((resolve) => setTimeout(() => resolve({}), 5000)),
-  ])) as any;
+  
 
-  const lzSymbols = ((await getCache("lz_token_symbols")) || {}) as Record<string, string>;
 
   tokenTotals.map((tokenString) => {
     const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
     const token = tokenData[0];
-    tokenSet.add(token);
+    
     const amountBn = BigNumber(tokenData[1]);
     const usdValue = parseFloat(tokenData[2]);
     dailyTokensRecordBn[token] = dailyTokensRecordBn[token] || {};
@@ -80,9 +76,14 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
   });
   Object.entries(dailyTokensRecordBn).map(([token, tokenData]) => {
     dailyTokensRecord[token].amount = tokenData.amountBn?.toFixed() ?? "0";
-    const fallbackSymbol = lzSymbols?.[token?.toLowerCase?.()] ?? "";
-    dailyTokensRecord[token].symbol = normlizeTokenSymbol(prices?.[token]?.symbol ?? fallbackSymbol ?? "");
-    dailyTokensRecord[token].decimals = prices?.[token]?.decimals ?? 0;
+    const key = token?.toLowerCase?.() ?? token;
+    const priceEntry = prices?.[key] ?? prices?.[token];
+    const addrOnly = key.includes(":") ? key.split(":")[1] : key;
+    const fallbackSymbol = lzSymbols?.[addrOnly] ?? lzSymbols?.[key] ?? "";
+    const symbol = priceEntry?.symbol ?? fallbackSymbol ?? "";
+    dailyTokensRecord[token].symbol = normlizeTokenSymbol(symbol);
+    const decimalsVal = priceEntry?.decimals;
+    dailyTokensRecord[token].decimals = typeof decimalsVal === "string" ? Number(decimalsVal) : decimalsVal ?? 0;
   });
 };
 
@@ -147,12 +148,50 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
   let dailyTokensWithdrawn = {} as TokenRecord;
   let dailyAddressesDeposited = {} as AddressRecord;
   let dailyAddressesWithdrawn = {} as AddressRecord;
+  const lzSymbols = ((await getCache("lz_token_symbols")) || {}) as Record<string, string>;
+  
+  const allTokenIds = new Set<string>();
+  const isValidPriceId = (id?: string) => {
+    if (!id) return false;
+    if (id.includes("\\") || id.includes("/") || id.includes(" ")) return false;
+    const parts = id.split(":");
+    if (parts.length !== 2) return false;
+    if (!parts[0] || !parts[1]) return false;
+    if (parts[1] === "\\N" || parts[1] === "\\n" || parts[1].toLowerCase() === "null" || parts[1].toLowerCase() === "undefined") return false;
+    return true;
+  };
+  const collectTokenIds = (tokenTotals?: string[]) => {
+    if (!tokenTotals) return;
+    tokenTotals.forEach((tokenString) => {
+      const tokenData = tokenString.replace(/[('\") ]/g, "").split(",");
+      const tokenId = (tokenData[0] || "").toLowerCase();
+      if (isValidPriceId(tokenId)) allTokenIds.add(tokenId);
+    });
+  };
+  dailyData.forEach(({ total_tokens_deposited, total_tokens_withdrawn }) => {
+    collectTokenIds(total_tokens_deposited);
+    collectTokenIds(total_tokens_withdrawn);
+  });
+  sourceChainsDailyData.forEach(({ total_tokens_deposited, total_tokens_withdrawn }) => {
+    collectTokenIds(total_tokens_deposited);
+    collectTokenIds(total_tokens_withdrawn);
+  });
+  let prices: Record<string, any> = {};
+  try {
+    prices = (await Promise.race([
+      getLlamaPrices(Array.from(allTokenIds)),
+      new Promise((resolve) => setTimeout(() => resolve({}), 5000)),
+    ])) as Record<string, any>;
+  } catch {
+    prices = {};
+  }
+
   const dailyDataPromises = Promise.all(
     dailyData.map(async (dayData) => {
       const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
         dayData;
-      await sumTokenTxs(total_tokens_deposited, dailyTokensDeposited);
-      await sumTokenTxs(total_tokens_withdrawn, dailyTokensWithdrawn);
+      await sumTokenTxs(total_tokens_deposited, dailyTokensDeposited, prices, lzSymbols);
+      await sumTokenTxs(total_tokens_withdrawn, dailyTokensWithdrawn, prices, lzSymbols);
       await sumAddressTxs(total_address_deposited, dailyAddressesDeposited);
       await sumAddressTxs(total_address_withdrawn, dailyAddressesWithdrawn);
     })
@@ -163,8 +202,8 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
     sourceChainsDailyData.map(async (dayData) => {
       const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
         dayData;
-      await sumTokenTxs(total_tokens_deposited, dailyTokensWithdrawn);
-      await sumTokenTxs(total_tokens_withdrawn, dailyTokensDeposited);
+      await sumTokenTxs(total_tokens_deposited, dailyTokensWithdrawn, prices, lzSymbols);
+      await sumTokenTxs(total_tokens_withdrawn, dailyTokensDeposited, prices, lzSymbols);
       await sumAddressTxs(total_address_deposited, dailyAddressesWithdrawn);
       await sumAddressTxs(total_address_withdrawn, dailyAddressesDeposited);
     })
