@@ -10,6 +10,7 @@ import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import BigNumber from "bignumber.js";
 import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
+import { getCache } from "../utils/cache";
 
 const numberOfTokensToReturn = 30; // also determines # of addresses returned
 
@@ -62,6 +63,8 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
     new Promise((resolve) => setTimeout(() => resolve({}), 5000)),
   ])) as any;
 
+  const lzSymbols = ((await getCache("lz_token_symbols")) || {}) as Record<string, string>;
+
   tokenTotals.map((tokenString) => {
     const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
     const token = tokenData[0];
@@ -77,7 +80,8 @@ const sumTokenTxs = async (tokenTotals: string[], dailyTokensRecord: TokenRecord
   });
   Object.entries(dailyTokensRecordBn).map(([token, tokenData]) => {
     dailyTokensRecord[token].amount = tokenData.amountBn?.toFixed() ?? "0";
-    dailyTokensRecord[token].symbol = normlizeTokenSymbol(prices?.[token]?.symbol ?? "");
+    const fallbackSymbol = lzSymbols?.[token?.toLowerCase?.()] ?? "";
+    dailyTokensRecord[token].symbol = normlizeTokenSymbol(prices?.[token]?.symbol ?? fallbackSymbol ?? "");
     dailyTokensRecord[token].decimals = prices?.[token]?.decimals ?? 0;
   });
 };

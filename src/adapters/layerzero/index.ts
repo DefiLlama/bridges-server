@@ -9,6 +9,7 @@ import { STSClient, AssumeRoleCommand } from "@aws-sdk/client-sts";
 import { createGunzip } from "zlib";
 import { Readable } from "stream";
 import allChains from "./allChains";
+import { getCache, setCache } from "../../utils/cache";
 
 export interface LayerZeroTransaction {
   txHashSource: string;
@@ -294,6 +295,27 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
     console.error("Error processing LayerZero files:", error);
     throw error;
   }
+}
+
+export async function updateLayerZeroTokenSymbols(transactions: LayerZeroTransaction[]) {
+  if (!transactions || transactions.length === 0) return;
+
+  const KEY = "lz_token_symbols";
+  const existing = ((await getCache(KEY)) || {}) as Record<string, string>;
+  const updated: Record<string, string> = { ...existing };
+
+  for (const tx of transactions) {
+    const addr = (tx.token || "").toLowerCase();
+    const sym = (tx.symbol || "").trim();
+    if (!addr || addr === "0x" || addr === "0x0000000000000000000000000000000000000000") continue;
+    if (!sym) continue;
+    if (!updated[addr] || updated[addr] !== sym) {
+      updated[addr] = sym;
+    }
+  }
+  console.log(updated);
+
+  await setCache(KEY, updated, null);
 }
 const adapter = Object.values(allChains).reduce((acc: any, chain: string) => {
   acc[layerZeroChainMapping[chain] || chain?.toLowerCase()] = true;
