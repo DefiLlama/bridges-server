@@ -193,7 +193,7 @@ export const getEvents = async (fromTimestamp: number, toTimestamp: number): Pro
           // isUSDVolume: false,
           amount: amountUSD as unknown as ethers.BigNumber,
           isUSDVolume: true,
-          isDeposit: true,
+          isDeposit: isWrap ? true : false,
           txHash: event.targetEvent.targetTransaction.txId,
           timestamp: new Date(event.createdAt).getTime() / 1000,
         };
