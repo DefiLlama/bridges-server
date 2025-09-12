@@ -36,7 +36,7 @@ interface ApiResponse {
 
 // --- Constants ---
 const API_BASE_URL = "https://dsa-metrics-api-gw-8p4u7g34.nw.gateway.dev/v1/ccip_transactions" // Base URL for the CCIP metrics API
-const API_KEY = ""; // API Key, currently an empty string during testing
+const API_KEY = ""; // TODO: API Key, needs to be piped in from Repo secrets
 
 function formatAmount(tokenAmount: number, decimals: number): string {
   // If decimals is zero, it means the token amount is already in the smallest unit (like wei for ETH)
