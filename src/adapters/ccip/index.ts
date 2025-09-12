@@ -63,7 +63,7 @@ export async function fetchEventsForDate(dateString: string): Promise<CCIPEvent[
     const response = await fetch(apiUrlWithDate, {
       method: 'GET',
       headers: {
-        'X-API-Key': API_KEY,
+        'x-api-key': API_KEY,
         'Accept': 'application/json',
       },
     });
