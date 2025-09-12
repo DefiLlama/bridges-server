@@ -35,7 +35,7 @@ interface ApiResponse {
 }
 
 // --- Constants ---
-const API_BASE_URL = "" // Base URL for the CCIP API
+const API_BASE_URL = "https://dsa-metrics-api-gw-8p4u7g34.nw.gateway.dev/v1/ccip_transactions" // Base URL for the CCIP metrics API
 const API_KEY = ""; // API Key, currently an empty string during testing
 
 function formatAmount(tokenAmount: number, decimals: number): string {
