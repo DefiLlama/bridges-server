@@ -113,43 +113,43 @@ export const convertRequestToEvent = (
     deposit:
       depositTx && depositTx.data && deposit && depositAmount.gt(0)
         ? {
-            blockNumber: depositTx.block!,
-            txHash: depositTx.hash as string,
-            timestamp: getTimestamp(depositTx, withdrawTx, request),
-            from: (depositTx.data as any).from
-              ? (depositTx.data as any).from
-              : depositTx.data
+          blockNumber: depositTx.block!,
+          txHash: depositTx.hash as string,
+          timestamp: getTimestamp(depositTx, withdrawTx, request),
+          from: (depositTx.data as any).from
+            ? (depositTx.data as any).from
+            : depositTx.data
               ? (depositTx.data as any).signer
               : undefined,
-            to: (depositTx.data as any).to
-              ? (depositTx.data as any).to
-              : withdrawTx?.data
+          to: (depositTx.data as any).to
+            ? (depositTx.data as any).to
+            : withdrawTx?.data
               ? (withdrawTx.data as any).signer
               : undefined,
-            token: deposit?.currency?.address!,
-            amount: depositAmount,
-            isDeposit: true,
-            isUSDVolume: true,
-          }
+          token: deposit?.currency?.address!,
+          amount: depositAmount,
+          isDeposit: true,
+          isUSDVolume: true,
+        }
         : undefined,
     withdrawChainId: withdrawTx?.chainId,
     withdraw:
       withdrawTx && withdrawTx.data && withdraw && withdrawAmount.gt(0)
         ? {
-            blockNumber: withdrawTx.block!,
-            txHash: withdrawTx.hash!,
-            timestamp: getTimestamp(withdrawTx, depositTx, request),
-            from: (withdrawTx.data as any).from
-              ? (withdrawTx.data as any).from
-              : withdrawTx.data
+          blockNumber: withdrawTx.block!,
+          txHash: withdrawTx.hash!,
+          timestamp: getTimestamp(withdrawTx, depositTx, request),
+          from: (withdrawTx.data as any).from
+            ? (withdrawTx.data as any).from
+            : withdrawTx.data
               ? (withdrawTx.data as any).signer
               : undefined,
-            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
-            token: withdraw?.currency?.address!,
-            amount: withdrawAmount,
-            isDeposit: false,
-            isUSDVolume: true,
-          }
+          to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
+          token: withdraw?.currency?.address!,
+          amount: withdrawAmount,
+          isDeposit: false,
+          isUSDVolume: true,
+        }
         : undefined,
   };
 };
@@ -173,8 +173,8 @@ const fetchRequestsByTime = async (
           response.status === 429
             ? ApiErrorType.API_LIMIT
             : response.status >= 500
-            ? ApiErrorType.NETWORK
-            : ApiErrorType.UNKNOWN;
+              ? ApiErrorType.NETWORK
+              : ApiErrorType.UNKNOWN;
         const error = new Error(
           `[${errorType}] HTTP ${response.status} for ts ${startTimestamp}-${endTimestamp}`
         );
@@ -312,6 +312,7 @@ export const slugToChainId: Record<string, number> = {
   mode: 34443,
   "proof-of-play": 70700,
   "proof-of-play-boss": 70701,
+  katana: 747474,
 };
 
 export const chainIdToSlug: Record<number, string> = Object.fromEntries(

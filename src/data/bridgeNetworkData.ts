@@ -2411,6 +2411,7 @@ export default [
       "Gnosis",
       "Ham",
       "Hychain",
+      "Katana",
       "Linea",
       "Lisk",
       "Mantle",
@@ -2436,6 +2437,25 @@ export default [
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",
       "World Chain": "wc",
+    },
+  },
+  {
+    id: 96,
+    displayName: "Agglayer",
+    bridgeDbName: "agglayer",
+    iconLink: "icons:agglayer",
+    largeTxThreshold: 10000,
+    url: "https://agglayer.dev/",
+    chains: [
+      "Ethereum",
+      "Katana",
+      "Polygon Zkevm",
+      "Ternoa",
+      "X Layer"
+    ],
+    chainMapping: {
+      "polygon zkevm": "polygon_zkevm",
+      "x layer": "xlayer",
     },
   },
 ] as BridgeNetwork[];
