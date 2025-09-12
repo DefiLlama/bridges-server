@@ -46,7 +46,7 @@ interface TransactionRow {
 
 const ADAPTER_NAME = "ccip";
 const DEFAULT_CHAIN_FOR_BRIDGE_ID = "Ethereum"; // Chain used to identify the bridge in the DB.
-const DEFAULT_DAYS_TO_PROCESS = 3; // Number of past days to process in default mode.
+const DEFAULT_DAYS_TO_PROCESS = 10; // Number of past days to process in default mode.
 const DB_BATCH_SIZE = 200; // Number of rows to insert into the DB in a single batch.
 
 // --- Utility Functions ---
