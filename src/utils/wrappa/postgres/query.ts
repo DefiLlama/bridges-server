@@ -380,37 +380,47 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
 };
 
 const getNetflows = async (period: TimePeriod) => {
-  let intervalPeriod = sql``;
+  let tableAndWhere = sql``;
   switch (period) {
     case "day":
-      intervalPeriod = sql`interval '1 day'`;
+      tableAndWhere = sql`FROM bridges.hourly_volume hv
+      JOIN bridges.config c ON hv.bridge_id = c.id
+      WHERE hv.ts >= NOW() AT TIME ZONE 'UTC' - interval '24 hours'
+      AND hv.ts <= NOW() AT TIME ZONE 'UTC'`;
       break;
     case "week":
-      intervalPeriod = sql`interval '1 week'`;
+      tableAndWhere = sql`FROM bridges.daily_volume hv
+      JOIN bridges.config c ON hv.bridge_id = c.id
+      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - interval '1 week'
+      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')`;
       break;
     case "month":
-      intervalPeriod = sql`interval '1 month'`;
+      tableAndWhere = sql`FROM bridges.daily_volume hv
+      JOIN bridges.config c ON hv.bridge_id = c.id
+      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - interval '1 month'
+      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')`;
       break;
   }
 
-  return await sql<{ chain: string; net_flow: string }[]>`
+  return await sql<{ chain: string; net_flow: string; deposited_usd: string; withdrawn_usd: string }[]>`
     WITH period_flows AS (
       SELECT 
         hv.chain,
+        SUM(hv.total_deposited_usd) AS deposited_usd,
+        SUM(hv.total_withdrawn_usd) AS withdrawn_usd,
         SUM(CASE 
-          WHEN c.destination_chain IS NULL THEN (hv.total_withdrawn_usd - hv.total_deposited_usd)
+          WHEN c.destination_chain IS NULL THEN (hv.total_deposited_usd - hv.total_withdrawn_usd)
           ELSE (hv.total_deposited_usd - hv.total_withdrawn_usd)
         END) as net_flow
-      FROM bridges.daily_volume hv
-      JOIN bridges.config c ON hv.bridge_id = c.id
-      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - ${intervalPeriod}
-      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')
-      AND LOWER(hv.chain) NOT LIKE '%dydx%'
+      ${tableAndWhere}
+      AND LOWER(hv.chain) NOT LIKE '%dydx%' AND hv.chain != 'bera'
       GROUP BY hv.chain
     )
     SELECT 
       chain,
-      net_flow::text
+      net_flow::text,
+      deposited_usd::text,
+      withdrawn_usd::text
     FROM period_flows
     WHERE net_flow IS NOT NULL
     ORDER BY ABS(net_flow::numeric) DESC;

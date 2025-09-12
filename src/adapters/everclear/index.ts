@@ -2,10 +2,11 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { ethers } from "ethers";
+import { getLlamaPrices } from "../../utils/prices";
 
 const contractAddresses = {
   //EverclearSpoke contract addresses for each chain
-  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"], 
+  ethereum: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   optimism: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   bsc: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
   unichain: ["0xa05A3380889115bf313f1Db9d5f335157Be4D816"],
@@ -31,13 +32,14 @@ const contractAddresses = {
 
 // Helper function to convert bytes32 to address
 function bytes32ToAddress(bytes32: string) {
-  return ethers.utils.getAddress('0x' + bytes32.slice(26));
+  return ethers.utils.getAddress("0x" + bytes32.slice(26));
 }
 
 // Deposit event (IntentAdded)
 const depositIntent: PartialContractEventParams = {
   target: "",
-  topic: "IntentAdded(bytes32,uint256,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
+  topic:
+    "IntentAdded(bytes32,uint256,(bytes32,bytes32,bytes32,bytes32,uint24,uint32,uint64,uint48,uint48,uint256,uint32[],bytes))",
   abi: [
     "event IntentAdded(bytes32 indexed _intentId, uint256 _queueId, (bytes32 initiator, bytes32 receiver, bytes32 inputAsset, bytes32 outputAsset, uint24 maxFee, uint32 origin, uint64 nonce, uint48 timestamp, uint48 ttl, uint256 amount, uint32[] destinations, bytes data) _intent)",
   ],
@@ -53,7 +55,7 @@ const depositIntent: PartialContractEventParams = {
   },
   argGetters: {
     from: (logArgs: any) => bytes32ToAddress(logArgs._intent.initiator),
-    token: (logArgs: any) => bytes32ToAddress(logArgs._intent.inputAsset)
+    token: (logArgs: any) => bytes32ToAddress(logArgs._intent.inputAsset),
   },
   isDeposit: true,
 };
@@ -62,9 +64,7 @@ const depositIntent: PartialContractEventParams = {
 const withdrawalIntent: PartialContractEventParams = {
   target: "",
   topic: "Settled(bytes32,address,address,uint256)",
-  abi: [
-    "event Settled(bytes32 indexed _intentId, address _account, address _asset, uint256 _amount)",
-  ],
+  abi: ["event Settled(bytes32 indexed _intentId, address _account, address _asset, uint256 _amount)"],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
@@ -85,44 +85,59 @@ const constructParams = (chain: Chain) => {
   const eventParams: PartialContractEventParams[] = [];
 
   // Add deposit (IntentAdded) events
-  chainConfig.forEach(address => {
-    eventParams.push({...depositIntent, target: address});
+  chainConfig.forEach((address) => {
+    eventParams.push({ ...depositIntent, target: address });
   });
 
   // Add withdrawal (Settled) events
-  chainConfig.forEach(address => {
-    eventParams.push({...withdrawalIntent, target: address});
+  chainConfig.forEach((address) => {
+    eventParams.push({ ...withdrawalIntent, target: address });
   });
 
   return async (fromBlock: number, toBlock: number) => {
-    console.log("Fetching Everclear bridge volume from block:", fromBlock, "to block:", toBlock)
-    return getTxDataFromEVMEventLogs("everclear", chain, fromBlock, toBlock, eventParams);
+    try {
+      const txs = await getTxDataFromEVMEventLogs("everclear", chain, fromBlock, toBlock, eventParams);
+      const tokens = [...new Set(txs.map((tx) => tx.token))].map((token) => `${chain}:${token.toLowerCase()}`);
+      const tokensData = await getLlamaPrices(tokens);
+      txs.forEach((tx) => {
+        const tokenDecimals = tokensData?.[`${chain}:${tx.token.toLowerCase()}`]?.decimals;
+        if (tokenDecimals && tokenDecimals !== 18) {
+          tx.amount = tx.amount.div(10 ** (18 - tokenDecimals));
+        }
+      });
+      return txs;
+    } catch (e) {
+      console.error(
+        `Error fetching Everclear bridge volume for ${chain} from block ${fromBlock} to block ${toBlock}:`,
+        e
+      );
+      return [];
+    }
   };
 };
 
 const adapter: BridgeAdapter = {
-  ethereum:  constructParams("ethereum"),
-  optimism:  constructParams("optimism"),
-  bsc:       constructParams("bsc"),
-  unichain:  constructParams("unichain"),
-  polygon:   constructParams("polygon"),
-  zksync:    constructParams("zksync"),
-  ronin:     constructParams("ronin"),
-  base:      constructParams("base"),
-  apechain:  constructParams("apechain"),
-  mode:      constructParams("mode"),
-  arbitrum:  constructParams("arbitrum"),
+  ethereum: constructParams("ethereum"),
+  optimism: constructParams("optimism"),
+  bsc: constructParams("bsc"),
+  unichain: constructParams("unichain"),
+  polygon: constructParams("polygon"),
+  zksync: constructParams("zksync"),
+  ronin: constructParams("ronin"),
+  base: constructParams("base"),
+  apechain: constructParams("apechain"),
+  mode: constructParams("mode"),
+  arbitrum: constructParams("arbitrum"),
   avalanche: constructParams("avalanche"),
-  zircuit:   constructParams("zircuit"),
-  linea:     constructParams("linea"),
-  blast:     constructParams("blast"),
-  scroll:    constructParams("scroll"),
-  taiko:     constructParams("taiko"),
-  sonic:     constructParams("sonic"),
+  zircuit: constructParams("zircuit"),
+  linea: constructParams("linea"),
+  blast: constructParams("blast"),
+  scroll: constructParams("scroll"),
+  taiko: constructParams("taiko"),
+  sonic: constructParams("sonic"),
   berachain: constructParams("berachain"),
-  mantle:    constructParams("mantle"),
-  ink:       constructParams("ink"),
-  solana:    constructParams("solana"),
+  mantle: constructParams("mantle"),
+  ink: constructParams("ink"),
 };
 
 export default adapter;

@@ -31,6 +31,20 @@ export const CCIP_TOKEN_BRIDGE: AddressList = {
 
 } as const;
 
+export const CCIP_V2_TOKEN_BRIDGE: AddressList = {
+    ethereum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    arbitrum: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    bsc: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    base: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    optimism: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    linea: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    sonic: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    scroll: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    avax: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    botanix: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+    unichain: "0x0772c76c3e4b081e85747f248ed76cc3813d46c4",
+} as const;
+
 export const CCIP_BACKED_TOKEN_BRIDGE: AddressList = {
     ethereum: "0x65c56363eE74947a2FE7E749123F3011C66833d6",
     arbitrum: "0x65c56363eE74947a2FE7E749123F3011C66833d6",
@@ -73,6 +87,11 @@ export const ACTION_EXECUTOR: AddressList = {
     flow: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
     abstract: "0x9c336bcc6D23C17ff14c891982F650f4E1117F3a",
     linea: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    soneium: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    sonic: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    hemi: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    rootstock: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c",
+    unichain: "0xf9Ce5d10977a75B73F06dF0C37ba6a160736Df6c"
 } as const;
 
 export const CUSTOM_BRIDGE: AddressList = {
@@ -80,6 +99,9 @@ export const CUSTOM_BRIDGE: AddressList = {
     avax: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320",
     base: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320",
     linea: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320",
+    sonic: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320",
+    world: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320",
+    optimism: "0x674cb5133A2dEaA4aBE86ed56CB7555960966320"
 } as const;
 
 export const CUSTOM_NON_EVM_BRIDGE: AddressList = {

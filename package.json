@@ -10,7 +10,7 @@
     "adapter": "export $(cat .env | xargs) &&  tsx  ./src/utils/runAdapterHistorical.ts",
     "aggregate": "export $(cat .env | xargs) &&  tsx ./src/utils/testaggregate.ts",
     "daily-volume": "export $(cat .env | xargs) &&  tsx ./src/utils/testDailyVolume.ts",
-    "dev": "vite",
+    "dev": "export $(cat .env | xargs) &&  tsx watch ./src/server/index.ts",
     "build": "vite build",
     "start": "node ./dist/index.js",
     "start:dev": "node ./dist/index.js",

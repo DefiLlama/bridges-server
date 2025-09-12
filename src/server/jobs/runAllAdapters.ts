@@ -12,6 +12,7 @@ export const runAllAdapters = async () => {
       GROUP BY bridge_id
   ) subquery;
   `;
+  console.log(lastRecordedBlocks[0].result);
   try {
     console.log("Stored last recorded blocks");
   } catch (e) {
@@ -24,6 +25,7 @@ export const runAllAdapters = async () => {
     .for(shuffledBridgeNetworks)
     .process(async (adapter) => {
       try {
+        console.log("Starting adapter", adapter.bridgeDbName);
         await runAdapterToCurrentBlock(adapter, true, "upsert", lastRecordedBlocks[0].result);
       } catch (e) {
         console.error(`Failed to run adapter ${adapter.bridgeDbName}`);

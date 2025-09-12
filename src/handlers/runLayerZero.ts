@@ -3,7 +3,7 @@ import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import dayjs from "dayjs";
 import { getCache, setCache } from "../utils/cache";
-import { processLayerZeroData } from "../adapters/layerzero";
+import { processLayerZeroData, updateLayerZeroTokenSymbols } from "../adapters/layerzero";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import { adapter } from "../adapters/layerzero";
 
@@ -39,6 +39,12 @@ export const handler = async () => {
         console.log(`Starting to process file #${processedFileCount}: ${fileName}`);
         const totalTransactions = transactions.length;
         let processedCount = 0;
+
+        try {
+          await updateLayerZeroTokenSymbols(transactions);
+        } catch (e) {
+          console.error(`Failed to update lz_token_symbols for ${fileName}:`, e);
+        }
 
         for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
           const batch = transactions.slice(i, i + BATCH_SIZE);

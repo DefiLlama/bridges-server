@@ -40,6 +40,7 @@ import manta from "./manta";
 import squidrouter from "./squid";
 import eywa from "./eywa";
 import rhinofi from "./rhinofi";
+import relay from "./relay";
 import pepeteam_bridge from "./pepeteam-bridge";
 import pnetwork from "./pnetwork";
 import interport from "./interport-finance";
@@ -81,7 +82,7 @@ import flyover from "./rootstock-flyover";
 import universalx from "./universalx";
 import eclipse from "./eclipse";
 import layerzero from "./layerzero";
-import assetchainbridge from "./assetchain-bridge"
+import assetchainbridge from "./assetchain-bridge";
 import train from "./train";
 import fuel from "./fuel";
 import lighter from "./lighter";
@@ -89,6 +90,8 @@ import movement from "./movement";
 import intersoon from "./intersoon";
 import ccip from "./ccip";
 import usdt0 from "./usdt0";
+import pheasantNetwork from "./pheasant-network";
+import teleswap from "./teleswap";
 
 export default {
   polygon,
@@ -131,6 +134,7 @@ export default {
   manta,
   eywa,
   rhinofi,
+  relay,
   pepeteam_bridge,
   pnetwork,
   interport,
@@ -181,6 +185,8 @@ export default {
   intersoon,
   ccip,
   usdt0,
+  pheasantNetwork,
+  teleswap,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

@@ -2,6 +2,7 @@ import fastify, { FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import dotenv from "dotenv";
 import getBridgeVolume from "../handlers/getBridgeVolume";
+import getBridgeVolumeBySlug from "../handlers/getBridgeVolumeBySlug";
 import getBridges from "../handlers/getBridges";
 import getBridge from "../handlers/getBridge";
 import getBridgeChains from "../handlers/getBridgeChains";
@@ -81,6 +82,7 @@ const start = async () => {
 
     server.get("/bridgedaystats/:timestamp/:chain", lambdaToFastify(getBridgeStatsOnDay));
     server.get("/bridgevolume/:chain", lambdaToFastify(getBridgeVolume));
+    server.get("/bridgevolume/slug/:slug", lambdaToFastify(getBridgeVolumeBySlug));
     server.get("/bridges", lambdaToFastify(getBridges));
     server.get("/bridge/:id", lambdaToFastify(getBridge));
     server.get("/bridgechains", lambdaToFastify(getBridgeChains));

@@ -1,13 +1,14 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogsCustom } from "./processTransactionsCustom";
+import { getTxDataFromEVMEventLogsCustom, getTxDataFromSolana } from "./processTransactionsCustom";
 import {
-    CCIP_TOKEN_BRIDGE,
-    NATIVE_TOKENS,
-    CCIP_NATIVE_BRIDGE,
-    CCIP_BACKED_TOKEN_BRIDGE,
-    ACTION_EXECUTOR,
-    CUSTOM_BRIDGE,
-    CUSTOM_NON_EVM_BRIDGE
+  CCIP_TOKEN_BRIDGE,
+  NATIVE_TOKENS,
+  CCIP_NATIVE_BRIDGE,
+  CCIP_BACKED_TOKEN_BRIDGE,
+  ACTION_EXECUTOR,
+  CUSTOM_BRIDGE,
+  CUSTOM_NON_EVM_BRIDGE,
+  CCIP_V2_TOKEN_BRIDGE
 } from "./constants";
 import { Chain } from "@defillama/sdk/build/general";
 
@@ -32,6 +33,31 @@ const ccipDepositParams = (chain: Chain): PartialContractEventParams => {
             token: "tokenAmounts[0].token"
         },
     };
+};
+
+const ccipV2DepositParams = (chain: Chain): PartialContractEventParams => {
+  const ccipV2TokenBridge = CCIP_V2_TOKEN_BRIDGE[chain] as string;
+
+  return {
+    target: ccipV2TokenBridge,
+    topic: "TokenBridgeActionSource(uint256,address,bytes,(address,uint256)[],bytes32,uint256)",
+    abi: [
+      "event TokenBridgeActionSource(uint256 targetChainId, address indexed sourceSender, bytes targetRecipient, tuple(address token, uint256 amount)[] tokenAmounts, bytes32 indexed ccipMessageId, uint256 timestamp)"
+    ],
+    isDeposit: true,
+    logKeys: {
+      blockNumber: "blockNumber",
+      txHash: "transactionHash",
+    },
+    argKeys: {
+      from: "sourceSender",
+      amount: "tokenAmounts[0].amount",
+      token: "tokenAmounts[0].token"
+    },
+    fixedEventData: {
+      to: ccipV2TokenBridge,
+    },
+  };
 };
 
 const ccipNativeDepositParams = (chain: Chain): PartialContractEventParams => {
@@ -183,6 +209,11 @@ const customNonEvmBridgeDeposit = (chain: Chain): PartialContractEventParams => 
 
 
 const constructParams = (chain: Chain) => {
+    if(chain === 'solana') {
+      return async (fromBlock: number, toBlock: number) =>
+        getTxDataFromSolana(fromBlock, toBlock);
+    }
+
     const eventParams: PartialContractEventParams[] = [];
 
     if(ACTION_EXECUTOR[chain]) {
@@ -210,12 +241,17 @@ const constructParams = (chain: Chain) => {
         eventParams.push(customBridgeDeposit(chain));
     }
 
+    if(CCIP_V2_TOKEN_BRIDGE[chain]) {
+        eventParams.push(ccipV2DepositParams(chain));
+    }
+
     return async (fromBlock: number, toBlock: number) =>
         getTxDataFromEVMEventLogsCustom("interport", chain, fromBlock, toBlock, eventParams);
 };
 
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
+    solana: constructParams("solana"),
     avalanche: constructParams("avax"),
     arbitrum: constructParams("arbitrum"),
     base: constructParams("base"),
@@ -232,7 +268,6 @@ const adapter: BridgeAdapter = {
     blast: constructParams("blast"),
     celo: constructParams("celo"),
     gnosis: constructParams("gnosis"),
-    kroma: constructParams("kroma"),
     metis: constructParams("metis"),
     mode: constructParams("mode"),
     wemix: constructParams("wemix"),
@@ -260,6 +295,11 @@ const adapter: BridgeAdapter = {
     flow: constructParams("flow"),
     abstract: constructParams("abstract"),
     mind: constructParams("mind"),
+    rootstock: constructParams("rootstock"),
+    hemi: constructParams("hemi"),
+    unichain: constructParams("unichain"),
+    botanix: constructParams("botanix"),
+    "world chain": constructParams("world"),
 };
 
 export default adapter;

@@ -6,6 +6,8 @@ import { ContractEventParams, PartialContractEventParams } from "../../helpers/b
 import { EventData } from "../../utils/types";
 import { getProvider } from "@defillama/sdk/build/general";
 import { PromisePool } from "@supercharge/promise-pool";
+import { getConnection } from "../../helpers/solana";
+import web3, { Connection, PartiallyDecodedInstruction, PublicKey } from "@solana/web3.js";
 
 const EventKeyTypes = {
     blockNumber: "number",
@@ -456,3 +458,236 @@ export const getTxDataFromEVMEventLogsCustom = async (
     return accEventData;
 };
 
+export async function getTxDataFromSolana (startSlot: number, endSlot: number): Promise<EventData[]> {
+  const eventData = []
+  const connection = getConnection();
+  const FEE_RECEIVERS = ["J84sWWdRQBUVfeMBDEyQty2qdSXVL1rm4YQPrc4gwEUt", "GX2BHPzW9P4CcWFyh4QhKw7EAaHwS4mGvpk3vupwMygr"]
+  const TOKEN_MESSENGER_MINTER_ADDRESS =
+    "CCTPiPYPc6AsJuwueEnWgSgucamXDZwBd53dQ11YiKX3";
+  const BRIDGE_PROGRAM_ID = 'Ccip842gzYHhvdDkSyi2YVCoAWPbYJoApMFzSxQroE9C';
+
+  const transactions = await Promise.all(FEE_RECEIVERS.map(async (address) => getTransactionListForAddress(startSlot, endSlot, address, connection)));
+
+  for (const { signature } of transactions.flat(1)) {
+    try {
+      const transaction = await connection.getParsedTransaction(
+        signature,
+        {
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0
+        }
+      );
+
+      if(!transaction) {
+        continue;
+      }
+
+      const instructions = transaction.transaction.message.instructions;
+      let parsedData
+
+      const cctpIx = instructions.find((ix: any) =>
+        ix.programId.equals(new PublicKey(TOKEN_MESSENGER_MINTER_ADDRESS))
+      ) as PartiallyDecodedInstruction;
+
+      if (cctpIx) {
+        parsedData = parseCctpDepositInstruction(
+          Buffer.from(base58decode(cctpIx.data))
+        );
+
+        if (!parsedData) {
+          continue;
+        }
+
+        parsedData.from = cctpIx.accounts[1].toString();
+      }
+
+      const ccipIx = instructions.find((ix: any) =>
+        ix.programId.equals(new PublicKey(BRIDGE_PROGRAM_ID))
+      ) as PartiallyDecodedInstruction;
+
+      if (ccipIx) {
+        parsedData = parseCcipDepositInstruction(
+          Buffer.from(base58decode(ccipIx.data))
+        );
+
+        if (!parsedData) {
+          continue;
+        }
+
+        parsedData.from = transaction.transaction.message.accountKeys[0].pubkey.toString()
+      }
+
+      eventData.push({
+        blockNumber: transaction.slot,
+        txHash: signature,
+        from: parsedData.from,
+        to: parsedData.toAddress,
+        token: parsedData.token,
+        amount: ethers.BigNumber.from(parsedData.amount),
+        isDeposit: true,
+      });
+
+    } catch{}
+  }
+
+  return eventData;
+}
+
+async function getTransactionListForAddress(startSlot: number, endSlot: number, address: string, connection: Connection) {
+  try {
+  const pageSize = 100;
+  const transactions = [];
+  let before: string | undefined = undefined;
+  let done = false;
+
+  while (!done) {
+    const opts: { limit: number; before?: string } = { limit: pageSize };
+    if (before) opts.before = before;
+
+    const sigsPage = await connection.getSignaturesForAddress(
+      new web3.PublicKey(address),
+      opts,
+      'confirmed'
+    );
+
+    if (sigsPage.length === 0) break;
+
+    for (const sig of sigsPage) {
+      if (sig.slot > endSlot) {
+        continue;
+      }
+
+      if (sig.slot < startSlot) {
+        done = true;
+        break;
+      }
+
+      transactions.push(sig);
+    }
+
+    before = sigsPage[sigsPage.length - 1].signature;
+
+    if (sigsPage[sigsPage.length - 1].slot < startSlot) {
+      break;
+    }
+  }
+
+  return transactions
+  } catch {
+    return []
+  }
+}
+
+function parseCctpDepositInstruction (data: Buffer): any {
+  const USDC_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+
+  const TARGET_DISCRIMINATOR = Uint8Array.from([
+    167, 222, 19, 114, 85, 21, 14, 118
+  ]);
+
+  if (!data.slice(0, 8).equals(Buffer.from(TARGET_DISCRIMINATOR))) {
+    return null;
+  }
+
+  const offset = 8;
+
+  const amount = Number(data.readBigUInt64LE(offset));
+  const recipient = data.slice(offset + 12, offset + 44);
+  const evmBytes = new PublicKey(recipient).toBuffer().slice(-20);
+  const evmMintRecipient = '0x' + Buffer.from(evmBytes).toString('hex');
+
+  return {
+    token: USDC_ADDRESS,
+    amount: amount.toString(),
+    toAddress: evmMintRecipient,
+  };
+}
+
+function readU32(buffer: Buffer, offset: number): [number, number] {
+  return [buffer.readUInt32LE(offset), offset + 4];
+}
+
+function readU64(buffer: Buffer, offset: number): [bigint, number] {
+  return [buffer.readBigUInt64LE(offset), offset + 8];
+}
+
+function readVecU8(buffer: Buffer, offset: number): [Uint8Array, number] {
+  const [length, newOffset] = readU32(buffer, offset);
+  const end = newOffset + length;
+  return [buffer.slice(newOffset, end), end];
+}
+
+function readPublicKey(buffer: Buffer, offset: number): [string, number] {
+  const key = new PublicKey(buffer.slice(offset, offset + 32));
+  return [key.toBase58(), offset + 32];
+}
+
+function parseCcipDepositInstruction(data: Buffer): any {
+  const TARGET_DISCRIMINATOR = Uint8Array.from([
+    108, 216, 134, 191, 249, 234, 33, 84,
+  ]);
+
+  if (!data.slice(0, 8).equals(Buffer.from(TARGET_DISCRIMINATOR))) {
+    return null;
+  }
+
+  let offset = 8;
+
+  const [, o1] = readU64(data, offset);
+  offset = o1;
+
+  const [receiverBytes, o2] = readVecU8(data, offset);
+  offset = o2;
+
+  const [, o3] = readVecU8(data, offset);
+  offset = o3;
+
+  const [tokenAmountsLen, o4] = readU32(data, offset);
+  offset = o4;
+
+  const tokenAmounts: { token: string, amount: string }[] = [];
+  for (let i = 0; i < tokenAmountsLen; i++) {
+    const [token, o5] = readPublicKey(data, offset);
+    const [amount, o6] = readU64(data, o5);
+    offset = o6;
+    tokenAmounts.push({ token, amount: amount.toString() });
+  }
+
+  const evmBytes = new PublicKey(receiverBytes).toBuffer().slice(-20);
+  const evmMintRecipient = '0x' + Buffer.from(evmBytes).toString('hex');
+
+  return {
+    amount: tokenAmounts[0].amount,
+    token: tokenAmounts[0].token,
+    toAddress: evmMintRecipient
+  };
+}
+
+
+function base58decode (str: string): Uint8Array {
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const base = alphabet.length;
+  const alphabetMap = new Map<string, number>();
+  for (let i = 0; i < alphabet.length; i++) alphabetMap.set(alphabet[i], i);
+
+  const bytes = [0];
+  for (const char of str) {
+    const value = alphabetMap.get(char);
+    if (value === undefined) throw new Error(`Invalid base58 character "${char}"`);
+    let carry = value;
+    for (let j = 0; j < bytes.length; ++j) {
+      carry += bytes[j] * base;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) {
+      bytes.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+
+  let zeros = 0;
+  while (str[zeros] === "1") zeros++;
+
+  return new Uint8Array([...new Array(zeros).fill(0), ...bytes.reverse()]);
+}
