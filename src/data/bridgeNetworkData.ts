@@ -2438,13 +2438,13 @@ export default [
       "World Chain": "wc",
     },
   },
-  {
-    id: 96,
-    displayName: "Chainlink CCIP",
-    bridgeDbName: "ccip",
-    iconLink: "icons:ccip",
-    largeTxThreshold: 10000,
-    url: "https://ccip.chain.link/",
-    chains: ["Ethereum"],
-  },
+  // {
+  //   id: 96,
+  //   displayName: "Chainlink CCIP",
+  //   bridgeDbName: "ccip",
+  //   iconLink: "icons:ccip",
+  //   largeTxThreshold: 10000,
+  //   url: "https://ccip.chain.link/",
+  //   chains: ["Ethereum"],
+  // },
 ] as BridgeNetwork[];
