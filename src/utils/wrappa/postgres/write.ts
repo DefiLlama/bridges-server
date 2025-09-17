@@ -398,6 +398,7 @@ export const insertTransactionRows = async (
         throw new Error(`Could not insert transaction rows in batch.`);
       } else {
         console.error(`Failed batch insert attempt ${i + 1}:`, e);
+        console.error(dedupedTransactions);
         continue;
       }
     }
