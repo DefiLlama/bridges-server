@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { BridgeAdapter } from '../../helpers/bridgeAdapter.type';
+import fs from "fs";
 
 export type CCIPEvent = {
   chain: string;
@@ -36,7 +37,7 @@ interface ApiResponse {
 
 // --- Constants ---
 const API_BASE_URL = "https://dsa-metrics-api-gw-8p4u7g34.nw.gateway.dev/v1/ccip_transactions" // Base URL for the CCIP metrics API
-const API_KEY = ""; // TODO: API Key, needs to be piped in from Repo secrets
+const API_KEY = process.env.CCIP_API_KEY as string;
 
 function formatAmount(tokenAmount: number, decimals: number): string {
   // If decimals is zero, it means the token amount is already in the smallest unit (like wei for ETH)
@@ -219,10 +220,41 @@ export async function fetchCCIPEvents(
   return filteredEvents;
 }
 
-// The CCIP adapter returns data for all chains at once, so we effectively ignore the 
-// chain parameter by mapping everything to 'Ethereum'
-const adapter: BridgeAdapter = {
-  "Ethereum": fetchCCIPEvents as any
-};
+
+const chains = [
+  "celo",
+  "ethereum",
+  "bsc",
+  "bitlayer",
+  "base",
+  "fhe",
+  "soneium",
+  "astar",
+  "berachain",
+  "polygon",
+  "avalanche",
+  "arbitrum",
+  "optimism",
+  "ronin",
+  "linea",
+  "aptos",
+  "shibarium",
+  "sonic",
+  "wemix",
+  "bsquared",
+  "xdai",
+  "bob",
+  "hyperliquid",
+  "unichain",
+  "katana",
+  "mantle",
+  "world chain",
+  "plume",
+  "zksync era",
+  "metis",
+  "sei"
+]
+
+export const adapter: BridgeAdapter = Object.fromEntries(chains.map(chain => [chain, fetchCCIPEvents as any]));
 
 export default adapter;

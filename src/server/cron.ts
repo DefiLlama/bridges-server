@@ -89,9 +89,13 @@ const cron = () => {
   runEvery("runLayerZero", 30, runLayerZero);
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
-  runEvery("runCCIP", 60 * 24, runCCIP)
   runEvery("runRelay", 30, runRelay);
-  runEvery("runTeleswap", 60 * 6, runTeleswap);
+  runEvery("runTeleswap", 60, runTeleswap);
+
+  if (new Date().getHours() === 0) { 
+    runEvery("runCCIP", 30, runCCIP)
+  }
+
 
   exit();
 };

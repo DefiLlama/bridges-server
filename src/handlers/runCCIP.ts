@@ -20,13 +20,12 @@
 
 import dayjs from 'dayjs';
 import _ from 'lodash';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 
-import { fetchEventsForDate, CCIPEvent } from '../adapters/ccip';
+import adapter, { fetchEventsForDate, CCIPEvent } from '../adapters/ccip';
 import { sql } from '../utils/db';
 import { insertTransactionRows } from '../utils/wrappa/postgres/write';
 import { getBridgeID } from '../utils/wrappa/postgres/query';
+import { insertConfigEntriesForAdapter } from '../utils/adapter';
 
 interface TransactionRow {
     bridge_id: string;
@@ -62,6 +61,20 @@ interface HandlerOptions {
 
 // Core handler function to process CCIP events.
 const _handler = async (options: HandlerOptions = {}): Promise<void> => {
+
+    await insertConfigEntriesForAdapter(adapter, ADAPTER_NAME);
+
+    const bridgeIds = Object.fromEntries(
+      await Promise.all(
+        Object.keys(adapter).map(async (chain) => {
+          chain = chain.toLowerCase();
+          const bridgeId = await getBridgeID(ADAPTER_NAME, chain);
+          return [chain, bridgeId?.id];
+        })
+      )
+    );
+
+ 
     const { startDate, endDate } = options;
     let datesToProcess: string[] = [];
 
@@ -98,24 +111,7 @@ const _handler = async (options: HandlerOptions = {}): Promise<void> => {
     console.log(`[_handler] Will process the following dates: ${datesToProcess.join(', ')}`);
     console.log(`[_handler] Starting CCIP event processing task.`);
 
-    let globalBridgeId: string | null = null;
-    try {
-        // Fetch the unique bridge identifier from the database.
-        console.log(`[_handler] Fetching global bridge_id for adapter "${ADAPTER_NAME}" using chain "${DEFAULT_CHAIN_FOR_BRIDGE_ID}"...`);
-        const bridgeEntry = await getBridgeID(ADAPTER_NAME, DEFAULT_CHAIN_FOR_BRIDGE_ID);
-        globalBridgeId = bridgeEntry ? bridgeEntry.id : null;
-
-        if (!globalBridgeId) {
-            console.error(`[_handler] CRITICAL: Failed to fetch global bridge_id using chain "${DEFAULT_CHAIN_FOR_BRIDGE_ID}". Terminating task.`);
-            throw new Error(`Failed to fetch global bridge_id for ${ADAPTER_NAME}`);
-        }
-        console.log(`[_handler] Using global bridge_id: "${globalBridgeId}" for all CCIP events.`);
-    } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error(`[_handler] CRITICAL: Error fetching global bridge_id: ${errorMessage}`, err);
-        throw err; // Re-throw for programmatic callers to handle
-    }
-
+    
     // Process events for each determined date.
     for (const dateString of datesToProcess) {
         console.log(`[_handler] Starting processing for date: ${dateString}`);
@@ -131,7 +127,7 @@ const _handler = async (options: HandlerOptions = {}): Promise<void> => {
 
             // Transform fetched CCIP events into the database row format.
             const transactionsToInsert: TransactionRow[] = ccipEvents.map(event => ({
-                bridge_id: globalBridgeId!, // Assert globalBridgeId is non-null.
+                bridge_id: bridgeIds[event.chain]!, // Assert globalBridgeId is non-null.
                 chain: event.chain,
                 tx_hash: event.tx_hash || null,
                 ts: event.ts,
@@ -144,7 +140,7 @@ const _handler = async (options: HandlerOptions = {}): Promise<void> => {
                 tx_block: null,
                 txs_counted_as: null,
                 origin_chain: null,
-            }));
+            })).filter((tx) => !!tx.bridge_id);
 
             if (transactionsToInsert.length > 0) {
                 console.log(`[_handler] Prepared ${transactionsToInsert.length} transaction rows for insertion for date ${dateString}.`);
@@ -183,6 +179,8 @@ export async function runCCIPDefaultMode(): Promise<void> {
     }
 }
 
+
+
 /**
  * Runs the CCIP handler in backfill mode for a specified date range.
  * @param startDate The start date of the range (YYYY-MM-DD, inclusive).
@@ -214,91 +212,5 @@ export async function runCCIPBackfillMode(startDate: string, endDate: string): P
 }
 
 
-// --- CLI Execution Wrapper ---
-async function executeHandlerForCli(options: HandlerOptions = {}) {
-    console.log("[executeHandlerForCli] Starting CLI execution...");
-    let success = false;
-    try {
-        await _handler(options);
-        console.log("[executeHandlerForCli] CLI execution finished successfully.");
-        success = true;
-    } catch (error) {
-        // Errors from _handler (like globalBridgeId failure) will be caught here.
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[executeHandlerForCli] CLI execution FAILED: ${errorMessage}`, error);
-    } finally {
-        // Ensure database connections are closed after execution for CLI.
-        console.log("[executeHandlerForCli] Entering finally block for cleanup.");
-        if (sql && typeof (sql as any).end === 'function') {
-            try {
-                console.log("[executeHandlerForCli] Attempting to close database connections...");
-                await (sql as any).end();
-                console.log("[executeHandlerForCli] Database connections closed.");
-            } catch (closeError) {
-                console.error("[executeHandlerForCli] Error closing database connections:", closeError);
-            }
-        } else {
-            console.warn("[executeHandlerForCli] Database connection object 'sql' or its 'end' method not available for cleanup.");
-        }
-        console.log("[executeHandlerForCli] Cleanup finished.");
-        // Exit with status code reflecting success or failure if run directly.
-        if (require.main === module) {
-            process.exit(success ? 0 : 1);
-        }
-    }
-}
 
-if (require.main === module) {
-    // Parse command-line arguments using yargs.
-    const argv = yargs(hideBin(process.argv))
-        .option('startDate', {
-            alias: 's',
-            type: 'string',
-            description: 'Start date for backfill (YYYY-MM-DD)',
-            coerce: (arg) => { // Validate date format.
-                if (arg && !isValidDateFormat(arg)) {
-                    throw new Error(`Invalid startDate format: ${arg}. Please use YYYY-MM-DD.`);
-                }
-                return arg;
-            }
-        })
-        .option('endDate', {
-            alias: 'e',
-            type: 'string',
-            description: 'End date for backfill (YYYY-MM-DD)',
-            coerce: (arg) => { // Validate date format.
-                if (arg && !isValidDateFormat(arg)) {
-                    throw new Error(`Invalid endDate format: ${arg}. Please use YYYY-MM-DD.`);
-                }
-                return arg;
-            }
-        })
-        .check((argv) => { // Additional validation for date range.
-            if ((argv.startDate && !argv.endDate) || (!argv.startDate && argv.endDate)) {
-                throw new Error("Both --startDate and --endDate must be provided for a date range.");
-            }
-            if (argv.startDate && argv.endDate && dayjs(argv.startDate).isAfter(dayjs(argv.endDate))) {
-                throw new Error("Error: --startDate cannot be after --endDate.");
-            }
-            return true;
-        })
-        .help()
-        .alias('help', 'h')
-        .argv;
 
-    // Execute the CLI wrapper with parsed arguments.
-    Promise.resolve(argv).then(resolvedArgv => {
-        const options: HandlerOptions = {};
-        if (resolvedArgv.startDate && resolvedArgv.endDate) {
-            options.startDate = resolvedArgv.startDate;
-            options.endDate = resolvedArgv.endDate;
-        }
-        executeHandlerForCli(options).catch(cliError => {
-            console.error("[runCCIP - CLI Global Error] Unhandled error during CLI execution:", cliError);
-            process.exit(1);
-        });
-    }).catch(err => {
-        console.error("[runCCIP - CLI Setup Error] Error parsing command line arguments:", err.message);
-        process.exit(1);
-    });
-}

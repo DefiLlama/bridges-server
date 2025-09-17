@@ -60,7 +60,6 @@
     "postgres": "^3.2.4",
     "tron-format-address": "^0.1.11",
     "tsx": "^4.7.1",
-    "typescript": "^5.4.2",
-    "yargs": "^17.7.2"
+    "typescript": "^5.4.2"
   }
 }
