@@ -24,7 +24,6 @@
     "@types/node-fetch": "^2.6.2",
     "@types/object-hash": "^3.0.6",
     "@types/retry": "^0.12.5",
-    "@types/yargs": "^17.0.33",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
     "serverless": "^3.21.0",
