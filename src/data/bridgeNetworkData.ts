@@ -2456,7 +2456,7 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avax", 
+      "avax",
       "optimism",
       "arbitrum",
       "base",
