@@ -89,7 +89,7 @@ const cron = () => {
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
   runEvery("runRelay", 30, runRelay);
-  runEvery("runTeleswap", 60 * 6, runTeleswap);
+  runEvery("runTeleswap", 30, runTeleswap);
 
   exit();
 };
