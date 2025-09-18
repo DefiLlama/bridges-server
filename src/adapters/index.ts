@@ -92,6 +92,7 @@ import ccip from "./ccip";
 import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
+import agglayer from "./agglayer";
 
 export default {
   polygon,
@@ -187,6 +188,7 @@ export default {
   usdt0,
   pheasantNetwork,
   teleswap,
+  agglayer,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
