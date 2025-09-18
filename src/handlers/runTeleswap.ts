@@ -39,7 +39,7 @@ export const handler = async () => {
         is_usd_volume: true,
         txs_counted_as: 1,
         origin_chain: null,
-      }));
+      })).filter((tx) => !!tx.bridge_id);
       startTs = toTs;
       await sql.begin(async (sql) => {
         const batchSize = 200;
@@ -55,5 +55,6 @@ export const handler = async () => {
     throw error;
   }
 };
+
 
 export default handler;
