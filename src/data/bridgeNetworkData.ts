@@ -2411,6 +2411,7 @@ export default [
       "Gnosis",
       "Ham",
       "Hychain",
+      "Katana",
       "Linea",
       "Lisk",
       "Mantle",
@@ -2447,4 +2448,23 @@ export default [
   //   url: "https://ccip.chain.link/",
   //   chains: ["Ethereum"],
   // },
+  {
+    id: 97,
+    displayName: "Agglayer",
+    bridgeDbName: "agglayer",
+    iconLink: "icons:agglayer",
+    largeTxThreshold: 10000,
+    url: "https://agglayer.dev/",
+    chains: [
+      "Ethereum",
+      "Katana",
+      "Polygon Zkevm",
+      "Ternoa",
+      "X Layer"
+    ],
+    chainMapping: {
+      "polygon zkevm": "polygon_zkevm",
+      "x layer": "xlayer",
+    },
+  },
 ] as BridgeNetwork[];

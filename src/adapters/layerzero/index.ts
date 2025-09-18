@@ -85,6 +85,7 @@ export const layerZeroChainMapping: { [key: string]: string } = {
   Morph: "morph",
   BB1: "bb1",
   BounceBit: "bouncebit",
+  Katana: "katana",
 };
 
 async function assumeRole(retryCount = 0, maxRetries = 3) {
@@ -280,8 +281,8 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
             bridge: values[15],
             _fileName: file.Key!,
           };
-          });
-        
+        });
+
         console.log(`Yielding ${transactions.length} transactions from ${file.Key}`);
         yield { fileName: file.Key, transactions };
         console.log(`Successfully yielded transactions from ${file.Key}, moving to next file`);
