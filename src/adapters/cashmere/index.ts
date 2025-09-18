@@ -8,7 +8,7 @@ const retry = require("async-retry");
 /**
  * Cashmere CCTP Relayer is a cross-chain USDC bridge using Circle's CCTP protocol.
  * All amounts are in USDC (6 decimals), making volume tracking straightforward.
- * API: https://api.cashmere.exchange/transactionsmainnet
+ * API: https://kapi.cashmere.exchange/transactionsmainnet
  */
 
 const requestQueues = new Map<number, Promise<any>>();
