@@ -2440,7 +2440,7 @@ export default [
     },
   },
   {
-    id: 96,
+    id: 97,
     displayName: "Agglayer",
     bridgeDbName: "agglayer",
     iconLink: "icons:agglayer",
@@ -2458,4 +2458,13 @@ export default [
       "x layer": "xlayer",
     },
   },
+  // {
+  //   id: 96,
+  //   displayName: "Chainlink CCIP",
+  //   bridgeDbName: "ccip",
+  //   iconLink: "icons:ccip",
+  //   largeTxThreshold: 10000,
+  //   url: "https://ccip.chain.link/",
+  //   chains: ["Ethereum"],
+  // },
 ] as BridgeNetwork[];
