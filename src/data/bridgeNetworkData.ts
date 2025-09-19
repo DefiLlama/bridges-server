@@ -2476,7 +2476,7 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avax",
+      "avalanche",
       "optimism",
       "arbitrum",
       "base",
@@ -2484,12 +2484,17 @@ export default [
       "unichain",
       "linea",
       "sonic",
-      "wc",
+      "world chain",
       "sei",
       "hyperliquid",
       "aptos",
       "sui",
       "solana",
     ],
+    chainMapping: {
+      "avalanche": "avax",
+      "world chain": "wc",
+      "hyperliquid": "hyperliquid",
+    },
   },
 ] as BridgeNetwork[];
