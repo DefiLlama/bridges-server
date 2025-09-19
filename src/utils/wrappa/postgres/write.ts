@@ -1,6 +1,17 @@
 import postgres from "postgres";
 import { sql } from "../../db";
 
+const PG_INT_MAX = 2147483647;
+
+const normalizeBlockNumber = (block: number | null): number | null => {
+  if (block == null) return block;
+  if (block > PG_INT_MAX) {
+    console.warn(`tx_block ${block} is out of INTEGER range; setting to 0`);
+    return 0;
+  }
+  return block;
+};
+
 const txTypes = {
   bridge_id: "string",
   chain: "string",
@@ -37,34 +48,37 @@ export const insertTransactionRow = async (
   },
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  // FIX should use dynamically built strings here, I just didn't finish it
+  const safeParams = {
+    ...params,
+    tx_block: normalizeBlockNumber(params.tx_block),
+  } as typeof params;
   let sqlCommand = sql`
-  insert into bridges.transactions ${sql(params)}
+  insert into bridges.transactions ${sql(safeParams)}
 `;
   if (onConflict === "ignore") {
     sqlCommand = sql`
-      insert into bridges.transactions ${sql(params)}
+      insert into bridges.transactions ${sql(safeParams)}
       ON CONFLICT DO NOTHING
     `;
   } else if (onConflict === "upsert") {
     sqlCommand = sql`
-      insert into bridges.transactions ${sql(params)}
+      insert into bridges.transactions ${sql(safeParams)}
       ON CONFLICT (bridge_id, chain, tx_hash, token, tx_from, tx_to)
-      DO UPDATE SET ${sql(params)}
+      DO UPDATE SET ${sql(safeParams)}
     `;
   }
 
-  Object.entries(params).map(([key, val]) => {
+  Object.entries(safeParams).map(([key, val]) => {
     if (val == null) {
       if (allowNullTxValues) {
         // console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
       } else {
-        throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
+        throw new Error(`Transaction for bridgeID ${safeParams.bridge_id} has a null value for ${key}.`);
       }
     } else {
       if (typeof val !== txTypes[key])
         throw new Error(
-          `Transaction for bridgeID ${params.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
+          `Transaction for bridgeID ${safeParams.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
         );
     }
   });
@@ -74,9 +88,9 @@ export const insertTransactionRow = async (
       return;
     } catch (e) {
       if (i >= 4) {
-        throw new Error(`Could not insert transaction row for bridge ${params.bridge_id}.`);
+        throw new Error(`Could not insert transaction row for bridge ${safeParams.bridge_id}.`);
       } else {
-        console.error(`id: ${params.bridge_id}, txHash: ${params.tx_hash}`, e);
+        console.error(`id: ${safeParams.bridge_id}, txHash: ${safeParams.tx_hash}`, e);
         continue;
       }
     }
@@ -347,7 +361,12 @@ export const insertTransactionRows = async (
     return;
   }
 
-  dedupedTransactions.forEach((params) => {
+  const sanitizedTransactions = dedupedTransactions.map((tx) => ({
+    ...tx,
+    tx_block: normalizeBlockNumber(tx.tx_block),
+  }));
+
+  sanitizedTransactions.forEach((params) => {
     Object.entries(params).forEach(([key, val]) => {
       if (val == null) {
         if (allowNullTxValues) {
@@ -366,12 +385,12 @@ export const insertTransactionRows = async (
   let sqlCommand;
   if (onConflict === "ignore") {
     sqlCommand = sql`
-      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+      INSERT INTO bridges.transactions ${sql(sanitizedTransactions)}
       ON CONFLICT DO NOTHING
     `;
   } else if (onConflict === "upsert") {
     sqlCommand = sql`
-      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+      INSERT INTO bridges.transactions ${sql(sanitizedTransactions)}
       ON CONFLICT (bridge_id, chain, tx_hash, token, tx_from, tx_to)
       DO UPDATE SET
         ts = EXCLUDED.ts,
@@ -384,21 +403,21 @@ export const insertTransactionRows = async (
     `;
   } else {
     sqlCommand = sql`
-      INSERT INTO bridges.transactions ${sql(dedupedTransactions)}
+      INSERT INTO bridges.transactions ${sql(sanitizedTransactions)}
     `;
   }
 
   for (let i = 0; i < 5; i++) {
     try {
       await sqlCommand;
-      console.log(`Inserted ${dedupedTransactions.length} transactions of ${transactions.length}`);
+      console.log(`Inserted ${sanitizedTransactions.length} transactions of ${transactions.length}`);
       return;
     } catch (e) {
       if (i >= 4) {
         throw new Error(`Could not insert transaction rows in batch.`);
       } else {
         console.error(`Failed batch insert attempt ${i + 1}:`, e);
-        console.error(dedupedTransactions);
+        console.error(sanitizedTransactions);
         continue;
       }
     }
