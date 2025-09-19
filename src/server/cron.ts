@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import runHyperlane from "../handlers/runHyperlane";
 import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
+import { handler as runCashmere } from "../handlers/runCashmere";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -90,6 +91,7 @@ const cron = () => {
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
   runEvery("runRelay", 30, runRelay);
+  runEvery("runCashmere", 30, runCashmere);
   runEvery("runTeleswap", 30, runTeleswap);
 
   if (new Date().getHours() === 0) { 
