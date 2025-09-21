@@ -119,11 +119,30 @@ export const handler = async () => {
       });
       start += BATCH_SIZE;
     }
-    const totalVolume = events.reduce((acc: number, curr: any) => acc + parseFloat(curr.token_usd_amount || "0"), 0);
+    // Calculate total volume, filtering outliers and avoiding double counting
+    const totalVolume = events.reduce((acc: number, curr: any) => {
+      const amount = parseFloat(curr.token_usd_amount || "0");
+      
+      // Skip transactions over $1M (outliers)
+      if (amount > 1000000) {
+        console.log(`[Volume Calc] Skipping outlier: $${amount.toLocaleString()} - tx: ${curr.transaction_hash}`);
+        return acc;
+      }
+      
+      // Only count deposits to avoid double counting (each bridge has deposit + withdrawal)
+      if (!curr.is_deposit) {
+        return acc;
+      }
+      
+      return acc + amount;
+    }, 0);
+    
+    console.log(`Mayan total volume: $${totalVolume.toLocaleString()} (filtered for outliers and double-counting)`);
     await setCache(END_TS_KEY, totalVolume, null);
   } catch (error) {
     throw error;
   }
 };
 
-export default wrapScheduledLambda(handler);
+// export default wrapScheduledLambda(handler);
+export default handler();

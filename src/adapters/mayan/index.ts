@@ -1,5 +1,4 @@
 import dayjs from "dayjs";
-import { queryAllium } from "../../helpers/allium";
 type WormholeBridgeEvent = {
   block_timestamp: string;
   transaction_hash: string;
@@ -10,6 +9,7 @@ type WormholeBridgeEvent = {
   token_amount: string;
   source_chain: string;
   destination_chain: string;
+  is_deposit?: boolean;
 };
 
 const chains = [
@@ -90,47 +90,124 @@ export function normalizeChainName(chainName: string): string {
   return chainName?.toLowerCase();
 }
 
+// Map wormhole chain IDs to chain names
+const wormholeChainMap: { [key: string]: string } = {
+  "1": "solana",
+  "2": "ethereum",
+  "30": "base",
+  "23": "arbitrum",
+  "24": "optimism",
+  "5": "polygon",
+  "6": "avalanche",
+  "4": "bsc",
+  "21": "sui",
+  "44": "unichain",
+  "22": "aptos",
+  "38": "linea"
+};
+
 export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: number): Promise<WormholeBridgeEvent[]> => {
   let allResults: WormholeBridgeEvent[] = [];
-  let currentTimestamp = fromTimestamp;
+  let offset = 0;
   const BATCH_SIZE = 10000;
+  
+  // Convert timestamps to milliseconds for API
+  const startMs = fromTimestamp * 1000;
+  const endMs = toTimestamp * 1000;
 
-  while (currentTimestamp < toTimestamp) {
-    const result = await queryAllium(`
-      select
-        BLOCK_TIMESTAMP,
-        TOKEN_TRANSFER_FROM_ADDRESS,
-        TOKEN_TRANSFER_TO_ADDRESS,
-        TOKEN_ADDRESS,
-        TOKEN_USD_AMOUNT,
-        TOKEN_AMOUNT,
-        SOURCE_CHAIN,
-        DESTINATION_CHAIN, 
-        UNIQUE_ID AS transaction_hash
-      from org_db__defillama.default.wormhole_token_transfers
-      where
-        block_timestamp BETWEEN TO_TIMESTAMP_NTZ(${currentTimestamp}) AND TO_TIMESTAMP_NTZ(${toTimestamp}) 
-        and status != 'REFUNDED'
-        order by block_timestamp
-        limit ${BATCH_SIZE};
-    `);
+  console.log(`[Mayan] Starting fetch from ${new Date(startMs).toISOString()} to ${new Date(endMs).toISOString()}`);
+  console.log(`[Mayan] Timestamps: ${fromTimestamp} - ${toTimestamp} (unix seconds)`);
 
-    if (result.length === 0) break;
+  while (true) {
+    try {
+      const url = `http://localhost:3000/swaps?startTs=${startMs}&endTs=${endMs}&offset=${offset}&limit=${BATCH_SIZE}`;
+      console.log(`[Mayan] Fetching batch: offset=${offset}, limit=${BATCH_SIZE}`);
+      console.log(`[Mayan] Request URL: ${url}`);
+      
+      const response = await fetch(url);
+      
+      console.log(`[Mayan] Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Mayan] API error response: ${errorText}`);
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log(`[Mayan] Received ${result.length} events in current batch`);
+      
+      if (result.length === 0) {
+        console.log(`[Mayan] No more events, stopping pagination`);
+        break;
+      }
 
-    const normalizedBatch = result.map((row: any) => ({
-      ...row,
-      token_usd_amount: String(parseFloat(row.token_usd_amount || "0") || 0),
-      block_timestamp: dayjs(row.block_timestamp).unix(),
-    }));
+      // Log sample of first event for debugging
+      if (offset === 0 && result.length > 0) {
+        console.log(`[Mayan] Sample first event structure:`, JSON.stringify(result[0], null, 2));
+      }
 
-    allResults = [...allResults, ...normalizedBatch];
-    console.log(`Fetched ${allResults.length} Wormhole events.`);
+      const normalizedBatch = result
+        .map((row: any) => {
+          // Parse timestamp - handle both ISO string and unix formats
+          const timestamp = row.ts ? dayjs(row.ts).unix() : dayjs().unix();
+          
+          // Map chain IDs to chain names
+          const sourceChain = wormholeChainMap[row.originChain] || row.originChain || "unknown";
+          const destChain = wormholeChainMap[row.chain] || row.chain || "unknown";
+          
+          // For deposits, swap source/dest (deposit means going FROM origin TO current chain)
+          const [source, dest] = row.isDeposit 
+            ? [sourceChain, destChain]
+            : [destChain, sourceChain];
 
-    currentTimestamp = normalizedBatch[normalizedBatch.length - 1].block_timestamp + 1;
+          // Parse USD amount and check for outliers
+          const usdAmount = parseFloat(row.amountUsd || "0") || 0;
+          
+          // Log outliers over 100k for monitoring
+          if (usdAmount > 100000) {
+            console.log(`[Mayan] Large USD amount: $${usdAmount.toLocaleString()} - txHash: ${row.txHash}, isDeposit: ${row.isDeposit}`);
+            if (usdAmount > 1000000) {
+              console.log(`[Mayan] WARNING: Transaction over $1M detected - will be filtered in volume calculation`);
+            }
+          }
 
-    if (result.length < BATCH_SIZE) break;
+          return {
+            block_timestamp: timestamp,
+            transaction_hash: row.txHash || row.orderId || "",
+            token_transfer_from_address: row.txFrom || "",
+            token_transfer_to_address: row.txTo || "",
+            token_address: row.token || "",
+            token_usd_amount: String(usdAmount),
+            token_amount: row.amount || "0",
+            source_chain: source,
+            destination_chain: dest,
+            is_deposit: row.isDeposit, // Include deposit flag for filtering in handler
+          };
+        });
+
+      allResults = [...allResults, ...normalizedBatch];
+      console.log(`[Mayan] Total events fetched so far: ${allResults.length}`);
+      
+      // Log chain mapping for first few events
+      if (offset === 0 && normalizedBatch.length > 0) {
+        console.log(`[Mayan] Chain mapping example: originChain ${result[0].originChain} -> ${normalizedBatch[0].source_chain}, chain ${result[0].chain} -> ${normalizedBatch[0].destination_chain}`);
+      }
+
+      offset += BATCH_SIZE;
+
+      if (result.length < BATCH_SIZE) {
+        console.log(`[Mayan] Batch size (${result.length}) < limit (${BATCH_SIZE}), stopping pagination`);
+        break;
+      }
+    } catch (error) {
+      console.error("[Mayan] Error fetching events from API:", error);
+      console.error(`[Mayan] Failed at offset: ${offset}`);
+      throw error;
+    }
   }
 
+  console.log(`[Mayan] Fetch complete. Total events: ${allResults.length}`);
   return allResults;
 };
 
