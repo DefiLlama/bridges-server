@@ -358,7 +358,7 @@ export const runAllAdaptersTimestampRange = async (
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
 
-const bridgesToSkip = ["wormhole", "layerzero", "hyperlane", "intersoon", "relay", "cashmere", "teleswap"];
+const bridgesToSkip = ["wormhole", "layerzero", "hyperlane", "intersoon", "relay", "cashmere", "teleswap", "mayan"];
 
 export const runAdapterHistorical = async (
   startBlock: number,
