@@ -2508,7 +2508,7 @@ export default [
     id: 99,
     displayName: "Mayan",
     bridgeDbName: "mayan",
-    slug: "mayan", // //rebrand from Wormhole
+    slug: "mayan",
     iconLink: "icons:mayana",
     largeTxThreshold: 10000,
     url: "https://swap.mayan.finance/",
