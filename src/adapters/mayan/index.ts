@@ -110,41 +110,31 @@ export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: numbe
   let allResults: WormholeBridgeEvent[] = [];
   let offset = 0;
   const BATCH_SIZE = 10000;
+  const API_KEY = process.env.MAYAN_API_KEY || '';
   
   // Convert timestamps to milliseconds for API
   const startMs = fromTimestamp * 1000;
   const endMs = toTimestamp * 1000;
 
-  console.log(`[Mayan] Starting fetch from ${new Date(startMs).toISOString()} to ${new Date(endMs).toISOString()}`);
-  console.log(`[Mayan] Timestamps: ${fromTimestamp} - ${toTimestamp} (unix seconds)`);
-
   while (true) {
     try {
       const url = `http://localhost:3000/swaps?startTs=${startMs}&endTs=${endMs}&offset=${offset}&limit=${BATCH_SIZE}`;
-      console.log(`[Mayan] Fetching batch: offset=${offset}, limit=${BATCH_SIZE}`);
-      console.log(`[Mayan] Request URL: ${url}`);
       
-      const response = await fetch(url);
-      
-      console.log(`[Mayan] Response status: ${response.status}`);
+      const response = await fetch(url, {
+        headers: {
+          'API-KEY': API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Mayan] API error response: ${errorText}`);
         throw new Error(`API request failed with status: ${response.status}`);
       }
       
       const result = await response.json();
-      console.log(`[Mayan] Received ${result.length} events in current batch`);
       
       if (result.length === 0) {
-        console.log(`[Mayan] No more events, stopping pagination`);
         break;
-      }
-
-      // Log sample of first event for debugging
-      if (offset === 0 && result.length > 0) {
-        console.log(`[Mayan] Sample first event structure:`, JSON.stringify(result[0], null, 2));
       }
 
       const normalizedBatch = result
@@ -161,16 +151,8 @@ export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: numbe
             ? [sourceChain, destChain]
             : [destChain, sourceChain];
 
-          // Parse USD amount and check for outliers
+          // Parse USD amount
           const usdAmount = parseFloat(row.amountUsd || "0") || 0;
-          
-          // Log outliers over 100k for monitoring
-          if (usdAmount > 100000) {
-            console.log(`[Mayan] Large USD amount: $${usdAmount.toLocaleString()} - txHash: ${row.txHash}, isDeposit: ${row.isDeposit}`);
-            if (usdAmount > 1000000) {
-              console.log(`[Mayan] WARNING: Transaction over $1M detected - will be filtered in volume calculation`);
-            }
-          }
 
           return {
             block_timestamp: timestamp,
@@ -187,27 +169,17 @@ export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: numbe
         });
 
       allResults = [...allResults, ...normalizedBatch];
-      console.log(`[Mayan] Total events fetched so far: ${allResults.length}`);
-      
-      // Log chain mapping for first few events
-      if (offset === 0 && normalizedBatch.length > 0) {
-        console.log(`[Mayan] Chain mapping example: originChain ${result[0].originChain} -> ${normalizedBatch[0].source_chain}, chain ${result[0].chain} -> ${normalizedBatch[0].destination_chain}`);
-      }
 
       offset += BATCH_SIZE;
 
       if (result.length < BATCH_SIZE) {
-        console.log(`[Mayan] Batch size (${result.length}) < limit (${BATCH_SIZE}), stopping pagination`);
         break;
       }
     } catch (error) {
-      console.error("[Mayan] Error fetching events from API:", error);
-      console.error(`[Mayan] Failed at offset: ${offset}`);
       throw error;
     }
   }
 
-  console.log(`[Mayan] Fetch complete. Total events: ${allResults.length}`);
   return allResults;
 };
 

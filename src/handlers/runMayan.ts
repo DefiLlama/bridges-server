@@ -122,22 +122,21 @@ export const handler = async () => {
     // Calculate total volume, filtering outliers and avoiding double counting
     const totalVolume = events.reduce((acc: number, curr: any) => {
       const amount = parseFloat(curr.token_usd_amount || "0");
-      
-      // Skip transactions over $1M (outliers)
+
+      // Skip transactions over $1M (outliers from API issues. Mayan's API pricing isn't perfectly reliable, a majority of the outliers are caught with this)
       if (amount > 1000000) {
-        console.log(`[Volume Calc] Skipping outlier: $${amount.toLocaleString()} - tx: ${curr.transaction_hash}`);
         return acc;
       }
-      
-      // Only count deposits to avoid double counting (each bridge has deposit + withdrawal)
+
+      // Only count deposits to avoid double counting (each bridge action has both deposit + withdrawal)
       if (!curr.is_deposit) {
         return acc;
       }
-      
+
       return acc + amount;
     }, 0);
-    
-    console.log(`Mayan total volume: $${totalVolume.toLocaleString()} (filtered for outliers and double-counting)`);
+
+    console.log(`Mayan total volume: $${totalVolume}`);
     await setCache(END_TS_KEY, totalVolume, null);
   } catch (error) {
     throw error;
