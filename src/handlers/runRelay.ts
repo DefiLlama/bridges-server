@@ -6,6 +6,8 @@ import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
 
+const HOURS_CONCURRENCY = 12;
+
 export const handler = async () => {
   try {
     await insertConfigEntriesForAdapter(adapter, "relay");
@@ -27,20 +29,45 @@ export const handler = async () => {
         .format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs.unix(endTs).format("YYYY-MM-DD HH:mm:ss")})`
     );
 
-    let totalDepositUsd = 0;
-    let currentTs = startTs;
+    const windows: Array<[number, number]> = [];
+    for (let t = startTs; t < endTs; t += 3600) {
+      windows.push([t, Math.min(t + 3600, endTs)]);
+    }
 
-    while (currentTs < endTs) {
-      const hourEndTs = Math.min(currentTs + 3600, endTs); 
-      console.log(
-        `Processing hour: ${dayjs.unix(currentTs).format("YYYY-MM-DD HH:mm:ss")} to ${dayjs
-          .unix(hourEndTs)
-          .format("YYYY-MM-DD HH:mm:ss")}`
-      );
+    const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
+      const results: R[] = new Array(items.length);
+      let inFlight = 0;
+      let i = 0;
+      return await new Promise<R[]>((resolve, reject) => {
+        const launchNext = () => {
+          if (i >= items.length && inFlight === 0) return resolve(results);
+          while (inFlight < limit && i < items.length) {
+            const idx = i++;
+            inFlight++;
+            fn(items[idx], idx)
+              .then((res) => {
+                results[idx] = res;
+              })
+              .catch(reject)
+              .finally(() => {
+                inFlight--;
+                launchNext();
+              });
+          }
+        };
+        launchNext();
+      });
+    };
 
+    const processHourWindow = async ([from, to]: [number, number]): Promise<number> => {
+      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs
+        .unix(to)
+        .format("HH:mm")}]`;
+      console.log(`${label} start`);
+      let hourDepositUsd = 0;
+      let pageIndex = 0;
       try {
-        let pageIndex = 0;
-        await forEachRequestsByTimePage(currentTs, hourEndTs, async (slice) => {
+        await forEachRequestsByTimePage(from, to, async (slice) => {
           pageIndex += 1;
           const sourceTransactions: any[] = [];
           const destinationTransactions: any[] = [];
@@ -52,7 +79,7 @@ export const handler = async () => {
                 const depositSlug = chainIdToSlug[event.depositChainId];
                 const bId = bridgeIds[depositSlug?.toLowerCase?.()];
                 if (bId) {
-                  totalDepositUsd += parseFloat(event.deposit.amount?.toString?.() || "0");
+                  hourDepositUsd += parseFloat(event.deposit.amount?.toString?.() || "0");
                   sourceTransactions.push({
                     bridge_id: bId,
                     chain: depositSlug.toLowerCase(),
@@ -93,7 +120,7 @@ export const handler = async () => {
                 }
               }
             } catch (e) {
-              console.error(`Error converting Relay request ${req?.id}:`, e);
+              console.error(`${label} error converting request ${req?.id}:`, e);
             }
           }
 
@@ -103,18 +130,21 @@ export const handler = async () => {
               if (destinationTransactions.length) await insertTransactionRows(sql, true, destinationTransactions, "upsert");
             });
             console.log(
-              `Inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
+              `${label} inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
             );
           } else {
-            console.log(`Page ${pageIndex} had no convertible requests`);
+            console.log(`${label} page ${pageIndex} had no convertible requests`);
           }
         });
       } catch (error) {
-        console.error(`Error processing hour ${currentTs} to ${hourEndTs}:`, error);
+        console.error(`${label} error processing window:`, error);
       }
+      console.log(`${label} complete`);
+      return hourDepositUsd;
+    };
 
-      currentTs = hourEndTs;
-    }
+    const hourTotals = await mapLimit(windows, HOURS_CONCURRENCY, (w) => processHourWindow(w));
+    const totalDepositUsd = hourTotals.reduce((a, b) => a + (b || 0), 0);
 
     console.log(`Relay processing complete. Total deposit USD: ${totalDepositUsd}`);
   } catch (error) {
