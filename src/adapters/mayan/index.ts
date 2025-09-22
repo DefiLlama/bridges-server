@@ -103,70 +103,67 @@ const wormholeChainMap: { [key: string]: string } = {
   "21": "sui",
   "44": "unichain",
   "22": "aptos",
-  "38": "linea"
+  "38": "linea",
 };
 
 export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: number): Promise<WormholeBridgeEvent[]> => {
   let allResults: WormholeBridgeEvent[] = [];
   let offset = 0;
   const BATCH_SIZE = 10000;
-  const API_KEY = process.env.MAYAN_API_KEY || '';
-  
+  const API_KEY = process.env.MAYAN_API_KEY || "";
+
   // Convert timestamps to milliseconds for API
   const startMs = fromTimestamp * 1000;
   const endMs = toTimestamp * 1000;
 
   while (true) {
     try {
-      const url = `http://localhost:3000/swaps?startTs=${startMs}&endTs=${endMs}&offset=${offset}&limit=${BATCH_SIZE}`;
-      
+      const url = `https://dlapi.wormhole.com/swaps?startTs=${startMs}&endTs=${endMs}&offset=${offset}&limit=${BATCH_SIZE}`;
+
       const response = await fetch(url, {
         headers: {
-          'API-KEY': API_KEY,
-          'Content-Type': 'application/json'
-        }
+          "API-KEY": API_KEY,
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
         throw new Error(`API request failed with status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.length === 0) {
         break;
       }
 
-      const normalizedBatch = result
-        .map((row: any) => {
-          // Parse timestamp - handle both ISO string and unix formats
-          const timestamp = row.ts ? dayjs(row.ts).unix() : dayjs().unix();
-          
-          // Map chain IDs to chain names
-          const sourceChain = wormholeChainMap[row.originChain] || row.originChain || "unknown";
-          const destChain = wormholeChainMap[row.chain] || row.chain || "unknown";
-          
-          // For deposits, swap source/dest (deposit means going FROM origin TO current chain)
-          const [source, dest] = row.isDeposit 
-            ? [sourceChain, destChain]
-            : [destChain, sourceChain];
+      const normalizedBatch = result.map((row: any) => {
+        // Parse timestamp - handle both ISO string and unix formats
+        const timestamp = row.ts ? dayjs(row.ts).unix() : dayjs().unix();
 
-          // Parse USD amount
-          const usdAmount = parseFloat(row.amountUsd || "0") || 0;
+        // Map chain IDs to chain names
+        const sourceChain = wormholeChainMap[row.originChain] || row.originChain || "unknown";
+        const destChain = wormholeChainMap[row.chain] || row.chain || "unknown";
 
-          return {
-            block_timestamp: timestamp,
-            transaction_hash: row.txHash || row.orderId || "",
-            token_transfer_from_address: row.txFrom || "",
-            token_transfer_to_address: row.txTo || "",
-            token_address: row.token || "",
-            token_usd_amount: String(usdAmount),
-            token_amount: row.amount || "0",
-            source_chain: source,
-            destination_chain: dest,
-            is_deposit: row.isDeposit, // Include deposit flag for filtering in handler
-          };
-        });
+        // For deposits, swap source/dest (deposit means going FROM origin TO current chain)
+        const [source, dest] = row.isDeposit ? [sourceChain, destChain] : [destChain, sourceChain];
+
+        // Parse USD amount
+        const usdAmount = parseFloat(row.amountUsd || "0") || 0;
+
+        return {
+          block_timestamp: timestamp,
+          transaction_hash: row.txHash || row.orderId || "",
+          token_transfer_from_address: row.txFrom || "",
+          token_transfer_to_address: row.txTo || "",
+          token_address: row.token || "",
+          token_usd_amount: String(usdAmount),
+          token_amount: row.amount || "0",
+          source_chain: source,
+          destination_chain: dest,
+          is_deposit: row.isDeposit, // Include deposit flag for filtering in handler
+        };
+      });
 
       allResults = [...allResults, ...normalizedBatch];
 

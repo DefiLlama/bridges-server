@@ -143,5 +143,4 @@ export const handler = async () => {
   }
 };
 
-// export default wrapScheduledLambda(handler);
-export default handler();
+export default wrapScheduledLambda(handler);
