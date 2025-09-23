@@ -11,7 +11,7 @@ const retry = require("async-retry");
  * API: https://kapi.cashmere.exchange/transactionsmainnet
  */
 
-const requestQueues = new Map<number, Promise<any>>();
+const requestQueues = new Map<string, Promise<any>>();
 
 enum ApiErrorType {
   NETWORK = "network",
@@ -125,7 +125,7 @@ const rateLimitedFetchByTime = async (
   cursor?: string
 ): Promise<CashmereAPIResponse> => {
   const delay = cursor ? 500 : 200;
-  const queueKey = 0;
+  const queueKey = `${startTimestamp}:${endTimestamp}`;
   const lastRequest = requestQueues.get(queueKey) || Promise.resolve();
   const currentRequest = lastRequest
     .then(() => new Promise((resolve) => setTimeout(resolve, delay)))
