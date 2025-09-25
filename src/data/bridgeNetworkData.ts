@@ -2472,6 +2472,7 @@ export default [
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",
       "x layer": "xlayer",
+      'ternoa': 'ternoa_mainnet',
     },
   },
   {

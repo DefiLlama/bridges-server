@@ -59,7 +59,7 @@ export const layerZeroChainMapping: { [key: string]: string } = {
   Hemi: "hemi",
   Lisk: "lisk",
   Hyperliquid: "hyperliquid",
-  zkConsensys: "zkconsensys",
+  zkConsensys: "linea",
   Rarible: "rarible",
   Unichain: "unichain",
   Glue: "glue",

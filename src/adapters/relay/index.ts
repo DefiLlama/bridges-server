@@ -5,7 +5,7 @@ import { RelayRequestsResponse } from "./types";
 import { ethers } from "ethers";
 const retry = require("async-retry");
 
-const requestQueues = new Map<number, Promise<any>>();
+const requestQueues = new Map<string, Promise<any>>();
 
 enum ApiErrorType {
   NETWORK = "network",
@@ -204,7 +204,7 @@ const rateLimitedFetchByTime = async (
   continuation?: string
 ): Promise<RelayRequestsResponse> => {
   const delay = continuation ? 500 : 200;
-  const queueKey = 0;
+  const queueKey = `${startTimestamp}:${endTimestamp}`;
   const lastRequest = requestQueues.get(queueKey) || Promise.resolve();
   const currentRequest = lastRequest
     .then(() => new Promise((resolve) => setTimeout(resolve, delay)))
