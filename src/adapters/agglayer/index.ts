@@ -21,7 +21,6 @@ const depositEvent: ContractEventParams = {
     },
     txKeys: {
         from: "from",
-        amount: "value",
     },
     isDeposit: true,
 }
@@ -43,7 +42,6 @@ const withdrawalEvent: ContractEventParams = {
     },
     txKeys: {
         from: "from",
-        amount: "value",
     },
     isDeposit: false,
 }
@@ -62,7 +60,7 @@ const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
     katana: constructParams("katana"),
     "polygon zkevm": constructParams("polygon_zkevm"),
-    ternoa: constructParams("ternoa"),
+    ternoa: constructParams("ternoa_mainnet"),
     "x layer": constructParams("xlayer"),
 };
 

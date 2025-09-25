@@ -76,6 +76,7 @@ import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
+import mayan from "./mayan";
 import thresholdnetwork from "./threshold-network";
 import zircuit from "./zircuit";
 import hyperliquid from "./hyperliquid";
@@ -172,6 +173,7 @@ export default {
   layerswap,
   hyperlane,
   wormhole,
+  mayan,
   thresholdnetwork,
   zircuit,
   hyperliquid,
