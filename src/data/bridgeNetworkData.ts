@@ -2472,7 +2472,7 @@ export default [
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",
       "x layer": "xlayer",
-      'ternoa': 'ternoa_mainnet',
+      ternoa: "ternoa_mainnet",
     },
   },
   {
@@ -2510,7 +2510,7 @@ export default [
     displayName: "Mayan",
     bridgeDbName: "mayan",
     slug: "mayan",
-    iconLink: "icons:mayana",
+    iconLink: "icons:mayan",
     largeTxThreshold: 10000,
     url: "https://swap.mayan.finance/",
     chains: [

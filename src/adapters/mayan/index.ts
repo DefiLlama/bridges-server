@@ -13,34 +13,18 @@ type WormholeBridgeEvent = {
 };
 
 const chains = [
+  "solana",
   "ethereum",
-  "avalanche",
-  "avax",
-  "bsc",
-  "polygon",
+  "base",
   "arbitrum",
   "optimism",
-  "base",
-  "zksync",
-  "scroll",
-  "aptos",
+  "polygon",
+  "avalanche",
+  "bsc",
   "sui",
-  "solana",
-  "sei",
-  "mantle",
-  "fantom",
-  "injective",
-  "moonbeam",
-  "oasis",
-  "celo",
-  "kaia",
-  "near",
-  "algorand",
-  "terra",
-  "terra classic",
-  "karura",
-  "acala",
-  "wormchain",
+  "unichain",
+  "aptos",
+  "linea",
 ];
 
 export const chainNameMapping: { [key: string]: string } = {
@@ -145,9 +129,6 @@ export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: numbe
         const sourceChain = wormholeChainMap[row.originChain] || row.originChain || "unknown";
         const destChain = wormholeChainMap[row.chain] || row.chain || "unknown";
 
-        // For deposits, swap source/dest (deposit means going FROM origin TO current chain)
-        const [source, dest] = row.isDeposit ? [sourceChain, destChain] : [destChain, sourceChain];
-
         // Parse USD amount
         const usdAmount = parseFloat(row.amountUsd || "0") || 0;
 
@@ -159,8 +140,8 @@ export const fetchMayanEvents = async (fromTimestamp: number, toTimestamp: numbe
           token_address: row.token || "",
           token_usd_amount: String(usdAmount),
           token_amount: row.amount || "0",
-          source_chain: source,
-          destination_chain: dest,
+          source_chain: sourceChain,
+          destination_chain: destChain,
           is_deposit: row.isDeposit, // Include deposit flag for filtering in handler
         };
       });
