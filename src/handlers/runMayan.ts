@@ -47,7 +47,20 @@ export const handler = async () => {
           token_usd_amount,
           source_chain,
           destination_chain,
+          is_deposit,
         } = event;
+
+        const usdAmount = parseFloat(token_usd_amount || "0");
+
+        // Skip transactions over $10M (outliers from API issues. Mayan's API pricing isn't perfectly reliable, a majority of the outliers are caught with this)
+        if (usdAmount > 1_000_000) {
+          continue;
+        }
+
+        // Only count deposits to avoid double counting (each bridge action has both deposit + withdrawal)
+        if (!is_deposit) {
+          continue;
+        }
 
         const sourceChain = normalizeChainName(source_chain);
         const destinationChain = normalizeChainName(destination_chain);
@@ -124,7 +137,7 @@ export const handler = async () => {
       const amount = parseFloat(curr.token_usd_amount || "0");
 
       // Skip transactions over $1M (outliers from API issues. Mayan's API pricing isn't perfectly reliable, a majority of the outliers are caught with this)
-      if (amount > 1000000) {
+      if (amount > 1_000_000) {
         return acc;
       }
 
@@ -143,4 +156,6 @@ export const handler = async () => {
   }
 };
 
-export default wrapScheduledLambda(handler);
+// export default wrapScheduledLambda(handler);
+
+handler().then(() => process.exit(0));
