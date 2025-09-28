@@ -2321,9 +2321,11 @@ export default [
       "Hyperliquid",
       "Ink",
       "Optimism",
+      "Plasma",
+      "Polygon",
+      "Rootstock",
       "Sei",
       "Unichain",
-      "Rootstock",
     ],
     chainMapping: {
       rootstock: "rsk",
@@ -2511,7 +2513,7 @@ export default [
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",
       "x layer": "xlayer",
-      'ternoa': 'ternoa_mainnet',
+      ternoa: "ternoa_mainnet",
     },
   },
   {
