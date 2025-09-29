@@ -7,6 +7,8 @@ import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
 
+const HOURS_CONCURRENCY = 12;
+
 export const handler = async () => {
   try {
     await insertConfigEntriesForAdapter(adapter, "cashmere");
@@ -28,21 +30,46 @@ export const handler = async () => {
         .format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs.unix(endTs).format("YYYY-MM-DD HH:mm:ss")})`
     );
 
-    let totalDepositUsd = 0;
-    let totalWithdrawUsd = 0;
-    let currentTs = startTs;
+    const windows: Array<[number, number]> = [];
+    for (let t = startTs; t < endTs; t += 3600) {
+      windows.push([t, Math.min(t + 3600, endTs)]);
+    }
 
-    while (currentTs < endTs) {
-      const hourEndTs = Math.min(currentTs + 3600, endTs); 
-      console.log(
-        `Processing hour: ${dayjs.unix(currentTs).format("YYYY-MM-DD HH:mm:ss")} to ${dayjs
-          .unix(hourEndTs)
-          .format("YYYY-MM-DD HH:mm:ss")}`
-      );
+    const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
+      const results: R[] = new Array(items.length);
+      let inFlight = 0;
+      let i = 0;
+      return await new Promise<R[]>((resolve, reject) => {
+        const launchNext = () => {
+          if (i >= items.length && inFlight === 0) return resolve(results);
+          while (inFlight < limit && i < items.length) {
+            const idx = i++;
+            inFlight++;
+            fn(items[idx], idx)
+              .then((res) => {
+                results[idx] = res;
+              })
+              .catch(reject)
+              .finally(() => {
+                inFlight--;
+                launchNext();
+              });
+          }
+        };
+        launchNext();
+      });
+    };
 
+    const processHourWindow = async ([from, to]: [number, number]): Promise<{depositUsd: number, withdrawUsd: number}> => {
+      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs
+        .unix(to)
+        .format("HH:mm")}]`;
+      console.log(`${label} start`);
+      let hourDepositUsd = 0;
+      let hourWithdrawUsd = 0;
+      let pageIndex = 0;
       try {
-        let pageIndex = 0;
-        await forEachTransactionsByTimePage(currentTs, hourEndTs, async (transactions) => {
+        await forEachTransactionsByTimePage(from, to, async (transactions) => {
           pageIndex += 1;
           const sourceTransactions: any[] = [];
           const destinationTransactions: any[] = [];
@@ -56,7 +83,7 @@ export const handler = async () => {
                 const depositChain = domainToChain[event.depositChainId];
                 const bId = bridgeIds[depositChain?.toLowerCase?.()];
                 if (bId && depositChain) {
-                  totalDepositUsd += parseFloat(event.deposit.amount?.toString?.() || "0");
+                  hourDepositUsd += parseFloat(event.deposit.amount?.toString?.() || "0");
                   sourceTransactions.push({
                     bridge_id: bId,
                     chain: depositChain.toLowerCase(),
@@ -80,7 +107,7 @@ export const handler = async () => {
                 const withdrawChain = domainToChain[event.withdrawChainId];
                 const bId = bridgeIds[withdrawChain?.toLowerCase?.()];
                 if (bId && withdrawChain) {
-                  totalWithdrawUsd += parseFloat(event.withdraw.amount?.toString?.() || "0");
+                  hourWithdrawUsd += parseFloat(event.withdraw.amount?.toString?.() || "0");
                   destinationTransactions.push({
                     bridge_id: bId,
                     chain: withdrawChain.toLowerCase(),
@@ -99,7 +126,7 @@ export const handler = async () => {
                 }
               }
             } catch (e) {
-              console.error(`Error converting Cashmere transaction ${tx?.id}:`, e);
+              console.error(`${label} error converting transaction ${tx?.id}:`, e);
             }
           }
 
@@ -109,18 +136,22 @@ export const handler = async () => {
               if (destinationTransactions.length) await insertTransactionRows(sql, true, destinationTransactions, "upsert");
             });
             console.log(
-              `Inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
+              `${label} inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
             );
           } else {
-            console.log(`Page ${pageIndex} had no convertible transactions`);
+            console.log(`${label} page ${pageIndex} had no convertible transactions`);
           }
         });
       } catch (error) {
-        console.error(`Error processing hour ${currentTs} to ${hourEndTs}:`, error);
+        console.error(`${label} error processing window:`, error);
       }
+      console.log(`${label} complete`);
+      return {depositUsd: hourDepositUsd, withdrawUsd: hourWithdrawUsd};
+    };
 
-      currentTs = hourEndTs;
-    }
+    const hourTotals = await mapLimit(windows, HOURS_CONCURRENCY, (w) => processHourWindow(w));
+    const totalDepositUsd = hourTotals.reduce((a, b) => a + (b?.depositUsd || 0), 0);
+    const totalWithdrawUsd = hourTotals.reduce((a, b) => a + (b?.withdrawUsd || 0), 0);
 
     console.log(`Cashmere CCTP processing complete. Total deposit USD: ${totalDepositUsd}, Total withdraw USD: ${totalWithdrawUsd}`);
   } catch (error) {
