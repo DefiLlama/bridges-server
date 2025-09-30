@@ -59,5 +59,3 @@ const adapter: BridgeAdapter = {
 };
 
 export default adapter;
-
-// npm run test fxrp 200000

@@ -2576,7 +2576,7 @@ export default [
     iconLink: "chain:flare",
     largeTxThreshold: 10000,
     url: "https://flare.network/products/fassets",
-    chains: ["Flare", "XRP"],
+    chains: ["Flare", "XRPL"],
     destinationChain: "Flare",
   },
 ] as BridgeNetwork[];

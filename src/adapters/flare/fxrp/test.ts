@@ -94,6 +94,3 @@ async function main() {
 }
 
 main().catch(console.error);
-
-// Run the TypeScript file with tsx
-// npx tsx src/adapters/flare/fxrp/test.ts
