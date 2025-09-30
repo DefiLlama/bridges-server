@@ -95,6 +95,7 @@ import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
 import agglayer from "./agglayer";
+import fxrp from "./flare/fxrp";
 
 export default {
   polygon,
@@ -193,6 +194,7 @@ export default {
   pheasantNetwork,
   teleswap,
   agglayer,
+  fxrp,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
