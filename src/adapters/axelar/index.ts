@@ -50,6 +50,10 @@ const axelarChains = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
+  hyperliquid: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
   imx: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
@@ -71,6 +75,10 @@ const axelarChains = {
     gateway: "0x4F4495243837681061C4743b74B3eEdf548D56A5",
   },
   optimism: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
+  plume: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
@@ -302,7 +310,7 @@ const constructParams = (chain: SupportedChains) => {
         token: (log: any) => {
           const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
           const chainName = chain === "avax" ? "avalanche" : chain;
-            return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
+          return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
             ? asset.chains[chainName].tokenAddress
             : "";
 
@@ -320,7 +328,7 @@ const constructParams = (chain: SupportedChains) => {
         token: (log: any) => {
           const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
           const chainName = chain === "avax" ? "avalanche" : chain;
-           return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
+          return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
             ? asset.chains[chain].tokenAddress
             : "";
         },
@@ -352,12 +360,14 @@ const adapter: BridgeAdapter = {
   fantom: constructParams("fantom"),
   filecoin: constructParams("filecoin"),
   fraxtal: constructParams("fraxtal"),
+  hyperliquid: constructParams("hyperliquid"),
   imx: constructParams("imx"),
   kava: constructParams("kava"),
   linea: constructParams("linea"),
   mantle: constructParams("mantle"),
   moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
+  plume: constructParams("plume"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
 };
