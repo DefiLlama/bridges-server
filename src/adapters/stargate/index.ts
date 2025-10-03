@@ -463,6 +463,11 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0", pool: "0xB1EeAD6959cb5bB9B20417d6689922523B2B86C3" }, // usdc
     { token: "0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1", pool: "0xe9aBA835f813ca05E50A6C0ce65D0D74390F7dE7" }, // weth
   ],
+  goat: [
+    { token: "0x3a1293Bdb83bBbDd5Ebf4fAc96605aD2021BbC0f", pool: "0x88853D410299BCBfE5fCC9Eef93c03115E908279" }, // weth
+    { token: "0x3022b87ac063DE95b1570F46f5e470F8B53112D8", pool: "0xbbA60da06c2c5424f03f7434542280FCAd453d10" }, // usdc
+    { token: "0xE1AD845D93853fff44990aE0DcecD8575293681e", pool: "0x549943e04f40284185054145c6E4e9568C1D3241" }, // usdt
+  ],
   gravity: [
     { token: "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6", pool: "0xC1B8045A6ef2934Cf0f78B0dbD489969Fa9Be7E4" }, // usdc
     { token: "0x816E810f9F787d669FB71932DeabF6c83781Cd48", pool: "0x0B38e83B86d491735fEaa0a791F65c2B99535396" }, // usdt
@@ -493,6 +498,9 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0x0829F361A05D993d5CEb035cA6DF3446b060970b", pool: "0x12a272A581feE5577A5dFa371afEB4b2F3a8C2F8" }, // usdc
     { token: "0x43F2376D5D03553aE72F4A8093bbe9de4336EB08", pool: "0xC16977205c53Cd854136031BD2128F75D6ff63C9" }, // usdt
     { token: "0xcdA5b77E2E2268D9E09c874c1b9A4c3F07b37555", pool: "0x108f4c02C9fcDF862e5f5131054c50f13703f916" }, // weth
+  ],
+  plasma: [
+    { token: "0x9895D81bB462A195b4922ED7De0e3ACD007c32CB", pool: "0x0cEb237E109eE22374a567c6b09F373C73FA4cBb" }, // weth
   ],
   peaq: [
     { token: "0xbbA60da06c2c5424f03f7434542280FCAd453d10", pool: "0x5c1a97C144A97E9b370F833a06c70Ca8F2f30DE5" }, // usdc
@@ -745,6 +753,7 @@ const adapter: BridgeAdapter = {
   flare: constructParams("flare"),
   flow: constructParams("flow"),
   fuse: constructParams("fuse"),
+  goat: constructParams("goat"),
   gnosis: constructParams("xdai"),
   gravity: constructParams("gravity"),
   hemi: constructParams("hemi"),
@@ -753,6 +762,7 @@ const adapter: BridgeAdapter = {
   islander: constructParams("vana"),
   manta: constructParams("manta"),
   nibiru: constructParams("nibiru"),
+  plasma: constructParams("plasma"),
   peaq: constructParams("peaq"),
   plume: constructParams("plume"),
   plumephoenix: constructParams("plume_mainnet"),
