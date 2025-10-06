@@ -2321,9 +2321,11 @@ export default [
       "Hyperliquid",
       "Ink",
       "Optimism",
+      "Plasma",
+      "Polygon",
+      "Rootstock",
       "Sei",
       "Unichain",
-      "Rootstock",
     ],
     chainMapping: {
       rootstock: "rsk",
@@ -2456,7 +2458,7 @@ export default [
     id: 96,
     displayName: "Chainlink CCIP",
     bridgeDbName: "ccip",
-    iconLink: "icons:ccip",
+    iconLink: "icons:chainlink",
     largeTxThreshold: 10000,
     url: "https://ccip.chain.link/",
     chains: [
@@ -2523,7 +2525,7 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avalanche",
+      "avax",           // Changed: match adapter export
       "optimism",
       "arbitrum",
       "base",
@@ -2531,7 +2533,7 @@ export default [
       "unichain",
       "linea",
       "sonic",
-      "world chain",
+      "wc",             // Changed: match adapter export
       "sei",
       "hyperliquid",
       "aptos",
@@ -2539,9 +2541,9 @@ export default [
       "solana",
     ],
     chainMapping: {
-      avalanche: "avax",
-      "world chain": "wc",
-      hyperliquid: "hyperliquid",
+      "avax": "avax",           // Identity mapping
+      "wc": "wc",               // Identity mapping
+      "hyperliquid": "hyperliquid", // Identity mapping
     },
   },
   {

@@ -1,8 +1,7 @@
-import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { ethers } from "ethers";
 import fetch from "node-fetch";
 import { EventData } from "../../utils/types";
-import { CashmereAPIResponse, CashmereTransaction, domainToChain, chainToDomain, usdcAddresses } from "./types";
-import { ethers } from "ethers";
+import { CashmereAPIResponse, CashmereTransaction, domainToChain, usdcAddresses } from "./types";
 const retry = require("async-retry");
 
 /**
@@ -11,7 +10,7 @@ const retry = require("async-retry");
  * API: https://kapi.cashmere.exchange/transactionsmainnet
  */
 
-const requestQueues = new Map<number, Promise<any>>();
+const requestQueues = new Map<string, Promise<any>>();
 
 enum ApiErrorType {
   NETWORK = "network",
@@ -48,7 +47,7 @@ export const convertTransactionToEvent = (
   
   return {
     depositChainId,
-    deposit: depositChainId && tx.source_tx_hash && depositAmount.gt(0)
+    deposit: depositChainId !== undefined && tx.source_tx_hash && depositAmount.gt(0)
       ? {
           blockNumber: tx.block || 0,
           txHash: tx.source_tx_hash,
@@ -62,7 +61,7 @@ export const convertTransactionToEvent = (
         }
       : undefined,
     withdrawChainId,
-    withdraw: withdrawChainId && tx.destination_tx_hash && withdrawAmount.gt(0)
+    withdraw: withdrawChainId !== undefined && tx.destination_tx_hash && withdrawAmount.gt(0)
       ? {
           blockNumber: 0, // Destination block not always available
           txHash: tx.destination_tx_hash,
@@ -125,7 +124,7 @@ const rateLimitedFetchByTime = async (
   cursor?: string
 ): Promise<CashmereAPIResponse> => {
   const delay = cursor ? 500 : 200;
-  const queueKey = 0;
+  const queueKey = `${startTimestamp}:${endTimestamp}`;
   const lastRequest = requestQueues.get(queueKey) || Promise.resolve();
   const currentRequest = lastRequest
     .then(() => new Promise((resolve) => setTimeout(resolve, delay)))
