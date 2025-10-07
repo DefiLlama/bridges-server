@@ -127,6 +127,4 @@ export const handler = async () => {
   }
 };
 
-// export default wrapScheduledLambda(handler);
-
-handler().then(() => process.exit(0));
+export default wrapScheduledLambda(handler);

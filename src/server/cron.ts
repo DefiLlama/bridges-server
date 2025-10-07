@@ -95,10 +95,7 @@ const cron = () => {
   runEvery("runRelay", 30, runRelay);
   runEvery("runCashmere", 30, runCashmere);
   runEvery("runTeleswap", 30, runTeleswap);
-
-  if (new Date().getHours() === 0) {
-    runEvery("runCCIP", 30, runCCIP);
-  }
+  runEvery("runCCIP", 30, runCCIP);
 
   exit();
 };
