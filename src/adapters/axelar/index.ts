@@ -74,6 +74,10 @@ const axelarChains = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
+  xrplevm: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
+  },
   polygon: {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0x6f015F16De9fC8791b234eF68D486d2bF203FBA8",
@@ -358,6 +362,7 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
+  xrplevm: constructParams("xrplevm"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
 };
