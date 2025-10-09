@@ -355,7 +355,10 @@ export const aggregateData = async (
         if (priceData && (priceData.confidence === undefined || priceData.confidence >= defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
           let bnAmount = null;
-          if (transformedDecimals) {
+          // mayan adapter stores amount already formatted as decimals
+          if (bridgeDbName === "mayan") {
+            bnAmount = rawBnAmount;
+          } else if (transformedDecimals) {
             bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
           } else {
             bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
@@ -439,6 +442,10 @@ export const aggregateData = async (
       Array.from(tokensWithNullPrices).map(async (token: string) => {
         try {
           const [chain, tokenAddress] = token.split(":");
+          if (chain === "solana") {
+            await insertOrUpdateTokenWithoutPrice(token, "SOLANA_TOKEN");
+            return;
+          }
           const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, chain)).output;
           await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
         } catch (e) {
