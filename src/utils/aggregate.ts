@@ -439,6 +439,10 @@ export const aggregateData = async (
       Array.from(tokensWithNullPrices).map(async (token: string) => {
         try {
           const [chain, tokenAddress] = token.split(":");
+          if (chain === "solana") {
+            await insertOrUpdateTokenWithoutPrice(token, "SOLANA_TOKEN");
+            return;
+          }
           const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, chain)).output;
           await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
         } catch (e) {

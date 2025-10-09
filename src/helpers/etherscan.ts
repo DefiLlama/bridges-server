@@ -63,21 +63,43 @@ export const getTxsBlockRangeEtherscan = async (
   if (!apiKey) {
     res = (
       await retry(
-        () =>
-          axios.get(
+        async () => {
+          const response = await axios.get(
             `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
-          ),
-        { factor: 1, retries: 3 }
+          );
+          if (response.data?.message?.includes("rate limit")) {
+            throw new Error("Rate limit exceeded");
+          }
+          return response;
+        },
+        {
+          retries: 5,
+          factor: 2,
+          minTimeout: 1000,
+          maxTimeout: 30000,
+          randomize: true
+        }
       )
     ).data as any;
   } else {
     res = (
       await retry(
-        () =>
-          axios.get(
+        async () => {
+          const response = await axios.get(
             `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
-          ),
-        { factor: 1, retries: 3 }
+          );
+          if (response.data?.message?.includes("rate limit")) {
+            throw new Error("Rate limit exceeded");
+          }
+          return response;
+        },
+        {
+          retries: 5,
+          factor: 2,
+          minTimeout: 1000,
+          maxTimeout: 30000,
+          randomize: true
+        }
       )
     ).data as any;
   }
