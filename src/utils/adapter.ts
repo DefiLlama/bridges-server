@@ -146,7 +146,8 @@ export const runAdapterToCurrentBlock = async (
   }
 
   const adapterPromises = Promise.all(
-    Object.keys(adapter).map(async (chain) => {
+    Object.keys(adapter).map(async (chain, i) => {
+      await wait(200 * i);
       const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
 
       let bridgeID: string;
@@ -272,7 +273,7 @@ export const runAllAdaptersToCurrentBlock = async (
     await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
-        await wait(100 * i); // attempt to space out API calls
+        await wait(200 * i);
         const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
           bridgeDbName,
@@ -325,7 +326,7 @@ export const runAllAdaptersTimestampRange = async (
     await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
-        await wait(100 * i); // attempt to space out API calls
+        await wait(200 * i);
         const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
         if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui" || chainContractsAreOn === "solana") {
           console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
