@@ -101,7 +101,6 @@ export const runAdapterToCurrentBlock = async (
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
 
-  console.log(`[INFO] Getting data for bridge ${bridgeNetwork.displayName}`);
   const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
   let recordedBlocks: RecordedBlocks | null = null;
   try {
@@ -112,8 +111,6 @@ export const runAdapterToCurrentBlock = async (
         { retries: 4, factor: 1 }
       )
     ).data as RecordedBlocks;
-
-    console.log(`[INFO] Retrieved recorded blocks for ${bridgeDbName}`);
   } catch (e: any) {
     console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
   }
@@ -134,7 +131,6 @@ export const runAdapterToCurrentBlock = async (
 
   try {
     await insertConfigEntriesForAdapter(adapter, bridgeDbName, bridgeNetwork?.destinationChain);
-    console.log(`[INFO] Inserted or skipped config for ${bridgeDbName}`);
   } catch (e: any) {
     console.error(`[ERROR] Failed to insert config entries for ${bridgeDbName}. Error: ${e.message}`);
     await insertErrorRow({
@@ -179,17 +175,12 @@ export const runAdapterToCurrentBlock = async (
       }
       const step = maxBlocksToQueryByChain[chain] || 400;
 
-      console.log(
-        `[INFO] Searching for ${bridgeDbName}'s transactions from ${startBlock} to ${endBlock} on chain ${chain}`
-      );
-
       if (startBlock == null) return;
       try {
         while (startBlock < endBlock) {
           let toBlock = startBlock + step > endBlock ? endBlock : startBlock + step;
           await runAdapterHistorical(startBlock, toBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
           startBlock += step;
-          console.log(`[DEBUG] Processed blocks ${startBlock} to ${toBlock} for ${bridgeDbName} on chain ${chain}`);
         }
       } catch (e: any) {
         const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed. Error: ${e.message}`;
@@ -219,7 +210,6 @@ export const runAdapterToCurrentBlock = async (
   if (recordedBlocks) {
     try {
       await store(recordedBlocksFilename, JSON.stringify(recordedBlocks));
-      console.log(`[INFO] Successfully stored recorded blocks for ${bridgeDbName}`);
     } catch (e: any) {
       console.error(`[ERROR] Failed to store recorded blocks for ${bridgeDbName}. Error: ${e.message}`);
       await insertErrorRow({
@@ -230,8 +220,6 @@ export const runAdapterToCurrentBlock = async (
       });
     }
   }
-
-  console.log(`[INFO] runAdapterToCurrentBlock for ${bridgeNetwork.displayName} successfully ran.`);
 };
 
 export const runAllAdaptersToCurrentBlock = async (
@@ -375,18 +363,14 @@ export const runAdapterHistorical = async (
   const { bridgeDbName, displayName } = bridgeNetwork;
 
   if (bridgesToSkip.includes(bridgeDbName)) {
-    console.log(`Skipping ${bridgeDbName} adapter, handled separately`);
     return;
   }
 
   let adapter = adapters[bridgeDbName];
   adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
-  console.log(`[INFO] Running adapter for ${bridgeDbName} on ${chain} from ${startBlock} to ${endBlock}.`);
-
   const adapterChainEventsFn = adapter[chain];
   if (chain?.toLowerCase() === bridgeNetwork.destinationChain?.toLowerCase() && !adapterChainEventsFn) {
-    console.log(`[INFO] Skipping ${bridgeDbName} on ${chain} because it is not the destination chain.`);
     return;
   }
   if (!adapter) {
@@ -448,7 +432,6 @@ export const runAdapterHistorical = async (
   while (block < endBlock) {
     await wait(500);
     const endBlockForQuery = block + maxBlocksToQuery > endBlock ? endBlock : block + maxBlocksToQuery;
-    console.log(`[INFO] Processing block range from ${block} to ${endBlockForQuery}`);
 
     let retryCount = 0;
     const maxRetries = 3;
@@ -466,7 +449,6 @@ export const runAdapterHistorical = async (
         );
 
         if (!eventLogs || eventLogs.length === 0) {
-          console.log(`[INFO] No events found for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}`);
           break;
         }
 
@@ -522,9 +504,6 @@ export const runAdapterHistorical = async (
 
                 results.forEach(({ blockNumber, blockTime, chainOverride }) => {
                   solanaTimestampsMap[blockNumber] = blockTime ?? 0;
-                  console.log(
-                    `[INFO] Block time for block ${blockNumber}: ${blockTime}, destination chain: ${chainOverride}`
-                  );
                 });
               }
 
@@ -652,9 +631,6 @@ export const runAdapterHistorical = async (
           { retries: 3, factor: 2 }
         );
 
-        console.log(
-          `[INFO] Inserted transactions for ${bridgeDbName} on ${chain} for blocks ${block}-${endBlockForQuery}`
-        );
         break;
       } catch (e: any) {
         retryCount++;
@@ -683,8 +659,6 @@ export const runAdapterHistorical = async (
     }
     block = endBlockForQuery;
   }
-
-  console.log(`finished inserting all transactions for ${bridgeID}`);
 };
 
 export const insertConfigEntriesForAdapter = async (
@@ -699,7 +673,6 @@ export const insertConfigEntriesForAdapter = async (
         return;
       }
       return sql.begin(async (sql) => {
-        console.log(`Inserting Config entry for ${bridgeDbName} on chain ${chain}`);
         return insertConfigRow(sql, {
           bridge_name: bridgeDbName,
           chain: chain,

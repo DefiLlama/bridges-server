@@ -11,7 +11,7 @@ import {
   getTimestampAtStartOfDayUTC,
 } from "./date";
 import { getLlamaPrices } from "./prices";
-import { getBridgeID, getLargeTransaction } from "./wrappa/postgres/query";
+import { getBridgeID } from "./wrappa/postgres/query";
 import {
   insertHourlyAggregatedRow,
   insertDailyAggregatedRow,
@@ -117,7 +117,6 @@ export const runAggregateDataHistorical = async (
       );
       await chainsPromises;
     }
-    console.log(`Successfully aggregated data for ${bridgeDbName} at timestamp ${timestamp}.`);
     timestamp -= hourly ? secondsInHour : secondsInDay;
   }
 };
@@ -235,14 +234,6 @@ export const aggregateData = async (
   const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
   if (txs.length === 0) {
-    const errString = `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
-    await insertErrorRow({
-      ts: currentTimestamp,
-      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-      keyword: "data",
-      error: errString,
-    });
-    console.log(errString);
     // If it is daily, insert an entry into db anyway
     if (!hourly) {
       try {
@@ -584,11 +575,6 @@ export const aggregateData = async (
     const txPK = largeTx.id;
     const timestamp = largeTx.ts;
     const usdValue = largeTx.usdValue;
-    const existingEntry = await getLargeTransaction(txPK, timestamp);
-    // if (existingEntry) {
-    //   console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
-    //   return;
-    // }
     try {
       await sql.begin(async (sql) => {
         await insertLargeTransactionRow(sql, {
