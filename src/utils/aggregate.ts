@@ -291,14 +291,15 @@ export const aggregateData = async (
 
   const uniqueTokenPromises = Promise.all(
     txs.map(async (tx) => {
-      let { token, chain, is_usd_volume, origin_chain } = tx;
+      const { token, chain, origin_chain, is_usd_volume } = tx;
+      if (is_usd_volume) return;
+      if (!token) return;
       const isSolanaAddress = checkSolanaAddress(token);
-      chain = isSolanaAddress ? "solana" : origin_chain ?? chain;
-      if (!is_usd_volume) {
-        if (!token || !chain) return;
-        const tokenL = isSolanaAddress ? token : token.toLowerCase();
-        uniqueTokens[transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`] = true;
-      }
+      const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+      if (!priceChain) return;
+      const tokenL = priceChain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
+      const key = transformTokens[priceChain]?.[tokenL] ?? `${priceChain}:${tokenL}`;
+      uniqueTokens[key] = true;
     })
   );
   await uniqueTokenPromises;
@@ -340,9 +341,15 @@ export const aggregateData = async (
         usdValue = rawUsdValue;
         tokenKey = `${chain}:${token}`;
       } else {
-        const tokenL = chain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
-        const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
-        tokenKey = transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`;
+        const isSolanaAddress = checkSolanaAddress(token);
+        const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+        if (!priceChain) {
+          console.log(`Skipping token with unknown chain for pricing`, tx);
+          return;
+        }
+        const tokenL = priceChain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
+        const transformedDecimals = transformTokenDecimals[priceChain]?.[tokenL] ?? null;
+        tokenKey = transformTokens[priceChain]?.[tokenL] ?? `${priceChain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
