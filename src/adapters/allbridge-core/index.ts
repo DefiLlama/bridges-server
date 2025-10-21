@@ -1,4 +1,3 @@
-import axios, { AxiosResponse } from 'axios';
 import { BigNumber } from 'ethers';
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
@@ -7,6 +6,8 @@ import { fromHex } from 'tron-format-address';
 import { getConnection } from '../../helpers/solana';
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { getTxDataFromTronEventLogs } from './eventParsing';
+import { getEventsFromAnalyticsApi } from './analyticsApi';
+import { getClient as getSuiClient } from '../../helpers/sui';
 
 const adapterName = "allbridge-core";
 
@@ -47,6 +48,10 @@ const lpAddresses = {
   ]
 } as {
   [chain: string]: string[];
+};
+
+const suiFullTokenAddressMap: Record<string, string> = {
+  "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7": "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
 };
 
 const constructParams = (chain: string) => {
@@ -101,21 +106,6 @@ const constructParams = (chain: string) => {
     getTxDataFromEVMEventLogs(adapterName, chain as Chain, fromBlock, toBlock, eventParams);
 };
 
-interface SolanaEvent {
-  blockTime: number;
-  txHash: string;
-  from: string;
-  to: string;
-  token: string;
-  amount: string;
-  isDeposit: boolean;
-}
-
-function interpolateNumber(x1: number, y1: number, x2: number, y2: number, y: number): number {
-  const x = x1 + (x2 - x1) / (y2 - y1) * (y - y1);
-  return Math.round(x);
-}
-
 const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
   const connection = getConnection();
   const timestampFrom = await connection.getBlockTime(fromSlot);
@@ -124,28 +114,18 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
   if (!timestampFrom || !timestampTo) {
     return [];
   }
-  const from = new Date(timestampFrom * 1000).toISOString();
-  const to = new Date(timestampTo * 1000).toISOString();
+  return await getEventsFromAnalyticsApi('SOL', fromSlot, timestampFrom * 1000, toSlot, timestampTo * 1000);
+};
 
-  let response: AxiosResponse<SolanaEvent[]>;
-  try {
-    response = await axios.get<SolanaEvent[]>(
-      `https://core.api.allbridgecoreapi.net/analytics/inflows?chain=SOL&from=${from}&to=${to}`
-    );
-  } catch (e) {
-    console.error("Error fetching Solana events", e);
-    return [];
-  }
+const getSuiEvents = async (fromCheckpointNumber: number, toCheckpointNumber: number): Promise<EventData[]> => {
+  const client = getSuiClient();
+  const fromCheckpoint = await client.getCheckpoint({ id: fromCheckpointNumber.toString() });
+  const fromTimestampMs = Number(fromCheckpoint.timestampMs);
+  const toCheckpoint = await client.getCheckpoint({ id: toCheckpointNumber.toString() });
+  const toTimestampMs = Number(toCheckpoint.timestampMs);
 
-  return response.data.map((event) => ({
-    blockNumber: interpolateNumber(fromSlot, timestampFrom, toSlot, timestampTo, event.blockTime),
-    txHash: event.txHash,
-    from,
-    to,
-    token: event.token,
-    amount: BigNumber.from(event.amount),
-    isDeposit: event.isDeposit,
-  }));
+  const eventData = await getEventsFromAnalyticsApi('SUI', fromCheckpointNumber, fromTimestampMs, toCheckpointNumber, toTimestampMs);
+  return eventData.map((data) => ({ ...data, token: suiFullTokenAddressMap[data.token] ?? data.token }));
 };
 
 function constructTronParams() {
@@ -213,6 +193,7 @@ const adapter: BridgeAdapter = {
   optimism: constructParams("optimism"),
   celo: constructParams("celo"),
   solana: getSolanaEvents,
+  sui: getSuiEvents,
 };
 
 export default adapter;
