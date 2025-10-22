@@ -37,8 +37,8 @@ export async function getEventsFromAnalyticsApi(
     return {
       blockNumber: interpolateNumber(fromBlock, fromTimestampMs, toBlock, toTimestampMs, blockTimeMs),
       txHash: event.txHash,
-      from,
-      to,
+      from: event.from,
+      to: event.to,
       token: event.token,
       amount: BigNumber.from(event.amount),
       isDeposit: event.isDeposit,
