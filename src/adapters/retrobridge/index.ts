@@ -113,80 +113,54 @@ const constructParams = (chain: SupportedChains) => {
         return async (fromBlock: number, toBlock: number) => {
             const eventLogData = await getTxDataFromEVMEventLogs("retrobridge", chain as Chain, fromBlock, toBlock, eventParams);
 
-            const nativeEvents = await Promise.all([
-                ...bridgeAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    let txs: any[] = [];
-                    if (chain === "merlin") {
-                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                            includeSignatures: ["0x"],
-                        });
-                    } else if (chain === "btr") {
-                        txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
-                            includeSignatures: ["0x"],
-                        });
-                    } else {
-                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                            includeSignatures: ["0x"],
-                        });
-                    }
-                    const eventsRes: EventData[] = txs.map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.blockNumber,
-                            from: tx.from,
-                            to: tx.to,
-                            token: nativeTokens[chain],
-                            amount: tx.value,
-                            isDeposit: address.toLowerCase() === tx.to,
-                        };
-                        return event;
-                    });
+            const allAddresses = [...bridgeAddress, ...contractAddress];
+            const nativeEvents: EventData[][] = [];
 
-                    return eventsRes;
-                }),
-                ...contractAddress.map(async (address: string, i: number) => {
-                    await wait(300 * i); // for etherscan
-                    let txs: any[] = [];
-                    if (chain === "merlin") {
-                        txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
-                            includeSignatures: [
-                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
-                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-                            ],
-                        });
-                    } else if (chain === "btr") {
-                        txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
-                            includeSignatures: [
-                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
-                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-                            ],
-                        });
-                    } else {
-                        txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
-                            includeSignatures: [
-                                "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
-                                "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-                            ],
-                        });
-                    }
-                    const eventsRes: EventData[] = txs.filter((tx: any) => String(tx.value) != "0").map((tx: any) => {
-                        const event: EventData = {
-                            txHash: tx.hash,
-                            blockNumber: +tx.blockNumber,
-                            from: tx.from,
-                            to: tx.to,
-                            token: nativeTokens[chain],
-                            amount: ethers.BigNumber.from(tx.value),
-                            isDeposit: address.toLowerCase() === tx.to,
-                        };
-                        return event;
-                    });
+            for (let i = 0; i < allAddresses.length; i++) {
+                await wait(500);
+                const address = allAddresses[i];
+                const isBridgeAddress = i < bridgeAddress.length;
 
-                    return eventsRes;
-                })
-            ]
-            );
+                let txs: any[] = [];
+                if (chain === "merlin") {
+                    txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {
+                        includeSignatures: isBridgeAddress ? ["0x"] : [
+                            "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                        ],
+                    });
+                } else if (chain === "btr") {
+                    txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {
+                        includeSignatures: isBridgeAddress ? ["0x"] : [
+                            "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                        ],
+                    });
+                } else {
+                    txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
+                        includeSignatures: isBridgeAddress ? ["0x"] : [
+                            "0x769254a71d2f67d8ac6cb44f2803c0d05cfbcf9effadb6a984f10ff9de3df6c3",
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+                        ],
+                    });
+                }
+
+                const filteredTxs = isBridgeAddress ? txs : txs.filter((tx: any) => String(tx.value) != "0");
+                const eventsRes: EventData[] = filteredTxs.map((tx: any) => {
+                    const event: EventData = {
+                        txHash: tx.hash,
+                        blockNumber: +tx.blockNumber,
+                        from: tx.from,
+                        to: tx.to,
+                        token: nativeTokens[chain],
+                        amount: isBridgeAddress ? tx.value : ethers.BigNumber.from(tx.value),
+                        isDeposit: address.toLowerCase() === tx.to,
+                    };
+                    return event;
+                });
+
+                nativeEvents.push(eventsRes);
+            }
             const allEvents = [...eventLogData, ...nativeEvents.flat()];
             return allEvents;
         };

@@ -11,7 +11,7 @@ import {
   getTimestampAtStartOfDayUTC,
 } from "./date";
 import { getLlamaPrices } from "./prices";
-import { getBridgeID, getLargeTransaction } from "./wrappa/postgres/query";
+import { getBridgeID } from "./wrappa/postgres/query";
 import {
   insertHourlyAggregatedRow,
   insertDailyAggregatedRow,
@@ -117,7 +117,6 @@ export const runAggregateDataHistorical = async (
       );
       await chainsPromises;
     }
-    console.log(`Successfully aggregated data for ${bridgeDbName} at timestamp ${timestamp}.`);
     timestamp -= hourly ? secondsInHour : secondsInDay;
   }
 };
@@ -235,14 +234,6 @@ export const aggregateData = async (
   const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
   if (txs.length === 0) {
-    const errString = `No transactions found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
-    await insertErrorRow({
-      ts: currentTimestamp,
-      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-      keyword: "data",
-      error: errString,
-    });
-    console.log(errString);
     // If it is daily, insert an entry into db anyway
     if (!hourly) {
       try {
@@ -291,14 +282,15 @@ export const aggregateData = async (
 
   const uniqueTokenPromises = Promise.all(
     txs.map(async (tx) => {
-      let { token, chain, is_usd_volume, origin_chain } = tx;
+      const { token, chain, origin_chain, is_usd_volume } = tx;
+      if (is_usd_volume) return;
+      if (!token) return;
       const isSolanaAddress = checkSolanaAddress(token);
-      chain = isSolanaAddress ? "solana" : origin_chain ?? chain;
-      if (!is_usd_volume) {
-        if (!token || !chain) return;
-        const tokenL = isSolanaAddress ? token : token.toLowerCase();
-        uniqueTokens[transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`] = true;
-      }
+      const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+      if (!priceChain) return;
+      const tokenL = priceChain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
+      const key = transformTokens[priceChain]?.[tokenL] ?? `${priceChain}:${tokenL}`;
+      uniqueTokens[key] = true;
     })
   );
   await uniqueTokenPromises;
@@ -340,9 +332,15 @@ export const aggregateData = async (
         usdValue = rawUsdValue;
         tokenKey = `${chain}:${token}`;
       } else {
-        const tokenL = chain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
-        const transformedDecimals = transformTokenDecimals[chain]?.[tokenL] ?? null;
-        tokenKey = transformTokens[chain]?.[tokenL] ?? `${chain}:${tokenL}`;
+        const isSolanaAddress = checkSolanaAddress(token);
+        const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+        if (!priceChain) {
+          console.log(`Skipping token with unknown chain for pricing`, tx);
+          return;
+        }
+        const tokenL = priceChain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
+        const transformedDecimals = transformTokenDecimals[priceChain]?.[tokenL] ?? null;
+        tokenKey = transformTokens[priceChain]?.[tokenL] ?? `${priceChain}:${tokenL}`;
         if (blacklist.includes(tokenKey)) {
           console.log(`${tokenKey} in blacklist. Skipping`);
           return;
@@ -442,6 +440,10 @@ export const aggregateData = async (
       Array.from(tokensWithNullPrices).map(async (token: string) => {
         try {
           const [chain, tokenAddress] = token.split(":");
+          if (chain === "solana") {
+            await insertOrUpdateTokenWithoutPrice(token, "SOLANA_TOKEN");
+            return;
+          }
           const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, chain)).output;
           await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
         } catch (e) {
@@ -573,11 +575,6 @@ export const aggregateData = async (
     const txPK = largeTx.id;
     const timestamp = largeTx.ts;
     const usdValue = largeTx.usdValue;
-    const existingEntry = await getLargeTransaction(txPK, timestamp);
-    // if (existingEntry) {
-    //   console.log(`Large transaction entry with PK ${txPK} at timestamp ${timestamp} already exists, skipping.`);
-    //   return;
-    // }
     try {
       await sql.begin(async (sql) => {
         await insertLargeTransactionRow(sql, {
