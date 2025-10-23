@@ -1,5 +1,5 @@
 import { getLatestBlock as getLatestBlockSdk, lookupBlock as lookupBlockSdk } from "@defillama/sdk/build/util";
-// import { getClient } from "../helpers/sui";
+import { getClient } from "../helpers/sui";
 import { tronGetLatestBlock } from "../helpers/tron";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
@@ -11,6 +11,7 @@ import {
   ibcGetBlockFromTimestamp,
 } from "../adapters/ibc";
 import bridgeNetworkData from "../data/bridgeNetworkData";
+
 const retry = require("async-retry");
 
 const connection = getConnection();
@@ -21,8 +22,8 @@ async function getLatestSlot() {
 
 export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
   if (chain === "sui") {
-    // const client = getClient();
-    // return Number(await client.getLatestCheckpointSequenceNumber());
+    const client = getClient();
+    return Number(await client.getLatestCheckpointSequenceNumber());
   } else if (chain === "solana") {
     return await getLatestSlot();
   } else if (chain === "tron") {
@@ -65,10 +66,10 @@ async function getBlockTime(slotNumber: number) {
 
 export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
-    // const client = getClient();
-    // const seqNumber = await client.getLatestCheckpointSequenceNumber();
-    // const { timestampMs } = await client.getCheckpoint({ id: seqNumber });
-    // return { number: Number(seqNumber), timestamp: Number(timestampMs) };
+    const client = getClient();
+    const seqNumber = await client.getLatestCheckpointSequenceNumber();
+    const { timestampMs } = await client.getCheckpoint({ id: seqNumber });
+    return { number: Number(seqNumber), timestamp: Math.floor(Number(timestampMs) / 1000) };
   } else if (chain === "tron") {
     return await tronGetLatestBlock();
   } else if (chain === "solana") {
