@@ -128,7 +128,6 @@ export const insertConfigRow = async (
   }
   for (let i = 0; i < 5; i++) {
     try {
-      console.log(`inserting into bridges.config`);
       return sql`
         INSERT INTO bridges.config ${sql(paramsToAvoidTsError)} 
         ON CONFLICT (bridge_name, chain) DO NOTHING;
@@ -410,7 +409,6 @@ export const insertTransactionRows = async (
   for (let i = 0; i < 5; i++) {
     try {
       await sqlCommand;
-      console.log(`Inserted ${sanitizedTransactions.length} transactions of ${transactions.length}`);
       return;
     } catch (e) {
       if (i >= 4) {

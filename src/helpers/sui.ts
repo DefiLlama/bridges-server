@@ -1,14 +1,14 @@
-// import {
-//   SuiClient,
-//   SuiTransactionBlockResponse,
-//   getFullnodeUrl,
-//   PaginatedTransactionResponse,
-// } from "@mysten/sui.js/client";
+import {
+  SuiClient,
+  SuiTransactionBlockResponse,
+  getFullnodeUrl,
+  PaginatedTransactionResponse,
+} from "@mysten/sui/client";
 
-// export const getClient = () => {
-//   const url = process.env.SUI_RPC ?? getFullnodeUrl("mainnet");
-//   return new SuiClient({ url });
-// };
+export const getClient = () => {
+  const url = process.env.SUI_RPC ?? getFullnodeUrl("mainnet");
+  return new SuiClient({ url });
+};
 
 // export const getTransactionBlocks = async (
 //   fromCheckpoint: number,

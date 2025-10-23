@@ -30,6 +30,8 @@ const nativeTokenAddress = {
   base: "0x4200000000000000000000000000000000000006", // WETH
   bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // BNB
   sonic: "0x0000000000000000000000000000000000000000", // S 
+  plume: "0x0000000000000000000000000000000000000000", // PLUME
+  plasma: "0x0000000000000000000000000000000000000000", // XPL
 };
 
 type SupportedChains = keyof typeof nativeTokenAddress;
@@ -153,6 +155,8 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   solana: getSolanaEvents,
   sonic: constructParams("sonic"),
+  plasma: constructParams("plasma"),
+  plume: constructParams("plume"),
 };
 
 export default adapter;

@@ -42,8 +42,9 @@ export const DEFAULT_TTL = 60 * 70; // 70 minutes
 
 export const needsWarming = async (cacheKey: string): Promise<boolean> => {
   const ttl = await redis.ttl(cacheKey);
+  if (ttl === -2) return true;
   if (ttl === -1) return false;
-  return true;
+  return ttl * 1000 < CACHE_WARM_THRESHOLD;
 };
 
 export const warmCache = async (cacheKey: string): Promise<void> => {
@@ -68,7 +69,11 @@ export const getCacheKey = (...parts: (string | undefined)[]) => parts.filter(Bo
 
 export const getCache = async (key: string): Promise<any> => {
   const value = await redis.get(key);
-  console.log("Cache HIT", key);
+  if (value) {
+    console.log("Cache HIT", key);
+  } else {
+    console.log("Cache MISS", key);
+  }
   return value ? JSON.parse(value) : null;
 };
 
