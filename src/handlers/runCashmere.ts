@@ -1,11 +1,11 @@
-import { wrapScheduledLambda } from "../utils/wrap";
-import adapter, { forEachTransactionsByTimePage, convertTransactionToEvent } from "../adapters/cashmere";
-import { domainToChain, usdcAddresses } from "../adapters/cashmere/types";
-import { sql } from "../utils/db";
-import { insertTransactionRows } from "../utils/wrappa/postgres/write";
-import { getBridgeID } from "../utils/wrappa/postgres/query";
-import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
+import adapter, { convertTransactionToEvent, forEachTransactionsByTimePage } from "../adapters/cashmere";
+import { domainToChain } from "../adapters/cashmere/types";
+import { insertConfigEntriesForAdapter } from "../utils/adapter";
+import { sql } from "../utils/db";
+import { wrapScheduledLambda } from "../utils/wrap";
+import { getBridgeID } from "../utils/wrappa/postgres/query";
+import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 
 const HOURS_CONCURRENCY = 12;
 
@@ -35,7 +35,11 @@ export const handler = async () => {
       windows.push([t, Math.min(t + 3600, endTs)]);
     }
 
-    const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
+    const mapLimit = async <T, R>(
+      items: T[],
+      limit: number,
+      fn: (item: T, index: number) => Promise<R>
+    ): Promise<R[]> => {
       const results: R[] = new Array(items.length);
       let inFlight = 0;
       let i = 0;
@@ -60,10 +64,11 @@ export const handler = async () => {
       });
     };
 
-    const processHourWindow = async ([from, to]: [number, number]): Promise<{depositUsd: number, withdrawUsd: number}> => {
-      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs
-        .unix(to)
-        .format("HH:mm")}]`;
+    const processHourWindow = async ([from, to]: [number, number]): Promise<{
+      depositUsd: number;
+      withdrawUsd: number;
+    }> => {
+      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs.unix(to).format("HH:mm")}]`;
       console.log(`${label} start`);
       let hourDepositUsd = 0;
       let hourWithdrawUsd = 0;
@@ -77,7 +82,7 @@ export const handler = async () => {
           for (const tx of transactions) {
             try {
               const event = convertTransactionToEvent(tx);
-              
+
               // Process deposit (source chain)
               if (event.deposit && event.depositChainId !== undefined) {
                 const depositChain = domainToChain[event.depositChainId];
@@ -92,7 +97,7 @@ export const handler = async () => {
                     tx_block: event.deposit.blockNumber || null,
                     tx_from: event.deposit.from ?? "0x",
                     tx_to: event.deposit.to ?? "0x",
-                    token: event.deposit.token ?? usdcAddresses[depositChain] ?? "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22", // USDC
+                    token: event.deposit.token,
                     amount: event.deposit.amount?.toString?.() || "0",
                     is_deposit: true,
                     is_usd_volume: true, // Key: amounts are already USD
@@ -116,7 +121,7 @@ export const handler = async () => {
                     tx_block: event.withdraw.blockNumber || null,
                     tx_from: event.withdraw.from ?? "0x",
                     tx_to: event.withdraw.to ?? "0x",
-                    token: event.withdraw.token ?? usdcAddresses[withdrawChain] ?? "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22", // USDC
+                    token: event.withdraw.token,
                     amount: event.withdraw.amount?.toString?.() || "0",
                     is_deposit: false,
                     is_usd_volume: true, // Key: amounts are already USD
@@ -133,7 +138,8 @@ export const handler = async () => {
           if (sourceTransactions.length || destinationTransactions.length) {
             await sql.begin(async (sql) => {
               if (sourceTransactions.length) await insertTransactionRows(sql, true, sourceTransactions, "upsert");
-              if (destinationTransactions.length) await insertTransactionRows(sql, true, destinationTransactions, "upsert");
+              if (destinationTransactions.length)
+                await insertTransactionRows(sql, true, destinationTransactions, "upsert");
             });
             console.log(
               `${label} inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
@@ -146,14 +152,16 @@ export const handler = async () => {
         console.error(`${label} error processing window:`, error);
       }
       console.log(`${label} complete`);
-      return {depositUsd: hourDepositUsd, withdrawUsd: hourWithdrawUsd};
+      return { depositUsd: hourDepositUsd, withdrawUsd: hourWithdrawUsd };
     };
 
     const hourTotals = await mapLimit(windows, HOURS_CONCURRENCY, (w) => processHourWindow(w));
     const totalDepositUsd = hourTotals.reduce((a, b) => a + (b?.depositUsd || 0), 0);
     const totalWithdrawUsd = hourTotals.reduce((a, b) => a + (b?.withdrawUsd || 0), 0);
 
-    console.log(`Cashmere CCTP processing complete. Total deposit USD: ${totalDepositUsd}, Total withdraw USD: ${totalWithdrawUsd}`);
+    console.log(
+      `Cashmere CCTP processing complete. Total deposit USD: ${totalDepositUsd}, Total withdraw USD: ${totalWithdrawUsd}`
+    );
   } catch (error) {
     console.error("Fatal error in Cashmere handler:", error);
     throw error;
