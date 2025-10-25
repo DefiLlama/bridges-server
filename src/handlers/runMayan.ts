@@ -44,6 +44,7 @@ export const handler = async () => {
           token_transfer_to_address,
           token_address,
           token_amount,
+          token_usd_amount,
           source_chain,
           destination_chain,
           is_deposit,
@@ -56,6 +57,10 @@ export const handler = async () => {
         const transactionChain = is_deposit ? destinationChain : sourceChain;
         const originChain = is_deposit ? sourceChain : null;
 
+        const tokenAmountUsd = parseFloat(token_usd_amount) ? token_usd_amount : 0;
+        // sanity check
+        const shouldBeUSDVolume = tokenAmountUsd > 0 && tokenAmountUsd <= 10_000_000;
+
         // Only create one transaction per event, using the appropriate chain's bridge_id
         if (bridgeIds[transactionChain]) {
           transactions.push({
@@ -67,9 +72,9 @@ export const handler = async () => {
             tx_from: token_transfer_from_address ?? "0x",
             tx_to: token_transfer_to_address ?? "0x",
             token: token_address ?? "0x0000000000000000000000000000000000000000",
-            amount: token_amount ?? "0",
+            amount: shouldBeUSDVolume ? tokenAmountUsd : token_amount ?? "0",
             is_deposit: is_deposit,
-            is_usd_volume: false,
+            is_usd_volume: shouldBeUSDVolume,
             txs_counted_as: 1,
             origin_chain: originChain,
           });
