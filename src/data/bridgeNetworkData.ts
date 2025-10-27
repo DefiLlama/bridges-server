@@ -2525,7 +2525,7 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avax",           // Changed: match adapter export
+      "avax", // Changed: match adapter export
       "optimism",
       "arbitrum",
       "base",
@@ -2533,7 +2533,7 @@ export default [
       "unichain",
       "linea",
       "sonic",
-      "wc",             // Changed: match adapter export
+      "wc", // Changed: match adapter export
       "sei",
       "hyperliquid",
       "aptos",
@@ -2541,9 +2541,9 @@ export default [
       "solana",
     ],
     chainMapping: {
-      "avax": "avax",           // Identity mapping
-      "wc": "wc",               // Identity mapping
-      "hyperliquid": "hyperliquid", // Identity mapping
+      avax: "avax", // Identity mapping
+      wc: "wc", // Identity mapping
+      hyperliquid: "hyperliquid", // Identity mapping
     },
   },
   {
@@ -2568,5 +2568,16 @@ export default [
       "Aptos",
       "Linea",
     ],
+  },
+  {
+    id: 100,
+    displayName: "FAssets",
+    bridgeDbName: "fxrp",
+    slug: "flare",
+    iconLink: "chain:flare",
+    largeTxThreshold: 10000,
+    url: "https://flare.network/products/fassets",
+    chains: ["Flare", "XRPL"],
+    destinationChain: "XRPL",
   },
 ] as BridgeNetwork[];
