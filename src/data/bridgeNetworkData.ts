@@ -2492,7 +2492,7 @@ export default [
       "Plume",
       "ZKsync Era",
       "Metis",
-      "Sei" 
+      "Sei",
     ],
     chainMapping: {
       "World Chain": "wc",
@@ -2525,7 +2525,7 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avax",           // Changed: match adapter export
+      "avax", // Changed: match adapter export
       "optimism",
       "arbitrum",
       "base",
@@ -2533,7 +2533,7 @@ export default [
       "unichain",
       "linea",
       "sonic",
-      "wc",             // Changed: match adapter export
+      "wc", // Changed: match adapter export
       "sei",
       "hyperliquid",
       "aptos",
@@ -2541,42 +2541,43 @@ export default [
       "solana",
     ],
     chainMapping: {
-      "avax": "avax",           // Identity mapping
-      "wc": "wc",               // Identity mapping
-      "hyperliquid": "hyperliquid", // Identity mapping
+      avax: "avax", // Identity mapping
+      wc: "wc", // Identity mapping
+      hyperliquid: "hyperliquid", // Identity mapping
     },
   },
-  // {
-  //   id: 99,
-  //   displayName: "Mayan",
-  //   bridgeDbName: "mayan",
-  //   slug: "mayan",
-  //   iconLink: "icons:mayana",
-  //   largeTxThreshold: 10000,
-  //   url: "https://swap.mayan.finance/",
-  //   chains: [
-  //     "Solana",
-  //     "Ethereum",
-  //     "Base",
-  //     "Arbitrum",
-  //     "Optimism",
-  //     "Polygon",
-  //     "Avalanche",
-  //     "BSC",
-  //     "Sui",
-  //     "Unichain",
-  //     "Aptos",
-  //     "Linea",
-  //   ],
-  // },
+  {
+    id: 99,
+    displayName: "Mayan",
+    bridgeDbName: "mayan",
+    slug: "mayan",
+    iconLink: "icons:mayan",
+    largeTxThreshold: 10000,
+    url: "https://swap.mayan.finance/",
+    chains: [
+      "Solana",
+      "Ethereum",
+      "Base",
+      "Arbitrum",
+      "Optimism",
+      "Polygon",
+      "Avalanche",
+      "BSC",
+      "Sui",
+      "Unichain",
+      "Aptos",
+      "Linea",
+    ],
+  },
   {
     id: 100,
     displayName: "FAssets",
     bridgeDbName: "fxrp",
+    slug: "flare",
     iconLink: "chain:flare",
     largeTxThreshold: 10000,
     url: "https://flare.network/products/fassets",
     chains: ["Flare", "XRPL"],
-    destinationChain: "Flare",
+    destinationChain: "XRPL",
   },
 ] as BridgeNetwork[];

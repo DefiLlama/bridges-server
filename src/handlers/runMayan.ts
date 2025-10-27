@@ -34,8 +34,7 @@ export const handler = async () => {
 
     const processBatch = async (sql: any, batch: any[]) => {
       const start = dayjs().unix();
-      const sourceTransactions = [];
-      const destinationTransactions = [];
+      const transactions = [];
 
       for (const event of batch) {
         const {
@@ -44,60 +43,50 @@ export const handler = async () => {
           token_transfer_from_address,
           token_transfer_to_address,
           token_address,
+          token_amount,
           token_usd_amount,
           source_chain,
           destination_chain,
+          is_deposit,
         } = event;
 
         const sourceChain = normalizeChainName(source_chain);
         const destinationChain = normalizeChainName(destination_chain);
 
-        if (bridgeIds[sourceChain]) {
-          sourceTransactions.push({
-            bridge_id: bridgeIds[sourceChain],
-            chain: sourceChain,
+        // Determine the correct chain to use for the bridge_id based on deposit status
+        const transactionChain = is_deposit ? destinationChain : sourceChain;
+        const originChain = is_deposit ? sourceChain : null;
+
+        const tokenAmountUsd = parseFloat(token_usd_amount) ? token_usd_amount : 0;
+        // sanity check
+        const shouldBeUSDVolume = tokenAmountUsd > 0 && tokenAmountUsd <= 10_000_000;
+
+        // Only create one transaction per event, using the appropriate chain's bridge_id
+        if (bridgeIds[transactionChain]) {
+          transactions.push({
+            bridge_id: bridgeIds[transactionChain],
+            chain: transactionChain,
             tx_hash: transaction_hash,
             ts: parseInt(block_timestamp) * 1000,
             tx_block: null,
             tx_from: token_transfer_from_address ?? "0x",
             tx_to: token_transfer_to_address ?? "0x",
             token: token_address ?? "0x0000000000000000000000000000000000000000",
-            amount: token_usd_amount || "0",
-            is_deposit: true,
-            is_usd_volume: true,
+            amount: shouldBeUSDVolume ? tokenAmountUsd : token_amount ?? "0",
+            is_deposit: is_deposit,
+            is_usd_volume: shouldBeUSDVolume,
             txs_counted_as: 1,
-            origin_chain: null,
-          });
-        }
-
-        if (bridgeIds[destinationChain]) {
-          destinationTransactions.push({
-            bridge_id: bridgeIds[destinationChain],
-            chain: destinationChain,
-            tx_hash: `${transaction_hash}_destination`,
-            ts: parseInt(block_timestamp) * 1000,
-            tx_block: null,
-            tx_from: token_transfer_to_address ?? "0x",
-            tx_to: token_transfer_from_address ?? "0x",
-            token: token_address ?? "0x0000000000000000000000000000000000000000",
-            amount: token_usd_amount || "0",
-            is_deposit: false,
-            is_usd_volume: true,
-            txs_counted_as: 1,
-            origin_chain: null,
+            origin_chain: originChain,
           });
         }
       }
 
       try {
-        if (sourceTransactions.length > 0) {
-          await insertTransactionRows(sql, true, sourceTransactions, "upsert");
-        }
-        if (destinationTransactions.length > 0) {
-          await insertTransactionRows(sql, true, destinationTransactions, "upsert");
+        if (transactions.length > 0) {
+          await insertTransactionRows(sql, true, transactions, "upsert");
         }
       } catch (error) {
-        console.error(`Error inserting Wormhole batch:`, error);
+        console.error(`Error inserting Mayan batch:`, error);
         throw error;
       }
 
@@ -124,7 +113,7 @@ export const handler = async () => {
       const amount = parseFloat(curr.token_usd_amount || "0");
 
       // Skip transactions over $1M (outliers from API issues. Mayan's API pricing isn't perfectly reliable, a majority of the outliers are caught with this)
-      if (amount > 1000000) {
+      if (amount > 1_000_000) {
         return acc;
       }
 

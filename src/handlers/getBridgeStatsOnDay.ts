@@ -129,7 +129,9 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
   });
 
   const queryTimestamp = getTimestampAtStartOfDay(parseInt(timestamp));
-  const endTimestamp = getCurrentUnixTimestamp();
+  const maxEndTimestamp = queryTimestamp + 86400;
+  const currentTimestamp = getCurrentUnixTimestamp();
+  const endTimestamp = Math.max(queryTimestamp, Math.min(maxEndTimestamp, currentTimestamp));
 
   let sourceChainsDailyData = [] as IAggregatedData[];
   await Promise.all(
@@ -140,9 +142,10 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
         config.chain,
         config.bridge_name
       );
-      sourceChainsDailyData = [...sourceChainData, ...sourceChainsDailyData];
+      sourceChainsDailyData.push(...sourceChainData);
     })
   );
+
   const dailyData = await queryAggregatedTokensInRange(queryTimestamp, endTimestamp, queryChain, bridgeDbName);
   let dailyTokensDeposited = {} as TokenRecord;
   let dailyTokensWithdrawn = {} as TokenRecord;
@@ -176,6 +179,7 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
     collectTokenIds(total_tokens_deposited);
     collectTokenIds(total_tokens_withdrawn);
   });
+
   let prices: Record<string, any> = {};
   try {
     prices = (await Promise.race([

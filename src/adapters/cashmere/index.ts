@@ -1,8 +1,7 @@
-import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { ethers } from "ethers";
 import fetch from "node-fetch";
 import { EventData } from "../../utils/types";
-import { CashmereAPIResponse, CashmereTransaction, domainToChain, chainToDomain, usdcAddresses } from "./types";
-import { ethers } from "ethers";
+import { CashmereAPIResponse, CashmereTransaction, domainToChain, usdcAddresses } from "./types";
 const retry = require("async-retry");
 
 /**
@@ -48,7 +47,7 @@ export const convertTransactionToEvent = (
   
   return {
     depositChainId,
-    deposit: depositChainId && tx.source_tx_hash && depositAmount.gt(0)
+    deposit: depositChainId !== undefined && tx.source_tx_hash && depositAmount.gt(0)
       ? {
           blockNumber: tx.block || 0,
           txHash: tx.source_tx_hash,
@@ -62,7 +61,7 @@ export const convertTransactionToEvent = (
         }
       : undefined,
     withdrawChainId,
-    withdraw: withdrawChainId && tx.destination_tx_hash && withdrawAmount.gt(0)
+    withdraw: withdrawChainId !== undefined && tx.destination_tx_hash && withdrawAmount.gt(0)
       ? {
           blockNumber: 0, // Destination block not always available
           txHash: tx.destination_tx_hash,

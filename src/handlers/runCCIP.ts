@@ -137,7 +137,7 @@ const _handler = async (options: HandlerOptions = {}): Promise<void> => {
                 amount: event.amount,
                 is_deposit: event.is_deposit,
                 is_usd_volume: event.is_usd_volume,
-                tx_block: null,
+                tx_block: 0,
                 txs_counted_as: null,
                 origin_chain: null,
             })).filter((tx) => !!tx.bridge_id);
