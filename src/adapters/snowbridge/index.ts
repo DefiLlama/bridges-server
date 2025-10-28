@@ -1,11 +1,13 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { constructTransferParams } from "../../helpers/eventParams";
+import { BigNumber } from "ethers";
 
 const contractAddresses = {
   ethereum: {
     gateway: "0x27ca963c279c93801941e1eb8799c23f407d68e7", // Gateway address
-    agent: "0xd803472c47a87d7b63e888de53f03b4191b846a8", // Agent address
+    agent: "0xd803472c47a87D7B63E888DE53f03B4191B846a8", // Agent address
     tokens: [
       {
         token: "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f", // TracToken
@@ -20,8 +22,8 @@ const contractAddresses = {
   },
 } as {
   [chain: string]: {
-    gateway?: string;
-    agent?: string;
+    gateway: string;
+    agent: string;
     tokens: { token: string }[];
   };
 };
@@ -29,18 +31,21 @@ const contractAddresses = {
 const depositParams: PartialContractEventParams = {
   target: "",
   topic: "Transfer(address,address,uint256)",
-  abi: ["event Transfer(address indexed src, address indexed dst, uint256 wad)"],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "wad",
-    from: "src",
+    amount: "value",
+    from: "from",
+    to: "to",
+  },
+  argGetters: {
+    amount: (log: any) => BigNumber.from(log.value),
   },
   fixedEventData: {
     token: "",
-    to: "",
   },
   isDeposit: true,
 };
@@ -48,27 +53,27 @@ const depositParams: PartialContractEventParams = {
 const withdrawalParams: PartialContractEventParams = {
   target: "",
   topic: "Transfer(address,address,uint256)",
-  abi: ["event Transfer(address indexed src, address indexed dst, uint256 wad)"],
+  abi: ["event Transfer(address indexed from, address indexed to, uint256 value)"],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    amount: "wad",
-    to: "dst",
+    amount: "value",
+    from: "from",
+    to: "to",
   },
   fixedEventData: {
     token: "",
-    from: "",
   },
   isDeposit: false,
 };
 
-// Step 5: Construct event parameters for your chain
 const constructParams = (chain: string) => {
   let eventParams: PartialContractEventParams[] = [];
 
   const contractAddressesForChain = contractAddresses[chain];
+  const gateway = contractAddressesForChain?.gateway;
   const agent = contractAddressesForChain?.agent;
   const tokens = contractAddressesForChain?.tokens || [];
 
@@ -76,19 +81,15 @@ const constructParams = (chain: string) => {
     const tokenDepositParams: PartialContractEventParams = {
       ...depositParams,
       target: token,
-      fixedEventData: {
-        token: token,
-        to: agent,
-      },
+      filter: { includeTo: [agent] },
+      fixedEventData: { ...depositParams.fixedEventData, token: token },
     };
     const tokenWithdrawalParams: PartialContractEventParams = {
-      ...tokenDepositParams,
+      ...withdrawalParams,
       target: token,
       isDeposit: false,
-      fixedEventData: {
-        token: token,
-        from: agent,
-      },
+      filter: { includeFrom: [agent] },
+      fixedEventData: { ...withdrawalParams.fixedEventData, token: token },
     };
     eventParams.push(tokenDepositParams, tokenWithdrawalParams);
   });
