@@ -2572,4 +2572,15 @@ export default [
       "Linea",
     ],
   },
+  {
+    id: 100,
+    displayName: "FAssets",
+    bridgeDbName: "fxrp",
+    slug: "flare",
+    iconLink: "chain:flare",
+    largeTxThreshold: 10000,
+    url: "https://flare.network/products/fassets",
+    chains: ["Flare", "XRPL"],
+    destinationChain: "XRPL",
+  },
 ] as BridgeNetwork[];
