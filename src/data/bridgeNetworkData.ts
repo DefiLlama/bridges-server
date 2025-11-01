@@ -2525,26 +2525,29 @@ export default [
     url: "https://app.cashmere.exchange/",
     chains: [
       "ethereum",
-      "avax", // Changed: match adapter export
+      "avax",
       "optimism",
       "arbitrum",
       "base",
       "polygon",
+      "bsc",
       "unichain",
       "linea",
       "sonic",
-      "wc", // Changed: match adapter export
+      "wc",
       "sei",
       "hyperliquid",
       "aptos",
       "sui",
       "solana",
+      "berachain",
+      "ink",
+      "corn",
+      "flare",
+      "rootstock",
+      "xlayer",
+      "plasma",
     ],
-    chainMapping: {
-      avax: "avax", // Identity mapping
-      wc: "wc", // Identity mapping
-      hyperliquid: "hyperliquid", // Identity mapping
-    },
   },
   {
     id: 99,

@@ -1,7 +1,14 @@
 import { ethers } from "ethers";
 import fetch from "node-fetch";
 import { EventData } from "../../utils/types";
-import { CashmereAPIResponse, CashmereTransaction, domainToChain, usdcAddresses } from "./types";
+import {
+  CashmereAPIResponse,
+  CashmereTransaction,
+  domainToChain,
+  usdcAddresses,
+  usdt0Addresses,
+  usdtAddresses,
+} from "./types";
 const retry = require("async-retry");
 
 /**
@@ -14,7 +21,7 @@ const requestQueues = new Map<string, Promise<any>>();
 
 enum ApiErrorType {
   NETWORK = "network",
-  API_LIMIT = "api_limit", 
+  API_LIMIT = "api_limit",
   DATA_PARSING = "data_parsing",
   UNKNOWN = "unknown",
 }
@@ -22,58 +29,69 @@ enum ApiErrorType {
 // Convert USDC amount (6 decimals) to USD BigNumber (Relay-style rounding)
 const parseUsdcAmount = (amountUsdc?: number): ethers.BigNumber => {
   if (!amountUsdc || amountUsdc <= 0) return ethers.BigNumber.from(0);
-  
+
   // Convert from 6-decimal USDC to USD and round (like Relay)
   const usdAmount = amountUsdc / 1e6;
   return ethers.BigNumber.from(Math.round(usdAmount));
 };
 
+const getTokenAddress = (domain: number): string => {
+  if (domain < 30_000) {
+    return usdcAddresses[domainToChain[domain]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
+  } else if (domain < 500_000) {
+    return usdt0Addresses[domainToChain[domain]] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
+  } else {
+    if (domain % 2 === 1) {
+      return usdcAddresses[domainToChain[domain]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
+    } else {
+      return usdtAddresses[domainToChain[domain]] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
+    }
+  }
+};
+
 export const convertTransactionToEvent = (
   tx: CashmereTransaction
 ): { deposit?: EventData; withdraw?: EventData; depositChainId?: number; withdrawChainId?: number } => {
-  
   const depositAmount = parseUsdcAmount(tx.deposit_amount);
   const withdrawAmount = parseUsdcAmount(tx.receive_amount);
-  
+
   const timestamp = new Date(tx.created_at).getTime();
-  
+
   // For CCTP, we track both deposit (source) and withdrawal (destination) sides
   const depositChainId = tx.source_domain;
   const withdrawChainId = tx.destination_domain;
-  
-  // Debug: Check if domains exist
-  const depositChain = depositChainId !== undefined ? domainToChain[depositChainId] : undefined;
-  const withdrawChain = withdrawChainId !== undefined ? domainToChain[withdrawChainId] : undefined;
-  
+
   return {
     depositChainId,
-    deposit: depositChainId !== undefined && tx.source_tx_hash && depositAmount.gt(0)
-      ? {
-          blockNumber: tx.block || 0,
-          txHash: tx.source_tx_hash,
-          timestamp,
-          from: tx.sender || "0x",
-          to: tx.recipient || "0x", 
-          token: usdcAddresses[domainToChain[depositChainId]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22", // USDC contract
-          amount: depositAmount,
-          isDeposit: true,
-          isUSDVolume: true, // Key: amounts are already in USD
-        }
-      : undefined,
+    deposit:
+      depositChainId !== undefined && tx.source_tx_hash && depositAmount.gt(0)
+        ? {
+            blockNumber: tx.block || 0,
+            txHash: tx.source_tx_hash,
+            timestamp,
+            from: tx.sender || "0x",
+            to: tx.recipient || "0x",
+            token: getTokenAddress(depositChainId),
+            amount: depositAmount,
+            isDeposit: true,
+            isUSDVolume: true, // Key: amounts are already in USD
+          }
+        : undefined,
     withdrawChainId,
-    withdraw: withdrawChainId !== undefined && tx.destination_tx_hash && withdrawAmount.gt(0)
-      ? {
-          blockNumber: 0, // Destination block not always available
-          txHash: tx.destination_tx_hash,
-          timestamp,
-          from: tx.sender || "0x",
-          to: tx.recipient || "0x",
-          token: usdcAddresses[domainToChain[withdrawChainId]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22", // USDC contract
-          amount: withdrawAmount,
-          isDeposit: false,
-          isUSDVolume: true, // Key: amounts are already in USD
-        }
-      : undefined,
+    withdraw:
+      withdrawChainId !== undefined && tx.destination_tx_hash && withdrawAmount.gt(0)
+        ? {
+            blockNumber: 0, // Destination block not always available
+            txHash: tx.destination_tx_hash,
+            timestamp,
+            from: tx.sender || "0x",
+            to: tx.recipient || "0x",
+            token: getTokenAddress(withdrawChainId),
+            amount: withdrawAmount,
+            isDeposit: false,
+            isUSDVolume: true, // Key: amounts are already in USD
+          }
+        : undefined,
   };
 };
 
@@ -93,11 +111,9 @@ const fetchTransactionsByTime = async (
           response.status === 429
             ? ApiErrorType.API_LIMIT
             : response.status >= 500
-              ? ApiErrorType.NETWORK
-              : ApiErrorType.UNKNOWN;
-        const error = new Error(
-          `[${errorType}] HTTP ${response.status} for ts ${startTimestamp}-${endTimestamp}`
-        );
+            ? ApiErrorType.NETWORK
+            : ApiErrorType.UNKNOWN;
+        const error = new Error(`[${errorType}] HTTP ${response.status} for ts ${startTimestamp}-${endTimestamp}`);
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
           (error as any).name = "NoRetryError";
         }
@@ -161,12 +177,12 @@ export const forEachTransactionsByTimePage = async (
         const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, cursor);
         cursor = page.next_cursor;
         const txs = page.transactions ?? [];
-        
+
         if (txs.length) await onPage(txs);
         pageCount += 1;
         totalTransactions += txs.length;
         consecutiveErrors = 0;
-        
+
         // Stop if API says no more data
         if (!page.has_more) {
           console.log(`Stopping: API indicates no more data (has_more=false)`);
@@ -189,16 +205,16 @@ export const forEachTransactionsByTimePage = async (
     if (pageCount >= maxPages && cursor) {
       console.warn(`Hit pagination page limit for ts ${startTimestamp}-${endTimestamp}. Some data may be missing.`);
     }
-    
-    console.log(`Processed ${totalTransactions} transactions across ${pageCount} pages for ts ${startTimestamp}-${endTimestamp}`);
+
+    console.log(
+      `Processed ${totalTransactions} transactions across ${pageCount} pages for ts ${startTimestamp}-${endTimestamp}`
+    );
   } catch (error) {
     console.error(`Critical error streaming transactions for ts ${startTimestamp}-${endTimestamp}:`, error);
   }
 };
 
 // Create adapter for all supported chains
-const adapter = Object.fromEntries(
-  Object.values(domainToChain).map(chain => [chain, true])
-) as any;
+const adapter = Object.fromEntries(Object.values(domainToChain).map((chain) => [chain, true])) as any;
 
 export default adapter;
