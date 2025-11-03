@@ -12,6 +12,16 @@ export const normalizedChainReplacements = {
   "world%20chain": "wc",
   "x%20layer": "xlayer",
   zetachain: "zeta",
+  x_layer: "xlayer",
+  worldchain: "wc",
+  "opbnb mainnet": "opbnb",
+  "opbnb%20mainnet": "opbnb",
+  zksync_era: "zksync era",
+  dfk_chain: "dfk",
+  cronosevm: "cronos",
+  coredao: "core",
+  rari_chain: "rari",
+  astar_zkevm: "astar_zkevm",
 } as {
   [chain: string]: string;
 };
@@ -1355,6 +1365,21 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "zkSync Era";
     case "zksync era":
       return "zkSync Era";
+    case "op_bnb":
+      return "opBNB";
+    case "opbnb":
+      return "opBNB";
+    case "core":
+      return "Core";
+    case "cronosevm":
+      return "Cronos";
+    case "rari_chain":
+      return "Rari Chain";
+    case "plumephoenix":
+      return "Plume Phoenix";
+    case "astar_zkevm":
+    case "astar zkevm":
+      return "Astar zkEVM";
     case "sui":
       return "Sui";
     case "solana":

@@ -4,7 +4,7 @@ import { getDailyBridgeVolume, getHourlyBridgeVolume } from "../utils/bridgeVolu
 import { secondsInDay, getCurrentUnixTimestamp, secondsInHour } from "../utils/date";
 import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTimestamp";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
-import { normalizeChain } from "../utils/normalizeChain";
+import { normalizeChain, getChainDisplayName } from "../utils/normalizeChain";
 import { getLast24HVolume } from "../utils/wrappa/postgres/query";
 
 const getBridge = async (bridgeNetworkId?: number) => {
@@ -133,6 +133,16 @@ const getBridge = async (bridgeNetworkId?: number) => {
   }
   delete chainBreakdown["all"];
 
+  const remappedBreakdown: any = {};
+  Object.entries(chainBreakdown).forEach(([k, v]) => {
+    const display = getChainDisplayName(normalizeChain(k), true);
+    remappedBreakdown[display] = v;
+  });
+
+  const destinationChainDisplay = destinationChain
+    ? getChainDisplayName(normalizeChain(destinationChain), true)
+    : "false";
+
   const response = {
     id: id,
     name: bridgeDbName,
@@ -150,8 +160,8 @@ const getBridge = async (bridgeNetworkId?: number) => {
     dayBeforeLastTxs: Object.keys(dayBeforeLastTxs).length ? dayBeforeLastTxs : { deposits: 0, withdrawals: 0 },
     weeklyTxs: Object.keys(weeklyTxs).length ? weeklyTxs : { deposits: 0, withdrawals: 0 },
     monthlyTxs: Object.keys(monthlyTxs).length ? monthlyTxs : { deposits: 0, withdrawals: 0 },
-    chainBreakdown,
-    destinationChain: destinationChain ?? "false",
+    chainBreakdown: remappedBreakdown,
+    destinationChain: destinationChainDisplay,
   } as any;
 
   return response;

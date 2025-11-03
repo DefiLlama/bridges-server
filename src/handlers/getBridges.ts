@@ -4,7 +4,7 @@ import { getDailyBridgeVolume } from "../utils/bridgeVolume";
 import { craftBridgeChainsResponse } from "./getBridgeChains";
 import { secondsInDay, getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
-import { normalizeChain } from "../utils/normalizeChain";
+import { normalizeChain, getChainDisplayName } from "../utils/normalizeChain";
 import { getLast24HVolume } from "../utils/wrappa/postgres/query";
 
 const getBridges = async () => {
@@ -44,6 +44,12 @@ const getBridges = async () => {
         }
 
         // can include transaction count if needed
+        const normalizedChains = (chains || []).map((c) =>
+          getChainDisplayName(normalizeChain(c), true)
+        );
+        const destinationChainDisplay = destinationChain
+          ? getChainDisplayName(normalizeChain(destinationChain), true)
+          : "false";
         const dataToReturn = {
           id: id,
           name: bridgeDbName,
@@ -58,8 +64,8 @@ const getBridges = async () => {
           dayBeforeLastVolume: dayBeforeLastVolume ?? 0,
           weeklyVolume: weeklyVolume ?? 0,
           monthlyVolume: monthlyVolume ?? 0,
-          chains: chains,
-          destinationChain: destinationChain ?? "false",
+          chains: normalizedChains,
+          destinationChain: destinationChainDisplay,
           url,
           slug,
         } as any;
