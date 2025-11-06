@@ -42,6 +42,10 @@ const deployments = {
     oapp: "0xF03b4d9AC1D5d1E7c4cEf54C2A313b9fe051A0aD",
     token: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
   }],
+  plasma: [{
+    oapp: "0x02ca37966753bDdDf11216B73B16C1dE756A7CF9",
+    token: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+  }],
   polygon: [{
     oapp: "0x6BA10300f0DC58B7a1e4c0e41f5daBb7D7829e13",
     token: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",

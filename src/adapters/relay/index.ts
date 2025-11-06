@@ -5,7 +5,7 @@ import { RelayRequestsResponse } from "./types";
 import { ethers } from "ethers";
 const retry = require("async-retry");
 
-const requestQueues = new Map<number, Promise<any>>();
+const requestQueues = new Map<string, Promise<any>>();
 
 enum ApiErrorType {
   NETWORK = "network",
@@ -78,7 +78,7 @@ const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
   return ethers.BigNumber.from(Math.round(parsed));
 };
 
-const convertRequestToEvent = (
+export const convertRequestToEvent = (
   request: NonNullable<RelayRequestsResponse["requests"]>["0"]
 ): { deposit?: EventData; withdraw?: EventData; depositChainId?: number; withdrawChainId?: number } => {
   const deposit = request.data?.metadata?.currencyIn;
@@ -113,84 +113,76 @@ const convertRequestToEvent = (
     deposit:
       depositTx && depositTx.data && deposit && depositAmount.gt(0)
         ? {
-            blockNumber: depositTx.block!,
-            txHash: depositTx.hash as string,
-            timestamp: getTimestamp(depositTx, withdrawTx, request),
-            from: (depositTx.data as any).from
-              ? (depositTx.data as any).from
-              : depositTx.data
+          blockNumber: depositTx.block!,
+          txHash: depositTx.hash as string,
+          timestamp: getTimestamp(depositTx, withdrawTx, request),
+          from: (depositTx.data as any).from
+            ? (depositTx.data as any).from
+            : depositTx.data
               ? (depositTx.data as any).signer
               : undefined,
-            to: (depositTx.data as any).to
-              ? (depositTx.data as any).to
-              : withdrawTx?.data
+          to: (depositTx.data as any).to
+            ? (depositTx.data as any).to
+            : withdrawTx?.data
               ? (withdrawTx.data as any).signer
               : undefined,
-            token: deposit?.currency?.address!,
-            amount: depositAmount,
-            isDeposit: true,
-            isUSDVolume: true,
-          }
+          token: deposit?.currency?.address!,
+          amount: depositAmount,
+          isDeposit: true,
+          isUSDVolume: true,
+        }
         : undefined,
     withdrawChainId: withdrawTx?.chainId,
     withdraw:
       withdrawTx && withdrawTx.data && withdraw && withdrawAmount.gt(0)
         ? {
-            blockNumber: withdrawTx.block!,
-            txHash: withdrawTx.hash!,
-            timestamp: getTimestamp(withdrawTx, depositTx, request),
-            from: (withdrawTx.data as any).from
-              ? (withdrawTx.data as any).from
-              : withdrawTx.data
+          blockNumber: withdrawTx.block!,
+          txHash: withdrawTx.hash!,
+          timestamp: getTimestamp(withdrawTx, depositTx, request),
+          from: (withdrawTx.data as any).from
+            ? (withdrawTx.data as any).from
+            : withdrawTx.data
               ? (withdrawTx.data as any).signer
               : undefined,
-            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
-            token: withdraw?.currency?.address!,
-            amount: withdrawAmount,
-            isDeposit: false,
-            isUSDVolume: true,
-          }
+          to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
+          token: withdraw?.currency?.address!,
+          amount: withdrawAmount,
+          isDeposit: false,
+          isUSDVolume: true,
+        }
         : undefined,
   };
 };
 
-const fetchRequests = async (
-  chainId: number,
-  fromBlock: number,
-  toBlock: number,
+
+
+
+const fetchRequestsByTime = async (
+  startTimestamp: number,
+  endTimestamp: number,
   continuation?: string
 ): Promise<RelayRequestsResponse> => {
-  let url = `https://api.relay.link/requests/v2?chainId=${chainId}&startBlock=${fromBlock}&endBlock=${toBlock}&referrer=`;
-
-  if (continuation) {
-    url = `${url}&continuation=${continuation}`;
-  }
+  let url = `https://api.relay.link/requests/v2?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}&limit=50&referrer=`;
+  if (continuation) url = `${url}&continuation=${continuation}`;
 
   return retry(
     async () => {
-      const response = await fetch(url, {
-        timeout: 30000, // 30 second timeout
-      });
-
+      const response = await fetch(url, { timeout: 30000 });
       if (!response.ok) {
         const errorType =
           response.status === 429
             ? ApiErrorType.API_LIMIT
             : response.status >= 500
-            ? ApiErrorType.NETWORK
-            : ApiErrorType.UNKNOWN;
-
+              ? ApiErrorType.NETWORK
+              : ApiErrorType.UNKNOWN;
         const error = new Error(
-          `[${errorType}] HTTP ${response.status} for chainId ${chainId}, blocks ${fromBlock}-${toBlock}`
+          `[${errorType}] HTTP ${response.status} for ts ${startTimestamp}-${endTimestamp}`
         );
-
-        // Don't retry 4xx errors except rate limits
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
           (error as any).name = "NoRetryError";
         }
         throw error;
       }
-
       return response.json();
     },
     {
@@ -198,166 +190,137 @@ const fetchRequests = async (
       factor: 2,
       minTimeout: 1000,
       maxTimeout: 10000,
-      randomize: true, // Add jitter to prevent thundering herd
+      randomize: true,
       onRetry: (error: any) => {
-        // Don't retry certain errors by throwing immediately
-        if (error.name === "NoRetryError") {
-          throw error;
-        }
+        if (error.name === "NoRetryError") throw error;
       },
     }
   );
 };
 
-const rateLimitedFetch = async (
-  chainId: number,
-  fromBlock: number,
-  toBlock: number,
+const rateLimitedFetchByTime = async (
+  startTimestamp: number,
+  endTimestamp: number,
   continuation?: string
 ): Promise<RelayRequestsResponse> => {
-  // Chain-specific rate limiting with longer delays for pagination
   const delay = continuation ? 500 : 200;
-
-  // Queue requests per chain to prevent API overload
-  const lastRequest = requestQueues.get(chainId) || Promise.resolve();
-
+  const queueKey = `${startTimestamp}:${endTimestamp}`;
+  const lastRequest = requestQueues.get(queueKey) || Promise.resolve();
   const currentRequest = lastRequest
     .then(() => new Promise((resolve) => setTimeout(resolve, delay)))
-    .then(() => fetchRequests(chainId, fromBlock, toBlock, continuation));
-
-  requestQueues.set(chainId, currentRequest);
+    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation));
+  requestQueues.set(queueKey, currentRequest);
   return currentRequest;
 };
 
-const fetchAllRequests = async (
-  chainId: number,
-  fromBlock: number,
-  toBlock: number
-): Promise<RelayRequestsResponse["requests"]> => {
+
+export const forEachRequestsByTimePage = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  onPage: (requests: NonNullable<RelayRequestsResponse["requests"]>) => Promise<void> | void
+): Promise<void> => {
   let consecutiveErrors = 0;
   const maxConsecutiveErrors = 3;
+  console.log(`Streaming requests for ts ${startTimestamp}-${endTimestamp}`);
 
   try {
-    let allRequests: RelayRequestsResponse["requests"] = [];
-    const response = await rateLimitedFetch(chainId, fromBlock, toBlock);
-    allRequests = [...(response.requests ?? [])];
-    consecutiveErrors = 0;
+    const first = await rateLimitedFetchByTime(startTimestamp, endTimestamp);
+    const firstPage = first.requests ?? [];
+    if (firstPage.length) {
+      await onPage(firstPage);
+    } else {
+      console.log(`No requests in first page for ts ${startTimestamp}-${endTimestamp}`);
+    }
 
-    let continuation = response.continuation;
-    let requestCount = 0;
-    const maxRequests = 1000;
+    let continuation = first.continuation;
+    let pageCount = firstPage.length ? 1 : 0;
+    let totalRequests = firstPage.length;
+    const maxPages = 1000;
 
-    while (continuation !== undefined && requestCount < maxRequests) {
+    while (continuation !== undefined && pageCount < maxPages) {
       try {
-        const paginatedResponse = await rateLimitedFetch(chainId, fromBlock, toBlock, continuation);
-        continuation = paginatedResponse.continuation;
-        allRequests = [...allRequests, ...(paginatedResponse.requests ?? [])];
-        requestCount++;
+        const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation);
+        continuation = page.continuation;
+        const reqs = page.requests ?? [];
+        if (reqs.length) await onPage(reqs);
+        pageCount += 1;
+        totalRequests += reqs.length;
         consecutiveErrors = 0;
       } catch (error) {
         consecutiveErrors++;
         console.error(
-          `Pagination error ${consecutiveErrors}/${maxConsecutiveErrors} for chainId ${chainId}, blocks ${fromBlock}-${toBlock}:`,
+          `Pagination error ${consecutiveErrors}/${maxConsecutiveErrors} while streaming ts ${startTimestamp}-${endTimestamp}:`,
           error
         );
-
-        // Circuit breaker: stop pagination on sustained failures
         if (consecutiveErrors >= maxConsecutiveErrors) {
-          console.error(
-            `Circuit breaker activated for chainId ${chainId} after ${consecutiveErrors} consecutive errors`
-          );
+          console.error(`Circuit breaker activated after ${consecutiveErrors} consecutive errors`);
           break;
         }
-
-        // Exponential backoff for errors
         await new Promise((resolve) => setTimeout(resolve, Math.pow(2, consecutiveErrors) * 1000));
       }
     }
 
-    if (requestCount >= maxRequests && continuation) {
-      console.warn(
-        `Hit pagination limit for chainId ${chainId}, blocks ${fromBlock}-${toBlock}. Some data may be missing.`
-      );
+    if (pageCount >= maxPages && continuation) {
+      console.warn(`Hit pagination page limit for ts ${startTimestamp}-${endTimestamp}. Some data may be missing.`);
     }
-
-    return allRequests;
   } catch (error) {
-    console.error(`Critical error fetching requests for chainId ${chainId}, blocks ${fromBlock}-${toBlock}:`, error);
-    return [];
+    console.error(`Critical error streaming requests for ts ${startTimestamp}-${endTimestamp}:`, error);
   }
 };
 
-const constructParams = (chainId: number) => {
-  return async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
-    const startingBlock = startingBlocks[chainId];
-    if (startingBlock !== undefined && toBlock < startingBlock) {
-      return [];
-    }
 
-    const requests = await fetchAllRequests(chainId, fromBlock, toBlock);
-    const events: EventData[] = [];
-
-    requests?.forEach((request) => {
-      try {
-        const event = convertRequestToEvent(request);
-        if (event.depositChainId === chainId && event.deposit) {
-          events.push(event.deposit);
-        }
-        if (event.withdrawChainId === chainId && event.withdraw) {
-          events.push(event.withdraw);
-        }
-      } catch (error) {
-        console.error(`Error processing request ${request.id}:`, error);
-      }
-    });
-
-    return events;
-  };
+export const slugToChainId: Record<string, number> = {
+  ethereum: 1,
+  optimism: 10,
+  bsc: 56,
+  gnosis: 100,
+  polygon: 137,
+  mint: 185,
+  boba: 288,
+  zksync: 324,
+  shape: 360,
+  "world-chain": 480,
+  redstone: 690,
+  "polygon-zkevm": 1101,
+  lisk: 1135,
+  sei: 1329,
+  hychain: 2911,
+  mantle: 5000,
+  ham: 5112,
+  cyber: 7560,
+  B3: 8333,
+  base: 8453,
+  arbitrum: 42161,
+  "arbitrum-nova": 42170,
+  avalanche: 43114,
+  superposition: 55244,
+  linea: 59144,
+  bob: 60808,
+  apex: 70700,
+  boss: 70701,
+  blast: 81457,
+  scroll: 534352,
+  "zero-network": 543210,
+  xai: 660279,
+  forma: 984122,
+  solana: 792703809,
+  ancient8: 888888888,
+  rari: 1380012617,
+  bitcoin: 8253038,
+  degen: 666666666,
+  funki: 33979,
+  mode: 34443,
+  "proof-of-play": 70700,
+  "proof-of-play-boss": 70701,
+  katana: 747474,
 };
 
-const adapter: BridgeAdapter = {
-  ethereum: constructParams(1),
-  optimism: constructParams(10),
-  bsc: constructParams(56),
-  gnosis: constructParams(100),
-  polygon: constructParams(137),
-  mint: constructParams(185),
-  boba: constructParams(288),
-  zksync: constructParams(324),
-  shape: constructParams(360),
-  "world-chain": constructParams(480),
-  redstone: constructParams(690),
-  "polygon-zkevm": constructParams(1101),
-  lisk: constructParams(1135),
-  sei: constructParams(1329),
-  hychain: constructParams(2911),
-  mantle: constructParams(5000),
-  ham: constructParams(5112),
-  cyber: constructParams(7560),
-  B3: constructParams(8333),
-  base: constructParams(8453),
-  arbitrum: constructParams(42161),
-  "arbitrum-nova": constructParams(42170),
-  avalanche: constructParams(43114),
-  superposition: constructParams(55244),
-  linea: constructParams(59144),
-  bob: constructParams(60808),
-  apex: constructParams(70700),
-  boss: constructParams(70701),
-  blast: constructParams(81457),
-  scroll: constructParams(534352),
-  "zero-network": constructParams(543210),
-  xai: constructParams(660279),
-  forma: constructParams(984122),
-  solana: constructParams(792703809),
-  ancient8: constructParams(888888888),
-  rari: constructParams(1380012617),
-  bitcoin: constructParams(8253038),
-  degen: constructParams(666666666),
-  funki: constructParams(33979),
-  mode: constructParams(34443),
-  "proof-of-play": constructParams(70700),
-  "proof-of-play-boss": constructParams(70701),
-};
+export const chainIdToSlug: Record<number, string> = Object.fromEntries(
+  Object.entries(slugToChainId).map(([slug, id]) => [id, slug])
+) as Record<number, string>;
+
+const adapter = Object.fromEntries(
+  Object.entries(slugToChainId).map(([slug, id]) => [slug, true])
+) as any
 
 export default adapter;

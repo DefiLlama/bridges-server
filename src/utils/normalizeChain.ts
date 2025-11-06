@@ -4,14 +4,31 @@ export const normalizedChainReplacements = {
   kucoin: "kcc",
   //gnosis: "xdai",
   "terra%20classic": "terra",
+  "terra classic": "terra",
   sxnetwork: "sx",
   "arbitrum%20nova": "arbitrum_nova",
   ethereumpow: "ethpow",
   "milkomeda%20c1": "milkomeda",
   shimmerevm: "shimmer_evm",
+  "shimmer evm": "shimmer_evm",
+  "shimmer_evm": "shimmer_evm",
   "world%20chain": "wc",
+  "world chain": "wc",
   "x%20layer": "xlayer",
+  "x layer": "xlayer",
   zetachain: "zeta",
+  x_layer: "xlayer",
+  worldchain: "wc",
+  "opbnb mainnet": "opbnb",
+  "opbnb%20mainnet": "opbnb",
+  zksync_era: "zksync era",
+  dfk_chain: "dfk",
+  cronosevm: "cronos",
+  coredao: "core",
+  rari_chain: "rari",
+  "rari chain": "rari",
+  "plume mainnet": "plume",
+  astar_zkevm: "astar_zkevm",
 } as {
   [chain: string]: string;
 };
@@ -1336,9 +1353,13 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
     case "ripple":
       return "Ripple";
     case "arbitrum_nova":
+    case "arbitrum nova":
       return "Arbitrum Nova";
     case "gravity_bridge":
+    case "gravity bridge":
       return "Gravity Bridge";
+    case "ebi":
+      return "EBI";
     case "kujira":
       return "Kujira";
     case "injective":
@@ -1355,6 +1376,31 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "zkSync Era";
     case "zksync era":
       return "zkSync Era";
+    case "op_bnb":
+      return "opBNB";
+    case "opbnb":
+      return "opBNB";
+    case "core":
+      return "Core";
+    case "cronosevm":
+      return "Cronos";
+    case "rari_chain":
+      return "Rari Chain";
+    case "plumephoenix":
+      return "Plume Phoenix";
+    case "astar_zkevm":
+    case "astar zkevm":
+      return "Astar zkEVM";
+    case "polygon_zkevm":
+    case "polygon zkevm":
+    case "polygonzkevm":
+      return "Polygon zkEVM";
+    case "cronos_zkevm":
+    case "cronos zkevm":
+      return "Cronos zkEVM";
+    case "immutable_zkevm":
+    case "immutable zkevm":
+      return "Immutable zkEVM";
     case "sui":
       return "Sui";
     case "solana":
@@ -1377,6 +1423,9 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "opBNB";
     case "taiko":
       return "Taiko";
+    case "mc":
+    case "merit circle":
+      return "Merit Circle";
     case "ape_chain":
       return "Ape Chain";
     case "cronos_zkevm":
@@ -1426,6 +1475,21 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Scroll";
     case "linea":
       return "Linea";
+    case "ux chain":
+    case "ux_chain":
+      return "UX Chain";
+    case "zero network":
+    case "zero_network":
+      return "Zero Network";
+    case "zkpolygon":
+      return "Polygon zkEVM";
+    case "shimmer_evm":
+    case "shimmer evm":
+      return "ShimmerEVM";
+    case "rari":
+    case "rari chain":
+    case "rari_chain":
+      return "RARI Chain";
     default:
       return normalizedChain.slice(0, 1).toUpperCase() + normalizedChain.slice(1); // Capitalize first letter
   }

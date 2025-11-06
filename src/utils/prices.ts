@@ -1,4 +1,5 @@
 import { PRICES_API } from "./constants";
+
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -29,7 +30,7 @@ const NAME_MAPPING: Record<string, string> = {
 export const getLlamaPrices = async (tokens: string[], timestamp?: number): Promise<Record<string, any>> => {
   const finalPrices: { [key: string]: any } = {};
   let remainingTokens = tokens.map((token) => {
-    const [prefix, id] = token.split(":");
+    const [prefix, id] = splitOnce(token, ":");
     const mappedPrefix = NAME_MAPPING[prefix] || prefix;
     return `${mappedPrefix}:${id}`;
   });
@@ -46,9 +47,22 @@ export const getLlamaPrices = async (tokens: string[], timestamp?: number): Prom
 
   return Object.fromEntries(
     Object.entries(finalPrices).map(([key, value]) => {
-      const [prefix, id] = key.split(":");
+      const [prefix, id] = splitOnce(key, ":");
       const originalPrefix = Object.entries(NAME_MAPPING).find(([, mappedName]) => mappedName === prefix)?.[0];
       return [`${originalPrefix || prefix}:${id}`, value];
     })
   );
 };
+
+function splitOnce(input: string, separator: string): string[] {
+  const index = input.indexOf(separator);
+
+  if (index === -1) {
+    return [input];
+  }
+
+  const part1 = input.substring(0, index);
+  const part2 = input.substring(index + separator.length);
+  return [part1, part2];
+}
+

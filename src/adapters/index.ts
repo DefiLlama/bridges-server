@@ -41,6 +41,7 @@ import squidrouter from "./squid";
 import eywa from "./eywa";
 import rhinofi from "./rhinofi";
 import relay from "./relay";
+import cashmere from "./cashmere";
 import pepeteam_bridge from "./pepeteam-bridge";
 import pnetwork from "./pnetwork";
 import interport from "./interport-finance";
@@ -75,6 +76,7 @@ import retrobridge from "./retrobridge";
 import layerswap from "./layerswap";
 import hyperlane from "./hyperlane";
 import wormhole from "./wormhole";
+import mayan from "./mayan";
 import thresholdnetwork from "./threshold-network";
 import zircuit from "./zircuit";
 import hyperliquid from "./hyperliquid";
@@ -88,9 +90,12 @@ import fuel from "./fuel";
 import lighter from "./lighter";
 import movement from "./movement";
 import intersoon from "./intersoon";
+import ccip from "./ccip";
 import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
+import agglayer from "./agglayer";
+import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
 
 export default {
@@ -135,6 +140,7 @@ export default {
   eywa,
   rhinofi,
   relay,
+  cashmere,
   pepeteam_bridge,
   pnetwork,
   interport,
@@ -169,6 +175,7 @@ export default {
   layerswap,
   hyperlane,
   wormhole,
+  mayan,
   thresholdnetwork,
   zircuit,
   hyperliquid,
@@ -183,9 +190,12 @@ export default {
   lighter,
   movement,
   intersoon,
+  ccip,
   usdt0,
   pheasantNetwork,
   teleswap,
+  agglayer,
+  fxrp,
   snowbridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;

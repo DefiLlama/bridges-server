@@ -53,10 +53,27 @@ export async function craftBridgeChainsResponse() {
       };
     })
   );
+  const raw = (await chainPromises).filter((chain) => chain) as Array<{
+    gecko_id: string | null;
+    volumePrevDay: number;
+    tokenSymbol: string | null;
+    name: string;
+  }>;
 
-  const response = (await chainPromises).filter((chain) => chain);
+  const merged = new Map<string, { gecko_id: string | null; volumePrevDay: number; tokenSymbol: string | null; name: string }>();
 
-  return response;
+  for (const item of raw) {
+    const key = item.gecko_id ?? item.name;
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { ...item });
+      continue;
+    }
+    existing.volumePrevDay += item.volumePrevDay ?? 0;
+    if (!existing.tokenSymbol && item.tokenSymbol) existing.tokenSymbol = item.tokenSymbol;
+  }
+
+  return Array.from(merged.values());
 }
 
 const handler = async (_event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {

@@ -3,6 +3,7 @@ import { runAllAdapters } from "./jobs/runAllAdapters";
 import { runAggregateAllAdapters } from "./jobs/runAggregateAllAdapter";
 import { runAdaptersFromTo } from "./jobs/runAdaptersFromTo";
 import { handler as runWormhole } from "../handlers/runWormhole";
+import { handler as runMayan } from "../handlers/runMayan";
 import { aggregateHourlyVolume } from "./jobs/aggregateHourlyVolume";
 import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
 import { warmAllCaches } from "./jobs/warmCache";
@@ -10,8 +11,12 @@ import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
 import { handler as runInterSoon } from "../handlers/runInterSoon";
+import { runCCIPDefaultMode as runCCIP } from "../handlers/runCCIP";
 import dayjs from "dayjs";
 import runHyperlane from "../handlers/runHyperlane";
+import runTeleswap from "../handlers/runTeleswap";
+import { handler as runRelay } from "../handlers/runRelay";
+import { handler as runCashmere } from "../handlers/runCashmere";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -83,9 +88,14 @@ const cron = () => {
   runAfterDelay("runAllAdapters", 10, runAllAdapters);
   runAfterDelay("runAdaptersFromTo", 50, runAdaptersFromTo);
   runEvery("runWormhole", 30, runWormhole);
+  runEvery("runMayan", 30, runMayan);
   runEvery("runLayerZero", 30, runLayerZero);
   runEvery("runHyperlane", 30, runHyperlane);
   runEvery("runInterSoon", 30, runInterSoon);
+  runEvery("runRelay", 30, runRelay);
+  runEvery("runCashmere", 30, runCashmere);
+  runEvery("runTeleswap", 30, runTeleswap);
+  runEvery("runCCIP", 30, runCCIP);
 
   exit();
 };
