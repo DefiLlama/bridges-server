@@ -1,7 +1,6 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
 import { BigNumber } from "ethers";
 
 const contractAddresses = {
@@ -17,6 +16,45 @@ const contractAddresses = {
       },
       {
         token: "0x18084fba666a33d37592fa2633fd49a74dd93a88", // tBTC v2
+      },
+      {
+        token: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0", // wstETH
+      },
+      {
+        token: "0x45804880De22913dAFE09f4980848ECE6EcbAf78", // PAXG
+      },
+      {
+        token: "0x514910771af9ca656af840dff83e8264ecf986ca", // LINK
+      },
+      {
+        token: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9", // AAVE
+      },
+      {
+        token: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // WETH
+      },
+      {
+        token: "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497", // SUSDE
+      },
+      {
+        token: "0x5a98fcbea516cf06857215779fd812ca3bef1b32", // LDO
+      },
+      {
+        token: "0x5d3d01fd6d2ad1169b17918eb4f153c6616288eb", // KILT
+      },
+      {
+        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
+      },
+      {
+        token: "0xdac17f958d2ee523a2206206994597c13d831ec7", // USDT
+      },
+      {
+        token: "0x56072C95FAA701256059aa122697B133aDEd9279", // SKY
+      },
+      {
+        token: "0x57e114B691Db790C35207b2e685D4A43181e6061", // ENA
+      },
+      {
+        token: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
       },
     ],
   },
