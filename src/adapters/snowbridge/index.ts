@@ -10,6 +10,9 @@ const contractAddresses = {
     agent: "0xd803472c47a87D7B63E888DE53f03B4191B846a8", // Agent address
     tokens: [
       {
+        token: "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f", // TracToken
+      },
+      {
         token: "0xba41ddf06b7ffd89d1267b5a93bfef2424eb2003", // MYTH
       },
       {
