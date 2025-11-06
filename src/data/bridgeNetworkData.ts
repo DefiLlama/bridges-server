@@ -2589,7 +2589,7 @@ export default [
     iconLink: "icons:snowbridge",
     slug: "snowbridge",
     largeTxThreshold: 10000,
-    url: "https://www.snowbridge.network/",
+    url: "https://app.snowbridge.network/",
     chains: ["Polkadot", "Ethereum"],
     destinationChain: "Ethereum",
   },
