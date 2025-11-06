@@ -54,6 +54,7 @@
     "graphql": "^16.0.0",
     "graphql-request": "^6.1.0",
     "ioredis": "^5.5.0",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.7",
     "object-hash": "^3.0.0",
     "postgres": "^3.2.4",
