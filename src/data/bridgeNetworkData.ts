@@ -2583,4 +2583,14 @@ export default [
     chains: ["Flare", "XRPL"],
     destinationChain: "XRPL",
   },
+
+  {
+    id: 101,
+    displayName: "Hyperbridge",
+    bridgeDbName: "hyperbridge",
+    iconLink: "icons:hyperbridge",
+    largeTxThreshold: 10000,
+    url: "https://hyperbridge.network",
+    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium"],
+  },
 ] as BridgeNetwork[];
