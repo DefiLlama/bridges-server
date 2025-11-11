@@ -82,14 +82,14 @@ const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinati
   if (chain && destinationChain) {
     chainEqual = sql`
     WHERE chain = ${chain} AND
-    destination_chain = ${destinationChain}
+    LOWER(destination_chain) = LOWER(${destinationChain})
     `;
   } else {
     chainEqual = chain ? sql`WHERE chain = ${chain}` : sql``;
-    destinationChainEqual = destinationChain ? sql`WHERE destination_chain = ${destinationChain}` : sql``;
+    destinationChainEqual = destinationChain ? sql`WHERE LOWER(destination_chain) = LOWER(${destinationChain})` : sql``;
   }
   return await sql<IConfig[]>`
-  SELECT * FROM 
+  SELECT * FROM
     bridges.config
     ${chainEqual}
     ${destinationChainEqual}

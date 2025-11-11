@@ -11,14 +11,6 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
       message: "Must include a chain or 'all' as path parameter.",
     });
   }
-  let bridgeNetwork;
-  if (bridgeNetworkId) {
-    bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
-  }
-  const destinationChain = bridgeNetwork?.destinationChain;
-  if (destinationChain && chain === destinationChain?.toLowerCase()) {
-    chain = "all";
-  }
   const queryChain = chain === "all" ? undefined : normalizeChain(chain);
 
   const queryId = bridgeNetworkId ? parseInt(bridgeNetworkId) : undefined;
