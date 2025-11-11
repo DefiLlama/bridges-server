@@ -18,6 +18,10 @@ const deployments = {
       oapp: "0x3Dc96399109df5ceb2C226664A086140bD0379cB",
       token: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
   }],
+  conflux: [{
+      oapp: "0xC57efa1c7113D98BdA6F9f249471704Ece5dd84A",
+      token: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
+  }],
   corn: [{
       oapp: "0x3f82943338a8a76c35BFA0c1828aA27fd43a34E4",
       token: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
