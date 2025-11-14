@@ -129,9 +129,6 @@ export const getTxDataFromEVMEventLogsCustom = async (
                         })
                     ).output;
                     //console.log(logs)
-                    if (logs.length === 0) {
-                        console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with topic ${topic}.`);
-                    }
                     break;
                 } catch (e) {
                     if (i >= 4) {

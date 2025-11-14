@@ -30,7 +30,6 @@ export const getTxsBlockRangeBtrScan = async (
     });
     return filteredResults;
   } else {
-    console.info(`No txs found for address ${address}.`);
     return [];
   }
 };
