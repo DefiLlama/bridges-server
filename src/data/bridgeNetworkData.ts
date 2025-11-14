@@ -2455,7 +2455,6 @@ export default [
     },
   },
   {
-    id: 96,
     displayName: "Chainlink CCIP",
     bridgeDbName: "ccip",
     iconLink: "icons:chainlink",
@@ -2582,5 +2581,16 @@ export default [
     url: "https://flare.network/products/fassets",
     chains: ["Flare", "XRPL"],
     destinationChain: "XRPL",
+  },
+  {
+    id: 101,
+    displayName: "Snowbridge",
+    bridgeDbName: "snowbridge",
+    iconLink: "icons:snowbridge",
+    slug: "snowbridge",
+    largeTxThreshold: 10000,
+    url: "https://app.snowbridge.network/",
+    chains: ["Polkadot", "Ethereum"],
+    destinationChain: "Ethereum",
   },
 ] as BridgeNetwork[];
