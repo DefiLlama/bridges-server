@@ -2455,6 +2455,7 @@ export default [
     },
   },
   {
+    id: 96,
     displayName: "Chainlink CCIP",
     bridgeDbName: "ccip",
     iconLink: "icons:chainlink",
