@@ -2320,6 +2320,7 @@ export default [
       "Flare",
       "Hyperliquid",
       "Ink",
+      "Mantle",
       "Optimism",
       "Plasma",
       "Polygon",
