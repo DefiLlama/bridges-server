@@ -97,6 +97,7 @@ import teleswap from "./teleswap";
 import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
+import starkgate from "./starkgate";
 
 export default {
   polygon,
@@ -197,6 +198,7 @@ export default {
   agglayer,
   fxrp,
   snowbridge,
+  starkgate,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
