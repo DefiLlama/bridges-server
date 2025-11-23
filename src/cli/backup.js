@@ -24,6 +24,10 @@ const backupClient =
       endpoint: process.env.BB_AWS_S3_ENDPOINT,
       region: process.env.BB_AWS_REGION,
       forcePathStyle: true,
+      credentials: {
+        accessKeyId: process.env.BB_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.BB_AWS_SECRET_ACCESS_KEY,
+      },
     })
     : null;
 
