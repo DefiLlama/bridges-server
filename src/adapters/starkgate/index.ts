@@ -12,10 +12,12 @@ Contract Addresses:
 
 Events:
 - LogDeposit: Triggered when tokens are deposited from L1 to L2
-- LogWithdrawal: Triggered when tokens are withdrawn from L2 to L1
+- LogMessageToL1: Triggered when tokens are withdrawn from L2(StarkNet Core) to L1
 */
 
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+
+const STARKNET_CORE = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
 
 // ETH Bridge Contract
 const ethBridgeContract = "0xae0Ee0A63A2cE6BaeEFFE56e7714FB4EFE48D419";
@@ -61,22 +63,33 @@ const erc20DepositParams = (contractAddress: string, tokenAddress: string): Part
   isDeposit: true,
 });
 
-// Withdrawal event for ERC20 tokens
-const erc20WithdrawalParams = (contractAddress: string, tokenAddress: string): PartialContractEventParams => ({
-  target: contractAddress,
-  topic: "LogWithdrawal(address,uint256)",
-  abi: ["event LogWithdrawal(address indexed recipient, uint256 amount)"],
+// Withdrawal event for ERC20 tokens - track via LogMessageToL1 on StarkNet Core
+const erc20WithdrawalParams = (
+  contractAddress: string,
+  tokenAddress: string
+): PartialContractEventParams => ({
+  target: STARKNET_CORE,
+  topic: "LogMessageToL1(uint256,address,uint256[])",
+  abi: [
+    "event LogMessageToL1(uint256 indexed fromAddress, address indexed toAddress, uint256[] payload)"
+  ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "recipient",
-    amount: "amount",
+    to: "toAddress",
+    amount: "payload",
+  },
+  selectIndexesFromArrays: {
+    amount: "1", // amount is at index 1 in payload array
   },
   fixedEventData: {
     from: contractAddress,
     token: tokenAddress,
+  },
+  filter: {
+    includeTo: [contractAddress],
   },
   isDeposit: false,
 });
@@ -104,20 +117,28 @@ const ethDepositParams: PartialContractEventParams = {
 };
 
 const ethWithdrawalParams: PartialContractEventParams = {
-  target: ethBridgeContract,
-  topic: "LogWithdrawal(address,uint256)",
-  abi: ["event LogWithdrawal(address indexed recipient, uint256 amount)"],
+  target: STARKNET_CORE,
+  topic: "LogMessageToL1(uint256,address,uint256[])",
+  abi: [
+    "event LogMessageToL1(uint256 indexed fromAddress, address indexed toAddress, uint256[] payload)"
+  ],
   logKeys: {
     blockNumber: "blockNumber",
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "recipient",
-    amount: "amount",
+    to: "toAddress",
+    amount: "payload",
+  },
+  selectIndexesFromArrays: {
+    amount: "1", // amount is at index 1 in payload array
   },
   fixedEventData: {
     from: ethBridgeContract,
     token: WETH,
+  },
+  filter: {
+    includeTo: [ethBridgeContract],
   },
   isDeposit: false,
 };
