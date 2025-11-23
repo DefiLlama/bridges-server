@@ -6,13 +6,13 @@ const s3Client = new S3Client({});
 
 const backupBucket = process.env.AWS_S3_BACKUP_BUCKET;
 const backupClient =
-  process.env.AWS_S3_ENDPOINT && process.env.AWS_REGION
+  process.env.BB_AWS_S3_ENDPOINT && process.env.BB_AWS_REGION
     ? new S3Client({
-        endpoint: process.env.AWS_S3_ENDPOINT,
-        region: process.env.AWS_REGION,
+        endpoint: process.env.BB_AWS_S3_ENDPOINT,
+        region: process.env.BB_AWS_REGION,
         forcePathStyle: true,
       })
-    : s3Client;
+    : null;
 
 function next21Minutedate() {
   const dt = new Date();
@@ -59,8 +59,8 @@ export async function storeDataset(filename: string, body: string) {
 }
 
 export async function storeBackup(key: string, body: string | Readable | Buffer) {
-  if (!backupBucket && !datasetBucket) {
-    throw new Error("No backup bucket configured");
+  if (!backupBucket && !backupClient) {
+    throw new Error("No backup client configured");
   }
 
   const params = {
@@ -70,5 +70,5 @@ export async function storeBackup(key: string, body: string | Readable | Buffer)
   };
 
   const command = new PutObjectCommand(params);
-  await backupClient.send(command);
+  await backupClient?.send(command);
 }
