@@ -1,13 +1,46 @@
 const dotenv = require("dotenv");
+dotenv.config();
+
 const dayjs = require("dayjs");
 const zlib = require("zlib");
-const { sql } = require("../utils/db");
-const { storeBackup } = require("../utils/s3");
+const postgres = require("postgres");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
-dotenv.config();
+const connectionString =
+  process.env.DB_URL ||
+  `postgresql://${process.env.PSQL_USERNAME}:${process.env.PSQL_PW}@${process.env.PSQL_URL}:5433/postgres`;
+
+const sql = postgres(connectionString, {
+  idle_timeout: 120,
+  max_lifetime: 60 * 30,
+  max: 3,
+  connect_timeout: 30,
+  keep_alive: true,
+});
+
+const backupClient =
+  process.env.BB_AWS_S3_ENDPOINT && process.env.BB_AWS_REGION
+    ? new S3Client({
+      endpoint: process.env.BB_AWS_S3_ENDPOINT,
+      region: process.env.BB_AWS_REGION,
+      forcePathStyle: true,
+    })
+    : null;
+
+async function storeBackup(key, body) {
+  const params = {
+    Bucket: backupBucket,
+    Key: key,
+    Body: body,
+  };
+
+  const command = new PutObjectCommand(params);
+  await backupClient.send(command);
+}
 
 const BACKUP_PREFIX = process.env.BACKUP_PREFIX || "transactions/daily-backup";
 const DAY_BATCH_SIZE = Number(process.env.DAY_BATCH_SIZE || "100000");
+
 
 async function backupSingleDay(dayStart) {
   const start = dayStart.startOf("day").toISOString();
