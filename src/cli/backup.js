@@ -27,9 +27,11 @@ const backupClient =
     })
     : null;
 
+const BACKUP_BUCKET = process.env.AWS_S3_BACKUP_BUCKET;
+
 async function storeBackup(key, body) {
   const params = {
-    Bucket: backupBucket,
+    Bucket: BACKUP_BUCKET,
     Key: key,
     Body: body,
   };
