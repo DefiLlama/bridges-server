@@ -125,7 +125,6 @@ export const getTxsBlockRangeEtherscan = async (
     });
     return filteredResults;
   } else if (res.message === "No transactions found") {
-    console.info(`No Etherscan txs found for address ${address}.`);
     return [];
   }
   console.log(res);

@@ -82,6 +82,7 @@ export const getDailyBridgeVolume = async (
           config.chain,
           config.bridge_name
         );
+        sourceChainsHistoricalDailyData = [...sourceChainsHistoricalDailyData, ...sourceChainHistoricalData];
         return sourceChainHistoricalData;
       })
     ),

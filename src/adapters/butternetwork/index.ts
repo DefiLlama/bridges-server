@@ -275,10 +275,9 @@ const constructParams_ = (chain: string) => {
           try {
             const logs = await getTronLogs(mos, eventName, fromTimestamp, toTimestamp);
 
-            if (logs.length === 0) {
-              console.info(`No ${eventName} logs received for Tron from ${fromBlock} to ${toBlock}`);
-              continue;
-            }
+          if (logs.length === 0) {
+            continue;
+          }
 
             // Process logs into EventData format
             const processedEvents = logs.map(log => {
@@ -427,7 +426,6 @@ const constructTronParams = () => {
           const logs = await getTronLogs(address, eventName, fromTimestamp, toTimestamp);
 
           if (logs.length === 0) {
-            console.info(`No [${symbol}] logs received for Tron from ${fromBlock} to ${toBlock}`);
             continue;
           }
 
@@ -503,4 +501,3 @@ const adapter: BridgeAdapter = {
 };
 
 export default adapter;
-

@@ -329,7 +329,6 @@ const constructParams = (chain: Chains) => {
             const logs = await getTronLogs(portal, eventName, fromTimestamp, toTimestamp);
             
             if (logs.length === 0) {
-              console.info(`No ${eventName} logs received for Tron from ${fromBlock} to ${toBlock}`);
               continue;
             }
             

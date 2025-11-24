@@ -96,6 +96,7 @@ import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
 import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
+import snowbridge from "./snowbridge";
 import hyperbridge from "./hyperbridge";
 
 export default {
@@ -196,6 +197,7 @@ export default {
   teleswap,
   agglayer,
   fxrp,
+  snowbridge,
   hyperbridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;

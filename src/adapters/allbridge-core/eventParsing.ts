@@ -53,9 +53,6 @@ export const getTxDataFromTronEventLogs = async (
       for (let i = 0; i < 5; i++) {
         try {
           logs = await getTronLogs(target, eventName, from, to);
-          if (logs.length === 0) {
-            console.info(`No logs received for ${adapterName} from ${fromBlock} to ${toBlock} with event ${eventName} (${isDeposit ? 'Deposit' : 'Withdrawal'}) for ${target}.`);
-          }
           break;
         } catch (e) {
           if (i >= 4) {

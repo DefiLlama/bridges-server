@@ -2583,9 +2583,19 @@ export default [
     chains: ["Flare", "XRPL"],
     destinationChain: "XRPL",
   },
-
   {
     id: 101,
+    displayName: "Snowbridge",
+    bridgeDbName: "snowbridge",
+    iconLink: "icons:snowbridge",
+    slug: "snowbridge",
+    largeTxThreshold: 10000,
+    url: "https://app.snowbridge.network/",
+    chains: ["Polkadot", "Ethereum"],
+    destinationChain: "Ethereum",
+  },
+  {
+    id: 102,
     displayName: "Hyperbridge",
     bridgeDbName: "hyperbridge",
     iconLink: "icons:hyperbridge",

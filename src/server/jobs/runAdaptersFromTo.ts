@@ -9,7 +9,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import retry from "async-retry";
 
 export const runAdaptersFromTo = async () => {
-  const fromTimestamp = dayjs().subtract(12, "hour").unix();
+  const fromTimestamp = dayjs().subtract(3, "hour").unix();
   const toTimestamp = dayjs().unix();
 
   const blockByChain: Record<string, { startBlock: number; endBlock: number }> = {};

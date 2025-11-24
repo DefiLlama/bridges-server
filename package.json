@@ -29,8 +29,7 @@
     "serverless": "^3.21.0",
     "serverless-esbuild": "^1.54.6",
     "serverless-offline": "^12.0.0",
-    "serverless-prune-plugin": "^2.0.1",
-    "vite": "^6.0.1"
+    "serverless-prune-plugin": "^2.0.1"
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.637.0",
@@ -55,11 +54,14 @@
     "graphql": "^16.0.0",
     "graphql-request": "^6.1.0",
     "ioredis": "^5.5.0",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.7",
     "object-hash": "^3.0.0",
     "postgres": "^3.2.4",
     "tron-format-address": "^0.1.11",
     "tsx": "^4.7.1",
-    "typescript": "^5.4.2"
+    "typescript": "^5.4.2",
+    "vite": "^6.0.1"
   }
 }

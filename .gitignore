@@ -27,3 +27,5 @@ src/utils/filljobs2.ts
 .vscoded
 
 dist
+
+.vscode
