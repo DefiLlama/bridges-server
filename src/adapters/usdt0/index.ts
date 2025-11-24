@@ -46,6 +46,10 @@ const deployments = {
     oapp: "0xcb768e263FB1C62214E7cab4AA8d036D76dc59CC",
     token: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
   }],
+  monad: [{
+    oapp: "0x9151434b16b9763660705744891fA906F660EcC5",
+    token: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+  }],
   optimism: [{
     oapp: "0xF03b4d9AC1D5d1E7c4cEf54C2A313b9fe051A0aD",
     token: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
