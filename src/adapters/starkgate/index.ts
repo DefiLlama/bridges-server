@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
@@ -41,6 +42,22 @@ const contracts = {
   multi: "0xf5b6ee2caeb6769659f6c091d209dfdcaf3f69eb",
 };
 
+// Token addresses on Ethereum
+const tokenAddresses: { [key: string]: string } = {
+  usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+  dai: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  wbtc: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+  wsteth: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+  reth: "0xae78736Cd615f374D3085123A210448E74Fc6393",
+  strk: "0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766",
+  lords: "0x686f2404e77Ab0d9070a46cdfb0B7feCDD2318b0",
+  frax: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+  lusd: "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0",
+  sfrax: "0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32",
+  fxs: "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
+};
+
 // Deposit event for ERC20 tokens
 const erc20DepositParams = (contractAddress: string, tokenAddress: string): PartialContractEventParams => ({
   target: contractAddress,
@@ -78,18 +95,24 @@ const erc20WithdrawalParams = (
     txHash: "transactionHash",
   },
   argKeys: {
-    to: "toAddress",
+    to: "toAddress", // This is the actual recipient on L1
     amount: "payload",
   },
-  selectIndexesFromArrays: {
-    amount: "1", // amount is at index 1 in payload array
+  argGetters: {
+    amount: (args: any) => {
+      const payload = args.payload;
+      const amountLow = BigInt(payload[3].toString());
+      const amountHigh = BigInt(payload[4].toString());
+      const fullAmount = (amountHigh << BigInt(128)) | amountLow;
+      return BigNumber.from(fullAmount.toString());
+    },
   },
   fixedEventData: {
-    from: contractAddress,
+    from: STARKNET_CORE, // Withdrawals come from StarkNet Core
     token: tokenAddress,
   },
   filter: {
-    includeTo: [contractAddress],
+    includeTo: [contractAddress], // Filter for events where toAddress is the bridge contract
   },
   isDeposit: false,
 });
@@ -130,11 +153,17 @@ const ethWithdrawalParams: PartialContractEventParams = {
     to: "toAddress",
     amount: "payload",
   },
-  selectIndexesFromArrays: {
-    amount: "1", // amount is at index 1 in payload array
+  argGetters: {
+    amount: (args: any) => {
+      const payload = args.payload;
+      const amountLow = BigInt(payload[3].toString());
+      const amountHigh = BigInt(payload[4].toString());
+      const fullAmount = (amountHigh << BigInt(128)) | amountLow;
+      return BigNumber.from(fullAmount.toString());
+    },
   },
   fixedEventData: {
-    from: ethBridgeContract,
+    from: STARKNET_CORE,
     token: WETH,
   },
   filter: {
@@ -143,21 +172,6 @@ const ethWithdrawalParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-// Token addresses on Ethereum
-const tokenAddresses: { [key: string]: string } = {
-  usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-  usdt: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-  dai: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-  wbtc: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-  wsteth: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
-  reth: "0xae78736Cd615f374D3085123A210448E74Fc6393",
-  strk: "0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766",
-  lords: "0x686f2404e77Ab0d9070a46cdfb0B7feCDD2318b0",
-  frax: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
-  lusd: "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0",
-  sfrax: "0xA663B02CF0a4b149d2aD41910CB81e23e1c41c32",
-  fxs: "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
-};
 
 const constructParams = () => {
   const eventParams: PartialContractEventParams[] = [
