@@ -1,177 +1,179 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { Chain } from "@defillama/sdk/build/general";
-import { EventData } from "../../utils/types";
-import { getProvider } from "@defillama/sdk";
-import { ethers } from "ethers";
 
-const intentGateway = "0x1a4ee689a004b10210a1df9f24a387ea13359acf";
-const tokenGateway = "0xFd413e3AFe560182C4471F4d143A96d3e259B6dE";
-
-export const intentGatewayAddresses = {
-  ethereum: intentGateway,
-  arbitrum: intentGateway,
-  base: intentGateway,
-  bsc: intentGateway,
-  polygon: intentGateway,
+const ismpHostAddresses = {
+  ethereum: "0x792A6236AF69787C40cF76b69B4c8c7B28c4cA20",
+  arbitrum: "0xE05AFD4Eb2ce6d65c40e1048381BD0Ef8b4B299e",
+  base: "0x6FFe92e4d7a9D589549644544780e6725E84b248",
+  bsc: "0x24B5d421Ec373FcA57325dd2F0C074009Af021F7",
+  polygon: "0xD8d3db17C1dF65b301D45C84405CcAC1395C559a",
+  unichain: "0x2A17C1c3616Bbc33FCe5aF5B965F166ba76cEDAf",
 } as const;
 
-export const tokenGatewayAddresses = {
-  ethereum: tokenGateway,
-  arbitrum: tokenGateway,
-  base: tokenGateway,
-  bsc: tokenGateway,
-  polygon: tokenGateway,
-} as const;
-
-type SupportedChains = keyof typeof intentGatewayAddresses;
-
-const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+type SupportedChains = keyof typeof ismpHostAddresses;
 
 const constructParams = (chain: SupportedChains) => {
-  const igGateway = intentGatewayAddresses[chain];
-  const tgGateway = tokenGatewayAddresses[chain];
+  const ismpHost = ismpHostAddresses[chain];
 
   return async (fromBlock: number, toBlock: number) => {
-    // ========== Intent Gateway Events (need custom filtering) ==========
-    const escrowReleasedParams: PartialContractEventParams = {
-      target: igGateway,
-      topic: "EscrowReleased(bytes32)",
-      abi: ["event EscrowReleased(bytes32 indexed commitment)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      isDeposit: true,
-    };
-
-    const orderFilledParams: PartialContractEventParams = {
-      target: igGateway,
-      topic: "OrderFilled(bytes32,address)",
-      abi: ["event OrderFilled(bytes32 indexed commitment, address filler)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      isDeposit: false,
-    };
-
-    // ========== Token Gateway Events (can use getTokenFromReceipt) ==========
-    const assetTeleportedParams: PartialContractEventParams = {
-      target: tgGateway,
-      topic: "AssetTeleported(bytes32,string,uint256,bytes32,address,bytes32,bool)",
+    const postRequestEventParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostRequestEvent(string,string,address,bytes,uint256,uint256,bytes,uint256)",
       abi: [
-        "event AssetTeleported(bytes32 to, string dest, uint256 amount, bytes32 commitment, address indexed from, bytes32 indexed assetId, bool redeem)",
+        "event PostRequestEvent(string source, string dest, address indexed from, bytes to, uint256 nonce, uint256 timeoutTimestamp, bytes body, uint256 fee)",
       ],
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      argKeys: {
-        from: "from",
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const postRequestHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostRequestHandled(bytes32,address)",
+      abi: ["event PostRequestHandled(bytes32 indexed commitment, address relayer)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
       },
       getTokenFromReceipt: {
         token: true,
         amount: true,
       },
-      fixedEventData: {
-        to: tgGateway,
-      },
-      isDeposit: true,
     };
 
-    const assetReceivedParams: PartialContractEventParams = {
-      target: tgGateway,
-      topic: "AssetReceived(uint256,bytes32,bytes32,address,bytes32)",
+    const postResponseEventParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostResponseEvent(string,string,address,bytes,uint256,uint256,bytes,bytes,uint256,uint256)",
       abi: [
-        "event AssetReceived(uint256 amount, bytes32 commitment, bytes32 indexed from, address indexed beneficiary, bytes32 indexed assetId)",
+        "event PostResponseEvent(string source, string dest, address indexed from, bytes to, uint256 nonce, uint256 timeoutTimestamp, bytes body, bytes response, uint256 responseTimeoutTimestamp, uint256 fee)",
       ],
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      argKeys: {
-        to: "beneficiary",
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const postResponseHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostResponseHandled(bytes32,address)",
+      abi: ["event PostResponseHandled(bytes32 indexed commitment, address relayer)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
       },
       getTokenFromReceipt: {
         token: true,
         amount: true,
       },
-      fixedEventData: {
-        from: tgGateway,
-      },
-      isDeposit: false,
     };
 
-    const intentGatewayParams = [escrowReleasedParams, orderFilledParams];
-    const intentGatewayEvents = await getTxDataFromEVMEventLogs(
+    // ========== ISMP Host Get Request Events ==========
+
+    const getRequestEventParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "GetRequestEvent(string,string,address,bytes[],uint256,uint256,uint256,bytes,uint256)",
+      abi: [
+        "event GetRequestEvent(string source, string dest, address indexed from, bytes[] keys, uint256 height, uint256 nonce, uint256 timeoutTimestamp, bytes context, uint256 fee)",
+      ],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const getRequestHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "GetRequestHandled(bytes32,address)",
+      abi: ["event GetRequestHandled(bytes32 indexed commitment, address relayer)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    // ========== ISMP Host Timeout Events ==========
+
+    const postRequestTimeoutHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostRequestTimeoutHandled(bytes32,string)",
+      abi: ["event PostRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const postResponseTimeoutHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "PostResponseTimeoutHandled(bytes32,string)",
+      abi: ["event PostResponseTimeoutHandled(bytes32 indexed commitment, string dest)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const getRequestTimeoutHandledParams: PartialContractEventParams = {
+      target: ismpHost,
+      topic: "GetRequestTimeoutHandled(bytes32,string)",
+      abi: ["event GetRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
+      logKeys: {
+        blockNumber: "blockNumber",
+        txHash: "transactionHash",
+      },
+      getTokenFromReceipt: {
+        token: true,
+        amount: true,
+      },
+    };
+
+    const ismpEventParams = [
+      postRequestEventParams,
+      postRequestHandledParams,
+      postResponseEventParams,
+      postResponseHandledParams,
+      getRequestEventParams,
+      getRequestHandledParams,
+      postRequestTimeoutHandledParams,
+      postResponseTimeoutHandledParams,
+      getRequestTimeoutHandledParams,
+    ];
+
+    const ismpEvents = await getTxDataFromEVMEventLogs(
       "hyperbridge",
       chain as Chain,
       fromBlock,
       toBlock,
-      intentGatewayParams
+      ismpEventParams
     );
 
-    const tokenGatewayParams = [assetTeleportedParams, assetReceivedParams];
-    const tokenGatewayEvents = await getTxDataFromEVMEventLogs(
-      "hyperbridge",
-      chain as Chain,
-      fromBlock,
-      toBlock,
-      tokenGatewayParams
-    );
-
-    // Process Intent Gateway events with custom filtering
-    const processedIntentGatewayEvents: EventData[] = [];
-
-    for (const event of intentGatewayEvents) {
-      try {
-        const provider = getProvider(chain as Chain);
-        const txReceipt = await provider.getTransactionReceipt(event.txHash);
-        if (!txReceipt?.logs) continue;
-
-        for (const log of txReceipt.logs) {
-          if (log.topics && log.topics[0] === TRANSFER_TOPIC && log.topics.length === 3) {
-            const from = "0x" + log.topics[1].slice(26);
-            const to = "0x" + log.topics[2].slice(26);
-            const token = log.address;
-            const amount = ethers.BigNumber.from(log.data);
-
-            if (event.isDeposit) {
-              // EscrowReleased: only transfers FROM gateway (escrow release to filler)
-              if (from.toLowerCase() === igGateway.toLowerCase()) {
-                processedIntentGatewayEvents.push({
-                  txHash: event.txHash,
-                  blockNumber: event.blockNumber,
-                  from: from,
-                  to: to,
-                  token: token,
-                  amount: amount,
-                  isDeposit: true,
-                });
-              }
-            } else {
-              // OrderFilled: transfers NOT involving gateway (filler → user)
-              if (from.toLowerCase() !== igGateway.toLowerCase() && to.toLowerCase() !== igGateway.toLowerCase()) {
-                processedIntentGatewayEvents.push({
-                  txHash: event.txHash,
-                  blockNumber: event.blockNumber,
-                  from: from,
-                  to: to,
-                  token: token,
-                  amount: amount,
-                  isDeposit: false,
-                });
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.error(`Error processing Intent Gateway transaction ${event.txHash}:`, e);
-      }
-    }
-
-    return [...processedIntentGatewayEvents, ...tokenGatewayEvents];
+    return ismpEvents;
   };
 };
 
@@ -181,6 +183,7 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
+  unichain: constructParams("unichain"),
 };
 
 export default adapter;

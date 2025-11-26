@@ -2601,6 +2601,6 @@ export default [
     iconLink: "icons:hyperbridge",
     largeTxThreshold: 10000,
     url: "https://hyperbridge.network",
-    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium"],
+    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium", "Unichain"],
   },
 ] as BridgeNetwork[];
