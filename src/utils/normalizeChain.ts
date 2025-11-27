@@ -1149,6 +1149,13 @@ export const chainCoingeckoIds = {
     parent: "Ethereum",
     chainId: 59144,
   },
+  Monad: {
+    geckoId: "monad",
+    symbol: "MON",
+    cmcId: "30495",
+    categories: ["EVM"],
+    chainId: 143,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
