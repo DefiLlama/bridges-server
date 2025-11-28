@@ -2597,4 +2597,15 @@ export default [
     chains: ["Polkadot", "Ethereum"],
     destinationChain: "Ethereum",
   },
+  {
+    id: 102,
+    displayName: "StarkGate",
+    bridgeDbName: "starkgate",
+    iconLink: "chain:starknet",
+    slug: "starkgate",
+    largeTxThreshold: 10000,
+    url: "https://starkgate.starknet.io/",
+    chains: ["Ethereum", "Starknet"],
+    destinationChain: "Starknet",
+  },
 ] as BridgeNetwork[];
