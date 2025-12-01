@@ -2597,4 +2597,20 @@ export default [
     chains: ["Polkadot", "Ethereum"],
     destinationChain: "Ethereum",
   },
+  {
+    id: 102,
+    displayName: "Kaspa Bridge",
+    bridgeDbName: "kaspabridge",
+    slug: "kaspabridge",
+    iconLink: "icons:hyperlane",
+    largeTxThreshold: 10000,
+    url: "https://www.kaspabridge.com/",
+    chains: [
+      "kasplex",
+      "bsc",
+    ],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
 ] as BridgeNetwork[];
