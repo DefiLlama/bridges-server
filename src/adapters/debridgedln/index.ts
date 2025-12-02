@@ -29,9 +29,10 @@ const nativeTokenAddress = {
   optimism: "0x4200000000000000000000000000000000000006", // WETH
   base: "0x4200000000000000000000000000000000000006", // WETH
   bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // BNB
-  sonic: "0x0000000000000000000000000000000000000000", // S 
+  sonic: "0x0000000000000000000000000000000000000000", // S
   plume: "0x0000000000000000000000000000000000000000", // PLUME
   plasma: "0x0000000000000000000000000000000000000000", // XPL
+  monad: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", // WMON
 };
 
 type SupportedChains = keyof typeof nativeTokenAddress;
@@ -157,6 +158,7 @@ const adapter: BridgeAdapter = {
   sonic: constructParams("sonic"),
   plasma: constructParams("plasma"),
   plume: constructParams("plume"),
+  monad: constructParams("monad"),
 };
 
 export default adapter;
