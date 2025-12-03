@@ -2633,4 +2633,14 @@ export default [
     chains: ["Ethereum", "Starknet"],
     destinationChain: "Starknet",
   },
+  {
+    id: 103,
+    displayName: "OneSec",
+    bridgeDbName: "onesec",
+    iconLink: "icons:onesec",
+    slug: "onesec",
+    largeTxThreshold: 10000,
+    url: "https://onesec.to/",
+    chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
+  },
 ] as BridgeNetwork[];

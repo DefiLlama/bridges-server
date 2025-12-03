@@ -98,6 +98,7 @@ import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
 import starkgate from "./starkgate";
+import onesec from "./onesec";
 
 export default {
   polygon,
@@ -199,6 +200,7 @@ export default {
   fxrp,
   snowbridge,
   starkgate,
+  onesec,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
