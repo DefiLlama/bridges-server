@@ -347,20 +347,22 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   }
   const hours = bridgeName === "wormhole" ? 28 : 24; // wormhole has 3h delay
   const result = await sql<{ volume: string; ts: Date; chain: string }[]>`
-    WITH RankedVolumes AS (
-      SELECT 
-        ${volumeColumn} as volume, 
-        ha.ts,
-        c.chain,
-        ROW_NUMBER() OVER (PARTITION BY c.chain ORDER BY ha.ts DESC) as rn
+    WITH LatestTs AS (
+      SELECT MAX(ha.ts) as max_ts
       FROM bridges.hourly_volume ha
       JOIN bridges.config c ON ha.bridge_id = c.id
       WHERE c.bridge_name = ${bridgeName}
     )
-    SELECT volume, ts, chain
-    FROM RankedVolumes
-    WHERE rn <= ${hours}
-    ORDER BY ts DESC
+    SELECT
+      ${volumeColumn} as volume,
+      ha.ts,
+      c.chain
+    FROM bridges.hourly_volume ha
+    JOIN bridges.config c ON ha.bridge_id = c.id
+    CROSS JOIN LatestTs lt
+    WHERE c.bridge_name = ${bridgeName}
+    AND ha.ts > lt.max_ts - INTERVAL '${sql.unsafe(String(hours))} hours'
+    ORDER BY ha.ts DESC
   `;
 
   const volumeByChain = result.reduce((acc, { volume, chain }) => {
