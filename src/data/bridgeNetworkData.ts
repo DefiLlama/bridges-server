@@ -2514,6 +2514,13 @@ export default [
       "ZKsync Era",
       "Metis",
       "Sei",
+      "Solana",
+      "Plasma",
+      "Ink",
+      "XDC",
+      "TAC",
+      "Bittensor",
+      "Hedera",
     ],
     chainMapping: {
       "World Chain": "wc",

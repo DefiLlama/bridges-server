@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import { BridgeAdapter } from '../../helpers/bridgeAdapter.type';
-import fs from "fs";
 
 export type CCIPEvent = {
   chain: string;
@@ -252,7 +251,14 @@ const chains = [
   "plume",
   "zksync era",
   "metis",
-  "sei"
+  "sei",
+  "solana",
+  "plasma",
+  "ink",
+  "xdc",
+  "tac",
+  "bittensor",
+  "hedera"
 ]
 
 export const adapter: BridgeAdapter = Object.fromEntries(chains.map(chain => [chain, fetchCCIPEvents as any]));
