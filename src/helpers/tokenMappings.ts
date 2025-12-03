@@ -14,6 +14,11 @@ export const transformTokens = {
     "0x430ebff5e3e80a6c58e7e6ada1d90f5c28aa116d": "ethereum:0xdac17f958d2ee523a2206206994597c13d831ec7",
     "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": "ethereum:0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
     "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
+    // OneSec bridge - ICP-native tokens
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer", // ICP
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-token", // BOB
+    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat", // CHAT
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao", // GLDT
   },
   bsc: {
     "0x98a5737749490856b401db5dc27f522fc314a4e1": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
@@ -46,6 +51,11 @@ export const transformTokens = {
     "0xaa4bf442f024820b2c28cd0fd72b82c63e66f56c": "arbitrum:0x17fc002b466eec40dae837fc4be5c67993ddbd6f",
     "0xf39b7be294cb36de8c510e267b82bb588705d977": "arbitrum:0x3f56e0c36d275367b8c502090edf38289b3dea0d",
     "0x600e576f9d853c95d58029093a16ee49646f3ca5": "arbitrum:0x93b346b6bc2548da6a1e7d98e9a421b42541425b",
+    // OneSec bridge - ICP-native tokens
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer", // ICP
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-token", // BOB
+    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat", // CHAT
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao", // GLDT
   },
   optimism: {
     "0xdecc0c09c3b5f6e92ef4184125d5648a66e35298": "optimism:0x7f5c764cbc14f9669b88837ca1490cca17c31607",
@@ -72,6 +82,13 @@ export const transformTokens = {
   op_bnb: {
     "0xe7798f023fc62146e8aa1b36da45fb70855a77ea": "ethereum:0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     "0x9d94a7ff461e83f161c8c040e78557e31d8cba72": "bsc:0xf4c8e32eadec4bfe97e0f595add0f4450a863a11",
+  },
+  // OneSec bridge - ICP-native tokens wrapped on EVM
+  base: {
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer", // ICP
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-token", // BOB
+    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat", // CHAT
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao", // GLDT
   },
 } as {
   [chain: string]: {
