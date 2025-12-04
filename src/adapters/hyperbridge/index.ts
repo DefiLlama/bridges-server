@@ -71,10 +71,6 @@ const constructParams = (chain: SupportedChains) => {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
-      },
     };
 
     const postRequestHandledParams = {
@@ -84,10 +80,6 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
       },
     };
 
@@ -101,10 +93,6 @@ const constructParams = (chain: SupportedChains) => {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
-      },
     };
 
     const postResponseHandledParams = {
@@ -114,10 +102,6 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
       },
     };
 
@@ -133,10 +117,6 @@ const constructParams = (chain: SupportedChains) => {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
-      },
     };
 
     const getRequestHandledParams = {
@@ -146,10 +126,6 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
       },
     };
 
@@ -163,10 +139,6 @@ const constructParams = (chain: SupportedChains) => {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
-      },
     };
 
     const postResponseTimeoutHandledParams = {
@@ -177,10 +149,6 @@ const constructParams = (chain: SupportedChains) => {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
       },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
-      },
     };
 
     const getRequestTimeoutHandledParams = {
@@ -190,10 +158,6 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
-      },
-      getTokenFromReceipt: {
-        token: true,
-        amount: true,
       },
     };
 
