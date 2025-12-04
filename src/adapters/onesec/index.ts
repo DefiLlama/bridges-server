@@ -77,6 +77,8 @@ const fetchTransactions = async (
   );
 };
 
+const MAX_PAGES = 100;
+
 const fetchAllTransactions = async (
   fromTimestamp: number,
   toTimestamp: number
@@ -84,7 +86,7 @@ const fetchAllTransactions = async (
   const allTransactions: OneSecTransaction[] = [];
   let currentFrom = fromTimestamp;
 
-  while (true) {
+  for (let page = 0; page < MAX_PAGES; page++) {
     const transactions = await fetchTransactions(currentFrom, toTimestamp);
 
     if (transactions.length === 0) break;
