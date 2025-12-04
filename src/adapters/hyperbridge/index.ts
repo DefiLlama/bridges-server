@@ -1,6 +1,11 @@
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { Chain } from "@defillama/sdk/build/general";
+import { EventData } from "../../utils/types";
+import { getProvider } from "../../utils/provider";
+import { ethers } from "ethers";
+
+const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
 const ismpHostAddresses = {
   ethereum: "0x792A6236AF69787C40cF76b69B4c8c7B28c4cA20",
@@ -13,11 +18,50 @@ const ismpHostAddresses = {
 
 type SupportedChains = keyof typeof ismpHostAddresses;
 
+// For each ISMP event, scan its tx for ERC20 Transfer logs and turn those into EventData.
+const extractTransfersFromIsmpEvents = async (events: EventData[], chain: Chain): Promise<EventData[]> => {
+  const provider = getProvider(chain as string) as any;
+  const transfers: EventData[] = [];
+
+  for (const event of events) {
+    let txReceipt: any;
+    try {
+      txReceipt = await provider.getTransactionReceipt(event.txHash);
+    } catch (e) {
+      console.error(`Error fetching tx receipt for hyperbridge tx ${event.txHash} on ${chain}:`, e);
+      continue;
+    }
+
+    if (!txReceipt?.logs) continue;
+
+    for (const log of txReceipt.logs) {
+      if (!log.topics || log.topics.length < 3) continue;
+      if (log.topics[0] !== TRANSFER_TOPIC) continue;
+
+      const from = "0x" + log.topics[1].slice(26);
+      const to = "0x" + log.topics[2].slice(26);
+      const token = log.address;
+      const amount = ethers.BigNumber.from(log.data);
+
+      transfers.push({
+        txHash: event.txHash,
+        blockNumber: event.blockNumber,
+        from,
+        to,
+        token,
+        amount,
+      });
+    }
+  }
+
+  return transfers;
+};
+
 const constructParams = (chain: SupportedChains) => {
   const ismpHost = ismpHostAddresses[chain];
 
   return async (fromBlock: number, toBlock: number) => {
-    const postRequestEventParams: PartialContractEventParams = {
+    const postRequestEventParams = {
       target: ismpHost,
       topic: "PostRequestEvent(string,string,address,bytes,uint256,uint256,bytes,uint256)",
       abi: [
@@ -33,7 +77,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const postRequestHandledParams: PartialContractEventParams = {
+    const postRequestHandledParams = {
       target: ismpHost,
       topic: "PostRequestHandled(bytes32,address)",
       abi: ["event PostRequestHandled(bytes32 indexed commitment, address relayer)"],
@@ -47,7 +91,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const postResponseEventParams: PartialContractEventParams = {
+    const postResponseEventParams = {
       target: ismpHost,
       topic: "PostResponseEvent(string,string,address,bytes,uint256,uint256,bytes,bytes,uint256,uint256)",
       abi: [
@@ -63,7 +107,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const postResponseHandledParams: PartialContractEventParams = {
+    const postResponseHandledParams = {
       target: ismpHost,
       topic: "PostResponseHandled(bytes32,address)",
       abi: ["event PostResponseHandled(bytes32 indexed commitment, address relayer)"],
@@ -79,7 +123,7 @@ const constructParams = (chain: SupportedChains) => {
 
     // ========== ISMP Host Get Request Events ==========
 
-    const getRequestEventParams: PartialContractEventParams = {
+    const getRequestEventParams = {
       target: ismpHost,
       topic: "GetRequestEvent(string,string,address,bytes[],uint256,uint256,uint256,bytes,uint256)",
       abi: [
@@ -95,7 +139,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const getRequestHandledParams: PartialContractEventParams = {
+    const getRequestHandledParams = {
       target: ismpHost,
       topic: "GetRequestHandled(bytes32,address)",
       abi: ["event GetRequestHandled(bytes32 indexed commitment, address relayer)"],
@@ -111,7 +155,7 @@ const constructParams = (chain: SupportedChains) => {
 
     // ========== ISMP Host Timeout Events ==========
 
-    const postRequestTimeoutHandledParams: PartialContractEventParams = {
+    const postRequestTimeoutHandledParams = {
       target: ismpHost,
       topic: "PostRequestTimeoutHandled(bytes32,string)",
       abi: ["event PostRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
@@ -125,7 +169,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const postResponseTimeoutHandledParams: PartialContractEventParams = {
+    const postResponseTimeoutHandledParams = {
       target: ismpHost,
       topic: "PostResponseTimeoutHandled(bytes32,string)",
       abi: ["event PostResponseTimeoutHandled(bytes32 indexed commitment, string dest)"],
@@ -139,7 +183,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const getRequestTimeoutHandledParams: PartialContractEventParams = {
+    const getRequestTimeoutHandledParams = {
       target: ismpHost,
       topic: "GetRequestTimeoutHandled(bytes32,string)",
       abi: ["event GetRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
@@ -170,10 +214,11 @@ const constructParams = (chain: SupportedChains) => {
       chain as Chain,
       fromBlock,
       toBlock,
-      ismpEventParams
+      ismpEventParams as ContractEventParams[]
     );
 
-    return ismpEvents;
+    const transferEvents = await extractTransfersFromIsmpEvents(ismpEvents, chain as Chain);
+    return transferEvents;
   };
 };
 
