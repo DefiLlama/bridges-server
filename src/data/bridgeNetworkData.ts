@@ -2696,4 +2696,20 @@ export default [
     chains: ["Ethereum", "Starknet"],
     destinationChain: "Starknet",
   },
+  {
+    id: 103,
+    displayName: "Kaspa Bridge",
+    bridgeDbName: "kaspabridge",
+    slug: "kaspabridge",
+    iconLink: "icons:kaspabridge",
+    largeTxThreshold: 10000,
+    url: "https://www.kaspabridge.com/",
+    chains: [
+      "kasplex",
+      "bsc",
+    ],
+    chainMapping: {
+      avalanche: "avax",
+    },
+  },
 ] as BridgeNetwork[];
