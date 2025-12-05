@@ -18,12 +18,14 @@ interface APIEvent {
   pathParameters?: Record<string, any>;
   queryStringParameters?: Record<string, any>;
   body?: any;
+  routePath?: string;
 }
 
 export const handlerRegistry = new Map<string, Function>();
 
 export const generateApiCacheKey = (event: APIEvent): string => {
   const eventToNormalize = {
+    routePath: event.routePath || "",
     path: event.pathParameters || {},
     query: event.queryStringParameters || {},
     body: event.body || {},

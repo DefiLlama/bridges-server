@@ -41,6 +41,7 @@ const chains = [
   "karura",
   "acala",
   "wormchain",
+  "monad",
 ];
 
 export const chainNameMapping: { [key: string]: string } = {
@@ -76,6 +77,7 @@ export const chainNameMapping: { [key: string]: string } = {
   xlayer: "xLayer",
   blast: "Blast",
   xpla: "XPLA",
+  monad: "Monad",
 };
 
 export function normalizeChainName(chainName: string): string {

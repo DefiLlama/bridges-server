@@ -25,6 +25,7 @@ const chains = [
   "unichain",
   "aptos",
   "linea",
+  "monad",
 ];
 
 export const chainNameMapping: { [key: string]: string } = {

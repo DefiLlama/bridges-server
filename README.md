@@ -82,6 +82,7 @@ Create new object for your bridge in ` ./src/data/bridgeNetworkData.ts`
 ```ts
 id:  1, // new id 
 displayName:  "Polygon PoS Bridge", // name
+defillamaId:  "240", // id in protocol metadata: https://github.com/DefiLlama/defillama-server/blob/master/defi/src/protocols/data1.ts
 bridgeDbName:  "polygon", // name in db
 iconLink:  "chain:polygon", // icon name in https://icons.llamao.fi/icons/
 largeTxThreshold:  10000,

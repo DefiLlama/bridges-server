@@ -69,11 +69,18 @@ const startingBlocks: Record<string, number> = {
   1380012617: 205727,
 };
 
+const MAX_USD_AMOUNT = 10_000_000;
+
 const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
   if (!amountUsd) return ethers.BigNumber.from(0);
 
   const parsed = parseFloat(amountUsd);
   if (isNaN(parsed) || parsed <= 0) return ethers.BigNumber.from(0);
+
+  if (parsed > MAX_USD_AMOUNT) {
+    console.warn(`[relay] Skipping suspicious USD amount: ${parsed}`);
+    return ethers.BigNumber.from(0);
+  }
 
   return ethers.BigNumber.from(Math.round(parsed));
 };
