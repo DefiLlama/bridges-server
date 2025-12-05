@@ -2697,4 +2697,13 @@ export default [
     chains: ["Ethereum", "Starknet"],
     destinationChain: "Starknet",
   },
+  {
+    id: 103,
+    displayName: "Hyperbridge",
+    bridgeDbName: "hyperbridge",
+    iconLink: "icons:hyperbridge",
+    largeTxThreshold: 10000,
+    url: "https://hyperbridge.network",
+    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium", "Unichain"],
+  },
 ] as BridgeNetwork[];

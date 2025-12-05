@@ -97,6 +97,7 @@ import teleswap from "./teleswap";
 import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
+import hyperbridge from "./hyperbridge";
 import starkgate from "./starkgate";
 
 export default {
@@ -198,6 +199,7 @@ export default {
   agglayer,
   fxrp,
   snowbridge,
+  hyperbridge,
   starkgate,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
