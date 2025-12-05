@@ -14,16 +14,48 @@ const ismpHostAddresses = {
   bsc: "0x24B5d421Ec373FcA57325dd2F0C074009Af021F7",
   polygon: "0xD8d3db17C1dF65b301D45C84405CcAC1395C559a",
   unichain: "0x2A17C1c3616Bbc33FCe5aF5B965F166ba76cEDAf",
+  soneium: "0x7F0165140D0f3251c8f6465e94E9d12C7FD40711",
+  optimism: "0x78c8A5F27C06757EA0e30bEa682f1FD5C8d7645d",
 } as const;
 
 type SupportedChains = keyof typeof ismpHostAddresses;
 
+// Extract ISMP module addresses from events
+// Returns a map of txHash -> Set of ISMP module addresses
+const extractIsmpModuleAddresses = (events: EventData[]): Map<string, Set<string>> => {
+  const ismpModulesByTx = new Map<string, Set<string>>();
+
+  for (const event of events) {
+    if (!ismpModulesByTx.has(event.txHash)) {
+      ismpModulesByTx.set(event.txHash, new Set<string>());
+    }
+    const modules = ismpModulesByTx.get(event.txHash)!;
+
+    if (event.from) {
+      modules.add(event.from.toLowerCase());
+    }
+
+    if (event.to) {
+      modules.add(event.to.toLowerCase());
+    }
+  }
+
+  return ismpModulesByTx;
+};
+
 // For each ISMP event, scan its tx for ERC20 Transfer logs and turn those into EventData.
-const extractTransfersFromIsmpEvents = async (events: EventData[], chain: Chain): Promise<EventData[]> => {
+const extractTransfersFromIsmpEvents = async (
+  events: EventData[],
+  chain: Chain,
+  ismpModulesByTx: Map<string, Set<string>>
+): Promise<EventData[]> => {
   const provider = getProvider(chain as string) as any;
   const transfers: EventData[] = [];
 
   for (const event of events) {
+    const ismpModules = ismpModulesByTx.get(event.txHash);
+    if (!ismpModules || ismpModules.size === 0) continue;
+
     let txReceipt: any;
     try {
       txReceipt = await provider.getTransactionReceipt(event.txHash);
@@ -43,6 +75,35 @@ const extractTransfersFromIsmpEvents = async (events: EventData[], chain: Chain)
       const token = log.address;
       const amount = ethers.BigNumber.from(log.data);
 
+      const fromLower = from.toLowerCase();
+      const toLower = to.toLowerCase();
+      const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+      // Special Case for Token Gateway
+      // If `from` is zero address → deposit, if `to` is zero address → withdrawal
+      let isDeposit: boolean | null = null;
+      if (fromLower === ZERO_ADDRESS) {
+        isDeposit = true; // Mint/deposit
+      } else if (toLower === ZERO_ADDRESS) {
+        isDeposit = false; // Burn/withdrawal
+      }
+
+      // If zero address check didn't determine the type, check ISMP module addresses
+      if (isDeposit === null) {
+        const isFromIsmpModule = ismpModules.has(fromLower);
+        const isToIsmpModule = ismpModules.has(toLower);
+
+        // If transfer is FROM an ISMP module → withdrawal (isDeposit = false)
+        // If transfer is TO an ISMP module → deposit (isDeposit = true)
+        if (isToIsmpModule) {
+          isDeposit = true;
+        } else if (isFromIsmpModule) {
+          isDeposit = false;
+        } else {
+          isDeposit = false;
+        }
+      }
+
       transfers.push({
         txHash: event.txHash,
         blockNumber: event.blockNumber,
@@ -50,6 +111,7 @@ const extractTransfersFromIsmpEvents = async (events: EventData[], chain: Chain)
         to,
         token,
         amount,
+        isDeposit,
       });
     }
   }
@@ -70,6 +132,10 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
+      },
+      argKeys: {
+        from: "from",
+        to: "to",
       },
     };
 
@@ -92,6 +158,10 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
+      },
+      argKeys: {
+        from: "from",
+        to: "to",
       },
     };
 
@@ -116,6 +186,9 @@ const constructParams = (chain: SupportedChains) => {
       logKeys: {
         blockNumber: "blockNumber",
         txHash: "transactionHash",
+      },
+      argKeys: {
+        from: "from",
       },
     };
 
@@ -181,16 +254,22 @@ const constructParams = (chain: SupportedChains) => {
       ismpEventParams as ContractEventParams[]
     );
 
-    const transferEvents = await extractTransfersFromIsmpEvents(ismpEvents, chain as Chain);
+    // Extract ISMP module addresses from events
+    const ismpModulesByTx = extractIsmpModuleAddresses(ismpEvents);
+
+    // Extract transfers and classify them as deposits/withdrawals
+    const transferEvents = await extractTransfersFromIsmpEvents(ismpEvents, chain as Chain, ismpModulesByTx);
     return transferEvents;
   };
 };
 
 const adapter: BridgeAdapter = {
+  bsc: constructParams("bsc"),
+  soneium: constructParams("soneium"),
+  optimism: constructParams("optimism"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
-  bsc: constructParams("bsc"),
   polygon: constructParams("polygon"),
   unichain: constructParams("unichain"),
 };
