@@ -2684,9 +2684,20 @@ export default [
     chains: ["Polkadot", "Ethereum"],
     destinationChain: "Ethereum",
   },
-
   {
     id: 102,
+    defillamaId: "3787",
+    displayName: "StarkGate",
+    bridgeDbName: "starkgate",
+    iconLink: "chain:starknet",
+    slug: "starkgate",
+    largeTxThreshold: 10000,
+    url: "https://starkgate.starknet.io/",
+    chains: ["Ethereum", "Starknet"],
+    destinationChain: "Starknet",
+  },
+  {
+    id: 103,
     displayName: "Kaspa Bridge",
     bridgeDbName: "kaspabridge",
     slug: "kaspabridge",
@@ -2700,17 +2711,5 @@ export default [
     chainMapping: {
       avalanche: "avax",
     },
-  },
-  {
-    id: 103,
-    defillamaId: "3787",
-    displayName: "StarkGate",
-    bridgeDbName: "starkgate",
-    iconLink: "chain:starknet",
-    slug: "starkgate",
-    largeTxThreshold: 10000,
-    url: "https://starkgate.starknet.io/",
-    chains: ["Ethereum", "Starknet"],
-    destinationChain: "Starknet",
   },
 ] as BridgeNetwork[];
