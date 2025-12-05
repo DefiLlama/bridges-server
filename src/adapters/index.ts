@@ -97,11 +97,8 @@ import teleswap from "./teleswap";
 import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
-<<<<<<< HEAD
 import kaspabridge from "./kaspabridge";
-=======
 import starkgate from "./starkgate";
->>>>>>> 2d12f8949153049b3df202108b5ff7ed2f63d956
 
 export default {
   polygon,
@@ -202,11 +199,8 @@ export default {
   agglayer,
   fxrp,
   snowbridge,
-<<<<<<< HEAD
   kaspabridge,
-=======
   starkgate,
->>>>>>> 2d12f8949153049b3df202108b5ff7ed2f63d956
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

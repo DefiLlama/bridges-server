@@ -32,6 +32,7 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
     pathParameters: request.params,
     queryStringParameters: request.query,
     body: request.body,
+    routePath: request.routeOptions.url,
   };
 
   const cacheKey = generateApiCacheKey(event);

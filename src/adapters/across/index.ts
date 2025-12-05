@@ -100,22 +100,26 @@ const contracts = {
   // Chain id: 7777777
   zora: {
     spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
-  }
+  },
+  monad: {
+    spokePoolv2p5: "0xd2ecb3afe598b746F8123CaE365a598DA831A449",
+  },
 } as const;
 
 type SupportedChains = keyof typeof contracts;
 
 // Add helper function
 function bytes32ToAddress(bytes32: string) {
-  return ethers.utils.getAddress('0x' + bytes32.slice(26))
+  return ethers.utils.getAddress("0x" + bytes32.slice(26));
 }
 
 // "Version 3.5" events
 const depositParamsv3p5: PartialContractEventParams = {
   target: "",
-  topic: "FundsDeposited(bytes32,bytes32,uint256,uint256,uint256,uint256,uint32,uint32,uint32,bytes32,bytes32,bytes32,bytes)",
+  topic:
+    "FundsDeposited(bytes32,bytes32,uint256,uint256,uint256,uint256,uint32,uint32,uint32,bytes32,bytes32,bytes32,bytes)",
   abi: [
-    "event FundsDeposited(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 indexed destinationChainId, uint256 indexed depositId, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 indexed depositor, bytes32 recipient, bytes32 exclusiveRelayer, bytes message)"
+    "event FundsDeposited(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 indexed destinationChainId, uint256 indexed depositId, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 indexed depositor, bytes32 recipient, bytes32 exclusiveRelayer, bytes message)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -130,7 +134,7 @@ const depositParamsv3p5: PartialContractEventParams = {
   argGetters: {
     to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
-    token: (logArgs: any) => bytes32ToAddress(logArgs.inputToken)
+    token: (logArgs: any) => bytes32ToAddress(logArgs.inputToken),
   },
   isDeposit: true,
 };
@@ -140,7 +144,7 @@ const relaysParamsv3p5: PartialContractEventParams = {
   topic:
     "FilledRelay(bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,uint32,uint32,bytes32,bytes32,bytes32,bytes32,bytes32,(bytes32,bytes32,uint256,uint8))",
   abi: [
-    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo)"
+    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -156,7 +160,7 @@ const relaysParamsv3p5: PartialContractEventParams = {
     // to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
     from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
-    token: (logArgs: any) => bytes32ToAddress(logArgs.outputToken)
+    token: (logArgs: any) => bytes32ToAddress(logArgs.outputToken),
   },
   isDeposit: false,
 };
@@ -164,9 +168,10 @@ const relaysParamsv3p5: PartialContractEventParams = {
 // "Version 3" events
 const depositParamsv3: PartialContractEventParams = {
   target: "",
-  topic: "V3FundsDeposited(address,address,uint256,uint256,uint256,uint32,uint32,uint32,uint32,address,address,address,bytes)",
+  topic:
+    "V3FundsDeposited(address,address,uint256,uint256,uint256,uint32,uint32,uint32,uint32,address,address,address,bytes)",
   abi: [
-    "event V3FundsDeposited(address inputToken,address outputToken,uint256 inputAmount,uint256 outputAmount,uint256 indexed destinationChainId,uint32 indexed depositId,uint32 quoteTimestamp,uint32 fillDeadline,uint32 exclusivityDeadline,address indexed depositor,address recipient,address exclusiveRelayer,bytes message)"
+    "event V3FundsDeposited(address inputToken,address outputToken,uint256 inputAmount,uint256 outputAmount,uint256 indexed destinationChainId,uint32 indexed depositId,uint32 quoteTimestamp,uint32 fillDeadline,uint32 exclusivityDeadline,address indexed depositor,address recipient,address exclusiveRelayer,bytes message)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -186,7 +191,7 @@ const relaysParamsv3: PartialContractEventParams = {
   topic:
     "FilledV3Relay(address,address,uint256,uint256,uint256,uint256,uint32,uint32,uint32,address,address,address,address,bytes,(address,bytes,uint256,uint8))",
   abi: [
-    "event FilledV3Relay(address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint32 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, address exclusiveRelayer, address indexed relayer, address depositor, address recipient, bytes message, tuple(address updatedRecipient, bytes updatedMessage, uint256 updatedOutputAmount, uint8 fillType) relayExecutionInfo)"
+    "event FilledV3Relay(address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint32 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, address exclusiveRelayer, address indexed relayer, address depositor, address recipient, bytes message, tuple(address updatedRecipient, bytes updatedMessage, uint256 updatedOutputAmount, uint8 fillType) relayExecutionInfo)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -369,6 +374,7 @@ const adapter: BridgeAdapter = {
   ink: constructParams("ink"),
   zora: constructParams("zora"),
   redstone: constructParams("redstone"),
+  monad: constructParams("monad"),
 };
 
 export default adapter;

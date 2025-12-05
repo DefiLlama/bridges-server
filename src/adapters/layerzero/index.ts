@@ -86,6 +86,7 @@ export const layerZeroChainMapping: { [key: string]: string } = {
   BB1: "bb1",
   BounceBit: "bouncebit",
   Katana: "katana",
+  Monad: "monad",
 };
 
 async function assumeRole(retryCount = 0, maxRetries = 3) {

@@ -11,7 +11,7 @@ const getBridges = async () => {
   const response = (
     await Promise.all(
       bridgeNetworks.map(async (bridgeNetwork) => {
-        const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain, slug } = bridgeNetwork;
+        const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain, slug, defillamaId, } = bridgeNetwork;
         // can use chains to give chain breakdown, but not needed at this time (put in getBridge to reduce queries?)
 
         let lastHourlyVolume, lastDailyVolume, dayBeforeLastVolume;
@@ -52,6 +52,7 @@ const getBridges = async () => {
           : "false";
         const dataToReturn = {
           id: id,
+          defillamaId,
           name: bridgeDbName,
           displayName: displayName,
           // url: url,
