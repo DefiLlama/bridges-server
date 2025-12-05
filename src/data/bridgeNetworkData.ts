@@ -2700,6 +2700,9 @@ export default [
     chainMapping: {
       avalanche: "avax",
     },
+  },
+  {
+    id: 103,
     defillamaId: "3787",
     displayName: "StarkGate",
     bridgeDbName: "starkgate",
