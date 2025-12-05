@@ -2701,7 +2701,7 @@ export default [
     displayName: "Kaspa Bridge",
     bridgeDbName: "kaspabridge",
     slug: "kaspabridge",
-    iconLink: "https://app.kaspafinance.io/images/chains/0xf87e587ab945f7b111329a6ace6dc497d34f098b.png",
+    iconLink: "icons:kaspabridge",
     largeTxThreshold: 10000,
     url: "https://www.kaspabridge.com/",
     chains: [
