@@ -112,5 +112,6 @@ const allChains = [
   "Morph",
   "BB1",
   "BounceBit",
+  "Monad",
 ];
 export default allChains;

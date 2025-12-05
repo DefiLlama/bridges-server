@@ -90,6 +90,10 @@ const axelarChains = {
     its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     gateway: "0xe432150cce91c13a887f7D836923d5597adD8E31",
   },
+  monad: {
+    its: "0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
+    gateway: "0xd2ecb3afe598b746F8123CaE365a598DA831A449",
+  },
 } as const;
 
 type SupportedChains = keyof typeof axelarChains;
@@ -313,7 +317,6 @@ const constructParams = (chain: SupportedChains) => {
           return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
             ? asset.chains[chainName].tokenAddress
             : "";
-
         },
       },
     };
@@ -370,6 +373,7 @@ const adapter: BridgeAdapter = {
   plume: constructParams("plume"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
+  monad: constructParams("monad"),
 };
 
 export default adapter;
