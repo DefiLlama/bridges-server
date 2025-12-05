@@ -97,6 +97,7 @@ import teleswap from "./teleswap";
 import agglayer from "./agglayer";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
+import hyperbridge from "./hyperbridge";
 import starkgate from "./starkgate";
 import onesec from "./1sec";
 
@@ -199,6 +200,7 @@ export default {
   agglayer,
   fxrp,
   snowbridge,
+  hyperbridge,
   starkgate,
   "1sec": onesec,
 } as {

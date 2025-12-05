@@ -358,6 +358,7 @@ const adapter: BridgeAdapter = {
   arbitrum: constructParams("arbitrum"),
   base: constructParams("base"),
   solana: getSolanaEvents,
+  monad: constructParams("monad"),
 };
 
 export default adapter;

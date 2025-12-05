@@ -6,6 +6,7 @@ import type { BridgeNetwork } from "./types";
 export default [
   {
     id: 1,
+    defillamaId: "240",
     displayName: "Polygon PoS Bridge",
     bridgeDbName: "polygon",
     iconLink: "chain:polygon",
@@ -17,6 +18,7 @@ export default [
   },
   {
     id: 2,
+    defillamaId: "3777",
     displayName: "Arbitrum Bridge",
     bridgeDbName: "arbitrum",
     iconLink: "chain:arbitrum",
@@ -28,6 +30,7 @@ export default [
   },
   {
     id: 3,
+    defillamaId: "4972",
     displayName: "Avalanche Bridge",
     bridgeDbName: "avalanche",
     iconLink: "chain:avalanche",
@@ -38,6 +41,7 @@ export default [
   },
   {
     id: 4,
+    defillamaId: "3784",
     displayName: "Optimism Gateway",
     bridgeDbName: "optimism",
     iconLink: "chain:optimism",
@@ -130,6 +134,7 @@ export default [
 
   {
     id: 10,
+    defillamaId: "801",
     displayName: "Celer cBridge",
     bridgeDbName: "celer",
     iconLink: "icons:cbridge",
@@ -166,6 +171,7 @@ export default [
   },
   {
     id: 11,
+    defillamaId: "657",
     displayName: "Synapse",
     bridgeDbName: "synapse",
     iconLink: "icons:synapse",
@@ -202,6 +208,7 @@ export default [
   },
   {
     id: 12,
+    defillamaId: "4831",
     displayName: "Stargate",
     bridgeDbName: "stargate",
     iconLink: "icons:stargate-finance",
@@ -275,6 +282,7 @@ export default [
   },
   {
     id: 13,
+    defillamaId: "3777",
     displayName: "Hop",
     bridgeDbName: "hop",
     iconLink: "icons:hop-protocol",
@@ -302,6 +310,7 @@ export default [
   */
   {
     id: 15,
+    defillamaId: "4972",
     displayName: "Core Bitcoin Bridge",
     bridgeDbName: "avalanche-c",
     iconLink: "chain:avalanche",
@@ -316,6 +325,7 @@ export default [
   },
   {
     id: 16,
+    defillamaId: "129",
     displayName: "Gnosis Bridge",
     bridgeDbName: "xdai",
     iconLink: "chain:xdai",
@@ -329,6 +339,7 @@ export default [
   },
   {
     id: 17,
+    defillamaId: "2237",
     displayName: "Axelar",
     bridgeDbName: "axelar",
     iconLink: "icons:axelar",
@@ -362,6 +373,7 @@ export default [
   },
   {
     id: 18,
+    defillamaId: "3866",
     displayName: "Rainbow Bridge",
     bridgeDbName: "rainbowbridge",
     slug: "rainbow-bridge",
@@ -373,6 +385,7 @@ export default [
   },
   {
     id: 19,
+    defillamaId: "1207",
     displayName: "Across",
     bridgeDbName: "across",
     iconLink: "icons:across",
@@ -407,6 +420,7 @@ export default [
 
   {
     id: 20,
+    defillamaId: "1462",
     displayName: "deBridge",
     bridgeDbName: "debridgedln",
     iconLink: "icons:debridge",
@@ -443,6 +457,7 @@ export default [
   // },
   {
     id: 22,
+    defillamaId: "577",
     displayName: "Allbridge Classic",
     bridgeDbName: "allbridge",
     iconLink: "icons:allbridge",
@@ -457,6 +472,7 @@ export default [
 
   {
     id: 23,
+    defillamaId: "3785",
     displayName: "Polygon zkEVM Bridge",
     bridgeDbName: "polygon_zkevm",
     iconLink: "chain:polygon zkevm",
@@ -716,6 +732,7 @@ export default [
   // },
   {
     id: 26,
+    defillamaId: "4844",
     displayName: "ZKsync Era Bridge",
     bridgeDbName: "zksync",
     iconLink: "chain:zksync era",
@@ -726,6 +743,7 @@ export default [
   },
   {
     id: 27,
+    defillamaId: "1594",
     displayName: "Symbiosis",
     bridgeDbName: "symbiosis",
     iconLink: "icons:symbiosis",
@@ -767,6 +785,7 @@ export default [
   },
   {
     id: 28,
+    defillamaId: "4536",
     displayName: "Meson",
     bridgeDbName: "meson",
     iconLink: "icons:meson",
@@ -811,6 +830,7 @@ export default [
   },
   {
     id: 29,
+    defillamaId: "3780",
     displayName: "Base Bridge",
     bridgeDbName: "base",
     iconLink: "chain:base",
@@ -822,6 +842,7 @@ export default [
   },
   {
     id: 30,
+    defillamaId: "3782",
     displayName: "Mantle Bridge",
     bridgeDbName: "mantle",
     iconLink: "chain:mantle",
@@ -833,6 +854,7 @@ export default [
   },
   {
     id: 34,
+    defillamaId: "5985",
     displayName: "Satellite (Powered by Axelar)",
     bridgeDbName: "axelarsatellite",
     iconLink: "icons:axelar",
@@ -860,6 +882,7 @@ export default [
   },
   {
     id: 37,
+    defillamaId: "4032",
     displayName: "Manta Pacific Bridge",
     bridgeDbName: "manta",
     iconLink: "icons:manta-pacific-bridge",
@@ -902,6 +925,7 @@ export default [
   },
   {
     id: 35,
+    defillamaId: "5146",
     displayName: "CrossCurve",
     bridgeDbName: "eywa",
     iconLink: "icons:eywa",
@@ -937,6 +961,7 @@ export default [
   },
   {
     id: 39,
+    defillamaId: "151",
     displayName: "rhino.fi",
     bridgeDbName: "rhinofi",
     iconLink: "icons:rhino.fi",
@@ -986,6 +1011,7 @@ export default [
   },
   {
     id: 41,
+    defillamaId: "2081",
     displayName: "Wan Bridge",
     bridgeDbName: "wanbridge",
     iconLink: "icons:wan-bridge",
@@ -1050,6 +1076,7 @@ export default [
   },
   {
     id: 42,
+    defillamaId: "547",
     displayName: "pNetwork",
     bridgeDbName: "pnetwork",
     iconLink: "icons:pnetwork",
@@ -1070,6 +1097,7 @@ export default [
   // },
   {
     id: 44,
+    defillamaId: "2839",
     displayName: "Interport Finance",
     bridgeDbName: "interport",
     iconLink: "icons:interport-finance",
@@ -1175,6 +1203,7 @@ export default [
   },
   {
     id: 45,
+    defillamaId: "4005",
     displayName: "Shimmer Bridge",
     bridgeDbName: "shimmerbridge",
     slug: "shimmerbridge",
@@ -1189,6 +1218,7 @@ export default [
   },
   {
     id: 46,
+    defillamaId: "1885",
     displayName: "yBridge by xSync Network",
     bridgeDbName: "xy",
     iconLink: "protocols:xy-finance",
@@ -1230,6 +1260,7 @@ export default [
   },
   {
     id: 47,
+    defillamaId: "2364",
     displayName: "Butter Network",
     bridgeDbName: "butternetwork",
     iconLink: "icons:butter-network",
@@ -1262,6 +1293,7 @@ export default [
 
   {
     id: 48,
+    defillamaId: "5367",
     displayName: "Rootstock Powpeg Bridge",
     bridgeDbName: "rootstock",
     iconLink: "chain:rootstock",
@@ -1276,6 +1308,7 @@ export default [
   },
   {
     id: 49,
+    defillamaId: "4086",
     displayName: "Garden",
     bridgeDbName: "garden",
     iconLink: "protocols:garden",
@@ -1287,6 +1320,7 @@ export default [
   },
   {
     id: 50,
+    defillamaId: "4237",
     displayName: "Mode Network",
     bridgeDbName: "mode",
     iconLink: "chain:mode",
@@ -1298,6 +1332,7 @@ export default [
   },
   {
     id: 51,
+    defillamaId: "5008",
     displayName: "Circle CCTP",
     bridgeDbName: "circle",
     iconLink: "protocols:circle_cctp",
@@ -1343,6 +1378,7 @@ export default [
   },
   {
     id: 54,
+    defillamaId: "2021",
     displayName: "Nitro (by Router Protocol)",
     bridgeDbName: "router",
     iconLink: "protocols:nitro",
@@ -1373,6 +1409,7 @@ export default [
   },
   {
     id: 55,
+    // defillamaId: "184",
     displayName: "Fuse Bridge",
     bridgeDbName: "fuse",
     iconLink: "chain:fuse",
@@ -1408,6 +1445,7 @@ export default [
   // },
   {
     id: 58,
+    defillamaId: "6520",
     displayName: "Orbiter Finance",
     bridgeDbName: "orbiter",
     iconLink: "icons:orbiter",
@@ -1473,6 +1511,7 @@ export default [
   },
   {
     id: 59,
+    defillamaId: "217",
     displayName: "Connext",
     bridgeDbName: "connext",
     iconLink: "icons:connext",
@@ -1486,6 +1525,7 @@ export default [
   },
   {
     id: 60,
+    defillamaId: "3944",
     displayName: "Allbridge Core",
     bridgeDbName: "allbridge-core",
     iconLink: "icons:allbridge-core",
@@ -1714,6 +1754,7 @@ export default [
   },
   {
     id: 67,
+    defillamaId: "4986",
     displayName: "Bunnyfi",
     bridgeDbName: "bunnyfi",
     iconLink: "icons:bunnyfi",
@@ -1837,6 +1878,7 @@ export default [
   },
   {
     id: 71,
+    defillamaId: "3049",
     displayName: "Crowdswap",
     bridgeDbName: "crowdswap",
     iconLink: "icons:crowdswap",
@@ -1847,6 +1889,7 @@ export default [
   },
   {
     id: 72,
+    defillamaId: "5218",
     displayName: "Mint",
     bridgeDbName: "mint",
     iconLink: "icons:mint",
@@ -1858,6 +1901,7 @@ export default [
   },
   {
     id: 73,
+    defillamaId: "5232",
     displayName: "Sui Bridge",
     bridgeDbName: "suibridge",
     iconLink: "icons:sui",
@@ -2083,6 +2127,7 @@ export default [
   },
   {
     id: 77,
+    defillamaId: "1541",
     displayName: "Wormhole",
     bridgeDbName: "wormhole",
     slug: "portal", // //rebrand from Wormhole
@@ -2116,6 +2161,7 @@ export default [
       "Celo",
       "Kaia",
       "Wormchain",
+      "Monad",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -2123,6 +2169,7 @@ export default [
   },
   {
     id: 78,
+    defillamaId: "2535",
     displayName: "Threshold Network",
     bridgeDbName: "thresholdnetwork",
     iconLink: "icons:threshold-network",
@@ -2134,6 +2181,7 @@ export default [
   },
   {
     id: 79,
+    defillamaId: "5375",
     displayName: "Zircuit Bridge",
     bridgeDbName: "zircuit",
     iconLink: "chain:zircuit",
@@ -2145,6 +2193,7 @@ export default [
   },
   {
     id: 80,
+    defillamaId: "4481",
     displayName: "Hyperliquid",
     bridgeDbName: "hyperliquid",
     slug: "hyperliquid-bridge",
@@ -2156,6 +2205,7 @@ export default [
   },
   {
     id: 81,
+    defillamaId: "5367",
     displayName: "PowPeg Fast Mode (Flyover)",
     bridgeDbName: "flyover",
     iconLink: "icons:flyover",
@@ -2199,6 +2249,7 @@ export default [
   },
   {
     id: 83,
+    defillamaId: "5564",
     displayName: "Eclipse Canonical Bridge",
     bridgeDbName: "eclipse",
     iconLink: "chain:eclipse",
@@ -2211,6 +2262,7 @@ export default [
 
   {
     id: 84,
+    defillamaId: "4867",
     displayName: "LayerZero",
     bridgeDbName: "layerzero",
     iconLink: "icons:layerzero",
@@ -2237,6 +2289,7 @@ export default [
   },
   {
     id: 86,
+    defillamaId: "5248",
     displayName: "Fuel",
     bridgeDbName: "fuel",
     iconLink: "chain:fuel ignition",
@@ -2248,6 +2301,7 @@ export default [
   },
   {
     id: 87,
+    defillamaId: "6042",
     displayName: "Lighter",
     bridgeDbName: "lighter",
     iconLink: "icons:lighter",
@@ -2259,6 +2313,7 @@ export default [
   },
   {
     id: 88,
+    defillamaId: "6938",
     displayName: "Movement",
     bridgeDbName: "movement",
     iconLink: "chain:movement",
@@ -2280,6 +2335,7 @@ export default [
   },
   {
     id: 90,
+    defillamaId: "6424",
     displayName: "InterSoon",
     bridgeDbName: "intersoon",
     iconLink: "icons:intersoon",
@@ -2324,6 +2380,7 @@ export default [
   },
   {
     id: 92,
+    defillamaId: "5901",
     displayName: "USDT0",
     bridgeDbName: "usdt0",
     slug: "usdt0",
@@ -2406,6 +2463,7 @@ export default [
   },
   {
     id: 94,
+    defillamaId: "5350",
     displayName: "Teleswap",
     bridgeDbName: "teleswap",
     iconLink: "icons:teleswap",
@@ -2477,6 +2535,7 @@ export default [
   },
   {
     id: 96,
+    defillamaId: "3675",
     displayName: "Chainlink CCIP",
     bridgeDbName: "ccip",
     iconLink: "icons:chainlink",
@@ -2532,6 +2591,7 @@ export default [
   },
   {
     id: 97,
+    defillamaId: "6296",
     displayName: "Agglayer",
     bridgeDbName: "agglayer",
     iconLink: "icons:agglayer",
@@ -2546,6 +2606,7 @@ export default [
   },
   {
     id: 98,
+    defillamaId: "6736",
     displayName: "Cashmere",
     bridgeDbName: "cashmere",
     iconLink: "icons:cashmere",
@@ -2579,6 +2640,7 @@ export default [
   },
   {
     id: 99,
+    defillamaId: "5925",
     displayName: "Mayan",
     bridgeDbName: "mayan",
     slug: "mayan",
@@ -2602,6 +2664,7 @@ export default [
   },
   {
     id: 100,
+    defillamaId: "6772",
     displayName: "FAssets",
     bridgeDbName: "fxrp",
     slug: "flare",
@@ -2624,6 +2687,7 @@ export default [
   },
   {
     id: 102,
+    defillamaId: "3787",
     displayName: "StarkGate",
     bridgeDbName: "starkgate",
     iconLink: "chain:starknet",
