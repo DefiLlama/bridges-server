@@ -2161,6 +2161,7 @@ export default [
       "Celo",
       "Kaia",
       "Wormchain",
+      "Monad",
     ],
     chainMapping: {
       avalanche: "avax",
