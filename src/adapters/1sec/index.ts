@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 import fetch from "node-fetch";
 const retry = require("async-retry");
 
-const API_BASE_URL = "https://5okwm-giaaa-aaaar-qbn6a-cai.raw.icp0.io/api";
+const API_BASE_URL = "https://1sec.to/api";
 const BATCH_SIZE = 100;
 
 const icpNativeTokens: Record<string, string> = {
