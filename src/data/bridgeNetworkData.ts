@@ -2635,12 +2635,12 @@ export default [
   },
   {
     id: 103,
-    displayName: "OneSec",
-    bridgeDbName: "onesec",
-    iconLink: "icons:onesec",
-    slug: "onesec",
+    displayName: "1sec",
+    bridgeDbName: "1sec",
+    iconLink: "icons:1sec",
+    slug: "1sec",
     largeTxThreshold: 10000,
-    url: "https://onesec.to/",
+    url: "https://1sec.to/",
     chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
   },
 ] as BridgeNetwork[];
