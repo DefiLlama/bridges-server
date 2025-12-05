@@ -1156,6 +1156,11 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 143,
   },
+  ICP: {
+    geckoId: "internet-computer",
+    symbol: "ICP",
+    cmcId: "8916",
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
@@ -1482,6 +1487,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Scroll";
     case "linea":
       return "Linea";
+    case "icp":
+      return "ICP";
     case "ux chain":
     case "ux_chain":
       return "UX Chain";

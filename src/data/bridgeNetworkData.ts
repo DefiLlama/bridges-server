@@ -2706,4 +2706,15 @@ export default [
     url: "https://hyperbridge.network",
     chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium", "Unichain"],
   },
+  {
+    id: 104,
+    displayName: "1sec",
+    bridgeDbName: "1sec",
+    iconLink: "icons:1sec",
+    slug: "1sec",
+    largeTxThreshold: 10000,
+    url: "https://1sec.to/",
+    chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
+    destinationChain: "ICP"
+  },
 ] as BridgeNetwork[];
