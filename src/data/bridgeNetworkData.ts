@@ -2715,5 +2715,6 @@ export default [
     largeTxThreshold: 10000,
     url: "https://1sec.to/",
     chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
+     destinationChain: "ICP"
   },
 ] as BridgeNetwork[];
