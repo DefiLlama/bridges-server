@@ -20,6 +20,14 @@ const ismpHostAddresses = {
 
 type SupportedChains = keyof typeof ismpHostAddresses;
 
+const intentGatewayAddresses: Partial<Record<SupportedChains, string>> = {
+  ethereum: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+  arbitrum: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+  base: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+  bsc: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+  polygon: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+};
+
 // Extract ISMP module addresses from events
 // Returns a map of txHash -> Set of ISMP module addresses
 const extractIsmpModuleAddresses = (events: EventData[]): Map<string, Set<string>> => {
@@ -43,7 +51,7 @@ const extractIsmpModuleAddresses = (events: EventData[]): Map<string, Set<string
   return ismpModulesByTx;
 };
 
-// For each ISMP event, scan its tx for ERC20 Transfer logs and turn those into EventData.
+// For each ISMP event and IntentGateway OrderPlaced event, scan its tx for ERC20 Transfer logs and turn those into EventData.
 const extractTransfersFromIsmpEvents = async (
   events: EventData[],
   chain: Chain,
@@ -51,10 +59,15 @@ const extractTransfersFromIsmpEvents = async (
 ): Promise<EventData[]> => {
   const provider = getProvider(chain as string) as any;
   const transfers: EventData[] = [];
+  const intentGateway = intentGatewayAddresses[chain as SupportedChains];
 
   for (const event of events) {
     const ismpModules = ismpModulesByTx.get(event.txHash);
-    if (!ismpModules || ismpModules.size === 0) continue;
+    // Check if this is an OrderPlaced event (has isDeposit=true but no from/to)
+    const isOrderPlacedEvent = event.isDeposit;
+
+    // Skip if this transaction has neither ISMP modules nor OrderPlaced event
+    if ((!ismpModules || ismpModules.size === 0) && !isOrderPlacedEvent) continue;
 
     let txReceipt: any;
     try {
@@ -79,29 +92,38 @@ const extractTransfersFromIsmpEvents = async (
       const toLower = to.toLowerCase();
       const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-      // Special Case for Token Gateway
-      // If `from` is zero address → deposit, if `to` is zero address → withdrawal
-      let isDeposit: boolean | null = null;
-      if (fromLower === ZERO_ADDRESS) {
-        isDeposit = true; // Mint/deposit
-      } else if (toLower === ZERO_ADDRESS) {
-        isDeposit = false; // Burn/withdrawal
+      // Special Case: OrderPlaced event indicates a deposit
+      // Only track transfers TO the IntentGateway address for OrderPlaced transactions
+      if (isOrderPlacedEvent) {
+        if (!intentGateway || toLower !== intentGateway.toLowerCase()) {
+          // Skip this transfer if it's an OrderPlaced tx but not to IntentGateway
+          continue;
+        }
+        // For OrderPlaced events, mark as deposit
+        transfers.push({
+          txHash: event.txHash,
+          blockNumber: event.blockNumber,
+          from,
+          to,
+          token,
+          amount,
+          isDeposit: true,
+        });
+        continue;
       }
 
-      // If zero address check didn't determine the type, check ISMP module addresses
-      if (isDeposit === null) {
-        const isFromIsmpModule = ismpModules.has(fromLower);
-        const isToIsmpModule = ismpModules.has(toLower);
-
-        // If transfer is FROM an ISMP module → withdrawal (isDeposit = false)
-        // If transfer is TO an ISMP module → deposit (isDeposit = true)
-        if (isToIsmpModule) {
-          isDeposit = true;
-        } else if (isFromIsmpModule) {
-          isDeposit = false;
-        } else {
-          isDeposit = false;
-        }
+      // Handle ISMP events
+      // Special Case for Token Gateway: If `from` is zero address → deposit, if `to` is zero address → withdrawal
+      let isDeposit: boolean;
+      if (fromLower === ZERO_ADDRESS) {
+        isDeposit = true;
+      } else if (toLower === ZERO_ADDRESS) {
+        isDeposit = false;
+      } else if (ismpModules && ismpModules.size > 0) {
+        // If transfer is TO an ISMP module → deposit, FROM an ISMP module → withdrawal
+        isDeposit = ismpModules.has(toLower);
+      } else {
+        isDeposit = false;
       }
 
       transfers.push({
@@ -121,6 +143,7 @@ const extractTransfersFromIsmpEvents = async (
 
 const constructParams = (chain: SupportedChains) => {
   const ismpHost = ismpHostAddresses[chain];
+  const intentGateway = intentGatewayAddresses[chain];
 
   return async (fromBlock: number, toBlock: number) => {
     const postRequestEventParams = {
@@ -234,7 +257,7 @@ const constructParams = (chain: SupportedChains) => {
       },
     };
 
-    const ismpEventParams = [
+    const eventParams = [
       postRequestEventParams,
       postRequestHandledParams,
       postResponseEventParams,
@@ -246,19 +269,35 @@ const constructParams = (chain: SupportedChains) => {
       getRequestTimeoutHandledParams,
     ];
 
-    const ismpEvents = await getTxDataFromEVMEventLogs(
+    if (intentGateway) {
+      const orderPlacedEventParams = {
+        target: intentGateway,
+        topic:
+          "OrderPlaced(bytes32,bytes,bytes,uint256,uint256,uint256,(bytes32,uint256,bytes32)[],(bytes32,uint256)[],bytes)",
+        abi: [
+          "event OrderPlaced(bytes32 user, bytes sourceChain, bytes destChain, uint256 deadline, uint256 nonce, uint256 fees, tuple(bytes32,uint256,bytes32)[] outputs, tuple(bytes32,uint256)[] inputs, bytes callData)",
+        ],
+        logKeys: {
+          blockNumber: "blockNumber",
+          txHash: "transactionHash",
+        },
+        isDeposit: true,
+      };
+      (eventParams as any[]).push(orderPlacedEventParams);
+    }
+
+    // Fetch all events (ISMP and OrderPlaced)
+    const allEvents = await getTxDataFromEVMEventLogs(
       "hyperbridge",
       chain as Chain,
       fromBlock,
       toBlock,
-      ismpEventParams as ContractEventParams[]
+      eventParams as ContractEventParams[]
     );
 
-    // Extract ISMP module addresses from events
-    const ismpModulesByTx = extractIsmpModuleAddresses(ismpEvents);
+    const ismpModulesByTx = extractIsmpModuleAddresses(allEvents);
 
-    // Extract transfers and classify them as deposits/withdrawals
-    const transferEvents = await extractTransfersFromIsmpEvents(ismpEvents, chain as Chain, ismpModulesByTx);
+    const transferEvents = await extractTransfersFromIsmpEvents(allEvents, chain as Chain, ismpModulesByTx);
     return transferEvents;
   };
 };
