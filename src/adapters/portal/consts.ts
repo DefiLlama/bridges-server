@@ -53,6 +53,10 @@ export const contractAddresses = {
     tokenBridge: "wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb",
     coreBridge: "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth",
   },
+  monad: {
+    tokenBridge: "0x0B2719cdA2F10595369e6673ceA3Ee2EDFa13BA7",
+    coreBridge: "0x194B123c5E96B9b2E49763619985790Dc241CAC0",
+  },
 } as {
   [chain: string]: {
     tokenBridge: string;
