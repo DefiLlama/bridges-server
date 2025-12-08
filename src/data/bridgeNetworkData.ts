@@ -2699,19 +2699,6 @@ export default [
   },
   {
     id: 103,
-    displayName: "Kaspa Bridge",
-    bridgeDbName: "kaspabridge",
-    slug: "kaspabridge",
-    iconLink: "icons:kaspabridge",
-    largeTxThreshold: 10000,
-    url: "https://www.kaspabridge.com/",
-    chains: [
-      "kasplex",
-      "bsc",
-    ],
-    chainMapping: {
-      avalanche: "avax",
-    },
     displayName: "Hyperbridge",
     bridgeDbName: "hyperbridge",
     iconLink: "icons:hyperbridge",
@@ -2729,5 +2716,21 @@ export default [
     url: "https://1sec.to/",
     chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
     destinationChain: "ICP"
+  },
+  {
+    id: 105,
+    displayName: "Kaspa Bridge",
+    bridgeDbName: "kaspabridge",
+    slug: "kaspabridge",
+    iconLink: "icons:kaspabridge",
+    largeTxThreshold: 10000,
+    url: "https://www.kaspabridge.com/",
+    chains: [
+      "kasplex",
+      "bsc",
+    ],
+    chainMapping: {
+      avalanche: "avax",
+    }
   },
 ] as BridgeNetwork[];
