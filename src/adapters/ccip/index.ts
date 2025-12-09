@@ -258,7 +258,10 @@ const chains = [
   "xdc",
   "tac",
   "bittensor",
-  "hedera"
+  "hedera",
+  "monad",
+  "0g",
+  "morph"
 ]
 
 export const adapter: BridgeAdapter = Object.fromEntries(chains.map(chain => [chain, fetchCCIPEvents as any]));

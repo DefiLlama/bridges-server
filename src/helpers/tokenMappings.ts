@@ -160,6 +160,7 @@ export const transformTokenDecimals = {
 
 export const chainMappings: Record<string, string> = {
   avalanche: "avax",
+  bittensor: "bittensor_evm",
   gnosis: "xdai",
   "zksync era": "era",
   "polygon zkevm": "polygon_zkevm",
