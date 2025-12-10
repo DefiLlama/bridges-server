@@ -2729,8 +2729,6 @@ export default [
       "kasplex",
       "bsc",
     ],
-    chainMapping: {
-      avalanche: "avax",
-    }
+    destinationChain: "kasplex",
   },
 ] as BridgeNetwork[];
