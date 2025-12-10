@@ -2403,6 +2403,7 @@ export default [
       "Polygon",
       "Rootstock",
       "Sei",
+      "Stable",
       "Unichain",
     ],
     chainMapping: {

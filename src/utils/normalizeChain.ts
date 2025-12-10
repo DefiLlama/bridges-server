@@ -1161,6 +1161,13 @@ export const chainCoingeckoIds = {
     symbol: "ICP",
     cmcId: "8916",
   },
+  Stable: {
+    geckoId: "stable-2",
+    symbol: "gUSDT",
+    cmcId: "38892",
+    categories: ["EVM"],
+    chainId: 988,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
