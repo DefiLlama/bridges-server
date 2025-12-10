@@ -2717,4 +2717,18 @@ export default [
     chains: ["Ethereum", "Arbitrum", "Base", "ICP"],
     destinationChain: "ICP"
   },
+  {
+    id: 105,
+    displayName: "Kaspa Bridge",
+    bridgeDbName: "kaspabridge",
+    slug: "kaspabridge",
+    iconLink: "icons:kaspabridge",
+    largeTxThreshold: 10000,
+    url: "https://www.kaspabridge.com/",
+    chains: [
+      "kasplex",
+      "bsc",
+    ],
+    destinationChain: "kasplex",
+  },
 ] as BridgeNetwork[];
