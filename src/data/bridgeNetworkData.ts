@@ -362,6 +362,7 @@ export default [
       "Kava",
       "Linea",
       "Mantle",
+      "Monad",
       "Moonbeam",
       "Optimism",
       "Polygon",
@@ -401,6 +402,7 @@ export default [
       "Arbitrum",
       "Linea",
       "Mode",
+      "Monad",
       "Blast",
       "Scroll",
       "Lisk",
@@ -2095,6 +2097,7 @@ export default [
       "Mint",
       "Mode",
       "Molten",
+      "Monad",
       "Moonbeam",
       "Oort",
       "Optimism",
@@ -2403,6 +2406,7 @@ export default [
       "Polygon",
       "Rootstock",
       "Sei",
+      "Stable",
       "Unichain",
     ],
     chainMapping: {
@@ -2660,6 +2664,7 @@ export default [
       "Unichain",
       "Aptos",
       "Linea",
+      "Monad",
     ],
   },
   {
@@ -2729,8 +2734,6 @@ export default [
       "kasplex",
       "bsc",
     ],
-    chainMapping: {
-      avalanche: "avax",
-    }
+    destinationChain: "kasplex",
   },
 ] as BridgeNetwork[];

@@ -125,22 +125,33 @@ const _handler = async (options: HandlerOptions = {}): Promise<void> => {
             }
             console.log(`[_handler] Fetched ${ccipEvents.length} CCIP events for ${dateString}.`);
 
-            // Transform fetched CCIP events into the database row format.
-            const transactionsToInsert: TransactionRow[] = ccipEvents.map(event => ({
-                bridge_id: bridgeIds[event.chain]!, // Assert globalBridgeId is non-null.
-                chain: event.chain,
-                tx_hash: event.tx_hash || null,
-                ts: event.ts,
-                tx_from: event.tx_from || null,
-                tx_to: event.tx_to || null,
-                token: event.token,
-                amount: event.amount,
-                is_deposit: event.is_deposit,
-                is_usd_volume: event.is_usd_volume,
-                tx_block: 0,
-                txs_counted_as: null,
-                origin_chain: null,
-            })).filter((tx) => !!tx.bridge_id);
+            const aggregatedEvents = new Map<string, CCIPEvent & { aggregatedAmount: number }>();
+            for (const event of ccipEvents) {
+                const key = `${event.chain}:${event.tx_hash}:${event.token}:${event.tx_from}:${event.tx_to}:${event.is_deposit}`;
+                const existing = aggregatedEvents.get(key);
+                if (existing) {
+                    existing.aggregatedAmount += parseFloat(event.amount);
+                } else {
+                    aggregatedEvents.set(key, { ...event, aggregatedAmount: parseFloat(event.amount) });
+                }
+            }
+
+            const transactionsToInsert: TransactionRow[] = Array.from(aggregatedEvents.values())
+                .map(event => ({
+                    bridge_id: bridgeIds[event.chain]!,
+                    chain: event.chain,
+                    tx_hash: event.tx_hash || null,
+                    ts: event.ts,
+                    tx_from: event.tx_from || null,
+                    tx_to: event.tx_to || null,
+                    token: event.token,
+                    amount: event.is_usd_volume ? event.aggregatedAmount.toFixed(2) : String(event.aggregatedAmount),
+                    is_deposit: event.is_deposit,
+                    is_usd_volume: event.is_usd_volume,
+                    tx_block: 0,
+                    txs_counted_as: null,
+                    origin_chain: null,
+                })).filter((tx) => !!tx.bridge_id);
 
             if (transactionsToInsert.length > 0) {
                 console.log(`[_handler] Prepared ${transactionsToInsert.length} transaction rows for insertion for date ${dateString}.`);

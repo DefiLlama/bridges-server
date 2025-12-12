@@ -28,10 +28,10 @@ const numberOfBlocks = process.argv[3];
 
 const testAdapter = async () => {
   let adapter = adapters[adapterName];
-  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
   if (!adapter) {
     throw new Error(`Adapter for ${adapterName} not found, check it is exported correctly.`);
   }
+  adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
 
   const bridgeNetwork = importBridgeNetwork(adapterName);
   if (!bridgeNetwork) {

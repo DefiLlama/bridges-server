@@ -24,7 +24,9 @@ import { isAsyncAdapter } from "../utils/adapter";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
-import { transformTokenDecimals, transformTokens } from "../helpers/tokenMappings";
+import { transformTokenDecimals, transformTokens, chainMappings } from "../helpers/tokenMappings";
+
+const mapChainName = (chain: string): string => chainMappings[chain] || chain;
 import { blacklist } from "../data/blacklist";
 import { PublicKey } from "@solana/web3.js";
 const sdk = require("@defillama/sdk");
@@ -286,7 +288,7 @@ export const aggregateData = async (
       if (is_usd_volume) return;
       if (!token) return;
       const isSolanaAddress = checkSolanaAddress(token);
-      const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+      const priceChain = mapChainName((isSolanaAddress ? "solana" : chain) ?? origin_chain);
       if (!priceChain) return;
       const tokenL = priceChain === "solana" || origin_chain === "solana" ? token : token.toLowerCase();
       const key = transformTokens[priceChain]?.[tokenL] ?? `${priceChain}:${tokenL}`;
@@ -333,7 +335,7 @@ export const aggregateData = async (
         tokenKey = `${chain}:${token}`;
       } else {
         const isSolanaAddress = checkSolanaAddress(token);
-        const priceChain = (isSolanaAddress ? "solana" : chain) ?? origin_chain;
+        const priceChain = mapChainName((isSolanaAddress ? "solana" : chain) ?? origin_chain);
         if (!priceChain) {
           console.log(`Skipping token with unknown chain for pricing`, tx);
           return;
@@ -444,7 +446,7 @@ export const aggregateData = async (
             await insertOrUpdateTokenWithoutPrice(token, "SOLANA_TOKEN");
             return;
           }
-          const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, chain)).output;
+          const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, mapChainName(chain))).output;
           await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
         } catch (e) {
           console.error(`Could not insert or update token without price: ${token}`, e);
