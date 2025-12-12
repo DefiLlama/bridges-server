@@ -1,4 +1,5 @@
-import { getLogs } from "@defillama/sdk/build/util";
+import { getLogs } from "@defillama/sdk/build/util/logs";
+import { isIndexerEnabled } from "@defillama/sdk/build/util/indexer";
 import { ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
@@ -125,17 +126,16 @@ export const getTxDataFromEVMEventLogs = async (
       let logs = [] as any[];
       for (let i = 0; i < 5; i++) {
         try {
-          logs = (
-            await getLogs({
-              target: target!,
-              topic: topic,
-              keys: [],
-              fromBlock: fromBlock,
-              toBlock: toBlock,
-              topics: topics as string[],
-              chain: overriddenChain,
-            })
-          ).output;
+          const startTime = Date.now();
+          logs = await getLogs({
+            target: target ?? undefined,
+            topic: topic,
+            fromBlock: fromBlock,
+            toBlock: toBlock,
+            topics: topics as string[],
+            chain: overriddenChain,
+            noTarget: !target,
+          });
           //console.log(logs)
           break;
         } catch (e) {
@@ -197,7 +197,10 @@ export const getTxDataFromEVMEventLogs = async (
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
-                const value = argGetters?.[eventKey]?.(args) || get(args, argKey);
+                let value = argGetters?.[eventKey]?.(args) || get(args, argKey);
+                if (eventKey === "amount" && (typeof value === "string" || typeof value === "bigint")) {
+                  value = ethers.BigNumber.from(value);
+                }
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
