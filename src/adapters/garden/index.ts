@@ -165,8 +165,11 @@ const contractAddresses = {
   },
   corn : {
     BTCN : "0xeaE7721d779276eb0f5837e2fE260118724a2Ba4"
-  }
-  
+  },
+  monad: {
+    MON: "0xE413743B51f3cC8b3ac24addf50D18fa138cB0Bb",
+    USDC: "0x5fA58e4E89c85B8d678Ade970bD6afD4311aF17E",
+  },
 } as any;
 const tokenAddresses = {
   ethereum: {
@@ -196,8 +199,11 @@ const tokenAddresses = {
   },
   corn : {
     BTCN : "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-  }
-  
+  },
+  monad: {
+    MON: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    USDC: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+  },
 } as any;
 
 
@@ -225,7 +231,8 @@ const adapter: BridgeAdapter = {
   berachain: constructParams("berachain"),
   hyperliquid: constructParams("hyperliquid"),
   corn : constructParams("corn"),
-  solana : getSolanaEvents
+  solana : getSolanaEvents,
+  monad: constructParams("monad"),
 };
 
 export default adapter;
