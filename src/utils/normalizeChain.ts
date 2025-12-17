@@ -1403,8 +1403,6 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Core";
     case "cronosevm":
       return "Cronos";
-    case "rari_chain":
-      return "Rari Chain";
     case "plumephoenix":
       return "Plume Phoenix";
     case "astar_zkevm":
@@ -1438,8 +1436,6 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "BounceBit";
     case "europa":
       return "SKALE Europa";
-    case "opbnb":
-      return "opBNB";
     case "taiko":
       return "Taiko";
     case "mc":
@@ -1447,8 +1443,6 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return "Merit Circle";
     case "ape_chain":
       return "Ape Chain";
-    case "cronos_zkevm":
-      return "Cronos zkEVM";
     case "paradex":
       return "Paradex";
     case "ton":
