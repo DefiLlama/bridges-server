@@ -34,7 +34,7 @@ const getBridges = async () => {
           if (dayBeforeLastVolumeRecord && Object.keys(dayBeforeLastVolumeRecord).length > 0) {
             dayBeforeLastVolume = (dayBeforeLastVolumeRecord.depositUSD + dayBeforeLastVolumeRecord?.withdrawUSD) / 2;
           }
-          lastMonthDailyVolume.map((entry, i) => {
+          lastMonthDailyVolume.map((entry: any, i: number) => {
             const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
             monthlyVolume += volume;
             if (i > lastMonthDailyVolume.length - 8) {

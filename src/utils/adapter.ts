@@ -502,7 +502,7 @@ export const runAdapterHistorical = async (
 
                 const results = await Promise.all(blockTimePromises);
 
-                results.forEach(({ blockNumber, blockTime, chainOverride }) => {
+                results.forEach(({ blockNumber, blockTime, chainOverride: _chainOverride }) => {
                   solanaTimestampsMap[blockNumber] = blockTime ?? 0;
                 });
               }

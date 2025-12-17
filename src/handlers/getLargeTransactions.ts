@@ -35,14 +35,14 @@ const getLargeTransactions = async (
   );
 
   const tokenSet = new Set<string>();
-  largeTransactions.map((tx) => {
+  largeTransactions.map((tx: any) => {
     const symbol = transformTokens[tx.chain]?.[tx.token]
       ? transformTokens[tx.chain]?.[tx.token]
       : `${tx.chain}:${tx.token}`;
     tokenSet.add(symbol);
   });
   const prices = await getLlamaPrices(Array.from(tokenSet));
-  const response = largeTransactions.map((tx) => {
+  const response = largeTransactions.map((tx: any) => {
     const bridgeID = tx.bridge_id;
     const bridgeName = configMapping[bridgeID] ?? "unknown";
     const transformedToken = transformTokens[tx.chain]?.[tx.token]

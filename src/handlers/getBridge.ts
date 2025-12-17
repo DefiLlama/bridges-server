@@ -57,7 +57,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
             withdrawals: dayBeforeLastVolumeRecord.withdrawTxs,
           };
         }
-        lastMonthDailyVolume.map((entry, i) => {
+        lastMonthDailyVolume.map((entry: any, i: number) => {
           const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
           const { depositTxs, withdrawTxs } = entry;
           monthlyVolume += volume;

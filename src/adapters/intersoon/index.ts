@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import axios from "axios";
 
 type InterSoonBridgeEvent = {
   block_timestamp: string;
@@ -36,7 +37,7 @@ export const fetchInterSoonEvents = async (
   const BATCH_SIZE = 5000;
 
   while (currentTimestamp < toTimestamp) {
-    const response = await axios.get<InterSoonBridgeEvent[]>(
+    const response = await axios.get<{data: InterSoonBridgeEvent[]}>(
       `https://api.ccb-relayer.soo.network/transaction/get_bridge_history?start_timestamp=${fromTimestamp}&end_timestamp=${toTimestamp}&limit=${BATCH_SIZE}`
     );
     const { data } = response.data;

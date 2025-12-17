@@ -327,7 +327,7 @@ export const chainIdToSlug: Record<number, string> = Object.fromEntries(
 ) as Record<number, string>;
 
 const adapter = Object.fromEntries(
-  Object.entries(slugToChainId).map(([slug, id]) => [slug, true])
+  Object.entries(slugToChainId).map(([slug, _id]) => [slug, true])
 ) as any
 
 export default adapter;

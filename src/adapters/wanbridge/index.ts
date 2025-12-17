@@ -420,7 +420,7 @@ const constructParams = (chain: Chains) => {
       getTxDataFromEVMEventLogs("wanbridge", chain, fromBlock, toBlock, eventParams);
   } else {
     // For other non-EVM chains, handle differently
-    return async (fromBlock: number, toBlock: number) => {
+    return async (_fromBlock: number, _toBlock: number) => {
       // Log the block range for debugging purposes
       // Processing non-EVM chain
       

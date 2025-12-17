@@ -143,7 +143,7 @@ export const isStablecoin = (tokenAddress: string, chain: string) => {
   const stablecoinSymbols = ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'USDP'];
 
   // Check if the token address matches known stablecoin addresses
-  const stablecoinAddresses = {
+  const stablecoinAddresses: { [chain: string]: string[] } = {
     bsc: [
       "0x55d398326f99059ff775485246999027b3197955", // USDT
       "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", // USDC
