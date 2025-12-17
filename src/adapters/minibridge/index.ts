@@ -9,7 +9,7 @@ import {getTxsBlockRangeMerlinScan} from "../../helpers/merlin";
 export const bridgesAddress = {
     ethereum: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
     arbitrum: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
-    avalanche: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
+    avax: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
     bsquared: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
     btr: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
     merlin: ["0x00000000000007736e2F9aA5630B8c812E1F3fc9"],
@@ -60,7 +60,7 @@ const nativeTokens: Record<string, string> = {
     bsquared: "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
     taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
     telos: "0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E",
-    avalanche: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+    avax: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
 };
 
 type SupportedChains = keyof typeof bridgesAddress;
@@ -122,7 +122,7 @@ const constructParams = (chain: SupportedChains) => {
 const adapter: BridgeAdapter = {
     ethereum: constructParams("ethereum"),
     arbitrum: constructParams("arbitrum"),
-    avalanche: constructParams("avalanche"),
+    avalanche: constructParams("avax"),
     optimism: constructParams("optimism"),
     base: constructParams("base"),
     linea: constructParams("linea"),

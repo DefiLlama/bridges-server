@@ -173,7 +173,7 @@ export const runAdapterToCurrentBlock = async (
         console.warn(`[WARN] Skipping ${bridgeDbName} on ${chain} because blocks are undefined.`);
         return;
       }
-      const step = maxBlocksToQueryByChain[chain] || 400;
+      const step = maxBlocksToQueryByChain[chainContractsAreOn] || maxBlocksToQueryByChain.default;
 
       if (startBlock == null) return;
       try {

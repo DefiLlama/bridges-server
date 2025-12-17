@@ -143,7 +143,7 @@ const constructParams = (chain: string) => {
     eventParams.push(deposit, withdraw, coralDeposit, coralWithdraw, newCoralDeposit, newCoralWithdraw);
 
     // Modify each event parameter to ensure it doesn't generate an origin_chain field
-    eventParams.forEach(param => {
+    eventParams.forEach((param: any) => {
       // Add a custom transform function to each parameter
       param.transform = (log: any) => {
         // If the log has an origin_chain field, remove it
@@ -177,7 +177,7 @@ const adapter: BridgeAdapter = {
   scroll: constructParams("scroll"),
   blast: constructParams("blast"),
   fraxtal: constructParams("fraxtal"),
-  immutable: constructParams("immutable"),
+  immutable: constructParams("imx"),
 };
 
 export default adapter;

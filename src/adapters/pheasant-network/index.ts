@@ -330,7 +330,7 @@ const adapter: BridgeAdapter = {
   fraxtal: constructParams("fraxtal"),
   gnosis: constructParams("xdai"),
   gravity: constructParams("gravity"),
-  "immutable zkevm": constructParams("immutable_zkevm"),
+  "immutable zkevm": constructParams("imx"),
   kava: constructParams("kava"),
   linea: constructParams("linea"),
   lisk: constructParams("lisk"),
