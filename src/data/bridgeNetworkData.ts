@@ -442,6 +442,7 @@ export default [
       "Solana",
       "Sonic",
       "Plume Mainnet",
+      "Monad",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
