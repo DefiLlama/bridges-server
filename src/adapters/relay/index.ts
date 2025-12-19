@@ -320,6 +320,7 @@ export const slugToChainId: Record<string, number> = {
   "proof-of-play": 70700,
   "proof-of-play-boss": 70701,
   katana: 747474,
+  monad: 143,
 };
 
 export const chainIdToSlug: Record<number, string> = Object.fromEntries(
