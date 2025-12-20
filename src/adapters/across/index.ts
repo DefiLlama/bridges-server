@@ -1,366 +1,294 @@
-import { Chain } from "@defillama/sdk/build/general";
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { EventData } from "../../utils/types";
 import { ethers } from "ethers";
+import fetch from "node-fetch";
+const retry = require("async-retry");
 
-/*
-Contracts: https://github.com/across-protocol/contracts-v2/blob/master/deployments/README.md
-https://docs.across.to/v/developer-docs/developers/contract-addresses
+/**
+ * Across Protocol Bridge Adapter
+ * 
+ * Uses the Across Indexer API at https://indexer.across.to
+ * 
+ * For each chain, we query:
+ * 1. Deposits: where originChainId = current chain (isDeposit: true)
+ * 2. Withdrawals: where destinationChainId = current chain (isDeposit: false)
+ *
+ */
 
-For all tokens using 'spokepool' contracts:
-  -deposits via FundsDeposited event
-  -withdrawals via FilledRelay event
-*/
+const BASE_URL = "https://indexer.across.to";
+const MAX_LIMIT = 1000;
+const PAGINATION_SAFETY_LIMIT = 100000;
 
-const contracts = {
-  // Chain id: 1
-  ethereum: {
-    spokePoolv2: "0x4D9079Bb4165aeb4084c526a32695dCfd2F77381",
-    spokePoolv2p5: "0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5",
-  },
-  // Chain id: 10
-  optimism: {
-    spokePoolv2: "0xa420b2d1c0841415A695b81E5B867BCD07Dff8C9",
-    spokePoolv2p5: "0x6f26Bf09B1C792e3228e5467807a900A503c0281",
-  },
-  // Chain id: 56
-  bsc: {
-    spokePoolv2p5: "0x4e8E101924eDE233C13e2D8622DC8aED2872d505",
-  },
-  // Chain id: 130
-  unichain: {
-    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
-  // Chain id: 137
-  polygon: {
-    spokePoolv2: "0x69B5c72837769eF1e7C164Abc6515DcFf217F920",
-    spokePoolv2p5: "0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096",
-  },
-  // Chain id: 232
-  lens: {
-    spokePoolv2p5: "0xe7cb3e167e7475dE1331Cf6E0CEb187654619E12",
-  },
-  // Chain id: 324
-  era: {
-    spokePoolv2p5: "0xE0B015E54d54fc84a6cB9B666099c46adE9335FF",
-  },
-  // Chain id: 480
-  wc: {
-    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
-  // Chain id: 690
-  redstone: {
-    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
-  },
-  // Chain id: 1135
-  lisk: {
-    spokePoolv2p5: "0x9552a0a6624A23B848060AE5901659CDDa1f83f8",
-  },
-  // Chain id: 1868
-  soneium: {
-    spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
-  },
-  // Chain id: 8453
-  base: {
-    spokePoolv2p5: "0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64",
-  },
-  // Chain id: 34443
-  mode: {
-    spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
-  },
-  // Chain id: 41455
-  aleph_zero: {
-    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
-  },
-  // Chain id: 42161
-  arbitrum: {
-    spokePoolv2: "0xB88690461dDbaB6f04Dfad7df66B7725942FEb9C",
-    spokePoolv2p5: "0xe35e9842fceaCA96570B734083f4a58e8F7C5f2A",
-  },
-  // Chain id: 56288
-  boba: {
-    spokePoolv2: "0xBbc6009fEfFc27ce705322832Cb2068F8C1e0A58",
-  },
-  // Chain id: 57073
-  ink: {
-    spokePoolv2p5: "0xeF684C38F94F48775959ECf2012D7E864ffb9dd4",
-  },
-  // Chain id: 59144
-  linea: {
-    spokePoolv2p5: "0x7E63A5f1a8F0B4d0934B2f2327DAED3F6bb2ee75",
-  },
-  // Chain id: 81457
-  blast: {
-    spokePoolv2p5: "0x2D509190Ed0172ba588407D4c2df918F955Cc6E1",
-  },
-  // Chain id: 534352
-  scroll: {
-    spokePoolv2p5: "0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96",
-  },
-  // Chain id: 7777777
-  zora: {
-    spokePoolv2p5: "0x13fDac9F9b4777705db45291bbFF3c972c6d1d97",
-  },
-  monad: {
-    spokePoolv2p5: "0xd2ecb3afe598b746F8123CaE365a598DA831A449",
-  },
-} as const;
+// Chain slug to chain ID mapping
+const chainIdMapping: Record<string, number> = {
+  ethereum: 1,
+  optimism: 10,
+  bsc: 56,
+  unichain: 130,
+  polygon: 137,
+  lens: 232,
+  "zksync era": 324,
+  "world chain": 480,
+  redstone: 690,
+  lisk: 1135,
+  soneium: 1868,
+  base: 8453,
+  mode: 34443,
+  aleph_zero: 41455,
+  arbitrum: 42161,
+  boba: 56288,
+  ink: 57073,
+  linea: 59144,
+  blast: 81457,
+  scroll: 534352,
+  zora: 7777777,
+  monad: 143,
+};
 
-type SupportedChains = keyof typeof contracts;
-
-// Add helper function
-function bytes32ToAddress(bytes32: string) {
-  return ethers.utils.getAddress("0x" + bytes32.slice(26));
+// Response type from the Across Indexer API
+interface AcrossDeposit {
+  depositor: string;
+  recipient: string;
+  inputToken: string;
+  outputToken: string;
+  inputAmount: string;
+  outputAmount: string;
+  originChainId: number;
+  destinationChainId: number | null;
+  depositTxHash: string;
+  depositTxnRef: string;
+  fillTx: string | null;
+  fillTxnRef: string | null;
+  status: string;
+  depositBlockNumber?: number;
+  fillBlockNumber?: number;
+  depositBlockTimestamp?: string;
+  fillBlockTimestamp?: string;
 }
 
-// "Version 3.5" events
-const depositParamsv3p5: PartialContractEventParams = {
-  target: "",
-  topic:
-    "FundsDeposited(bytes32,bytes32,uint256,uint256,uint256,uint256,uint32,uint32,uint32,bytes32,bytes32,bytes32,bytes)",
-  abi: [
-    "event FundsDeposited(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 indexed destinationChainId, uint256 indexed depositId, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 indexed depositor, bytes32 recipient, bytes32 exclusiveRelayer, bytes message)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    to: "recipient",
-    from: "depositor",
-    token: "inputToken",
-    amount: "inputAmount",
-  },
-  argGetters: {
-    to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
-    from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
-    token: (logArgs: any) => bytes32ToAddress(logArgs.inputToken),
-  },
-  isDeposit: true,
+enum ApiErrorType {
+  NETWORK = "network",
+  API_LIMIT = "api_limit",
+  DATA_PARSING = "data_parsing",
+  UNKNOWN = "unknown",
+}
+
+/**
+ * Fetch deposits from the Across Indexer API with retry logic
+ */
+const fetchDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
+  const queryParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    queryParams.append(key, String(value));
+  }
+  
+  const url = `${BASE_URL}/deposits?${queryParams.toString()}`;
+  
+  return retry(
+    async () => {
+      const response = await fetch(url, { timeout: 30000 });
+      if (!response.ok) {
+        const errorType =
+          response.status === 429
+            ? ApiErrorType.API_LIMIT
+            : response.status >= 500
+              ? ApiErrorType.NETWORK
+              : ApiErrorType.UNKNOWN;
+        const error = new Error(
+          `[${errorType}] HTTP ${response.status} fetching deposits`
+        );
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          (error as any).name = "NoRetryError";
+        }
+        throw error;
+      }
+      return response.json() as Promise<AcrossDeposit[]>;
+    },
+    {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 10000,
+      randomize: true,
+      onRetry: (error: any) => {
+        if (error.name === "NoRetryError") throw error;
+        console.log(`[across] Retrying after error: ${error.message}`);
+      },
+    }
+  );
 };
 
-const relaysParamsv3p5: PartialContractEventParams = {
-  target: "",
-  topic:
-    "FilledRelay(bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,uint32,uint32,bytes32,bytes32,bytes32,bytes32,bytes32,(bytes32,bytes32,uint256,uint8))",
-  abi: [
-    "event FilledRelay(bytes32 inputToken, bytes32 outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, bytes32 exclusiveRelayer, bytes32 indexed relayer, bytes32 depositor, bytes32 recipient, bytes32 messageHash, tuple(bytes32 updatedRecipient, bytes32 updatedMessageHash, uint256 updatedOutputAmount, uint8 fillType)  relayExecutionInfo)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    to: "recipient",
-    from: "depositor",
-    token: "outputToken",
-    amount: "outputAmount",
-  },
-  argGetters: {
-    // to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
-    to: (logArgs: any) => bytes32ToAddress(logArgs.recipient),
-    from: (logArgs: any) => bytes32ToAddress(logArgs.depositor),
-    token: (logArgs: any) => bytes32ToAddress(logArgs.outputToken),
-  },
-  isDeposit: false,
+/**
+ * Fetch all deposits with pagination
+ */
+const fetchAllDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
+  const allDeposits: AcrossDeposit[] = [];
+  let skip = 0;
+  
+  while (true) {
+    const deposits = await fetchDeposits({
+      ...params,
+      limit: MAX_LIMIT,
+      skip,
+    });
+    
+    allDeposits.push(...deposits);
+    
+    // If we got less than the limit, we've fetched all pages
+    if (deposits.length < MAX_LIMIT) {
+      break;
+    }
+    
+    skip += MAX_LIMIT;
+    
+    // Safety limit to prevent infinite loops
+    if (skip > PAGINATION_SAFETY_LIMIT) {
+      console.warn(`[across] Hit pagination safety limit at ${skip} records`);
+      break;
+    }
+  }
+  
+  return allDeposits;
 };
 
-// "Version 3" events
-const depositParamsv3: PartialContractEventParams = {
-  target: "",
-  topic:
-    "V3FundsDeposited(address,address,uint256,uint256,uint256,uint32,uint32,uint32,uint32,address,address,address,bytes)",
-  abi: [
-    "event V3FundsDeposited(address inputToken,address outputToken,uint256 inputAmount,uint256 outputAmount,uint256 indexed destinationChainId,uint32 indexed depositId,uint32 quoteTimestamp,uint32 fillDeadline,uint32 exclusivityDeadline,address indexed depositor,address recipient,address exclusiveRelayer,bytes message)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "inputAmount",
-    to: "recipient",
-    from: "depositor",
-    token: "inputToken",
-  },
-  isDeposit: true,
-};
-
-const relaysParamsv3: PartialContractEventParams = {
-  target: "",
-  topic:
-    "FilledV3Relay(address,address,uint256,uint256,uint256,uint256,uint32,uint32,uint32,address,address,address,address,bytes,(address,bytes,uint256,uint8))",
-  abi: [
-    "event FilledV3Relay(address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint32 indexed depositId, uint32 fillDeadline, uint32 exclusivityDeadline, address exclusiveRelayer, address indexed relayer, address depositor, address recipient, bytes message, tuple(address updatedRecipient, bytes updatedMessage, uint256 updatedOutputAmount, uint8 fillType) relayExecutionInfo)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "outputAmount",
-    to: "recipient",
-    from: "depositor",
-    token: "outputToken",
-  },
-  isDeposit: false,
-};
-
-// "Version 2.5" events
-const depositParamsv2p5: PartialContractEventParams = {
-  target: "",
-  topic: "FundsDeposited(uint256,uint256,uint256,int64,uint32,uint32,address,address,address,bytes)",
-  abi: [
-    "event FundsDeposited(uint256 amount, uint256 originChainId, uint256 indexed destinationChainId, int64 relayerFeePct, uint32 indexed depositId, uint32 quoteTimestamp, address originToken, address recipient, address indexed depositor, bytes message)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "amount",
-    to: "recipient",
-    from: "depositor",
-    token: "originToken",
-  },
-  isDeposit: true,
-};
-
-const relaysParamsv2p5: PartialContractEventParams = {
-  target: "",
-  topic:
-    "FilledRelay(uint256,uint256,uint256,uint256,uint256,uint256,int64,int64,uint32,address,address,address,address,bytes,(address,bytes,int64,bool,int256))",
-  abi: [
-    "event FilledRelay(uint256 amount, uint256 totalFilledAmount, uint256 fillAmount, uint256 repaymentChainId, uint256 indexed originChainId, uint256 destinationChainId, int64 relayerFeePct, int64 realizedLpFeePct, uint32 indexed depositId, address destinationToken,address relayer,address indexed depositor, address recipient, bytes message, tuple(address recipient, bytes message, int64 relayerFeePct, bool isSlowRelay, int256 payoutAdjustmentPct) updatableRelayData)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "fillAmount",
-    to: "recipient",
-    from: "depositor",
-    token: "destinationToken",
-  },
-  isDeposit: false,
-};
-
-// "Version 2" events
-const depositParamsv2: PartialContractEventParams = {
-  target: "",
-  topic: "FundsDeposited(uint256,uint256,uint256,uint64,uint32,uint32,address,address,address)",
-  abi: [
-    "event FundsDeposited(uint256 amount, uint256 originChainId, uint256 destinationChainId, uint64 relayerFeePct, uint32 indexed depositId, uint32 quoteTimestamp, address indexed originToken, address recipient, address indexed depositor)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "amount",
-    to: "recipient",
-    from: "depositor",
-    token: "originToken",
-  },
-  isDeposit: true,
-};
-
-const relaysParamsv2: PartialContractEventParams = {
-  target: "",
-  topic:
-    "FilledRelay(uint256,uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint32,address,address,address,address,bool)",
-  abi: [
-    "event FilledRelay(uint256 amount, uint256 totalFilledAmount, uint256 fillAmount, uint256 repaymentChainId, uint256 originChainId, uint256 destinationChainId, uint64 relayerFeePct, uint64 appliedRelayerFeePct, uint64 realizedLpFeePct, uint32 depositId, address destinationToken,address indexed relayer,address indexed depositor, address recipient, bool isSlowRelay)",
-  ],
-  logKeys: {
-    blockNumber: "blockNumber",
-    txHash: "transactionHash",
-  },
-  argKeys: {
-    amount: "fillAmount",
-    to: "recipient",
-    from: "depositor",
-    token: "destinationToken",
-  },
-  isDeposit: false,
-};
-
-const constructParams = (chain: SupportedChains) => {
-  const eventParams: PartialContractEventParams[] = [];
-
-  const chainConfig = contracts[chain];
-
-  // Old Spoke Pools
-  if ("spokePoolv2" in chainConfig) {
-    const finalDepositParamsv2 = {
-      ...depositParamsv2,
-      target: chainConfig.spokePoolv2,
-    };
-    eventParams.push(finalDepositParamsv2);
-
-    const finalRelaysParamsv2 = {
-      ...relaysParamsv2,
-      target: chainConfig.spokePoolv2,
-    };
-    eventParams.push(finalRelaysParamsv2);
+/**
+ * Convert a deposit from the API to the EventData format for a DEPOSIT event
+ * (funds leaving the origin chain)
+ */
+const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
+  if (!deposit.depositTxHash || !deposit.inputToken || !deposit.inputAmount) {
+    return null;
   }
 
-  // New Spoke Pools
-  if ("spokePoolv2p5" in chainConfig) {
-    // "Version 2.5" events
-    const finalDepositParamsv2p5 = {
-      ...depositParamsv2p5,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalDepositParamsv2p5);
-
-    const finalRelaysParamsv2p5 = {
-      ...relaysParamsv2p5,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalRelaysParamsv2p5);
-
-    // "Version 3" events
-    // The v2.5 spoke pools are ProxyContracts that can be upgraded -- Across
-    // reuses these spoke addresses for v3 with the modified events
-    const finalDepositParamsv3 = {
-      ...depositParamsv3,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalDepositParamsv3);
-
-    const finalRelaysParamsv3 = {
-      ...relaysParamsv3,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalRelaysParamsv3);
-
-    // "Version 3.5" events
-    // The v2.5 spoke pools are ProxyContracts that can be upgraded -- Across
-    // reuses these spoke addresses for v3.5 with the modified events
-    const finalDepositParamsv3p5 = {
-      ...depositParamsv3p5,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalDepositParamsv3p5);
-
-    const finalRelaysParamsv3p5 = {
-      ...relaysParamsv3p5,
-      target: chainConfig.spokePoolv2p5,
-    };
-    eventParams.push(finalRelaysParamsv3p5);
+  // Parse the timestamp if available
+  let timestamp: number | undefined;
+  if (deposit.depositBlockTimestamp) {
+    timestamp = new Date(deposit.depositBlockTimestamp).getTime();
   }
 
-  return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("across", chain, fromBlock, toBlock, eventParams);
+  return {
+    blockNumber: deposit.depositBlockNumber || 0,
+    txHash: deposit.depositTxHash,
+    from: deposit.depositor,
+    to: deposit.recipient,
+    token: deposit.inputToken,
+    amount: ethers.BigNumber.from(deposit.inputAmount),
+    isDeposit: true,
+    timestamp,
+  };
+};
+
+/**
+ * Convert a deposit from the API to the EventData format for a WITHDRAWAL event
+ * (funds arriving on the destination chain)
+ */
+const convertToWithdrawalEvent = (deposit: AcrossDeposit): EventData | null => {
+  // Only include filled deposits for withdrawals
+  if (!deposit.fillTx || !deposit.outputToken || !deposit.outputAmount) {
+    return null;
+  }
+
+  // Parse the timestamp if available
+  let timestamp: number | undefined;
+  if (deposit.fillBlockTimestamp) {
+    timestamp = new Date(deposit.fillBlockTimestamp).getTime();
+  }
+
+  return {
+    blockNumber: deposit.fillBlockNumber || 0,
+    txHash: deposit.fillTx,
+    from: deposit.depositor,
+    to: deposit.recipient,
+    token: deposit.outputToken,
+    amount: ethers.BigNumber.from(deposit.outputAmount),
+    isDeposit: false,
+    timestamp,
+  };
+};
+
+/**
+ * Construct the adapter function for a given chain
+ */
+const constructParams = (chain: string) => {
+  const chainId = chainIdMapping[chain];
+  
+  if (!chainId) {
+    throw new Error(`[across] Unknown chain: ${chain}`);
+  }
+
+  return async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+    const events: EventData[] = [];
+
+    // Fetch deposits (origin chain = this chain)
+    // These are funds leaving this chain
+    // TODO: Add startBlock/endBlock filtering once API supports it
+    const depositsParams: Record<string, string | number> = {
+      originChainId: chainId,
+      // startBlock: fromBlock,  // Not yet implemented in API
+      // endBlock: toBlock,      // Not yet implemented in API
+    };
+
+    try {
+      const deposits = await fetchAllDeposits(depositsParams);
+      
+      // Filter by block range client-side until API supports it
+      const filteredDeposits = deposits.filter(d => {
+        const blockNum = d.depositBlockNumber || 0;
+        return blockNum >= fromBlock && blockNum <= toBlock;
+      });
+      
+      for (const deposit of filteredDeposits) {
+        const event = convertToDepositEvent(deposit);
+        if (event) {
+          events.push(event);
+        }
+      }
+      
+      console.log(`[across] Fetched ${deposits.length} deposits from ${chain} (chainId: ${chainId}), ${filteredDeposits.length} in block range ${fromBlock}-${toBlock}`);
+    } catch (error) {
+      console.error(`[across] Error fetching deposits for ${chain}:`, error);
+    }
+
+    // Fetch withdrawals (destination chain = this chain)
+    // These are funds arriving on this chain
+    // TODO: Add startBlock/endBlock filtering once API supports it
+    const withdrawalsParams: Record<string, string | number> = {
+      destinationChainId: chainId,
+      status: "filled", // Only filled deposits have withdrawals
+      // startBlock: fromBlock,  // Not yet implemented in API
+      // endBlock: toBlock,      // Not yet implemented in API
+    };
+
+    try {
+      const withdrawals = await fetchAllDeposits(withdrawalsParams);
+      
+      // Filter by block range client-side until API supports it
+      const filteredWithdrawals = withdrawals.filter(d => {
+        const blockNum = d.fillBlockNumber || 0;
+        return blockNum >= fromBlock && blockNum <= toBlock;
+      });
+      
+      for (const deposit of filteredWithdrawals) {
+        const event = convertToWithdrawalEvent(deposit);
+        if (event) {
+          events.push(event);
+        }
+      }
+      
+      console.log(`[across] Fetched ${withdrawals.length} withdrawals to ${chain} (chainId: ${chainId}), ${filteredWithdrawals.length} in block range ${fromBlock}-${toBlock}`);
+    } catch (error) {
+      console.error(`[across] Error fetching withdrawals for ${chain}:`, error);
+    }
+
+    return events;
+  };
 };
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
   optimism: constructParams("optimism"),
   polygon: constructParams("polygon"),
-  "zksync era": constructParams("era"),
+  "zksync era": constructParams("zksync era"),
   lisk: constructParams("lisk"),
   unichain: constructParams("unichain"),
   base: constructParams("base"),
@@ -370,7 +298,7 @@ const adapter: BridgeAdapter = {
   blast: constructParams("blast"),
   scroll: constructParams("scroll"),
   soneium: constructParams("soneium"),
-  "world chain": constructParams("wc"),
+  "world chain": constructParams("world chain"),
   ink: constructParams("ink"),
   zora: constructParams("zora"),
   redstone: constructParams("redstone"),
