@@ -2515,6 +2515,7 @@ export default [
       "Mantle",
       "Mint",
       "Mode",
+      "Monad",
       "Optimism",
       "Polygon",
       "Polygon Zkevm",
