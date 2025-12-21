@@ -18,10 +18,37 @@ import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
 import { chainMappings } from "../helpers/tokenMappings";
+import { getCache, setCache } from "./cache";
 const axios = require("axios");
 const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
+
+interface AdapterProgress {
+  lastSuccessfulBlock: number;
+  lastUpdated: number;
+}
+
+const getProgressKey = (bridgeDbName: string, chain: string) =>
+  `adapter_progress:${bridgeDbName.toLowerCase()}:${chain.toLowerCase()}`;
+
+const getAdapterProgress = async (bridgeDbName: string, chain: string): Promise<AdapterProgress | null> => {
+  return await getCache(getProgressKey(bridgeDbName, chain));
+};
+
+const PROGRESS_TTL = 60 * 60 * 24 * 7; // 7 days
+
+const setAdapterProgress = async (bridgeDbName: string, chain: string, lastBlock: number): Promise<void> => {
+  const key = getProgressKey(bridgeDbName, chain);
+  const current = await getAdapterProgress(bridgeDbName, chain);
+  if (current?.lastSuccessfulBlock && current.lastSuccessfulBlock >= lastBlock) {
+    return;
+  }
+  await setCache(key, {
+    lastSuccessfulBlock: lastBlock,
+    lastUpdated: Math.floor(Date.now() / 1000)
+  }, PROGRESS_TTL);
+};
 
 // FIX timeout problems throughout functions here
 
@@ -73,15 +100,14 @@ const getBlocksForRunningAdapter = async (
           lastRecordedEndBlock + 1
         }.`
       );
-    } else {
-      // try {
-      //   const lastTs = await getTimestamp(lastRecordedEndBlock, chain);
-      //   const sixHoursBlock = await getBlock(chain, Number((currentTimestamp - SECONDS_IN_DAY / 4).toFixed()));
-      //   lastRecordedEndBlock = currentTimestamp - lastTs > SECONDS_IN_DAY ? sixHoursBlock : lastRecordedEndBlock;
-      // } catch (e: any) {
-      //   console.error("Get start block error");
-      // }
     }
+
+    const cachedProgress = await getAdapterProgress(bridgeDbName, chain);
+    if (cachedProgress?.lastSuccessfulBlock && cachedProgress.lastSuccessfulBlock > lastRecordedEndBlock) {
+      console.log(`[PROGRESS] Using Redis progress for ${bridgeDbName}:${chain}, advancing from block ${lastRecordedEndBlock} to ${cachedProgress.lastSuccessfulBlock}`);
+      lastRecordedEndBlock = cachedProgress.lastSuccessfulBlock;
+    }
+
     startBlock = lastRecordedEndBlock + 1;
     useRecordedBlocks = true;
   } else {
@@ -328,7 +354,7 @@ export const runAllAdaptersTimestampRange = async (
             startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
           }
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict);
+          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict, false);
         } catch (e: any) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
@@ -356,7 +382,8 @@ export const runAdapterHistorical = async (
   chain: string,
   allowNullTxValues: boolean = false,
   throwOnFailedInsert: boolean = true,
-  onConflict: "ignore" | "error" | "upsert" = "error"
+  onConflict: "ignore" | "error" | "upsert" = "error",
+  updateProgress: boolean = true
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
@@ -364,6 +391,19 @@ export const runAdapterHistorical = async (
 
   if (bridgesToSkip.includes(bridgeDbName)) {
     return;
+  }
+
+  const cachedProgress = await getAdapterProgress(bridgeDbName, chain);
+  if (cachedProgress?.lastSuccessfulBlock) {
+    if (cachedProgress.lastSuccessfulBlock >= endBlock) {
+      console.log(`[SKIP] ${bridgeDbName}:${chain} blocks ${startBlock}-${endBlock} already processed (last: ${cachedProgress.lastSuccessfulBlock})`);
+      return;
+    }
+    if (cachedProgress.lastSuccessfulBlock >= startBlock) {
+      const newStart = cachedProgress.lastSuccessfulBlock + 1;
+      console.log(`[PROGRESS] ${bridgeDbName}:${chain} adjusting start from ${startBlock} to ${newStart} (last: ${cachedProgress.lastSuccessfulBlock})`);
+      startBlock = newStart;
+    }
   }
 
   let adapter = adapters[bridgeDbName];
@@ -449,6 +489,9 @@ export const runAdapterHistorical = async (
         );
 
         if (!eventLogs || eventLogs.length === 0) {
+          if (updateProgress) {
+            await setAdapterProgress(bridgeDbName, chain, endBlockForQuery);
+          }
           break;
         }
 
@@ -631,6 +674,9 @@ export const runAdapterHistorical = async (
           { retries: 3, factor: 2 }
         );
 
+        if (updateProgress) {
+          await setAdapterProgress(bridgeDbName, chain, endBlockForQuery);
+        }
         break;
       } catch (e: any) {
         retryCount++;

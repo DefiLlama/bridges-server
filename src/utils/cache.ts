@@ -70,23 +70,45 @@ export const registerCacheHandler = (cacheKey: string, handler: Function) => {
 export const getCacheKey = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(":");
 
 export const getCache = async (key: string): Promise<any> => {
-  const value = await redis.get(key);
-  if (value) {
-    console.log("Cache HIT", key);
-  } else {
-    console.log("Cache MISS", key);
+  if (!redis) {
+    return null;
   }
-  return value ? JSON.parse(value) : null;
+  try {
+    const value = await redis.get(key);
+    if (value) {
+      console.log("Cache HIT", key);
+    } else {
+      console.log("Cache MISS", key);
+    }
+    return value ? JSON.parse(value) : null;
+  } catch (e) {
+    console.error(`[CACHE] getCache error for ${key}:`, e);
+    return null;
+  }
 };
 
 export const setCache = async (key: string, value: any, ttl: number | null = DEFAULT_TTL): Promise<void> => {
-  if (ttl === null) {
-    await redis.set(key, JSON.stringify(value));
-  } else {
-    await redis.set(key, JSON.stringify(value), "EX", ttl);
+  if (!redis) {
+    return;
+  }
+  try {
+    if (ttl === null) {
+      await redis.set(key, JSON.stringify(value));
+    } else {
+      await redis.set(key, JSON.stringify(value), "EX", ttl);
+    }
+  } catch (e) {
+    console.error(`[CACHE] setCache error for ${key}:`, e);
   }
 };
 
 export const deleteCache = async (key: string): Promise<void> => {
-  await redis.del(key);
+  if (!redis) {
+    return;
+  }
+  try {
+    await redis.del(key);
+  } catch (e) {
+    console.error(`[CACHE] deleteCache error for ${key}:`, e);
+  }
 };
