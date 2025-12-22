@@ -44,10 +44,14 @@ const setAdapterProgress = async (bridgeDbName: string, chain: string, lastBlock
   if (current?.lastSuccessfulBlock && current.lastSuccessfulBlock >= lastBlock) {
     return;
   }
-  await setCache(key, {
-    lastSuccessfulBlock: lastBlock,
-    lastUpdated: Math.floor(Date.now() / 1000)
-  }, PROGRESS_TTL);
+  await setCache(
+    key,
+    {
+      lastSuccessfulBlock: lastBlock,
+      lastUpdated: Math.floor(Date.now() / 1000),
+    },
+    PROGRESS_TTL
+  );
 };
 
 // FIX timeout problems throughout functions here
@@ -104,7 +108,9 @@ const getBlocksForRunningAdapter = async (
 
     const cachedProgress = await getAdapterProgress(bridgeDbName, chain);
     if (cachedProgress?.lastSuccessfulBlock && cachedProgress.lastSuccessfulBlock > lastRecordedEndBlock) {
-      console.log(`[PROGRESS] Using Redis progress for ${bridgeDbName}:${chain}, advancing from block ${lastRecordedEndBlock} to ${cachedProgress.lastSuccessfulBlock}`);
+      console.log(
+        `[PROGRESS] Using Redis progress for ${bridgeDbName}:${chain}, advancing from block ${lastRecordedEndBlock} to ${cachedProgress.lastSuccessfulBlock}`
+      );
       lastRecordedEndBlock = cachedProgress.lastSuccessfulBlock;
     }
 
@@ -354,7 +360,16 @@ export const runAllAdaptersTimestampRange = async (
             startBlock = (await lookupBlock(startTimestamp, { chain: chainContractsAreOn as Chain })).block;
             endBlock = (await lookupBlock(endTimestamp, { chain: chainContractsAreOn as Chain })).block;
           }
-          await runAdapterHistorical(startBlock, endBlock, id, chain as Chain, allowNullTxValues, true, onConflict, false);
+          await runAdapterHistorical(
+            startBlock,
+            endBlock,
+            id,
+            chain as Chain,
+            allowNullTxValues,
+            true,
+            onConflict,
+            false
+          );
         } catch (e: any) {
           const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed, skipped. ${JSON.stringify(e)}`;
           await insertErrorRow({
@@ -373,7 +388,17 @@ export const runAllAdaptersTimestampRange = async (
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
 
-const bridgesToSkip = ["wormhole", "layerzero", "hyperlane", "intersoon", "relay", "cashmere", "teleswap", "mayan"];
+const bridgesToSkip = [
+  "wormhole",
+  "layerzero",
+  "hyperlane",
+  "intersoon",
+  "relay",
+  "cashmere",
+  "teleswap",
+  "mayan",
+  "ccip",
+];
 
 export const runAdapterHistorical = async (
   startBlock: number,
@@ -396,12 +421,16 @@ export const runAdapterHistorical = async (
   const cachedProgress = await getAdapterProgress(bridgeDbName, chain);
   if (cachedProgress?.lastSuccessfulBlock) {
     if (cachedProgress.lastSuccessfulBlock >= endBlock) {
-      console.log(`[SKIP] ${bridgeDbName}:${chain} blocks ${startBlock}-${endBlock} already processed (last: ${cachedProgress.lastSuccessfulBlock})`);
+      console.log(
+        `[SKIP] ${bridgeDbName}:${chain} blocks ${startBlock}-${endBlock} already processed (last: ${cachedProgress.lastSuccessfulBlock})`
+      );
       return;
     }
     if (cachedProgress.lastSuccessfulBlock >= startBlock) {
       const newStart = cachedProgress.lastSuccessfulBlock + 1;
-      console.log(`[PROGRESS] ${bridgeDbName}:${chain} adjusting start from ${startBlock} to ${newStart} (last: ${cachedProgress.lastSuccessfulBlock})`);
+      console.log(
+        `[PROGRESS] ${bridgeDbName}:${chain} adjusting start from ${startBlock} to ${newStart} (last: ${cachedProgress.lastSuccessfulBlock})`
+      );
       startBlock = newStart;
     }
   }
