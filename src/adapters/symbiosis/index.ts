@@ -6,11 +6,11 @@ import { contracts } from "./contracts";
 import { AddressZero, CHAIN_ADAPTER_MAP, CHAINS_MAP } from "./constants";
 
 const buildAdapter = (): BridgeAdapter => {
-  const eventParams: PartialContractEventParams[] = [];
-
   const adapter: BridgeAdapter = {}
 
   contracts.forEach(({ chainId, portal, synthesis }) => {
+    const eventParams: PartialContractEventParams[] = [];
+
     if (portal !== AddressZero) {
       eventParams.push({
         ...events.synthesizeRequestParams,

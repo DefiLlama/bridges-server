@@ -244,13 +244,13 @@ const InterchainTransferReceivedParams: PartialContractEventParams = {
 };
 
 const constructParams = (chain: SupportedChains) => {
-  let eventParams: PartialContractEventParams[] = [];
   const axelarContractAddress = axelarChains[chain];
 
   const gatewayAddy = axelarContractAddress.gateway;
   const itsAddy = axelarContractAddress.its;
 
   return async (fromBlock: number, toBlock: number) => {
+    const eventParams: PartialContractEventParams[] = [];
     const assets = await getAssets();
     const itsAssets = await getItsTokens();
 

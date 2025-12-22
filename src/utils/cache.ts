@@ -1,5 +1,6 @@
 import Redis from "ioredis";
 import hash from "object-hash";
+import { PromisePool } from "@supercharge/promise-pool";
 
 const REDIS_URL = process.env.REDIS_URL;
 
@@ -133,11 +134,12 @@ export const getAllGetLogsCounts = async (): Promise<Record<string, number>> => 
     if (keys.length === 0) return {};
 
     const counts: Record<string, number> = {};
-    for (const key of keys) {
+    const pool = PromisePool.withConcurrency(20);
+    await pool.for(keys).process(async (key) => {
       const val = await redis.get(key);
       const parts = key.replace(`getlogs_count:${today}:`, "");
       counts[parts] = parseInt(val || "0", 10);
-    }
+    });
     return counts;
   } catch (e) {
     console.error("[CACHE] getAllGetLogsCounts error:", e);
