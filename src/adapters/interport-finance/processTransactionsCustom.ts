@@ -8,6 +8,7 @@ import { getProvider } from "@defillama/sdk/build/general";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getConnection } from "../../helpers/solana";
 import web3, { Connection, PartiallyDecodedInstruction, PublicKey } from "@solana/web3.js";
+import { incrementGetLogsCount } from "../../utils/cache";
 
 const EventKeyTypes = {
     blockNumber: "number",
@@ -128,7 +129,7 @@ export const getTxDataFromEVMEventLogsCustom = async (
                             chain: overriddenChain,
                         })
                     ).output;
-                    //console.log(logs)
+                    incrementGetLogsCount(adapterName, overriddenChain);
                     break;
                 } catch (e) {
                     if (i >= 4) {

@@ -5,6 +5,7 @@ import { EventData } from "../../utils/types";
 import { BigNumber } from "ethers";
 import { getLogs, GetLogsOptions } from "@defillama/sdk/build/util/logs";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { incrementGetLogsCount } from "../../utils/cache";
 
 const contractsByChain: Record<string, string[]> = {
   ethereum: ["0x7E6f983f93fd12114DaFE0C69d1e55023EE0abCB"],
@@ -44,6 +45,7 @@ const constructParams = (chain: string) => {
               entireLog: true,
             };
             const logs = await getLogs(options);
+            incrementGetLogsCount("train", chain);
             return logs;
           })
         );
@@ -76,6 +78,7 @@ const constructParams = (chain: string) => {
               entireLog: true,
             };
             const logs = await getLogs(options);
+            incrementGetLogsCount("train", chain);
             return logs;
           })
         );
@@ -109,6 +112,7 @@ const constructParams = (chain: string) => {
               entireLog: true,
             };
             const logs = await getLogs(options);
+            incrementGetLogsCount("train", chain);
             return logs;
           })
         );

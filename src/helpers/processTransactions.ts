@@ -6,6 +6,7 @@ import { ContractEventParams, PartialContractEventParams } from "../helpers/brid
 import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
+import { incrementGetLogsCount } from "../utils/cache";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -125,6 +126,7 @@ export const getTxDataFromEVMEventLogs = async (
       let logs = [] as any[];
       for (let i = 0; i < 5; i++) {
         try {
+          incrementGetLogsCount(adapterName, overriddenChain);
           logs = (
             await getLogs({
               target: target!,
@@ -136,7 +138,6 @@ export const getTxDataFromEVMEventLogs = async (
               chain: overriddenChain,
             })
           ).output;
-          //console.log(logs)
           break;
         } catch (e) {
           if (i >= 4) {

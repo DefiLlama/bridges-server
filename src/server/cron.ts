@@ -17,6 +17,7 @@ import runHyperlane from "../handlers/runHyperlane";
 import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
 import { handler as runCashmere } from "../handlers/runCashmere";
+import { getAllGetLogsCounts } from "../utils/cache";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -40,9 +41,20 @@ const withTimeout = async (jobName: string, promise: Promise<any>, timeoutMinute
   }
 };
 
+const printGetLogsSummary = async () => {
+  const counts = await getAllGetLogsCounts();
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  console.log("[GETLOGS SUMMARY] Top callers today:");
+  for (const [key, count] of sorted.slice(0, 30)) {
+    console.log(`  ${key}: ${count} calls`);
+  }
+  console.log(`[GETLOGS SUMMARY] Total unique adapter:chain combinations: ${sorted.length}`);
+};
+
 const exit = () => {
   setTimeout(async () => {
     console.log("[INFO] Timeout! Shutting down. Bye bye!");
+    await printGetLogsSummary();
     await sql.end();
     await querySql.end();
     process.exit(0);

@@ -112,3 +112,35 @@ export const deleteCache = async (key: string): Promise<void> => {
     console.error(`[CACHE] deleteCache error for ${key}:`, e);
   }
 };
+
+const GETLOGS_COUNT_TTL = 60 * 60 * 24 * 7;
+
+export const incrementGetLogsCount = async (adapterName: string, chain: string): Promise<void> => {
+  if (!redis) return;
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const key = `getlogs_count:${today}:${adapterName.toLowerCase()}:${chain.toLowerCase()}`;
+    await redis.incr(key);
+    await redis.expire(key, GETLOGS_COUNT_TTL);
+  } catch (e) {}
+};
+
+export const getAllGetLogsCounts = async (): Promise<Record<string, number>> => {
+  if (!redis) return {};
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const keys = await redis.keys(`getlogs_count:${today}:*`);
+    if (keys.length === 0) return {};
+
+    const counts: Record<string, number> = {};
+    for (const key of keys) {
+      const val = await redis.get(key);
+      const parts = key.replace(`getlogs_count:${today}:`, "");
+      counts[parts] = parseInt(val || "0", 10);
+    }
+    return counts;
+  } catch (e) {
+    console.error("[CACHE] getAllGetLogsCounts error:", e);
+    return {};
+  }
+};
