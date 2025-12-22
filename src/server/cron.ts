@@ -86,7 +86,6 @@ const cron = () => {
   runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume);
   runAfterDelay("aggregateDaily", 5, aggregateDailyVolume);
   runAfterDelay("runAllAdapters", 10, runAllAdapters);
-  runAfterDelay("runAdaptersFromTo", 50, runAdaptersFromTo);
   runEvery("runWormhole", 30, runWormhole);
   runEvery("runMayan", 30, runMayan);
   runEvery("runLayerZero", 30, runLayerZero);
