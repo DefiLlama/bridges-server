@@ -21,7 +21,7 @@ export const runAllAdapters = async () => {
   }
   const shuffledBridgeNetworks = bridgeNetworks.sort(() => Math.random() - 0.5);
 
-  await PromisePool.withConcurrency(20)
+  await PromisePool.withConcurrency(10)
     .for(shuffledBridgeNetworks)
     .process(async (adapter) => {
       try {

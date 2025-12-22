@@ -59,16 +59,6 @@ const runAfterDelay = async (jobName: string, delayMinutes: number, fn: () => Pr
   }, delayMinutes * 60 * 1000);
 };
 
-const runEvery = (jobName: string, minutes: number, fn: () => Promise<void>) => {
-  setInterval(async () => {
-    try {
-      await withTimeout(jobName, fn(), minutes);
-    } catch (error) {
-      console.error(`[ERROR] Job ${jobName} failed:`, error);
-    }
-  }, minutes * 60 * 1000);
-};
-
 const cron = () => {
   if (process.env.NO_CRON) {
     return;
@@ -86,15 +76,15 @@ const cron = () => {
   runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume);
   runAfterDelay("aggregateDaily", 5, aggregateDailyVolume);
   runAfterDelay("runAllAdapters", 10, runAllAdapters);
-  runEvery("runWormhole", 30, runWormhole);
-  runEvery("runMayan", 30, runMayan);
-  runEvery("runLayerZero", 30, runLayerZero);
-  runEvery("runHyperlane", 30, runHyperlane);
-  runEvery("runInterSoon", 30, runInterSoon);
-  runEvery("runRelay", 30, runRelay);
-  runEvery("runCashmere", 30, runCashmere);
-  runEvery("runTeleswap", 30, runTeleswap);
-  runEvery("runCCIP", 30, runCCIP);
+  runAfterDelay("runWormhole", 30, runWormhole);
+  runAfterDelay("runMayan", 30, runMayan);
+  runAfterDelay("runLayerZero", 30, runLayerZero);
+  runAfterDelay("runHyperlane", 30, runHyperlane);
+  runAfterDelay("runInterSoon", 30, runInterSoon);
+  runAfterDelay("runRelay", 30, runRelay);
+  runAfterDelay("runCashmere", 30, runCashmere);
+  runAfterDelay("runTeleswap", 30, runTeleswap);
+  runAfterDelay("runCCIP", 30, runCCIP);
 
   exit();
 };
