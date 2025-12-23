@@ -6,7 +6,6 @@ import { insertTransactionRow, insertConfigRow, insertErrorRow } from "./wrappa/
 import bridgeNetworks from "../data/bridgeNetworkData";
 import adapters from "../adapters";
 import { maxBlocksToQueryByChain, nonBlocksChains } from "./constants";
-import { store } from "./s3";
 import { BridgeAdapter, AsyncBridgeAdapter } from "../helpers/bridgeAdapter.type";
 import { getCurrentUnixTimestamp } from "./date";
 import type { RecordedBlocks } from "./types";
@@ -19,7 +18,6 @@ import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
 import { chainMappings } from "../helpers/tokenMappings";
 import { getCache, setCache } from "./cache";
-const axios = require("axios");
 const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
@@ -60,7 +58,7 @@ const getBlocksForRunningAdapter = async (
   bridgeDbName: string,
   chain: string,
   chainContractsAreOn: string,
-  recordedBlocks: RecordedBlocks
+  recordedBlocks?: Partial<RecordedBlocks>
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
   // todo: fix this line
@@ -132,20 +130,6 @@ export const runAdapterToCurrentBlock = async (
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const { id, bridgeDbName } = bridgeNetwork;
-
-  const recordedBlocksFilename = `blocks-${bridgeDbName}.json`;
-  let recordedBlocks: RecordedBlocks | null = null;
-  try {
-    recordedBlocks = (
-      await retry(
-        async (_bail: any) =>
-          await axios.get(`https://llama-bridges-data.s3.eu-central-1.amazonaws.com/${recordedBlocksFilename}`),
-        { retries: 4, factor: 1 }
-      )
-    ).data as RecordedBlocks;
-  } catch (e: any) {
-    console.warn(`[WARN] No recorded blocks data for ${bridgeDbName}. Error: ${e.message}`);
-  }
 
   let adapter = adapters[bridgeDbName];
   adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
@@ -238,20 +222,6 @@ export const runAdapterToCurrentBlock = async (
       error: `Error in adapter promises: ${e.message}`,
     });
   }
-
-  if (recordedBlocks) {
-    try {
-      await store(recordedBlocksFilename, JSON.stringify(recordedBlocks));
-    } catch (e: any) {
-      console.error(`[ERROR] Failed to store recorded blocks for ${bridgeDbName}. Error: ${e.message}`);
-      await insertErrorRow({
-        ts: currentTimestamp,
-        target_table: "blocks",
-        keyword: "error",
-        error: `Failed to store recorded blocks: ${e.message}`,
-      });
-    }
-  }
 };
 
 export const runAllAdaptersToCurrentBlock = async (
@@ -259,22 +229,6 @@ export const runAllAdaptersToCurrentBlock = async (
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
-  const recordedBlocks = (
-    await retry(
-      async (_bail: any) =>
-        await axios.get("https://llama-bridges-data.s3.eu-central-1.amazonaws.com/recordedBlocks.json")
-    )
-  ).data as RecordedBlocks;
-  if (!recordedBlocks) {
-    const errString = `Unable to retrieve recordedBlocks from s3.`;
-    await insertErrorRow({
-      ts: currentTimestamp,
-      target_table: "transactions",
-      keyword: "critical",
-      error: errString,
-    });
-    throw new Error(errString);
-  }
 
   for (const bridgeNetwork of bridgeNetworks) {
     const { id, bridgeDbName } = bridgeNetwork;
@@ -295,11 +249,11 @@ export const runAllAdaptersToCurrentBlock = async (
       Object.keys(adapter).map(async (chain, i) => {
         await wait(200 * i);
         const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
-        const { startBlock, endBlock, useRecordedBlocks } = await getBlocksForRunningAdapter(
+        const { startBlock, endBlock } = await getBlocksForRunningAdapter(
           bridgeDbName,
           chain,
           chainContractsAreOn,
-          recordedBlocks
+          {}
         );
         if (startBlock == null) return;
         try {
@@ -318,8 +272,6 @@ export const runAllAdaptersToCurrentBlock = async (
     );
     await adapterPromises;
   }
-  // need better error catching
-  await store("recordedBlocks.json", JSON.stringify(recordedBlocks));
   console.log("runAllAdaptersToCurrentBlock successfully ran.");
 };
 

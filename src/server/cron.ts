@@ -1,12 +1,9 @@
-import { CronJob } from "cron";
 import { runAllAdapters } from "./jobs/runAllAdapters";
 import { runAggregateAllAdapters } from "./jobs/runAggregateAllAdapter";
-import { runAdaptersFromTo } from "./jobs/runAdaptersFromTo";
 import { handler as runWormhole } from "../handlers/runWormhole";
 import { handler as runMayan } from "../handlers/runMayan";
 import { aggregateHourlyVolume } from "./jobs/aggregateHourlyVolume";
 import { aggregateDailyVolume } from "./jobs/aggregateDailyVolume";
-import { warmAllCaches } from "./jobs/warmCache";
 import runLayerZero from "../handlers/runLayerZero";
 import { querySql, sql } from "../utils/db";
 import { runAggregateHistoricalByName } from "../utils/aggregate";
@@ -61,10 +58,15 @@ const exit = () => {
   }, 1000 * 60 * 54);
 };
 
-const runAfterDelay = async (jobName: string, delayMinutes: number, fn: () => Promise<void>) => {
+const runAfterDelay = async (
+  jobName: string,
+  delayMinutes: number,
+  fn: () => Promise<void>,
+  timeoutMinutes: number = 5
+) => {
   setTimeout(async () => {
     try {
-      await withTimeout(jobName, fn(), delayMinutes);
+      await withTimeout(jobName, fn(), timeoutMinutes);
     } catch (error) {
       console.error(`[ERROR] Job ${jobName} failed:`, error);
     }
@@ -78,25 +80,23 @@ const cron = () => {
 
   console.log(`[INFO] Starting cron service at ${new Date().toISOString()}`);
 
-  withTimeout("warmCache", warmAllCaches(), 5);
-
   runAfterDelay("aggregateLayerZero", 5, () =>
-    runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero")
+    runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"), 15
   );
 
-  runAfterDelay("aggregateAll", 5, runAggregateAllAdapters);
-  runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume);
-  runAfterDelay("aggregateDaily", 5, aggregateDailyVolume);
-  runAfterDelay("runAllAdapters", 10, runAllAdapters);
-  runAfterDelay("runWormhole", 30, runWormhole);
-  runAfterDelay("runMayan", 30, runMayan);
-  runAfterDelay("runLayerZero", 30, runLayerZero);
-  runAfterDelay("runHyperlane", 30, runHyperlane);
-  runAfterDelay("runInterSoon", 30, runInterSoon);
-  runAfterDelay("runRelay", 30, runRelay);
-  runAfterDelay("runCashmere", 30, runCashmere);
-  runAfterDelay("runTeleswap", 30, runTeleswap);
-  runAfterDelay("runCCIP", 30, runCCIP);
+  runAfterDelay("aggregateAll", 5, runAggregateAllAdapters, 15);
+  runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15);
+  runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15);
+  runAfterDelay("runAllAdapters", 5, runAllAdapters, 40);
+  runAfterDelay("runWormhole", 25, runWormhole, 25);
+  runAfterDelay("runMayan", 25, runMayan, 25);
+  runAfterDelay("runLayerZero", 25, runLayerZero, 25);
+  runAfterDelay("runHyperlane", 25, runHyperlane, 25);
+  runAfterDelay("runInterSoon", 25, runInterSoon, 25);
+  runAfterDelay("runRelay", 25, runRelay, 25);
+  runAfterDelay("runCashmere", 25, runCashmere, 25);
+  runAfterDelay("runTeleswap", 25, runTeleswap, 25);
+  runAfterDelay("runCCIP", 25, runCCIP, 25);
 
   exit();
 };

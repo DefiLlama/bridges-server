@@ -12,8 +12,10 @@ import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
 import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
+import getTopGetLogs from "../handlers/getTopGetLogs";
 import { generateApiCacheKey, registerCacheHandler, warmCache, needsWarming, setCache, getCache } from "../utils/cache";
 import { startHealthMonitoring, getHealthStatus } from "./health";
+import { warmAllCaches } from "./jobs/warmCache";
 
 dotenv.config();
 
@@ -92,12 +94,23 @@ const start = async () => {
     server.get("/netflows/:period", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
     server.post("/run-adapter", lambdaToFastify(runAdapter));
+    server.get("/top-getlogs", lambdaToFastify(getTopGetLogs));
     server.get("/healthcheck", async (_, reply) => {
       const { health, statusCode } = getHealthStatus();
       return reply.code(statusCode).send(health);
     });
 
     startHealthMonitoring();
+
+    setInterval(async () => {
+      try {
+        console.log("[INFO] Starting cache warming cycle");
+        await warmAllCaches();
+        console.log("[INFO] Cache warming cycle completed");
+      } catch (error) {
+        console.error("[ERROR] Cache warming failed:", error);
+      }
+    }, 10 * 60 * 1000);
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
     await server.listen({ port, host: "0.0.0.0" });
