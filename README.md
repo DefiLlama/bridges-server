@@ -113,9 +113,9 @@ syntax: `npm run {script-name} {startTimestamp} {endTimestamp} {bridgeName}`
 
 Example: 
 ```
-npm run adapter arbitrum 1704690402 1704949602
-npm run aggregate arbitrum 1704690402 1704949602
-npm run daily-volume arbitrum 1704690402 1704949602 
+npm run adapter 1704690402 1704949602 arbitrum
+npm run aggregate 1704690402 1704949602 arbitrum
+npm run daily-volume 1704690402 1704949602 arbitrum
 ```
 Returns: 
 ```
