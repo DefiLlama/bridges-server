@@ -2585,7 +2585,6 @@ export default [
       "XDC",
       "TAC",
       "Bittensor",
-      "Hedera",
       "Monad",
       "0G",
       "Morph",

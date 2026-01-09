@@ -258,7 +258,6 @@ const chains = [
   "xdc",
   "tac",
   "bittensor",
-  "hedera",
   "monad",
   "0g",
   "morph",
