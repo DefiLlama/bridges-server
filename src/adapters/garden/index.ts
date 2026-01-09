@@ -8,149 +8,150 @@ import retry from "async-retry";
 import { ethers } from "ethers";
 
 const fetchWithRetry = (url: string): Promise<SwapResponse> => {
-    return retry(
-        async () => {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        },
-        {
-            retries: 3,
-            factor: 2,
-            minTimeout: 1000,
-            maxTimeout: 4000,
-        }
-    );
+  return retry(
+    async () => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    },
+    {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 4000,
+    }
+  );
 };
 
 // Helper function to check if we should process this slot
 const shouldProcessSlot = (slot: number, fromSlot: number, toSlot: number) => {
-    if (slot < fromSlot) {
-        return { process: false, stopPagination: true, reason: "slot_too_old" };
-    }
-    if (slot > toSlot) {
-        return { process: false, stopPagination: false, reason: "slot_too_new" };
-    }
-    return { process: true, stopPagination: false, reason: "slot_in_range" };
+  if (slot < fromSlot) {
+    return { process: false, stopPagination: true, reason: "slot_too_old" };
+  }
+  if (slot > toSlot) {
+    return { process: false, stopPagination: false, reason: "slot_too_new" };
+  }
+  return { process: true, stopPagination: false, reason: "slot_in_range" };
 };
 
 const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
-    const events: SolanaEvent[] = [];
-    let page = 1;
-    let hasMoreData = true;
+  const events: SolanaEvent[] = [];
+  let page = 1;
+  let hasMoreData = true;
 
-    while (hasMoreData) {
-        try {
-            console.log("Fetching page:", page);
-            const url = `https://api.garden.finance/orders/matched?per_page=500&page=${page}`;
-            const response = await fetchWithRetry(url);
+  while (hasMoreData) {
+    try {
+      console.log("Fetching page:", page);
+      const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
+      const response = await fetchWithRetry(url);
 
-            if (response.status !== "Ok" || !response.result.data.length) {
-                hasMoreData = false;
-                break;
-            }
+      if (response.status !== "Ok" || !response.result.data.length) {
+        hasMoreData = false;
+        break;
+      }
 
-            let shouldStopPagination = false;
+      let shouldStopPagination = false;
 
-            for (const swap of response.result.data) {
-                const { source_swap, destination_swap } = swap;
-                const isSourceSolana = source_swap.chain.toLowerCase() === "solana";
-                const isDestinationSolana = destination_swap.chain.toLowerCase() === "solana";
+      for (const swap of response.result.data) {
+        const { source_swap, destination_swap } = swap;
+        const isSourceSolana = source_swap.chain.toLowerCase() === "solana";
+        const isDestinationSolana = destination_swap.chain.toLowerCase() === "solana";
 
-                if (!isSourceSolana && !isDestinationSolana) {
-                    continue; // Skip if neither chain is Solana
-                }
-
-                if (!destination_swap.redeem_tx_hash) {
-                    continue; // Skip if the transaction hash we need is missing
-                }
-
-                const slot = isSourceSolana
-                    ? parseInt(source_swap.initiate_block_number, 10)
-                    : parseInt(destination_swap.redeem_block_number, 10);
-
-                if (isNaN(slot)) {
-                    continue; // Skip if slot is invalid or outside range
-                }
-
-                // Check if we should process this slot
-                const { process, stopPagination, reason } = shouldProcessSlot(
-                    slot,
-                    fromSlot,
-                    toSlot
-                );
-
-                if (stopPagination) {
-                    // We've reached slots older than our range, stop everything
-                    shouldStopPagination = true;
-                    break;
-                }
-
-                if (!process) {
-                    continue; // Skip this slot but continue processing the page
-                }
-
-                const event: SolanaEvent = {
-                    blockNumber: slot,
-                    txHash: isSourceSolana
-                        ? source_swap.initiate_tx_hash
-                        : destination_swap.redeem_tx_hash,
-                    from: isSourceSolana
-                        ? source_swap.initiator
-                        : destination_swap.initiator,
-                    to: isSourceSolana ? source_swap.redeemer : destination_swap.redeemer,
-                    amount: isSourceSolana ? source_swap.amount : destination_swap.amount,
-                    isDeposit: isSourceSolana,
-                    token: isSourceSolana
-                        ? source_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : source_swap.asset
-                        : destination_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : destination_swap.asset,
-                    timestamp: new Date(swap.created_at).getTime(),
-                };
-
-                events.push(event);
-            }
-
-            if (shouldStopPagination) {
-                hasMoreData = false;
-                break;
-            }
-
-            page++;
-        } catch (error) {
-            console.error(`Error fetching page ${page}:`, error);
-            throw error;
+        if (!isSourceSolana && !isDestinationSolana) {
+          continue; // Skip if neither chain is Solana
         }
+
+        if (!destination_swap.redeem_tx_hash) {
+          continue; // Skip if the transaction hash we need is missing
+        }
+
+        const slot = isSourceSolana
+          ? parseInt(source_swap.initiate_block_number, 10)
+          : parseInt(destination_swap.redeem_block_number, 10);
+
+        if (isNaN(slot)) {
+          continue; // Skip if slot is invalid or outside range
+        }
+
+        // Check if we should process this slot
+        const { process, stopPagination, reason } = shouldProcessSlot(
+          slot,
+          fromSlot,
+          toSlot
+        );
+
+        if (stopPagination) {
+          // We've reached slots older than our range, stop everything
+          shouldStopPagination = true;
+          break;
+        }
+
+        if (!process) {
+          continue; // Skip this slot but continue processing the page
+        }
+
+        const event: SolanaEvent = {
+          blockNumber: slot,
+          txHash: isSourceSolana
+            ? source_swap.initiate_tx_hash
+            : destination_swap.redeem_tx_hash,
+          from: isSourceSolana
+            ? source_swap.initiator
+            : destination_swap.initiator,
+          to: isSourceSolana ? source_swap.redeemer : destination_swap.redeemer,
+          amount: isSourceSolana ? source_swap.amount : destination_swap.amount,
+          isDeposit: isSourceSolana,
+          token: isSourceSolana
+            ? source_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : source_swap.asset
+            : destination_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : destination_swap.asset,
+          timestamp: new Date(swap.created_at).getTime(),
+        };
+
+        events.push(event);
+      }
+
+      if (shouldStopPagination) {
+        hasMoreData = false;
+        break;
+      }
+
+      page++;
+    } catch (error) {
+      console.error(`Error fetching page ${page}:`, error);
+      throw error;
     }
-    
-    // Transform to match DeFiLlama expected format
-    return events.map((event) => ({
-        blockNumber: event.blockNumber,
-        txHash: event.txHash,
-        from: event.from,
-        to: event.to,
-        token: event.token,
-        amount: ethers.BigNumber.from(event.amount), 
-        isDeposit: event.isDeposit,
-        timestamp: event.timestamp,
-    }));
+  }
+
+  // Transform to match DeFiLlama expected format
+  return events.map((event) => ({
+    blockNumber: event.blockNumber,
+    txHash: event.txHash,
+    from: event.from,
+    to: event.to,
+    token: event.token,
+    amount: ethers.BigNumber.from(event.amount),
+    isDeposit: event.isDeposit,
+    timestamp: event.timestamp,
+  }));
 };
 
 const contractAddresses = {
   ethereum: {
-    WBTC: "0x795dcb58d1cd4789169d5f938ea05e17eceb68ca",
+    WBTC: "0xD781a2abB3FCB9fC0D1Dd85697c237d06b75fe95",
+    USDT: "0xCF5E5e28848cFe779f7Fb711C57857Cb3b144A19",
     USDC: "0xd8a6e3fca403d79b6ad6216b60527f51cc967d39",
-    cbBTC: "0xeae7721d779276eb0f5837e2fe260118724a2ba4",
+    cbBTC: "0xe35d025d0f0d9492db4700FE8646f7F89150eC04",
     iBTC: "0xDC74a45e86DEdf1fF7c6dac77e0c2F082f9E4F72",
   },
   arbitrum: {
-    WBTC: "0x6b6303fab8ec7232b4f2a7b9fa58e5216f608fcb",
+    WBTC: "0xb5AE9785349186069C48794a763DB39EC756B1cF",
     USDC: "0xeae7721d779276eb0f5837e2fe260118724a2ba4",
     iBTC: "0xdc74a45e86dedf1ff7c6dac77e0c2f082f9e4f72",
   },
   base: {
-    cbBTC: "0xeae7721d779276eb0f5837e2fe260118724a2ba4",
+    cbBTC: "0xe35d025d0f0d9492db4700FE8646f7F89150eC04",
     USDC: "0xd8a6e3fca403d79b6ad6216b60527f51cc967d39",
   },
   unichain: {
@@ -163,8 +164,8 @@ const contractAddresses = {
   hyperliquid: {
     uBTC: "0x39f3294352208905fc6ebf033954E6c6455CdB4C",
   },
-  corn : {
-    BTCN : "0xeaE7721d779276eb0f5837e2fE260118724a2Ba4"
+  corn: {
+    BTCN: "0xeaE7721d779276eb0f5837e2fE260118724a2Ba4"
   },
   monad: {
     MON: "0xE413743B51f3cC8b3ac24addf50D18fa138cB0Bb",
@@ -174,6 +175,7 @@ const contractAddresses = {
 const tokenAddresses = {
   ethereum: {
     WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     cbBTC: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
     iBTC: "0x20157DBAbb84e3BBFE68C349d0d44E48AE7B5AD2",
@@ -197,8 +199,8 @@ const tokenAddresses = {
   hyperliquid: {
     uBTC: "0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463",
   },
-  corn : {
-    BTCN : "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+  corn: {
+    BTCN: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
   },
   monad: {
     MON: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -230,8 +232,8 @@ const adapter: BridgeAdapter = {
   unichain: constructParams("unichain"),
   berachain: constructParams("berachain"),
   hyperliquid: constructParams("hyperliquid"),
-  corn : constructParams("corn"),
-  solana : getSolanaEvents,
+  corn: constructParams("corn"),
+  solana: getSolanaEvents,
   monad: constructParams("monad"),
 };
 
