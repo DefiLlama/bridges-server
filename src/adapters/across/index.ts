@@ -221,11 +221,10 @@ const constructParams = (chain: string) => {
 
     // Fetch deposits (origin chain = this chain)
     // These are funds leaving this chain
-    // TODO: Add startBlock/endBlock filtering once API supports it
     const depositsParams: Record<string, string | number> = {
       originChainId: chainId,
-      // startBlock: fromBlock,  // Not yet implemented in API
-      // endBlock: toBlock,      // Not yet implemented in API
+      startBlock: fromBlock,
+      endBlock: toBlock,
     };
 
     try {
@@ -251,31 +250,24 @@ const constructParams = (chain: string) => {
 
     // Fetch withdrawals (destination chain = this chain)
     // These are funds arriving on this chain
-    // TODO: Add startBlock/endBlock filtering once API supports it
     const withdrawalsParams: Record<string, string | number> = {
       destinationChainId: chainId,
       status: "filled", // Only filled deposits have withdrawals
-      // startBlock: fromBlock,  // Not yet implemented in API
-      // endBlock: toBlock,      // Not yet implemented in API
+      startFillBlock: fromBlock,
+      endFillBlock: toBlock,
     };
 
     try {
       const withdrawals = await fetchAllDeposits(withdrawalsParams);
       
-      // Filter by block range client-side until API supports it
-      const filteredWithdrawals = withdrawals.filter(d => {
-        const blockNum = d.fillBlockNumber || 0;
-        return blockNum >= fromBlock && blockNum <= toBlock;
-      });
-      
-      for (const deposit of filteredWithdrawals) {
+      for (const deposit of withdrawals) {
         const event = convertToWithdrawalEvent(deposit);
         if (event) {
           events.push(event);
         }
       }
       
-      console.log(`[across] Fetched ${withdrawals.length} withdrawals to ${chain} (chainId: ${chainId}), ${filteredWithdrawals.length} in block range ${fromBlock}-${toBlock}`);
+      console.log(`[across] Fetched ${withdrawals.length} withdrawals to ${chain} (chainId: ${chainId}) in block range ${fromBlock}-${toBlock}`);
     } catch (error) {
       console.error(`[across] Error fetching withdrawals for ${chain}:`, error);
     }
