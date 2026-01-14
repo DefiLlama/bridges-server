@@ -7,7 +7,7 @@ const retry = require("async-retry");
 /**
  * Across Protocol Bridge Adapter
  * 
- * Uses the Across Indexer API at https://indexer.across.to
+ * Uses the Across Indexer API at https://app.across.to/api/
  * 
  * For each chain, we query:
  * 1. Deposits: where originChainId = current chain (isDeposit: true)
@@ -15,7 +15,7 @@ const retry = require("async-retry");
  *
  */
 
-const BASE_URL = "https://indexer.across.to";
+const BASE_URL = "https://app.across.to/api";
 const MAX_LIMIT = 1000;
 const PAGINATION_SAFETY_LIMIT = 100000;
 
@@ -36,11 +36,13 @@ const chainIdMapping: Record<string, number> = {
   mode: 34443,
   aleph_zero: 41455,
   arbitrum: 42161,
-  boba: 56288,
+  boba: 288,
   ink: 57073,
   linea: 59144,
   blast: 81457,
+  plasma: 9745,
   scroll: 534352,
+  solana: 34268394551451,
   zora: 7777777,
   monad: 143,
 };
@@ -295,6 +297,9 @@ const adapter: BridgeAdapter = {
   zora: constructParams("zora"),
   redstone: constructParams("redstone"),
   monad: constructParams("monad"),
+  boba: constructParams("boba"),
+  plasma: constructParams("plasma"),
+  solana: constructParams("solana"),
 };
 
 export default adapter;
