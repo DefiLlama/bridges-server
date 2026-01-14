@@ -45,6 +45,7 @@ const chainIdMapping: Record<string, number> = {
   solana: 34268394551451,
   zora: 7777777,
   monad: 143,
+  hyperevm: 999,
 };
 
 // Response type from the Across Indexer API
@@ -300,6 +301,7 @@ const adapter: BridgeAdapter = {
   boba: constructParams("boba"),
   plasma: constructParams("plasma"),
   solana: constructParams("solana"),
+  hyperevm: constructParams("hyperevm"),
 };
 
 export default adapter;
