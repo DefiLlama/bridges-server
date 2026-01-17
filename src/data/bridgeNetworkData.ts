@@ -2685,6 +2685,7 @@ export default [
       "rootstock",
       "xlayer",
       "plasma",
+      "monad",
     ],
   },
   {
