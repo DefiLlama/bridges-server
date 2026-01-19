@@ -2401,6 +2401,7 @@ export default [
       "Hyperliquid",
       "Ink",
       "Mantle",
+      "MegaETH",
       "Monad",
       "Optimism",
       "Plasma",

@@ -46,6 +46,10 @@ const deployments = {
     oapp: "0xcb768e263FB1C62214E7cab4AA8d036D76dc59CC",
     token: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
   }],
+  megaeth: [{
+    oapp: "0x9151434b16b9763660705744891fA906F660EcC5",
+    token: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+  }],
   monad: [{
     oapp: "0x9151434b16b9763660705744891fA906F660EcC5",
     token: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
