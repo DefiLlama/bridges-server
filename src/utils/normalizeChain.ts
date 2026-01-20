@@ -1168,6 +1168,13 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 988,
   },
+  MegaETH: {
+    geckoId: "megaeth",
+    symbol: "MEGA",
+    cmcId: "38770",
+    categories: ["EVM"],
+    chainId: 4326,
+  },
 } as {
   [chain: string]: {
     geckoId: string | null;
