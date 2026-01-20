@@ -35,17 +35,47 @@ const parseUsdcAmount = (amountUsdc?: number): ethers.BigNumber => {
   return ethers.BigNumber.from(Math.round(usdAmount));
 };
 
+// Native token addresses (wrapped versions for tracking)
+const nativeAddresses: Record<string, string> = {
+  ethereum: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
+  arbitrum: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", // WETH
+  optimism: "0x4200000000000000000000000000000000000006", // WETH
+  base: "0x4200000000000000000000000000000000000006",     // WETH
+  polygon: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",  // WMATIC/WPOL
+  avax: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",     // WAVAX
+  bsc: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",      // WBNB
+  xlayer: "0xe538905cf8410324e03A5A23C1c177a474D59b2b",   // WOKB
+  monad: "0x0000000000000000000000000000000000000000",    // MON (placeholder)
+  plasma: "0x0000000000000000000000000000000000000000",   // XPL (placeholder)
+  berachain: "0x6969696969696969696969696969696969696969", // WBERA (placeholder)
+  solana: "So11111111111111111111111111111111111111112",   // wSOL
+  sui: "0x2::sui::SUI",                                   // SUI
+  aptos: "0x1::aptos_coin::AptosCoin",                    // APT
+};
+
 const getTokenAddress = (domain: number): string => {
+  const chain = domainToChain[domain];
+  
+  // Circle CCTP (0-29)
   if (domain < 30_000) {
-    return usdcAddresses[domainToChain[domain]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
-  } else if (domain < 500_000) {
-    return usdt0Addresses[domainToChain[domain]] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
-  } else {
+    return usdcAddresses[chain] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
+  }
+  // LayerZero (30000-499999)
+  else if (domain < 500_000) {
+    return usdt0Addresses[chain] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
+  }
+  // NEAR Intents Stablecoins (500000-599999)
+  else if (domain < 600_000) {
+    // Odd = USDC, Even = USDT
     if (domain % 2 === 1) {
-      return usdcAddresses[domainToChain[domain]] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
+      return usdcAddresses[chain] || "0xA0b86a33E6441986C3103F5f1b26E86d1e5F0d22"; // eth usdc as default
     } else {
-      return usdtAddresses[domainToChain[domain]] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
+      return usdtAddresses[chain] || "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // eth usdt as default
     }
+  }
+  // NEAR Intents Native Assets (600000+)
+  else {
+    return nativeAddresses[chain] || "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"; // WETH as default
   }
 };
 
