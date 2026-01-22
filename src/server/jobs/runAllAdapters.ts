@@ -1,6 +1,6 @@
 import bridgeNetworks from "../../data/bridgeNetworkData";
 import { sql } from "../../utils/db";
-import { runAdapterToCurrentBlock } from "../../utils/adapter";
+import { runAdapterToCurrentBlock, shouldSkipBridge } from "../../utils/adapter";
 import { PromisePool } from "@supercharge/promise-pool";
 
 export const runAllAdapters = async () => {
@@ -25,6 +25,9 @@ export const runAllAdapters = async () => {
     .for(shuffledBridgeNetworks)
     .process(async (adapter) => {
       try {
+        if (shouldSkipBridge(adapter.bridgeDbName)) {
+          return;
+        }
         console.log("Starting adapter", adapter.bridgeDbName);
         await runAdapterToCurrentBlock(adapter, true, "upsert", lastRecordedBlocks[0].result);
       } catch (e) {

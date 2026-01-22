@@ -22,6 +22,20 @@ const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
 
+export const bridgesToSkip = [
+  "wormhole",
+  "layerzero",
+  "hyperlane",
+  "intersoon",
+  "relay",
+  "cashmere",
+  "teleswap",
+  "mayan",
+  "ccip",
+];
+
+export const shouldSkipBridge = (bridgeDbName: string) => bridgesToSkip.includes(bridgeDbName);
+
 interface AdapterProgress {
   lastSuccessfulBlock: number;
   lastUpdated: number;
@@ -340,18 +354,6 @@ export const runAllAdaptersTimestampRange = async (
   console.log("runAllAdaptersTimestampRange successfully ran.");
 };
 
-const bridgesToSkip = [
-  "wormhole",
-  "layerzero",
-  "hyperlane",
-  "intersoon",
-  "relay",
-  "cashmere",
-  "teleswap",
-  "mayan",
-  "ccip",
-];
-
 export const runAdapterHistorical = async (
   startBlock: number,
   endBlock: number,
@@ -366,7 +368,7 @@ export const runAdapterHistorical = async (
   const bridgeNetwork = bridgeNetworks.filter((bridgeNetwork) => bridgeNetwork.id === bridgeNetworkId)[0];
   const { bridgeDbName, displayName } = bridgeNetwork;
 
-  if (bridgesToSkip.includes(bridgeDbName)) {
+  if (shouldSkipBridge(bridgeDbName)) {
     return;
   }
 
