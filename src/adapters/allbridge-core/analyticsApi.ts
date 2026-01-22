@@ -29,7 +29,7 @@ export async function getEventsFromAnalyticsApi(
     );
   } catch (e) {
     console.error(`Error fetching ${chainCode} events`, e);
-    return [];
+    throw new Error(`Error fetching ${chainCode} events`);
   }
 
   return response.data.map((event) => {

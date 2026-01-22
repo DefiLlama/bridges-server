@@ -1,6 +1,7 @@
 import { getLatestBlock as getLatestBlockSdk, lookupBlock as lookupBlockSdk } from "@defillama/sdk/build/util";
 import { getClient } from "../helpers/sui";
 import { tronGetLatestBlock } from "../helpers/tron";
+import { getLatestLedger } from "../helpers/stellar";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
@@ -26,6 +27,8 @@ export async function getLatestBlockNumber(chain: string, bridge?: string): Prom
     return Number(await client.getLatestCheckpointSequenceNumber());
   } else if (chain === "solana") {
     return await getLatestSlot();
+  } else if (chain === "stellar") {
+    return (await getLatestLedger()).number;
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
   } else if (bridge && bridge === "ibc") {
@@ -79,6 +82,8 @@ export async function getLatestBlock(chain: string, bridge?: string): Promise<{ 
       throw new Error("Failed to get block time");
     }
     return { number, timestamp };
+  } else if (chain === "stellar") {
+    return await getLatestLedger();
   } else if (bridge && bridge === "ibc") {
     return await getLatestBlockForZoneFromMoz(chain);
   }

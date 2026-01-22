@@ -22,6 +22,7 @@ export const maxBlocksToQueryByChain = {
   klaytn: 6000,
   sui: 2400,
   solana: 6000,
+  stellar: 1000,
   taiko: 100,
   sonic: 10000,
   base: 3000,
