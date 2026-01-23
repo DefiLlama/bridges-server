@@ -93,27 +93,34 @@ export const getDailyBridgeVolume = async (
   historicalDailyData.map((dailyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       dailyData;
-    if (isNaN(parseFloat(total_deposited_usd)) || !isFinite(parseFloat(total_deposited_usd))) {
+    const depositUSD = parseFloat(total_deposited_usd);
+    const withdrawUSD = parseFloat(total_withdrawn_usd);
+    if (isNaN(depositUSD) || !isFinite(depositUSD)) {
       return;
     }
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
     historicalDailySums[timestamp].depositUSD =
-      (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_deposited_usd);
+      (historicalDailySums[timestamp].depositUSD ?? 0) + depositUSD;
     historicalDailySums[timestamp].withdrawUSD =
-      (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      (historicalDailySums[timestamp].withdrawUSD ?? 0) + (isFinite(withdrawUSD) ? withdrawUSD : 0);
     historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_deposit_txs;
     historicalDailySums[timestamp].withdrawTxs =
       (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
   });
   sourceChainsHistoricalDailyData.map((dailyData) => {
     const { ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = dailyData;
+    const depositUSD = parseFloat(total_deposited_usd);
+    const withdrawUSD = parseFloat(total_withdrawn_usd);
+    if (isNaN(withdrawUSD) || !isFinite(withdrawUSD)) {
+      return;
+    }
     const timestamp = convertToUnixTimestamp(ts);
     historicalDailySums[timestamp] = historicalDailySums[timestamp] || {};
     historicalDailySums[timestamp].depositUSD =
-      (historicalDailySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      (historicalDailySums[timestamp].depositUSD ?? 0) + withdrawUSD;
     historicalDailySums[timestamp].withdrawUSD =
-      (historicalDailySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+      (historicalDailySums[timestamp].withdrawUSD ?? 0) + (isFinite(depositUSD) ? depositUSD : 0);
     historicalDailySums[timestamp].depositTxs = (historicalDailySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
     historicalDailySums[timestamp].withdrawTxs = (historicalDailySums[timestamp].withdrawTxs ?? 0) + total_deposit_txs;
   });
@@ -183,27 +190,34 @@ export const getHourlyBridgeVolume = async (
   historicalHourlyData.map((hourlyData) => {
     const { bridge_id, ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } =
       hourlyData;
+    const depositUSD = parseFloat(total_deposited_usd);
+    const withdrawUSD = parseFloat(total_withdrawn_usd);
+    if (isNaN(depositUSD) || !isFinite(depositUSD)) {
+      return;
+    }
     const timestamp = convertToUnixTimestamp(ts);
     historicalHourlySums[timestamp] = historicalHourlySums[timestamp] || {};
     historicalHourlySums[timestamp].depositUSD =
-      (historicalHourlySums[timestamp].depositUSD ?? 0) + parseFloat(total_deposited_usd);
+      (historicalHourlySums[timestamp].depositUSD ?? 0) + depositUSD;
     historicalHourlySums[timestamp].withdrawUSD =
-      (historicalHourlySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      (historicalHourlySums[timestamp].withdrawUSD ?? 0) + (isFinite(withdrawUSD) ? withdrawUSD : 0);
     historicalHourlySums[timestamp].depositTxs = (historicalHourlySums[timestamp].depositTxs ?? 0) + total_deposit_txs;
     historicalHourlySums[timestamp].withdrawTxs =
       (historicalHourlySums[timestamp].withdrawTxs ?? 0) + total_withdrawal_txs;
-
-    // doubling volume for chains with a destination chain (those that only have 1 aggregated entry for entire bridgeNetwork)
   });
-  // the deposits and withdrawals are swapped here
   sourceChainsHourlyData.map((hourlyData) => {
     const { ts, total_deposited_usd, total_withdrawn_usd, total_deposit_txs, total_withdrawal_txs } = hourlyData;
+    const depositUSD = parseFloat(total_deposited_usd);
+    const withdrawUSD = parseFloat(total_withdrawn_usd);
+    if (isNaN(withdrawUSD) || !isFinite(withdrawUSD)) {
+      return;
+    }
     const timestamp = convertToUnixTimestamp(ts);
     historicalHourlySums[timestamp] = historicalHourlySums[timestamp] || {};
     historicalHourlySums[timestamp].depositUSD =
-      (historicalHourlySums[timestamp].depositUSD ?? 0) + parseFloat(total_withdrawn_usd);
+      (historicalHourlySums[timestamp].depositUSD ?? 0) + withdrawUSD;
     historicalHourlySums[timestamp].withdrawUSD =
-      (historicalHourlySums[timestamp].withdrawUSD ?? 0) + parseFloat(total_deposited_usd);
+      (historicalHourlySums[timestamp].withdrawUSD ?? 0) + (isFinite(depositUSD) ? depositUSD : 0);
     historicalHourlySums[timestamp].depositTxs =
       (historicalHourlySums[timestamp].depositTxs ?? 0) + total_withdrawal_txs;
     historicalHourlySums[timestamp].withdrawTxs =

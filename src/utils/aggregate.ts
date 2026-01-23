@@ -354,17 +354,25 @@ export const aggregateData = async (
         }
         if (priceData && (priceData.confidence === undefined || priceData.confidence >= defaultConfidenceThreshold)) {
           const { price, decimals } = priceData;
-          let bnAmount = null;
-          // mayan adapter stores amount already formatted as decimals
-          if (bridgeDbName === "mayan") {
-            bnAmount = rawBnAmount;
-          } else if (transformedDecimals) {
-            bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
+          if (transformedDecimals === null && decimals === undefined) {
+            console.log(`Skipping token ${tokenKey} - no decimals available`);
           } else {
-            bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
-          }
+            let bnAmount = null;
+            if (bridgeDbName === "mayan") {
+              bnAmount = rawBnAmount;
+            } else if (transformedDecimals) {
+              bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
+            } else {
+              bnAmount = rawBnAmount.dividedBy(10 ** Number(decimals));
+            }
 
-          usdValue = bnAmount.multipliedBy(Number(price)).toNumber();
+            const calculatedUsdValue = bnAmount.multipliedBy(Number(price)).toNumber();
+            if (!isNaN(calculatedUsdValue) && isFinite(calculatedUsdValue)) {
+              usdValue = calculatedUsdValue;
+            } else {
+              console.error(`Invalid calculated USD value for tx id ${id}: ${calculatedUsdValue}, price: ${price}, decimals: ${decimals}`);
+            }
+          }
         }
       }
 
@@ -520,6 +528,20 @@ export const aggregateData = async (
   // console.log(totalDepositTxs);
   // console.log(totalWithdrawalTxs);
 
+  const safeDepositedUsd = isNaN(totalDepositedUsd) || !isFinite(totalDepositedUsd) ? 0 : totalDepositedUsd;
+  const safeWithdrawnUsd = isNaN(totalWithdrawnUsd) || !isFinite(totalWithdrawnUsd) ? 0 : totalWithdrawnUsd;
+
+  if (safeDepositedUsd !== totalDepositedUsd || safeWithdrawnUsd !== totalWithdrawnUsd) {
+    const errString = `NaN/Infinity detected for ${bridgeID}: deposited=${totalDepositedUsd}, withdrawn=${totalWithdrawnUsd}`;
+    await insertErrorRow({
+      ts: currentTimestamp,
+      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
+      keyword: "data",
+      error: errString,
+    });
+    console.error(errString);
+  }
+
   if (hourly) {
     try {
       await sql.begin(async (sql) => {
@@ -528,8 +550,8 @@ export const aggregateData = async (
           ts: startTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
-          total_deposited_usd: totalDepositedUsd,
-          total_withdrawn_usd: totalWithdrawnUsd,
+          total_deposited_usd: safeDepositedUsd,
+          total_withdrawn_usd: safeWithdrawnUsd,
           total_deposit_txs: totalDepositTxs,
           total_withdrawal_txs: totalWithdrawalTxs,
           total_address_deposited: totalAddressDeposited,
@@ -554,8 +576,8 @@ export const aggregateData = async (
           ts: startTimestamp * 1000,
           total_tokens_deposited: totalTokensDeposited,
           total_tokens_withdrawn: totalTokensWithdrawn,
-          total_deposited_usd: totalDepositedUsd,
-          total_withdrawn_usd: totalWithdrawnUsd,
+          total_deposited_usd: safeDepositedUsd,
+          total_withdrawn_usd: safeWithdrawnUsd,
           total_deposit_txs: totalDepositTxs,
           total_withdrawal_txs: totalWithdrawalTxs,
           total_address_deposited: totalAddressDeposited,
@@ -563,7 +585,7 @@ export const aggregateData = async (
         });
       });
     } catch (e) {
-      const errString = `Failed inserting hourly aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
+      const errString = `Failed inserting daily aggregated row for bridge ${bridgeID} for timestamp ${startTimestamp}.`;
       await insertErrorRow({
         ts: currentTimestamp,
         target_table: hourly ? "hourly_aggregated" : "daily_aggregated",

@@ -28,14 +28,20 @@ const getBridges = async () => {
         if (lastMonthDailyVolume?.length) {
           const lastDailyVolumeRecord = lastMonthDailyVolume[lastMonthDailyVolume.length - 1];
           lastDailyTs = parseInt(lastDailyVolumeRecord.date);
-          lastDailyVolume = (lastDailyVolumeRecord.depositUSD + lastDailyVolumeRecord.withdrawUSD) / 2;
+          const lastDeposit = Number.isFinite(lastDailyVolumeRecord.depositUSD) ? lastDailyVolumeRecord.depositUSD : 0;
+          const lastWithdraw = Number.isFinite(lastDailyVolumeRecord.withdrawUSD) ? lastDailyVolumeRecord.withdrawUSD : 0;
+          lastDailyVolume = (lastDeposit + lastWithdraw) / 2;
 
           const dayBeforeLastVolumeRecord = lastMonthDailyVolume[lastMonthDailyVolume.length - 2];
           if (dayBeforeLastVolumeRecord && Object.keys(dayBeforeLastVolumeRecord).length > 0) {
-            dayBeforeLastVolume = (dayBeforeLastVolumeRecord.depositUSD + dayBeforeLastVolumeRecord?.withdrawUSD) / 2;
+            const prevDeposit = Number.isFinite(dayBeforeLastVolumeRecord.depositUSD) ? dayBeforeLastVolumeRecord.depositUSD : 0;
+            const prevWithdraw = Number.isFinite(dayBeforeLastVolumeRecord.withdrawUSD) ? dayBeforeLastVolumeRecord.withdrawUSD : 0;
+            dayBeforeLastVolume = (prevDeposit + prevWithdraw) / 2;
           }
           lastMonthDailyVolume.map((entry: any, i: number) => {
-            const volume = (entry.depositUSD + entry.withdrawUSD) / 2;
+            const depositUSD = Number.isFinite(entry.depositUSD) ? entry.depositUSD : 0;
+            const withdrawUSD = Number.isFinite(entry.withdrawUSD) ? entry.withdrawUSD : 0;
+            const volume = (depositUSD + withdrawUSD) / 2;
             monthlyVolume += volume;
             if (i > lastMonthDailyVolume.length - 8) {
               weeklyVolume += volume;
