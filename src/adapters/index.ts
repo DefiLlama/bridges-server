@@ -101,6 +101,7 @@ import kaspabridge from "./kaspabridge";
 import hyperbridge from "./hyperbridge";
 import starkgate from "./starkgate";
 import onesec from "./1sec";
+import firefly from "./firefly";
 
 export default {
   polygon,
@@ -205,6 +206,7 @@ export default {
   hyperbridge,
   starkgate,
   "1sec": onesec,
+  firefly
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
