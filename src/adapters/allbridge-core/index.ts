@@ -8,6 +8,7 @@ import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { getTxDataFromTronEventLogs } from './eventParsing';
 import { getEventsFromAnalyticsApi } from './analyticsApi';
 import { getClient as getSuiClient } from '../../helpers/sui';
+import { getTimestampByLedgerNumber } from '../../helpers/stellar';
 
 const adapterName = "allbridge-core";
 
@@ -138,6 +139,12 @@ const getSuiEvents = async (fromCheckpointNumber: number, toCheckpointNumber: nu
   return eventData.map((data) => ({ ...data, token: suiFullTokenAddressMap[data.token] ?? data.token }));
 };
 
+const getStellarEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+  const fromTimestamp = await getTimestampByLedgerNumber(fromBlock);
+  const toTimestamp = await getTimestampByLedgerNumber(toBlock);
+  return await getEventsFromAnalyticsApi('SRB', fromBlock, fromTimestamp * 1000, toBlock, toTimestamp * 1000);
+};
+
 function constructTronParams() {
   const chain = "tron";
   const eventParams: any[] = [];
@@ -206,6 +213,7 @@ const adapter: BridgeAdapter = {
   unichain: constructParams("unichain"),
   solana: getSolanaEvents,
   sui: getSuiEvents,
+  stellar: getStellarEvents,
 };
 
 export default adapter;
