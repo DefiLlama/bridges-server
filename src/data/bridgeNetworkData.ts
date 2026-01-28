@@ -2692,7 +2692,7 @@ export default [
   {
     id: 99,
     defillamaId: "5925",
-    displayName: "Mayan",
+    displayName: "kaspabridge",
     bridgeDbName: "mayan",
     slug: "mayan",
     iconLink: "icons:mayan",
@@ -2786,7 +2786,7 @@ export default [
   {
     id: 106,
     displayName: "Firefly Labs",
-    bridgeDbName: "fireflylabs",
+    bridgeDbName: "firefly",
     slug: "firefly-labs",
     iconLink: "icons:firefly-labs",
     largeTxThreshold: 10000,
