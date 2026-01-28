@@ -2788,7 +2788,7 @@ export default [
     displayName: "Firefly",
     bridgeDbName: "firefly",
     slug: "firefly",
-    iconLink: "icons:firefly",
+    iconLink: "icons:firefly-labs",
     largeTxThreshold: 10000,
     url: "https://fireflylabs.app/?utm_source=defillama",
     chains: [
