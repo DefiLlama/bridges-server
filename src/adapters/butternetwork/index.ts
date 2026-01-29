@@ -163,17 +163,17 @@ const contractAddresses = {
     }
   },
 
-  map: {
-    mosContract: "0x0000317Bec33Af037b5fAb2028f52d14658F6A56",
-    tokens: {
-      USDT: "0x33daba9618a75a7aff103e53afe530fbacf4a3dd",
-      USDC: "0x9f722b2cb30093f766221fd0d37964949ed66918",
-      ETH: "0x05ab928d446d8ce6761e368c8e7be03c3168a9ec",
-      MAP: "0x13cb04d4a5dfb6398fc5ab005a6c84337256ee23",
-      BTC: '0xb877e3562a660c7861117c2f1361a26abaf19beb',
-      TRX: '0x593a37fe0f6dfd0b6c5a051e9a44aa0f6922a1a2',
-    }
-  },
+  // map: {
+  //   mosContract: "0x0000317Bec33Af037b5fAb2028f52d14658F6A56",
+  //   tokens: {
+  //     USDT: "0x33daba9618a75a7aff103e53afe530fbacf4a3dd",
+  //     USDC: "0x9f722b2cb30093f766221fd0d37964949ed66918",
+  //     ETH: "0x05ab928d446d8ce6761e368c8e7be03c3168a9ec",
+  //     MAP: "0x13cb04d4a5dfb6398fc5ab005a6c84337256ee23",
+  //     BTC: '0xb877e3562a660c7861117c2f1361a26abaf19beb',
+  //     TRX: '0x593a37fe0f6dfd0b6c5a051e9a44aa0f6922a1a2',
+  //   }
+  // },
   merlin: {
     mosContract: "0x0000317Bec33Af037b5fAb2028f52d14658F6A56",
     tokens: {
@@ -489,7 +489,7 @@ const adapter: BridgeAdapter = {
   base: constructParams("base"),
   optimism: constructParams("optimism"),
   tron: constructParams("tron"),
-  'map relay chain': constructParams("map"),
+  // 'map relay chain': constructParams("map"),
   xlayer: constructParams("xlayer"),
   klaytn: constructParams("klaytn"),
   linea: constructParams("linea"),
