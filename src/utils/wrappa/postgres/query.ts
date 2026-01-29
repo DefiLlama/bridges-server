@@ -277,14 +277,13 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   startTimestamp: number,
   endTimestamp?: number,
   bridgeNetworkName?: string,
-  chain?: string
+  chain?: string,
+  limit?: number
 ) => {
   let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
-  let chainEqual = chain ? sql`WHERE (chain = ${chain} OR destination_chain = ${chain})` : sql``;
-  let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : chainEqual;
-  if (bridgeNetworkName && chain) {
-    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`;
-  }
+  let bridgeNameCondition = bridgeNetworkName ? sql`AND config.bridge_name = ${bridgeNetworkName}` : sql``;
+  let chainCondition = chain ? sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})` : sql``;
+  const limitClause = limit ? sql`LIMIT ${limit}` : sql``;
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,
        transactions.tx_hash,
@@ -304,12 +303,12 @@ FROM   bridges.transactions
                ON transactions.bridge_id = config.id
        LEFT JOIN bridges.large_transactions
                ON transactions.id = large_transactions.tx_pk
-WHERE  config.id IN (SELECT id
-                     FROM   bridges.config
-                     ${bridgeNetworkEqual})
-       AND transactions.ts >= to_timestamp(${startTimestamp})
+WHERE  transactions.ts >= to_timestamp(${startTimestamp})
        ${timestampLessThan}
+       ${bridgeNameCondition}
+       ${chainCondition}
 ORDER BY transactions.ts DESC
+${limitClause}
        `;
 };
 
