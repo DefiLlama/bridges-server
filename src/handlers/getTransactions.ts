@@ -26,7 +26,8 @@ const getTransactions = async (
       message: "Cannot include both 'chain' and 'sourceChain' as query params.",
     });
   }
-  const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : 0;
+  const defaultStartTimestamp = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+  const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : defaultStartTimestamp;
   const queryEndTimestamp = endTimestamp ? parseInt(endTimestamp) : undefined;
   const queryChain = sourceChain ? normalizeChain(sourceChain) : chain ? normalizeChain(chain) : chain;
   let queryName = undefined;
@@ -47,7 +48,8 @@ const getTransactions = async (
     queryStartTimestamp,
     queryEndTimestamp,
     queryName,
-    queryChain
+    queryChain,
+    responseLimit
   )) as any[];
 
   const response = transactions
