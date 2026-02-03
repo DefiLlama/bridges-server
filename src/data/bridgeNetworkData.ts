@@ -2443,6 +2443,7 @@ export default [
       "Linea",
       "Lisk",
       "Mantle",
+      "MegaETH",
       "Metis",
       "Mode",
       "Moonbeam",

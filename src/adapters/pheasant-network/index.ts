@@ -11,6 +11,7 @@ export const bridgesAddress = {
   morph: "0xbD45fC4826Fd0981F1A3d8330cf75309fBC9ce33",
   era: "0x85308f2393A8F49E64e3b71Bb24f57614844497c",
   unichain: "0xbD192e039F3D1A9BC84A12679fdE2F40ae7b4FfF",
+  megaeth: "0x9E7FCb2c0b8a5461BCc7078a2E37886f254B060b",
 } as const;
 
 type SupportedBridgeChains = keyof typeof bridgesAddress;
@@ -335,6 +336,7 @@ const adapter: BridgeAdapter = {
   linea: constructParams("linea"),
   lisk: constructParams("lisk"),
   mantle: constructParams("mantle"),
+  megaeth: constructParams("megaeth"),
   metis: constructParams("metis"),
   mode: constructParams("mode"),
   moonbeam: constructParams("moonbeam"),
