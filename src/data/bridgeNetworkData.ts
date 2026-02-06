@@ -2403,6 +2403,7 @@ export default [
       "Mantle",
       "MegaETH",
       "Monad",
+      "Morph",
       "Optimism",
       "Plasma",
       "Polygon",
