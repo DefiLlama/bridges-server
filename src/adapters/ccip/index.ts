@@ -273,7 +273,7 @@ const chains = [
   "etherlink",
   "everclear",
   "fraxtal",
-  "hashkey",
+  "hsk",
   "hemi",
   "henesys",
   "jovay",

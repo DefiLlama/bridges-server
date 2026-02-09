@@ -198,7 +198,7 @@ export const chainMappings: Record<string, string> = {
   etherlink: "etlk",
   "function x": "functionx",
   gravity_bridge: "gravity",
-  hashkey: "hsk",
+  hsk: "hsk",
   horizen: "eon",
   "immutable zkevm": "imx",
   "injective evm": "injective",
