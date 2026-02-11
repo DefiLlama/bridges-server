@@ -2,6 +2,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { getAccountTrcTransactions, tronGetTimestampByBlockNumber } from "../../helpers/tron";
 import { SolanaEvent, SwapResponse } from "./types";
 import { EventData } from "../../utils/types";
 import retry from "async-retry";
@@ -137,18 +138,127 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
   }));
 };
 
+const TRON_HTLC = "TBjXw4bQsoNcKJocqAE37bW7hd6JV993tZ";
+const TRON_USDT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+
+const getTronEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+  const fromTimestamp = await tronGetTimestampByBlockNumber(fromBlock);
+  const toTimestamp = await tronGetTimestampByBlockNumber(toBlock);
+
+  const transactions = await getAccountTrcTransactions(
+    TRON_HTLC,
+    TRON_USDT,
+    fromTimestamp * 1000,
+    toTimestamp * 1000
+  );
+
+  return transactions.map((tx: any) => {
+    const isDeposit = tx.to === TRON_HTLC;
+    return {
+      blockNumber: tx.block_timestamp,
+      txHash: tx.transaction_id,
+      from: tx.from,
+      to: tx.to,
+      token: TRON_USDT,
+      amount: ethers.BigNumber.from(tx.value),
+      isDeposit,
+    };
+  });
+};
+
+const STARKNET_WBTC = "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac";
+
+const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+  const events: EventData[] = [];
+  let page = 1;
+  let hasMoreData = true;
+
+  while (hasMoreData) {
+    try {
+      const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
+      const response = await fetchWithRetry(url);
+
+      if (response.status !== "Ok" || !response.result.data.length) {
+        hasMoreData = false;
+        break;
+      }
+
+      let shouldStopPagination = false;
+
+      for (const swap of response.result.data) {
+        const { source_swap, destination_swap } = swap;
+        const isSourceStarknet = source_swap.chain.toLowerCase() === "starknet";
+        const isDestinationStarknet = destination_swap.chain.toLowerCase() === "starknet";
+
+        if (!isSourceStarknet && !isDestinationStarknet) {
+          continue;
+        }
+
+        if (!destination_swap.redeem_tx_hash) {
+          continue;
+        }
+
+        const blockNumber = isSourceStarknet
+          ? parseInt(source_swap.initiate_block_number, 10)
+          : parseInt(destination_swap.redeem_block_number, 10);
+
+        if (isNaN(blockNumber)) {
+          continue;
+        }
+
+        const { process, stopPagination } = shouldProcessSlot(blockNumber, fromBlock, toBlock);
+
+        if (stopPagination) {
+          shouldStopPagination = true;
+          break;
+        }
+
+        if (!process) {
+          continue;
+        }
+
+        events.push({
+          blockNumber,
+          txHash: isSourceStarknet
+            ? source_swap.initiate_tx_hash
+            : destination_swap.redeem_tx_hash,
+          from: isSourceStarknet ? source_swap.initiator : destination_swap.initiator,
+          to: isSourceStarknet ? source_swap.redeemer : destination_swap.redeemer,
+          token: STARKNET_WBTC,
+          amount: ethers.BigNumber.from(
+            isSourceStarknet ? source_swap.amount : destination_swap.amount
+          ),
+          isDeposit: isSourceStarknet,
+        });
+      }
+
+      if (shouldStopPagination) {
+        hasMoreData = false;
+        break;
+      }
+
+      page++;
+    } catch (error) {
+      console.error(`Error fetching Starknet events page ${page}:`, error);
+      throw error;
+    }
+  }
+
+  return events;
+};
+
 const contractAddresses = {
   ethereum: {
     WBTC: "0xD781a2abB3FCB9fC0D1Dd85697c237d06b75fe95",
     USDT: "0xCF5E5e28848cFe779f7Fb711C57857Cb3b144A19",
-    USDC: "0xd8a6e3fca403d79b6ad6216b60527f51cc967d39",
+    USDC: "0x5fA58e4E89c85B8d678Ade970bD6afD4311aF17E",
     cbBTC: "0xe35d025d0f0d9492db4700FE8646f7F89150eC04",
     iBTC: "0xDC74a45e86DEdf1fF7c6dac77e0c2F082f9E4F72",
   },
   arbitrum: {
     WBTC: "0xb5AE9785349186069C48794a763DB39EC756B1cF",
     USDC: "0xeae7721d779276eb0f5837e2fe260118724a2ba4",
-    iBTC: "0xdc74a45e86dedf1ff7c6dac77e0c2f082f9e4f72",
+    iBTC: "0x7e8c18fa79bd4014cfCf49294Bf315139eD39f45",
   },
   base: {
     cbBTC: "0xe35d025d0f0d9492db4700FE8646f7F89150eC04",
@@ -162,7 +272,16 @@ const contractAddresses = {
     LBTC: "0x39f3294352208905fc6ebf033954E6c6455CdB4C",
   },
   hyperliquid: {
-    uBTC: "0x39f3294352208905fc6ebf033954E6c6455CdB4C",
+    uBTC: "0xDC74a45e86DEdf1fF7c6dac77e0c2F082f9E4F72",
+  },
+  citrea: {
+    cBTC: "0xE413743B51f3cC8b3ac24addf50D18fa138cB0Bb",
+  },
+  botanix: {
+    BTC: "0xE413743B51f3cC8b3ac24addf50D18fa138cB0Bb",
+  },
+  bsc: {
+    BTCB: "0xe74784E5A45528fDEcB257477DD6bd31c8ef0761",
   },
   corn: {
     BTCN: "0xeaE7721d779276eb0f5837e2fE260118724a2Ba4"
@@ -171,7 +290,11 @@ const contractAddresses = {
     MON: "0xE413743B51f3cC8b3ac24addf50D18fa138cB0Bb",
     USDC: "0x5fA58e4E89c85B8d678Ade970bD6afD4311aF17E",
   },
+  megaeth: {
+    "BTC.b": "0x52b4d144059CB17724D352034b15A8eaE2F29FA7",
+  },
 } as any;
+
 const tokenAddresses = {
   ethereum: {
     WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
@@ -199,12 +322,24 @@ const tokenAddresses = {
   hyperliquid: {
     uBTC: "0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463",
   },
+  citrea: {
+    cBTC: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  },
+  botanix: {
+    BTC: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+  },
+  bsc: {
+    BTCB: "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+  },
   corn: {
     BTCN: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
   },
   monad: {
     MON: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     USDC: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
+  },
+  megaeth: {
+    "BTC.b": "0xB0F70C0bD6FD87dbEb7C10dC692a2a6106817072",
   },
 } as any;
 
@@ -232,9 +367,15 @@ const adapter: BridgeAdapter = {
   unichain: constructParams("unichain"),
   berachain: constructParams("berachain"),
   hyperliquid: constructParams("hyperliquid"),
+  citrea: constructParams("citrea"),
+  botanix: constructParams("botanix"),
+  bsc: constructParams("bsc"),
   corn: constructParams("corn"),
   solana: getSolanaEvents,
+  tron: getTronEvents,
+  starknet: getStarknetEvents,
   monad: constructParams("monad"),
+  megaeth: constructParams("megaeth"),
 };
 
 export default adapter;
