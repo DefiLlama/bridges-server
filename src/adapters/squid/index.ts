@@ -1,183 +1,188 @@
-import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import { constructTransferParams } from "../../helpers/eventParams";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { ethers } from "ethers";
-import { fetchAssets, getTokenAddress, getTokenId } from "./utils";
-import { axelarGatewayAddresses, squidRouterAddresses, coralSpokeAddresses, stablecoins } from "./constants";
-import { isStablecoin } from "./utils";
+import { BigNumber } from "ethers";
 
-const constructGatewayWithdrawalParams = (assets: any[], chain: string) => {
-    const squidRouterAddress = squidRouterAddresses[chain as keyof typeof squidRouterAddresses] || squidRouterAddresses.default;
-    
-    return {
-      target: "",
-      topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
-      topics: [ethers.utils.id("ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
-      abi: ["event ContractCallWithToken(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload, string symbol, uint256 amount)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        from: "payload",
-        amount: "amount",
-        to: "destinationContractAddress",
-        token: "symbol"
-      },
-      argGetters: {
-          from: (log: any) => "0x".concat(log.payload.substr(90,40)),
-          amount: (log: any) => log.amount,
-          to: (log: any) => "0x".concat(log.payload.substr(log.payload.lastIndexOf(log.payload.substr(90,40)),40)),
-          token: (log: any) => getTokenAddress(log.symbol, chain, assets)
-        },
-      isDeposit: false,
-    };
+const NATIVE_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const nullAddress = "0x0000000000000000000000000000000000000000";
+
+// Squid Router addresses
+const SQUID_ROUTER_DEFAULT = "0xce16F69375520ab01377ce7B88f5BA8C48F8D666";
+const SQUID_ROUTER_FRAXTAL = "0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9";
+const SQUID_ROUTER_BLAST = "0x492751eC3c57141deb205eC2da8bFcb410738630";
+
+// Coral Spoke addresses (same on all deployed chains)
+const CORAL_SPOKE_V1 = "0xfe91aAA1012B47499CfE8758874F2D2c52B22cD8";
+const CORAL_SPOKE_OLD = "0xA4cE01bD7Dd91DA968a7C4A8D04282a3f5eA06bB";
+const CORAL_SPOKE_V2 = "0xdf4fFDa22270c12d0b5b3788F1669D709476111E";
+const ALL_SPOKES = [CORAL_SPOKE_V1, CORAL_SPOKE_OLD, CORAL_SPOKE_V2];
+
+type ChainConfig = {
+  router: string;
+  spokes?: string[];
 };
 
-const constructGatewayDepositParams = (assets: any[], chain: string) => {
-  const squidRouterAddress = squidRouterAddresses[chain as keyof typeof squidRouterAddresses] || squidRouterAddresses.default;
-
-  return {
-    target: "",
-    topic: "ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)",
-    topics: [ethers.utils.id("ContractCallWithToken(address,string,string,bytes32,bytes,string,uint256)"), ethers.utils.hexZeroPad(squidRouterAddress,32)],
-    abi: ["event ContractCallWithToken(address indexed sender, string destinationChain, string destinationContractAddress, bytes32 indexed payloadHash, bytes payload, string symbol, uint256 amount)"],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      from: "payload",
-      amount: "amount",
-      to: "destinationContractAddress",
-      token: "symbol"
-    },
-    argGetters: {
-      from: (log: any) => "0x".concat(log.payload.substr(90,40)),
-      amount: (log: any) => log.amount,
-      to: (log: any) => log.destinationContractAddress,
-      token: (log: any) => getTokenAddress(log.symbol, chain, assets),
-      is_usd_volume: (log: any) => isStablecoin(log.symbol, chain)
-    },
-    isDeposit: true,
-  };
+// Keyed by SDK-compatible chain slug (passed to getLogs)
+const chainConfigs: Record<string, ChainConfig> = {
+  ethereum: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  arbitrum: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  avax: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  base: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  bsc: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  blast: { router: SQUID_ROUTER_BLAST, spokes: ALL_SPOKES },
+  celo: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  optimism: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  polygon: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  linea: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  xdai: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  sonic: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  soneium: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  moonbeam: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  berachain: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  hyperliquid: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  peaq: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
+  fantom: { router: SQUID_ROUTER_DEFAULT },
+  filecoin: { router: SQUID_ROUTER_DEFAULT },
+  fraxtal: { router: SQUID_ROUTER_FRAXTAL },
+  kava: { router: SQUID_ROUTER_DEFAULT },
+  mantle: { router: SQUID_ROUTER_DEFAULT },
+  scroll: { router: SQUID_ROUTER_DEFAULT },
+  imx: { router: SQUID_ROUTER_DEFAULT },
+  mantra: { router: SQUID_ROUTER_DEFAULT },
+  monad: { router: SQUID_ROUTER_DEFAULT },
+  hedera: { router: SQUID_ROUTER_DEFAULT },
+  citrea: { router: SQUID_ROUTER_DEFAULT },
 };
 
-const constructCoralWithdrawParams = (assets: any[], chain: string) => {
-  return {
-    target: coralSpokeAddresses.default,
-    topic: "OrderCreated(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
-    topics: [ethers.utils.id("OrderCreated(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))")],
-    abi: ["event OrderCreated(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)"],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      from: "args",
-      amount: "args",
-      to: "args",
-      token: "args"
-    },
-    argGetters: {
-      from: (log: any) => log[1].fromAddress,
-      amount: (log: any) => log[1].fromAmount,
-      to: (log: any) => log[1].toAddress,
-      token: (log: any) => getTokenAddress(log[1].fromToken, chain, assets),
-      is_usd_volume: (log: any) => isStablecoin(log[1].fromToken, chain)
-    },
-    isDeposit: false,
-  };
+// Coral Spoke events (same signature across v1, old, and v2 contracts)
+const OrderCreatedParams: PartialContractEventParams = {
+  target: "",
+  topic: "OrderCreated(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
+  abi: [
+    "event OrderCreated(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)",
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    from: "order",
+    to: "order",
+    token: "order",
+    amount: "order",
+  },
+  isDeposit: true,
 };
 
-const constructCoralDepositParams = (assets: any[], chain: string) => {
-  return {
-    target: coralSpokeAddresses.default,
-    topic: "OrderFilled(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
-    topics: [ethers.utils.id("OrderFilled(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))")],
-    abi: ["event OrderFilled(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)"],
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      from: "args",
-      amount: "args",
-      to: "args",
-      token: "args"
-    },
-    argGetters: {
-      from: (log: any) => log[1].fromAddress,
-      amount: (log: any) => log[1].fromAmount,
-      to: (log: any) => log[1].toAddress,
-      token: (log: any) => getTokenAddress(log[1].fromToken, chain, assets),
-      is_usd_volume: (log: any) => isStablecoin(log[1].fromToken, chain)
-    },
-    isDeposit: true,
-  };
+const OrderFilledParams: PartialContractEventParams = {
+  target: "",
+  topic: "OrderFilled(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
+  abi: [
+    "event OrderFilled(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)",
+  ],
+  logKeys: {
+    blockNumber: "blockNumber",
+    txHash: "transactionHash",
+  },
+  argKeys: {
+    from: "order",
+    to: "order",
+    token: "order",
+    amount: "order",
+  },
+  isDeposit: false,
+};
+
+const mapNativeToken = (token: string): string => {
+  return token.toLowerCase() === NATIVE_TOKEN.toLowerCase() ? nullAddress : token;
 };
 
 const constructParams = (chain: string) => {
+  const config = chainConfigs[chain];
+  if (!config) throw new Error(`[squid] Unknown chain: ${chain}`);
+
+  const { router, spokes } = config;
+
   return async (fromBlock: number, toBlock: number) => {
-    const assets = await fetchAssets();
-    const eventParams = [];
+    const eventParams: PartialContractEventParams[] = [];
 
-    // Gateway params
-    const gatewayDepositParams = constructGatewayDepositParams(assets, chain);
-    const gatewayWithdrawalParams = constructGatewayWithdrawalParams(assets, chain);
-
-    const deposit = {...gatewayDepositParams, target: axelarGatewayAddresses[chain]};
-    const withdraw = {...gatewayWithdrawalParams, target: axelarGatewayAddresses[chain]};
-
-    // Coral params
-    const coralDepositParams = constructCoralDepositParams(assets, chain);
-    const coralWithdrawParams = constructCoralWithdrawParams(assets, chain);
-    
-    const coralDeposit = {...coralDepositParams, target: coralSpokeAddresses.default};
-    const coralWithdraw = {...coralWithdrawParams, target: coralSpokeAddresses.default};
-    
-    // Add new coral spoke address
-    const newCoralDeposit = {...coralDepositParams, target: coralSpokeAddresses.new};
-    const newCoralWithdraw = {...coralWithdrawParams, target: coralSpokeAddresses.new};
-
-    eventParams.push(deposit, withdraw, coralDeposit, coralWithdraw, newCoralDeposit, newCoralWithdraw);
-
-    // Modify each event parameter to ensure it doesn't generate an origin_chain field
-    eventParams.forEach((param: any) => {
-      // Add a custom transform function to each parameter
-      param.transform = (log: any) => {
-        // If the log has an origin_chain field, remove it
-        if (log.origin_chain) {
-          delete log.origin_chain;
-        }
-        return log;
-      };
+    // Track ERC20 transfers to/from SquidRouter (Axelar GMP, CCTP, Chainflip paths)
+    const routerDeposit = constructTransferParams(router, true, {
+      excludeFrom: [router, nullAddress],
+      excludeTo: [nullAddress],
+      includeTo: [router],
     });
 
-    return getTxDataFromEVMEventLogs("squid", chain as Chain, fromBlock, toBlock, eventParams);
-  }
+    const routerWithdraw = constructTransferParams(router, false, {
+      excludeFrom: [nullAddress],
+      excludeTo: [nullAddress, router],
+      includeFrom: [router],
+    });
+
+    eventParams.push(routerDeposit, routerWithdraw);
+
+    // Track Coral Spoke events (OrderCreated/OrderFilled) across all deployed spoke contracts
+    if (spokes) {
+      for (const spoke of spokes) {
+        const orderCreatedEvent = {
+          ...OrderCreatedParams,
+          target: spoke,
+          argGetters: {
+            from: (args: any) => args.order.fromAddress,
+            to: (args: any) => args.order.toAddress,
+            token: (args: any) => mapNativeToken(args.order.fromToken),
+            amount: (args: any) => BigNumber.from(args.order.fromAmount),
+          },
+        };
+
+        const orderFilledEvent = {
+          ...OrderFilledParams,
+          target: spoke,
+          argGetters: {
+            from: (args: any) => args.order.fromAddress,
+            to: (args: any) => args.order.toAddress,
+            token: (args: any) => mapNativeToken(args.order.toToken),
+            amount: (args: any) => BigNumber.from(args.order.fillAmount),
+          },
+        };
+
+        eventParams.push(orderCreatedEvent, orderFilledEvent);
+      }
+    }
+
+    return await getTxDataFromEVMEventLogs("squidrouter", chain, fromBlock, toBlock, eventParams);
+  };
 };
 
 const adapter: BridgeAdapter = {
-  polygon: constructParams("polygon"),
-  fantom: constructParams("fantom"),
-  avalanche: constructParams("avax"),
-  bsc: constructParams("bsc"),
   ethereum: constructParams("ethereum"),
   arbitrum: constructParams("arbitrum"),
+  avalanche: constructParams("avax"),
   base: constructParams("base"),
-  linea: constructParams("linea"),
-  celo: constructParams("celo"),
-  moonbeam: constructParams("moonbeam"),
-  kava: constructParams("kava"),
-  filecoin: constructParams("filecoin"),
-  optimism: constructParams("optimism"),
-  mantle: constructParams("mantle"),
-//new chains
-  scroll: constructParams("scroll"),
+  bsc: constructParams("bsc"),
   blast: constructParams("blast"),
+  celo: constructParams("celo"),
+  optimism: constructParams("optimism"),
+  polygon: constructParams("polygon"),
+  linea: constructParams("linea"),
+  gnosis: constructParams("xdai"),
+  sonic: constructParams("sonic"),
+  soneium: constructParams("soneium"),
+  moonbeam: constructParams("moonbeam"),
+  berachain: constructParams("berachain"),
+  hyperliquid: constructParams("hyperliquid"),
+  peaq: constructParams("peaq"),
+  fantom: constructParams("fantom"),
+  filecoin: constructParams("filecoin"),
   fraxtal: constructParams("fraxtal"),
-  immutable: constructParams("imx"),
+  kava: constructParams("kava"),
+  mantle: constructParams("mantle"),
+  scroll: constructParams("scroll"),
+  imx: constructParams("imx"),
+  mantra: constructParams("mantra"),
+  monad: constructParams("monad"),
+  hedera: constructParams("hedera"),
+  citrea: constructParams("citrea"),
 };
 
 export default adapter;

@@ -920,10 +920,22 @@ export default [
       "Scroll",
       "Blast",
       "Fraxtal",
+      "Gnosis",
+      "Sonic",
+      "Soneium",
+      "Berachain",
+      "Hyperliquid",
+      "Filecoin",
+      "Immutable zkEVM",
+      "Mantra",
+      "Monad",
+      "Peaq",
+      "Hedera",
+      "Citrea",
     ],
     chainMapping: {
       avalanche: "avax",
-      // Add any other necessary mappings here
+      "immutable zkevm": "imx",
     },
   },
   {
