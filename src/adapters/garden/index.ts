@@ -8,6 +8,29 @@ import { EventData } from "../../utils/types";
 import retry from "async-retry";
 import { ethers } from "ethers";
 
+// Solana asset string → SPL token address mapping (from Garden /v2/assets API)
+const solanaTokenAddresses: Record<string, string> = {
+  "solana:sol": "So11111111111111111111111111111111111111112",
+  "primary": "So11111111111111111111111111111111111111112",
+  "solana:usdc": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "solana:usdt": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+  "solana:cash": "CASHx9KJUStyftLFWGvEVf59SGeG9sh5FfcnZMVPCASH",
+  "solana:cbbtc": "cbbtcf3aa214zXHbiAZQwf4122FBYbraNdFqgw4iMij",
+};
+
+// Decimals for known Solana assets (from Garden /v2/assets API)
+const solanaAssetDecimals: Record<string, number> = {
+  "solana:sol": 9,
+  "primary": 9,
+  "solana:usdc": 6,
+  "solana:usdt": 6,
+  "solana:cash": 6,
+  "solana:cbbtc": 8,
+};
+
+const DEFAULT_SOLANA_DECIMALS = 9;
+const WSOL_ADDRESS = "So11111111111111111111111111111111111111112";
+
 const fetchWithRetry = (url: string): Promise<SwapResponse> => {
   return retry(
     async () => {
@@ -93,6 +116,19 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
           continue; // Skip this slot but continue processing the page
         }
 
+        // Get the Solana-side swap data
+        const solanaSwap = isSourceSolana ? source_swap : destination_swap;
+        const assetKey = solanaSwap.asset.toLowerCase();
+        const decimals = solanaAssetDecimals[assetKey] ?? DEFAULT_SOLANA_DECIMALS;
+        const rawAmount = parseInt(solanaSwap.amount, 10);
+        const assetPrice = solanaSwap.asset_price;
+
+        // Calculate USD volume: (rawAmount / 10^decimals) * assetPrice
+        const usdAmount = (rawAmount / Math.pow(10, decimals)) * assetPrice;
+        if (isNaN(usdAmount) || usdAmount <= 0) {
+          continue; // Skip invalid amounts
+        }
+
         const event: SolanaEvent = {
           blockNumber: slot,
           txHash: isSourceSolana
@@ -102,11 +138,9 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
             ? source_swap.initiator
             : destination_swap.initiator,
           to: isSourceSolana ? source_swap.redeemer : destination_swap.redeemer,
-          amount: isSourceSolana ? source_swap.amount : destination_swap.amount,
+          amount: Math.round(usdAmount).toString(),
           isDeposit: isSourceSolana,
-          token: isSourceSolana
-            ? source_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : source_swap.asset
-            : destination_swap.asset === 'primary' ? "So11111111111111111111111111111111111111112" : destination_swap.asset,
+          token: solanaTokenAddresses[assetKey] ?? WSOL_ADDRESS,
           timestamp: new Date(swap.created_at).getTime(),
         };
 
@@ -134,6 +168,7 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
     token: event.token,
     amount: ethers.BigNumber.from(event.amount),
     isDeposit: event.isDeposit,
+    isUSDVolume: true,
     timestamp: event.timestamp,
   }));
 };
@@ -152,21 +187,33 @@ const getTronEvents = async (fromBlock: number, toBlock: number): Promise<EventD
     toTimestamp * 1000
   );
 
-  return transactions.map((tx: any) => {
-    const isDeposit = tx.to === TRON_HTLC;
-    return {
-      blockNumber: tx.block_timestamp,
-      txHash: tx.transaction_id,
-      from: tx.from,
-      to: tx.to,
-      token: TRON_USDT,
-      amount: ethers.BigNumber.from(tx.value),
-      isDeposit,
-    };
-  });
+  return transactions
+    .filter((tx: any) => tx.type === "Transfer") // Exclude Approval events
+    .map((tx: any) => {
+      const isDeposit = tx.to === TRON_HTLC;
+      return {
+        blockNumber: Math.floor(tx.block_timestamp / 1000), // Convert ms timestamp to seconds
+        txHash: tx.transaction_id,
+        from: tx.from,
+        to: tx.to,
+        token: TRON_USDT,
+        amount: ethers.BigNumber.from(tx.value),
+        isDeposit,
+      };
+    });
 };
 
-const STARKNET_WBTC = "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac";
+// Starknet asset string → token address mapping (from Garden /v2/assets API)
+const starknetTokenAddresses: Record<string, string> = {
+  "starknet:wbtc": "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac",
+};
+
+const starknetAssetDecimals: Record<string, number> = {
+  "starknet:wbtc": 8,
+};
+
+const DEFAULT_STARKNET_DECIMALS = 8;
+const DEFAULT_STARKNET_TOKEN = "0x3fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac";
 
 const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
   const events: EventData[] = [];
@@ -217,6 +264,19 @@ const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<Ev
           continue;
         }
 
+        // Get the Starknet-side swap data
+        const starknetSwap = isSourceStarknet ? source_swap : destination_swap;
+        const assetKey = starknetSwap.asset.toLowerCase();
+        const decimals = starknetAssetDecimals[assetKey] ?? DEFAULT_STARKNET_DECIMALS;
+        const rawAmount = parseInt(starknetSwap.amount, 10);
+        const assetPrice = starknetSwap.asset_price;
+
+        // Calculate USD volume: (rawAmount / 10^decimals) * assetPrice
+        const usdAmount = (rawAmount / Math.pow(10, decimals)) * assetPrice;
+        if (isNaN(usdAmount) || usdAmount <= 0) {
+          continue; // Skip invalid amounts
+        }
+
         events.push({
           blockNumber,
           txHash: isSourceStarknet
@@ -224,11 +284,10 @@ const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<Ev
             : destination_swap.redeem_tx_hash,
           from: isSourceStarknet ? source_swap.initiator : destination_swap.initiator,
           to: isSourceStarknet ? source_swap.redeemer : destination_swap.redeemer,
-          token: STARKNET_WBTC,
-          amount: ethers.BigNumber.from(
-            isSourceStarknet ? source_swap.amount : destination_swap.amount
-          ),
+          token: starknetTokenAddresses[assetKey] ?? DEFAULT_STARKNET_TOKEN,
+          amount: ethers.BigNumber.from(Math.round(usdAmount).toString()),
           isDeposit: isSourceStarknet,
+          isUSDVolume: true,
         });
       }
 
@@ -240,6 +299,104 @@ const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<Ev
       page++;
     } catch (error) {
       console.error(`Error fetching Starknet events page ${page}:`, error);
+      throw error;
+    }
+  }
+
+  return events;
+};
+
+// Citrea asset config (from Garden /v2/assets API)
+const citreaAssetDecimals: Record<string, number> = {
+  "citrea:cbtc": 18,
+};
+
+const DEFAULT_CITREA_DECIMALS = 18;
+// cBTC is native on Citrea, use the HTLC contract address as token identifier for DefiLlama
+const CITREA_CBTC_TOKEN = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+
+const getCitreaEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+  const events: EventData[] = [];
+  let page = 1;
+  let hasMoreData = true;
+
+  while (hasMoreData) {
+    try {
+      const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
+      const response = await fetchWithRetry(url);
+
+      if (response.status !== "Ok" || !response.result.data.length) {
+        hasMoreData = false;
+        break;
+      }
+
+      let shouldStopPagination = false;
+
+      for (const swap of response.result.data) {
+        const { source_swap, destination_swap } = swap;
+        const isSourceCitrea = source_swap.chain.toLowerCase() === "citrea";
+        const isDestinationCitrea = destination_swap.chain.toLowerCase() === "citrea";
+
+        if (!isSourceCitrea && !isDestinationCitrea) {
+          continue;
+        }
+
+        if (!destination_swap.redeem_tx_hash) {
+          continue;
+        }
+
+        const blockNumber = isSourceCitrea
+          ? parseInt(source_swap.initiate_block_number, 10)
+          : parseInt(destination_swap.redeem_block_number, 10);
+
+        if (isNaN(blockNumber)) {
+          continue;
+        }
+
+        const { process, stopPagination } = shouldProcessSlot(blockNumber, fromBlock, toBlock);
+
+        if (stopPagination) {
+          shouldStopPagination = true;
+          break;
+        }
+
+        if (!process) {
+          continue;
+        }
+
+        const citreaSwap = isSourceCitrea ? source_swap : destination_swap;
+        const assetKey = citreaSwap.asset.toLowerCase();
+        const decimals = citreaAssetDecimals[assetKey] ?? DEFAULT_CITREA_DECIMALS;
+        const rawAmount = parseInt(citreaSwap.amount, 10);
+        const assetPrice = citreaSwap.asset_price;
+
+        const usdAmount = (rawAmount / Math.pow(10, decimals)) * assetPrice;
+        if (isNaN(usdAmount) || usdAmount <= 0) {
+          continue;
+        }
+
+        events.push({
+          blockNumber,
+          txHash: isSourceCitrea
+            ? source_swap.initiate_tx_hash
+            : destination_swap.redeem_tx_hash,
+          from: isSourceCitrea ? source_swap.initiator : destination_swap.initiator,
+          to: isSourceCitrea ? source_swap.redeemer : destination_swap.redeemer,
+          token: CITREA_CBTC_TOKEN,
+          amount: ethers.BigNumber.from(Math.round(usdAmount).toString()),
+          isDeposit: isSourceCitrea,
+          isUSDVolume: true,
+        });
+      }
+
+      if (shouldStopPagination) {
+        hasMoreData = false;
+        break;
+      }
+
+      page++;
+    } catch (error) {
+      console.error(`Error fetching Citrea events page ${page}:`, error);
       throw error;
     }
   }
@@ -361,21 +518,21 @@ const constructParams = (chain: Chain) => {
 };
 
 const adapter: BridgeAdapter = {
-  ethereum: constructParams("ethereum"),
-  arbitrum: constructParams("arbitrum"),
-  base: constructParams("base"),
-  unichain: constructParams("unichain"),
-  berachain: constructParams("berachain"),
-  hyperliquid: constructParams("hyperliquid"),
-  citrea: constructParams("citrea"),
-  botanix: constructParams("botanix"),
-  bsc: constructParams("bsc"),
-  corn: constructParams("corn"),
-  solana: getSolanaEvents,
-  tron: getTronEvents,
-  starknet: getStarknetEvents,
-  monad: constructParams("monad"),
-  megaeth: constructParams("megaeth"),
+  // ethereum: constructParams("ethereum"),
+  // arbitrum: constructParams("arbitrum"),
+  // base: constructParams("base"),
+  // unichain: constructParams("unichain"),
+  // berachain: constructParams("berachain"),
+  // hyperliquid: constructParams("hyperliquid"),
+  citrea: getCitreaEvents,
+  // botanix: constructParams("botanix"),
+  // bsc: constructParams("bsc"),
+  // corn: constructParams("corn"),
+  // solana: getSolanaEvents,
+  // tron: getTronEvents,
+  // starknet: getStarknetEvents,
+  // monad: constructParams("monad"),
+  // megaeth: constructParams("megaeth"),
 };
 
 export default adapter;
