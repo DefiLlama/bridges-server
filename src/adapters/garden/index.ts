@@ -518,21 +518,21 @@ const constructParams = (chain: Chain) => {
 };
 
 const adapter: BridgeAdapter = {
-  // ethereum: constructParams("ethereum"),
-  // arbitrum: constructParams("arbitrum"),
-  // base: constructParams("base"),
-  // unichain: constructParams("unichain"),
-  // berachain: constructParams("berachain"),
-  // hyperliquid: constructParams("hyperliquid"),
+  ethereum: constructParams("ethereum"),
+  arbitrum: constructParams("arbitrum"),
+  base: constructParams("base"),
+  unichain: constructParams("unichain"),
+  berachain: constructParams("berachain"),
+  hyperliquid: constructParams("hyperliquid"),
   citrea: getCitreaEvents,
-  // botanix: constructParams("botanix"),
-  // bsc: constructParams("bsc"),
-  // corn: constructParams("corn"),
-  // solana: getSolanaEvents,
-  // tron: getTronEvents,
-  // starknet: getStarknetEvents,
-  // monad: constructParams("monad"),
-  // megaeth: constructParams("megaeth"),
+  botanix: constructParams("botanix"),
+  bsc: constructParams("bsc"),
+  corn: constructParams("corn"),
+  solana: getSolanaEvents,
+  tron: getTronEvents,
+  starknet: getStarknetEvents,
+  monad: constructParams("monad"),
+  megaeth: constructParams("megaeth"),
 };
 
 export default adapter;
