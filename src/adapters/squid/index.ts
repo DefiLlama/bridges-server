@@ -40,7 +40,6 @@ const chainConfigs: Record<string, ChainConfig> = {
   moonbeam: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
   berachain: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
   hyperliquid: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
-  peaq: { router: SQUID_ROUTER_DEFAULT, spokes: ALL_SPOKES },
   fantom: { router: SQUID_ROUTER_DEFAULT },
   filecoin: { router: SQUID_ROUTER_DEFAULT },
   fraxtal: { router: SQUID_ROUTER_FRAXTAL },
@@ -48,16 +47,15 @@ const chainConfigs: Record<string, ChainConfig> = {
   mantle: { router: SQUID_ROUTER_DEFAULT },
   scroll: { router: SQUID_ROUTER_DEFAULT },
   imx: { router: SQUID_ROUTER_DEFAULT },
-  mantra: { router: SQUID_ROUTER_DEFAULT },
   monad: { router: SQUID_ROUTER_DEFAULT },
-  hedera: { router: SQUID_ROUTER_DEFAULT },
   citrea: { router: SQUID_ROUTER_DEFAULT },
 };
 
 // Coral Spoke events (same signature across v1, old, and v2 contracts)
 const OrderCreatedParams: PartialContractEventParams = {
   target: "",
-  topic: "OrderCreated(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
+  topic:
+    "OrderCreated(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
   abi: [
     "event OrderCreated(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)",
   ],
@@ -76,7 +74,8 @@ const OrderCreatedParams: PartialContractEventParams = {
 
 const OrderFilledParams: PartialContractEventParams = {
   target: "",
-  topic: "OrderFilled(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
+  topic:
+    "OrderFilled(bytes32,(address,address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256,bytes32))",
   abi: [
     "event OrderFilled(bytes32 indexed orderHash, tuple(address fromAddress, address toAddress, address filler, address fromToken, address toToken, uint256 expiry, uint256 fromAmount, uint256 fillAmount, uint256 feeRate, uint256 fromChain, uint256 toChain, bytes32 postHookHash) order)",
   ],
@@ -171,17 +170,14 @@ const adapter: BridgeAdapter = {
   moonbeam: constructParams("moonbeam"),
   berachain: constructParams("berachain"),
   hyperliquid: constructParams("hyperliquid"),
-  peaq: constructParams("peaq"),
   fantom: constructParams("fantom"),
   filecoin: constructParams("filecoin"),
   fraxtal: constructParams("fraxtal"),
   kava: constructParams("kava"),
   mantle: constructParams("mantle"),
   scroll: constructParams("scroll"),
-  imx: constructParams("imx"),
-  mantra: constructParams("mantra"),
+  "immutable zkevm": constructParams("imx"),
   monad: constructParams("monad"),
-  hedera: constructParams("hedera"),
   citrea: constructParams("citrea"),
 };
 
