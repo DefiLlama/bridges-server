@@ -10,8 +10,18 @@ import PromisePool from "@supercharge/promise-pool";
 const startTs = Number(process.argv[2]);
 const endTs = Number(process.argv[3]);
 const bridgeName = process.argv[4];
-const chain = process.argv[5];
-const blockByChain: Record<string, { startBlock: number; endBlock: number }> = {};
+const sequential = process.argv.includes("--sequential");
+const chain = process.argv[5] && !process.argv[5].startsWith("--") ? process.argv[5] : undefined;
+let shuttingDown = false;
+
+process.on("SIGINT", () => {
+  if (shuttingDown) {
+    console.log("\nForce shutdown.");
+    process.exit(1);
+  }
+  shuttingDown = true;
+  console.log("\nGraceful shutdown requested. Waiting for in-flight tasks to finish...");
+});
 
 function splitIntoDailyIntervals(startTimestamp: number, endTimestamp: number): Array<{ start: number; end: number }> {
   const intervals = [];
@@ -41,6 +51,7 @@ async function fillAdapterHistorical(
   bridgeDbName: string,
   restrictChainTo?: string
 ) {
+  if (shuttingDown) return;
   if (!startTimestamp || !endTimestamp || !bridgeDbName) {
     console.error(
       "Missing parameters, please provide startTimestamp, endTimestamp and bridgeDbName. \nExample: npm run adapter 1704690402 1704949602 arbitrum"
@@ -50,7 +61,11 @@ async function fillAdapterHistorical(
 
   const adapter = bridgeNetworkData.find((x) => x.bridgeDbName === bridgeDbName);
   if (!adapter) throw new Error("Invalid adapter");
-  console.log(`Found ${bridgeDbName}`);
+  const startDate = new Date(startTimestamp * 1000).toISOString().slice(0, 10);
+  const endDate = new Date(endTimestamp * 1000).toISOString().slice(0, 10);
+  console.log(`[${bridgeDbName}] Processing ${startDate} to ${endDate} (${startTimestamp}-${endTimestamp})${restrictChainTo ? ` chain=${restrictChainTo}` : ""}`);
+
+  const blockByChain: Record<string, { startBlock: number; endBlock: number }> = {};
 
   const promises = Promise.all(
     adapter.chains.map(async (chain, i) => {
@@ -69,12 +84,12 @@ async function fillAdapterHistorical(
       if (bridgeDbName === "ibc") {
         startBlock = await getBlockByTimestamp(startTimestamp, nChain as Chain, adapter, "First");
         if (!startBlock) {
-          console.error(`Could not find start block for ${chain} on ${bridgeDbName}`);
+          console.error(`[${bridgeDbName}] Could not find start block for ${chain}`);
           return;
         }
         endBlock = await getBlockByTimestamp(endTimestamp, nChain as Chain, adapter, "Last");
         if (!endBlock) {
-          console.error(`Could not find end block for ${chain} on ${bridgeDbName}`);
+          console.error(`[${bridgeDbName}] Could not find end block for ${chain}`);
           return;
         }
       } else {
@@ -85,12 +100,14 @@ async function fillAdapterHistorical(
             startBlock: startBlock.block,
             endBlock: endBlock.block,
           };
+          console.log(`[${bridgeDbName}] ${nChain} blocks: ${startBlock.block} -> ${endBlock.block}`);
         } else {
           startBlock = blockByChain[nChain].startBlock;
           endBlock = blockByChain[nChain].endBlock;
         }
       }
 
+      console.log(`[${bridgeDbName}] Running ${chain.toLowerCase()} (${nChain}) blocks ${startBlock.block}-${endBlock.block}`);
       await runAdapterHistorical(
         startBlock.block,
         endBlock.block,
@@ -100,10 +117,11 @@ async function fillAdapterHistorical(
         false,
         "upsert"
       );
+      console.log(`[${bridgeDbName}] Done ${chain.toLowerCase()} blocks ${startBlock.block}-${endBlock.block}`);
     })
   );
   await promises;
-  console.log(`Finished running adapter from ${startTimestamp} to ${endTimestamp} for ${bridgeDbName}`);
+  console.log(`[${bridgeDbName}] Finished ${startDate} to ${endDate}`);
 }
 
 const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: number) => {
@@ -111,6 +129,7 @@ const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: nu
     await PromisePool.withConcurrency(20)
       .for(bridgeNetworkData.reverse())
       .process(async (adapter) => {
+        if (shuttingDown) return;
         await fillAdapterHistorical(startTimestamp, endTimestamp, adapter.bridgeDbName);
       });
   } finally {
@@ -119,14 +138,27 @@ const runAllAdaptersHistorical = async (startTimestamp: number, endTimestamp: nu
 };
 
 (async () => {
-  if (bridgeName) {
-    const dailyIntervals = splitIntoDailyIntervals(startTs, endTs);
-    await PromisePool.withConcurrency(60)
-      .for(dailyIntervals.reverse())
-      .process(async (interval) => {
-        await fillAdapterHistorical(interval.start, interval.end, bridgeName, chain);
-      });
-  } else {
-    await runAllAdaptersHistorical(startTs, endTs);
+  try {
+    if (bridgeName) {
+      const dailyIntervals = splitIntoDailyIntervals(startTs, endTs).reverse();
+      if (sequential) {
+        for (const interval of dailyIntervals) {
+          if (shuttingDown) break;
+          await fillAdapterHistorical(interval.start, interval.end, bridgeName, chain);
+        }
+      } else {
+        await PromisePool.withConcurrency(60)
+          .for(dailyIntervals)
+          .process(async (interval) => {
+            if (shuttingDown) return;
+            await fillAdapterHistorical(interval.start, interval.end, bridgeName, chain);
+          });
+      }
+    } else {
+      await runAllAdaptersHistorical(startTs, endTs);
+    }
+  } finally {
+    if (shuttingDown) console.log("Shutdown complete.");
+    await sql.end();
   }
 })();
