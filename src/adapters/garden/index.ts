@@ -31,6 +31,8 @@ const solanaAssetDecimals: Record<string, number> = {
 const DEFAULT_SOLANA_DECIMALS = 9;
 const WSOL_ADDRESS = "So11111111111111111111111111111111111111112";
 
+const MAX_PAGES = 200;
+
 const fetchWithRetry = (url: string): Promise<SwapResponse> => {
   return retry(
     async () => {
@@ -65,7 +67,7 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
   let page = 1;
   let hasMoreData = true;
 
-  while (hasMoreData) {
+  while (hasMoreData && page <= MAX_PAGES) {
     try {
       console.log("Fetching page:", page);
       const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
@@ -120,7 +122,7 @@ const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventD
         const solanaSwap = isSourceSolana ? source_swap : destination_swap;
         const assetKey = solanaSwap.asset.toLowerCase();
         const decimals = solanaAssetDecimals[assetKey] ?? DEFAULT_SOLANA_DECIMALS;
-        const rawAmount = parseInt(solanaSwap.amount, 10);
+        const rawAmount = parseFloat(solanaSwap.amount);
         const assetPrice = solanaSwap.asset_price;
 
         // Calculate USD volume: (rawAmount / 10^decimals) * assetPrice
@@ -220,7 +222,7 @@ const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<Ev
   let page = 1;
   let hasMoreData = true;
 
-  while (hasMoreData) {
+  while (hasMoreData && page <= MAX_PAGES) {
     try {
       const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
       const response = await fetchWithRetry(url);
@@ -268,7 +270,7 @@ const getStarknetEvents = async (fromBlock: number, toBlock: number): Promise<Ev
         const starknetSwap = isSourceStarknet ? source_swap : destination_swap;
         const assetKey = starknetSwap.asset.toLowerCase();
         const decimals = starknetAssetDecimals[assetKey] ?? DEFAULT_STARKNET_DECIMALS;
-        const rawAmount = parseInt(starknetSwap.amount, 10);
+        const rawAmount = parseFloat(starknetSwap.amount);
         const assetPrice = starknetSwap.asset_price;
 
         // Calculate USD volume: (rawAmount / 10^decimals) * assetPrice
@@ -320,7 +322,7 @@ const getCitreaEvents = async (fromBlock: number, toBlock: number): Promise<Even
   let page = 1;
   let hasMoreData = true;
 
-  while (hasMoreData) {
+  while (hasMoreData && page <= MAX_PAGES) {
     try {
       const url = `https://api.garden.finance/v2/orders?status=completed&per_page=500&page=${page}`;
       const response = await fetchWithRetry(url);
@@ -367,7 +369,7 @@ const getCitreaEvents = async (fromBlock: number, toBlock: number): Promise<Even
         const citreaSwap = isSourceCitrea ? source_swap : destination_swap;
         const assetKey = citreaSwap.asset.toLowerCase();
         const decimals = citreaAssetDecimals[assetKey] ?? DEFAULT_CITREA_DECIMALS;
-        const rawAmount = parseInt(citreaSwap.amount, 10);
+        const rawAmount = parseFloat(citreaSwap.amount);
         const assetPrice = citreaSwap.asset_price;
 
         const usdAmount = (rawAmount / Math.pow(10, decimals)) * assetPrice;
