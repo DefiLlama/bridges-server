@@ -18,6 +18,7 @@ interface SwapData {
 interface SourceSwap {
   chain: string;
   asset: string;
+  asset_price: number;
   initiator: string;
   redeemer: string;
   amount: string;
@@ -33,6 +34,7 @@ interface SourceSwap {
 interface DestinationSwap {
   chain: string;
   asset: string;
+  asset_price: number;
   initiator: string;
   redeemer: string;
   amount: string;
@@ -73,3 +75,4 @@ interface SolanaEvent {
 
 // Export the main interface
 export type { SwapResponse, SwapData, SourceSwap, DestinationSwap, CreateOrder, SolanaEvent };
+
