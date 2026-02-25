@@ -1,4 +1,4 @@
-export const PRICES_API = "https://coins.llama.fi/prices";
+export const PRICES_API = process.env.PRICES_API || "https://coins.llama.fi/prices";
 
 export const defaultConfidenceThreshold = 0.5; // for querying defillama prices
 
@@ -6,7 +6,7 @@ export const defaultConfidenceThreshold = 0.5; // for querying defillama prices
 export const maxBlocksToQueryByChain = {
   default: 300,
   ethereum: 300,
-  polygon: 1000,
+  polygon: 3000,
   fantom: 800,
   arbitrum: 3000,
   era: 5000,
@@ -16,9 +16,9 @@ export const maxBlocksToQueryByChain = {
   avax: 3000,
   bsc: 2000,
   optimism: 3000,
-  xdai: 400,
+  xdai: 3000,
   aurora: 5400,
-  celo: 1200,
+  celo: 3000,
   klaytn: 6000,
   sui: 2400,
   solana: 6000,
@@ -57,6 +57,11 @@ export const maxBlocksToQueryByChain = {
   monad: 5000,
   plume: 3000,
   imx: 3000,
+  soneium: 3000,
+  citrea: 3000,
+  moonbeam: 3000,
+  filecoin: 3000,
+  kava: 3000,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter
