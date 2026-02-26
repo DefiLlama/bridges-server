@@ -4,6 +4,8 @@ const axios = require("axios");
 const retry = require("async-retry");
 
 const maxNumberOfPrices = 150;
+const REQUEST_TIMEOUT = 30_000;
+const RETRY_OPTS = { retries: 3, minTimeout: 1000, maxTimeout: 5000 };
 
 export const getSingleLlamaPrice = async (
   chain: string,
@@ -14,7 +16,8 @@ export const getSingleLlamaPrice = async (
   const url = timestamp
     ? PRICES_API + `/historical/${timestamp}/${chain}:${token}`
     : PRICES_API + `/current/${chain}:${token}`;
-  const res = await retry(async (_bail: any) => await axios.get(url));
+
+  const res = await retry(async (_bail: any) => await axios.get(url, { timeout: REQUEST_TIMEOUT }), RETRY_OPTS);
   const price = res?.data?.coins?.[`${chain}:${token}`];
   if (!confidenceThreshold || !price || price.confidence > confidenceThreshold) {
     return price;
@@ -39,9 +42,13 @@ export const getLlamaPrices = async (tokens: string[], timestamp?: number): Prom
     const url = timestamp
       ? `${PRICES_API}/historical/${timestamp}/${remainingTokens.slice(0, maxNumberOfPrices).join(",")}`
       : `${PRICES_API}/current/${remainingTokens.slice(0, maxNumberOfPrices).join(",")}`;
-    const res = await retry(async () => await axios.get(url));
-    const prices = res?.data?.coins;
-    Object.assign(finalPrices, prices);
+    try {
+      const res = await retry(async () => await axios.get(url, { timeout: REQUEST_TIMEOUT }), RETRY_OPTS);
+      const prices = res?.data?.coins;
+      Object.assign(finalPrices, prices);
+    } catch (e) {
+      console.error(`[PRICES] Failed fetching prices for batch after retries, skipping batch. ${(e as any)?.message}`);
+    }
     remainingTokens = remainingTokens.slice(maxNumberOfPrices);
   }
 
@@ -65,4 +72,3 @@ function splitOnce(input: string, separator: string): string[] {
   const part2 = input.substring(index + separator.length);
   return [part1, part2];
 }
-
