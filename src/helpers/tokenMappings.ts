@@ -87,6 +87,9 @@ export const transformTokens = {
     "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat",
     "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao",
   },
+  tron: {
+    "0xa614f803b6fd780986a42c78ec9c7f77e6ded13c": "tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", // USDT
+  },
 } as {
   [chain: string]: {
     [token: string]: string;
