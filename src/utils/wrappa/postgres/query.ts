@@ -386,9 +386,18 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   return totalVolume / 2;
 };
 
-const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) => {
+const queryBridgeTxCounts24h = async (chain?: string) => {
   if (!chain) {
     return await sql<IBridgeTxCounts24H[]>`
+      WITH latest_per_bridge AS (
+        SELECT
+          c.bridge_name,
+          MAX(t.ts) AS max_ts
+        FROM bridges.config c
+        LEFT JOIN bridges.transactions t
+          ON t.bridge_id = c.id
+        GROUP BY c.bridge_name
+      )
       SELECT
         c.bridge_name,
         CAST(
@@ -414,15 +423,29 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
           ) AS INTEGER
         ) AS withdraw_txs_24h
       FROM bridges.config c
+      LEFT JOIN latest_per_bridge latest
+        ON latest.bridge_name = c.bridge_name
       LEFT JOIN bridges.transactions t
         ON t.bridge_id = c.id
-       AND t.ts >= to_timestamp(${startTimestamp})
+       AND latest.max_ts IS NOT NULL
+       AND t.ts > latest.max_ts - INTERVAL '24 hours'
+       AND t.ts <= latest.max_ts
       GROUP BY c.bridge_name
       ORDER BY c.bridge_name;
     `;
   }
 
   return await sql<IBridgeTxCounts24H[]>`
+    WITH latest_per_bridge AS (
+      SELECT
+        c.bridge_name,
+        MAX(t.ts) AS max_ts
+      FROM bridges.config c
+      LEFT JOIN bridges.transactions t
+        ON t.bridge_id = c.id
+      WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
+      GROUP BY c.bridge_name
+    )
     SELECT
       c.bridge_name,
       CAST(
@@ -466,9 +489,13 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
         ) AS INTEGER
       ) AS withdraw_txs_24h
     FROM bridges.config c
+    LEFT JOIN latest_per_bridge latest
+      ON latest.bridge_name = c.bridge_name
     LEFT JOIN bridges.transactions t
       ON t.bridge_id = c.id
-     AND t.ts >= to_timestamp(${startTimestamp})
+     AND latest.max_ts IS NOT NULL
+     AND t.ts > latest.max_ts - INTERVAL '24 hours'
+     AND t.ts <= latest.max_ts
     WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
     GROUP BY c.bridge_name
     ORDER BY c.bridge_name;

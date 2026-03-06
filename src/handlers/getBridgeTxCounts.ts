@@ -5,12 +5,9 @@ import { normalizeChain } from "../utils/normalizeChain";
 import { DEFAULT_TTL } from "../utils/cache";
 import { queryBridgeTxCounts24h } from "../utils/wrappa/postgres/query";
 
-const secondsInDay = 24 * 60 * 60;
-
 const getBridgeTxCounts = async (chain?: string) => {
   const queryChain = chain && chain !== "all" ? normalizeChain(chain) : undefined;
-  const startTimestamp = Math.floor(Date.now() / 1000) - secondsInDay;
-  const txCounts = await queryBridgeTxCounts24h(startTimestamp, queryChain);
+  const txCounts = await queryBridgeTxCounts24h(queryChain);
   const txCountsByBridgeName = txCounts.reduce((acc, row) => {
     acc[row.bridge_name] = row;
     return acc;
