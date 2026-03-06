@@ -6,6 +6,7 @@ import getBridgeVolumeBySlug from "../handlers/getBridgeVolumeBySlug";
 import getBridges from "../handlers/getBridges";
 import getBridge from "../handlers/getBridge";
 import getBridgeChains from "../handlers/getBridgeChains";
+import getBridgeTxCounts from "../handlers/getBridgeTxCounts";
 import getLargeTransactions from "../handlers/getLargeTransactions";
 import getLastBlocks from "../handlers/getLastBlocks";
 import getNetflows from "../handlers/getNetflows";
@@ -86,6 +87,7 @@ const start = async () => {
     server.get("/bridgedaystats/:timestamp/:chain", lambdaToFastify(getBridgeStatsOnDay));
     server.get("/bridgevolume/:chain", lambdaToFastify(getBridgeVolume));
     server.get("/bridgevolume/slug/:slug", lambdaToFastify(getBridgeVolumeBySlug));
+    server.get("/bridgetxcounts/:chain", lambdaToFastify(getBridgeTxCounts));
     server.get("/bridges", lambdaToFastify(getBridges));
     server.get("/bridge/:id", lambdaToFastify(getBridge));
     server.get("/bridgechains", lambdaToFastify(getBridgeChains));

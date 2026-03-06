@@ -44,6 +44,12 @@ interface IAggregatedData {
   total_address_withdrawn: string[];
 }
 
+interface IBridgeTxCounts24H {
+  bridge_name: string;
+  deposit_txs_24h: number;
+  withdraw_txs_24h: number;
+}
+
 type TimePeriod = "day" | "week" | "month";
 
 const getBridgeID = async (bridgNetworkName: string, chain: string) => {
@@ -380,6 +386,95 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   return totalVolume / 2;
 };
 
+const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) => {
+  if (!chain) {
+    return await sql<IBridgeTxCounts24H[]>`
+      SELECT
+        c.bridge_name,
+        CAST(
+          COALESCE(
+            SUM(
+              CASE
+                WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                ELSE 0
+              END
+            ),
+            0
+          ) AS INTEGER
+        ) AS deposit_txs_24h,
+        CAST(
+          COALESCE(
+            SUM(
+              CASE
+                WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                ELSE 0
+              END
+            ),
+            0
+          ) AS INTEGER
+        ) AS withdraw_txs_24h
+      FROM bridges.config c
+      LEFT JOIN bridges.transactions t
+        ON t.bridge_id = c.id
+       AND t.ts >= to_timestamp(${startTimestamp})
+      GROUP BY c.bridge_name
+      ORDER BY c.bridge_name;
+    `;
+  }
+
+  return await sql<IBridgeTxCounts24H[]>`
+    SELECT
+      c.bridge_name,
+      CAST(
+        COALESCE(
+          SUM(
+            CASE
+              WHEN c.chain = ${chain} THEN
+                CASE
+                  WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  ELSE 0
+                END
+              WHEN c.destination_chain = ${chain} THEN
+                CASE
+                  WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  ELSE 0
+                END
+              ELSE 0
+            END
+          ),
+          0
+        ) AS INTEGER
+      ) AS deposit_txs_24h,
+      CAST(
+        COALESCE(
+          SUM(
+            CASE
+              WHEN c.chain = ${chain} THEN
+                CASE
+                  WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  ELSE 0
+                END
+              WHEN c.destination_chain = ${chain} THEN
+                CASE
+                  WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  ELSE 0
+                END
+              ELSE 0
+            END
+          ),
+          0
+        ) AS INTEGER
+      ) AS withdraw_txs_24h
+    FROM bridges.config c
+    LEFT JOIN bridges.transactions t
+      ON t.bridge_id = c.id
+     AND t.ts >= to_timestamp(${startTimestamp})
+    WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
+    GROUP BY c.bridge_name
+    ORDER BY c.bridge_name;
+  `;
+};
+
 const getNetflows = async (period: TimePeriod) => {
   let tableAndWhere = sql``;
   switch (period) {
@@ -484,6 +579,7 @@ export {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
+  queryBridgeTxCounts24h,
   getNetflows,
   queryAggregatedTokensInRange,
 };
