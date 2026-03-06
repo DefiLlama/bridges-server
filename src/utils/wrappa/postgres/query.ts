@@ -395,7 +395,7 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
           COALESCE(
             SUM(
               CASE
-                WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                 ELSE 0
               END
             ),
@@ -406,7 +406,7 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
           COALESCE(
             SUM(
               CASE
-                WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                 ELSE 0
               END
             ),
@@ -431,12 +431,12 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
             CASE
               WHEN c.chain = ${chain} THEN
                 CASE
-                  WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                   ELSE 0
                 END
               WHEN c.destination_chain = ${chain} THEN
                 CASE
-                  WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                   ELSE 0
                 END
               ELSE 0
@@ -451,12 +451,12 @@ const queryBridgeTxCounts24h = async (startTimestamp: number, chain?: string) =>
             CASE
               WHEN c.chain = ${chain} THEN
                 CASE
-                  WHEN NOT t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                   ELSE 0
                 END
               WHEN c.destination_chain = ${chain} THEN
                 CASE
-                  WHEN t.is_deposit THEN COALESCE(t.txs_counted_as, 1)
+                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
                   ELSE 0
                 END
               ELSE 0
