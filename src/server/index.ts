@@ -20,14 +20,75 @@ import { warmAllCaches } from "./jobs/warmCache";
 
 dotenv.config();
 
+const debugLevel = Number(process.env.LLAMA_DEBUG_LEVEL ?? "0");
+const requestDebugEnabled = process.env.FASTIFY_REQUEST_DEBUG === "1" || debugLevel >= 3;
+const verboseRequestDebugEnabled = process.env.FASTIFY_REQUEST_DEBUG_VERBOSE === "1" || debugLevel >= 4;
+
 const server: FastifyInstance = fastify({
-  logger: true,
+  logger: {
+    level: requestDebugEnabled ? "debug" : "info",
+  },
   connectionTimeout: 60000,
   keepAliveTimeout: 65000,
 });
 
-server.addHook("onRequest", async (_, reply) => {
+server.addHook("onRequest", async (request: any, reply) => {
+  request.requestStartTime = Date.now();
   reply.raw.setTimeout(55000);
+  if (requestDebugEnabled) {
+    request.log.info(
+      {
+        reqId: request.id,
+        method: request.method,
+        url: request.url,
+        routePath: request.routeOptions?.url,
+        params: request.params,
+        query: request.query,
+      },
+      "request:start"
+    );
+  }
+});
+
+server.addHook("onResponse", async (request: any, reply) => {
+  if (!requestDebugEnabled) {
+    return;
+  }
+  const durationMs = typeof request.requestStartTime === "number" ? Date.now() - request.requestStartTime : undefined;
+  const payload = {
+    reqId: request.id,
+    method: request.method,
+    url: request.url,
+    routePath: request.routeOptions?.url,
+    statusCode: reply.statusCode,
+    durationMs,
+  } as any;
+  if (verboseRequestDebugEnabled) {
+    payload.params = request.params;
+    payload.query = request.query;
+  }
+  request.log.info(payload, "request:done");
+});
+
+server.addHook("onError", async (request: any, reply, error) => {
+  if (!requestDebugEnabled) {
+    return;
+  }
+  const durationMs = typeof request.requestStartTime === "number" ? Date.now() - request.requestStartTime : undefined;
+  request.log.error(
+    {
+      reqId: request.id,
+      method: request.method,
+      url: request.url,
+      routePath: request.routeOptions?.url,
+      statusCode: reply.statusCode,
+      durationMs,
+      params: request.params,
+      query: request.query,
+      err: error,
+    },
+    "request:error"
+  );
 });
 
 const lambdaToFastify = (handler: Function) => async (request: any, reply: any) => {
