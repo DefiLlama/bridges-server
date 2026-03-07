@@ -4,7 +4,7 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
   {
     chainId: 1,
     portal: "0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8",
-    synthesis: "0x0000000000000000000000000000000000000000",
+    synthesis: "0xD7c3DF25683871d18BC838E4F619126442Dd38B3",
   },
   {
     chainId: 56,
@@ -79,7 +79,7 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
   {
     chainId: 8453,
     portal: "0xEE981B2459331AD268cc63CE6167b446AF4161f8",
-    synthesis: "0x0000000000000000000000000000000000000000",
+    synthesis: "0x9F6424FE88fBe7785Fa34F0E369F192bF38E7A6e",
   },
   {
     chainId: 728126428,
@@ -230,5 +230,25 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
     chainId: 747474,
     portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
     synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 33139,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 9745,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 143,
+    portal: "0x292fC50e4eB66C3f6514b9E402dBc25961824D62",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
+  {
+    chainId: 4114,
+    portal: "0x0000000000000000000000000000000000000000",
+    synthesis: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
   },
 ] as const;

@@ -4,7 +4,7 @@ export enum ChainId {
     MATIC_MAINNET = 137,
     AVAX_MAINNET = 43114,
     BOBA_MAINNET = 288,
-    BOBA_BNB = 56288,
+    SYMBIOSIS_MAINNET = 13863860,
     TELOS_MAINNET = 40,
     KAVA_MAINNET = 2222,
     ZKSYNC_MAINNET = 324,
@@ -40,14 +40,17 @@ export enum ChainId {
     ABSTRACT_MAINNET = 2741,
     GNOSIS_MAINNET = 100,
     BERACHAIN_MAINNET = 80094,
-    SYMBIOSIS_MAINNET = 13863860,
     UNICHAIN_MAINNET = 130,
     SONEIUM_MAINNET = 1868,
     OPBNB_MAINNET = 204,
-    HYPEREVM_MAINNET = 999,
+    HYPERLIQUID_MAINNET = 999,
     KATANA_MAINNET = 747474,
-
+    APECHAIN_MAINNET = 33139,
+    PLASMA_MAINNET = 9745,
+    MONAD_MAINNET = 143,
+    CITREA_MAINNET = 4114,
 }
+
 export const AddressZero = "0x0000000000000000000000000000000000000000"
 
 export const CHAINS_MAP: Record<ChainId, string> = {
@@ -58,7 +61,6 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.TELOS_MAINNET]: 'telos',
     [ChainId.KAVA_MAINNET]: 'kava',
     [ChainId.BOBA_MAINNET]: 'boba',
-    [ChainId.BOBA_BNB]: 'boba_bnb',
     [ChainId.ZKSYNC_MAINNET]: 'era',
     [ChainId.ARBITRUM_MAINNET]: 'arbitrum',
     [ChainId.OPTIMISM_MAINNET]: 'optimism',
@@ -79,7 +81,7 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.ZKLINK_MAINNET]: 'zklink',
     [ChainId.CORE_MAINNET]: 'core',
     [ChainId.TAIKO_MAINNET]: 'taiko',
-    [ChainId.SEI_EVM_MAINNET]: 'sei_v2', // TODO no chain on defillama bridges
+    [ChainId.SEI_EVM_MAINNET]: 'sei',
     [ChainId.ZETACHAIN_MAINNET]: 'zeta',
     [ChainId.CRONOS_MAINNET]: 'cronos',
     [ChainId.FRAXTAL_MAINNET]: 'fraxtal',
@@ -87,7 +89,7 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.BSQUARED_MAINNET]: 'bsquared',
     [ChainId.CRONOS_ZK_MAINNET]: 'cronos_zkevm',
     [ChainId.MORPH_MAINNET]: 'morph',
-    [ChainId.GOAT_MAINNET]: 'goat', // TODO no chain on defillama bridges
+    [ChainId.GOAT_MAINNET]: 'goat',
     [ChainId.SONIC_MAINNET]: 'sonic',
     [ChainId.ABSTRACT_MAINNET]: 'abstract',
     [ChainId.GNOSIS_MAINNET]: 'xdai',
@@ -96,13 +98,16 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.UNICHAIN_MAINNET]: 'unichain',
     [ChainId.SONEIUM_MAINNET]: 'soneium',
     [ChainId.OPBNB_MAINNET]: 'op_bnb',
-    [ChainId.HYPEREVM_MAINNET]: 'hyperevm', // TODO no chain on defillama bridges
-    [ChainId.KATANA_MAINNET]: 'katana', // TODO no chain on defillama bridges
+    [ChainId.HYPERLIQUID_MAINNET]: 'hyperevm',
+    [ChainId.KATANA_MAINNET]: 'katana',
+    [ChainId.APECHAIN_MAINNET]: 'apechain',
+    [ChainId.PLASMA_MAINNET]: 'plasma',
+    [ChainId.MONAD_MAINNET]: 'monad',
+    [ChainId.CITREA_MAINNET]: 'citrea',
 }
 
 export const CHAIN_ADAPTER_MAP: Record<string, string> = {
     'avax': 'avalanche',
-    'boba_bnb': 'boba bnb',
     'era': 'zksync era',
     'arbitrum_nova': 'arbitrum nova',
     'polygon_zkevm': 'polygon zkevm',
