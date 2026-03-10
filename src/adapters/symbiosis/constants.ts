@@ -98,7 +98,7 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.UNICHAIN_MAINNET]: 'unichain',
     [ChainId.SONEIUM_MAINNET]: 'soneium',
     [ChainId.OPBNB_MAINNET]: 'op_bnb',
-    [ChainId.HYPERLIQUID_MAINNET]: 'hyperevm',
+    [ChainId.HYPERLIQUID_MAINNET]: 'hyperliquid',
     [ChainId.KATANA_MAINNET]: 'katana',
     [ChainId.APECHAIN_MAINNET]: 'apechain',
     [ChainId.PLASMA_MAINNET]: 'plasma',
