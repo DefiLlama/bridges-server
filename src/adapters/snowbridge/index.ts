@@ -56,6 +56,9 @@ const contractAddresses = {
       {
         token: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
       },
+      {
+        token: "0xcccccccccc33d538dbc2ee4feab0a7a1ff4e8a94", // CFG
+      },
     ],
   },
 } as {
