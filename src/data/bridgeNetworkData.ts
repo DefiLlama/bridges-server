@@ -2458,6 +2458,7 @@ export default [
       "Corn",
       "Ethereum",
       "Flare",
+      "Hedera",
       "Hyperliquid",
       "Ink",
       "Mantle",
