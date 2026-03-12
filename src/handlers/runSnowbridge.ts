@@ -34,7 +34,7 @@ interface SnowbridgeApiResponse {
   toPolkadot: SnowbridgeTransfer[];
 }
 
-function toEventData(t: SnowbridgeTransfer, direction: "toEthereum" | "toPolkadot"): EventData {
+function toEventData(t: SnowbridgeTransfer, isDeposit: boolean): EventData {
   const ts = new Date(t.timestamp).getTime() / 1000;
   return {
     blockNumber: t.blockNumber,
@@ -43,7 +43,7 @@ function toEventData(t: SnowbridgeTransfer, direction: "toEthereum" | "toPolkado
     to: "0x",
     token: t.tokenAddress,
     amount: BigNumber.from(t.amount),
-    isDeposit: direction === "toPolkadot",
+    isDeposit,
     chain: "ethereum",
     timestamp: ts,
   };
@@ -51,7 +51,8 @@ function toEventData(t: SnowbridgeTransfer, direction: "toEthereum" | "toPolkado
 
 /**
  * Load ether (native token) transfer events from Snowbridge dashboard API.
- * toPolkadot => source chain ethereum; toEthereum => source chain polkadot.
+ * In DefiLlama context we track this handler on ethereum only.
+ * Both directions are merged into ethereum with direction preserved by isDeposit.
  */
 const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<EventData[]> => {
   const res = await fetch(SNOWBRIDGE_ETHER_API);
@@ -65,8 +66,8 @@ const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<Ev
     return ts >= fromTimestamp && ts < toTimestamp;
   };
 
-  const toPolkadot: EventData[] = (data.toPolkadot ?? []).filter(inRange).map((t) => toEventData(t, "toPolkadot"));
-  const toEthereum: EventData[] = (data.toEthereum ?? []).filter(inRange).map((t) => toEventData(t, "toEthereum"));
+  const toPolkadot: EventData[] = (data.toPolkadot ?? []).filter(inRange).map((t) => toEventData(t, true));
+  const toEthereum: EventData[] = (data.toEthereum ?? []).filter(inRange).map((t) => toEventData(t, false));
 
   return [...toPolkadot, ...toEthereum];
 };
@@ -74,7 +75,6 @@ const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<Ev
 /** Adapter shape for config/bridge IDs only; event fetching is via getEvents. */
 const snowbridgeEtherAdapter: BridgeAdapter = {
   ethereum: async () => [],
-  polkadot: async () => [],
 };
 
 export const handler = async () => {
