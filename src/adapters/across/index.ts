@@ -56,6 +56,7 @@ interface AcrossDeposit {
   outputToken: string;
   inputAmount: string;
   outputAmount: string;
+  bridgeFeeUsd?: string | null;
   originChainId: number;
   destinationChainId: number | null;
   depositTxHash: string;
@@ -75,6 +76,12 @@ enum ApiErrorType {
   DATA_PARSING = "data_parsing",
   UNKNOWN = "unknown",
 }
+
+const parseBridgeFeeUsd = (value?: string | null): number | undefined => {
+  if (value == null) return undefined;
+  const n = Number(value);
+  return !isNaN(n) && isFinite(n) ? n : undefined;
+};
 
 /**
  * Fetch deposits from the Across Indexer API with retry logic
@@ -169,7 +176,7 @@ const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
     timestamp = new Date(deposit.depositBlockTimestamp).getTime();
   }
 
-  return {
+  const event: EventData = {
     blockNumber: deposit.depositBlockNumber || 0,
     txHash: deposit.depositTxHash,
     from: deposit.depositor,
@@ -179,6 +186,13 @@ const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
     isDeposit: true,
     timestamp,
   };
+
+  const bridgeFeeUsd = parseBridgeFeeUsd(deposit.bridgeFeeUsd);
+  if (bridgeFeeUsd !== undefined) {
+    (event as EventData & { bridgeFeeUsd?: number }).bridgeFeeUsd = bridgeFeeUsd;
+  }
+
+  return event;
 };
 
 /**
@@ -197,7 +211,7 @@ const convertToWithdrawalEvent = (deposit: AcrossDeposit): EventData | null => {
     timestamp = new Date(deposit.fillBlockTimestamp).getTime();
   }
 
-  return {
+  const event: EventData = {
     blockNumber: deposit.fillBlockNumber || 0,
     txHash: deposit.fillTx,
     from: deposit.depositor,
@@ -207,6 +221,13 @@ const convertToWithdrawalEvent = (deposit: AcrossDeposit): EventData | null => {
     isDeposit: false,
     timestamp,
   };
+
+  const bridgeFeeUsd = parseBridgeFeeUsd(deposit.bridgeFeeUsd);
+  if (bridgeFeeUsd !== undefined) {
+    (event as EventData & { bridgeFeeUsd?: number }).bridgeFeeUsd = bridgeFeeUsd;
+  }
+
+  return event;
 };
 
 /**
