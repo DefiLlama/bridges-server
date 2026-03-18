@@ -300,6 +300,7 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
        transactions.token,
        transactions.amount,
        transactions.is_deposit,
+       transactions.is_usd_volume,
        transactions.chain,
        config.bridge_name,
        config.destination_chain,
