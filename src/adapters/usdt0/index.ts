@@ -34,6 +34,10 @@ const deployments = {
       oapp: "0x567287d2A9829215a37e3B88843d32f9221E7588",
       token: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
   }],
+  hedera: [{
+      oapp: "0xe3119e23fC2371d1E6b01775ba312035425A53d6",
+      token: "0x00000000000000000000000000000000009Ce723",
+  }],
   hyperliquid: [{
       oapp: "0x904861a24F30EC96ea7CFC3bE9EA4B476d237e98",
       token: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
@@ -52,6 +56,10 @@ const deployments = {
   }],
   monad: [{
     oapp: "0x9151434b16b9763660705744891fA906F660EcC5",
+    token: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+  }],
+  morph: [{
+    oapp: "0xcb768e263FB1C62214E7cab4AA8d036D76dc59CC",
     token: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
   }],
   optimism: [{

@@ -273,7 +273,7 @@ const chains = [
   "etherlink",
   "everclear",
   "fraxtal",
-  "hashkey",
+  "hsk",
   "hemi",
   "henesys",
   "jovay",
@@ -295,7 +295,8 @@ const chains = [
   "taiko",
   "x layer",
   "zircuit",
-  "zora"
+  "zora",
+  "pharos"
 ]
 
 export const adapter: BridgeAdapter = Object.fromEntries(chains.map(chain => [chain, fetchCCIPEvents as any]));

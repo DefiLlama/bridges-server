@@ -44,6 +44,12 @@ interface IAggregatedData {
   total_address_withdrawn: string[];
 }
 
+interface IBridgeTxCounts24H {
+  bridge_name: string;
+  deposit_txs_24h: number;
+  withdraw_txs_24h: number;
+}
+
 type TimePeriod = "day" | "week" | "month";
 
 const getBridgeID = async (bridgNetworkName: string, chain: string) => {
@@ -277,14 +283,13 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   startTimestamp: number,
   endTimestamp?: number,
   bridgeNetworkName?: string,
-  chain?: string
+  chain?: string,
+  limit?: number
 ) => {
   let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
-  let chainEqual = chain ? sql`WHERE (chain = ${chain} OR destination_chain = ${chain})` : sql``;
-  let bridgeNetworkEqual = bridgeNetworkName ? sql`WHERE bridge_name = ${bridgeNetworkName}` : chainEqual;
-  if (bridgeNetworkName && chain) {
-    bridgeNetworkEqual = sql`${chainEqual} AND bridge_name = ${bridgeNetworkName}`;
-  }
+  let bridgeNameCondition = bridgeNetworkName ? sql`AND config.bridge_name = ${bridgeNetworkName}` : sql``;
+  let chainCondition = chain ? sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})` : sql``;
+  const limitClause = limit ? sql`LIMIT ${limit}` : sql``;
   return await sql<ITransaction[]>`
   SELECT transactions.bridge_id,
        transactions.tx_hash,
@@ -295,6 +300,7 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
        transactions.token,
        transactions.amount,
        transactions.is_deposit,
+       transactions.is_usd_volume,
        transactions.chain,
        config.bridge_name,
        config.destination_chain,
@@ -304,12 +310,12 @@ FROM   bridges.transactions
                ON transactions.bridge_id = config.id
        LEFT JOIN bridges.large_transactions
                ON transactions.id = large_transactions.tx_pk
-WHERE  config.id IN (SELECT id
-                     FROM   bridges.config
-                     ${bridgeNetworkEqual})
-       AND transactions.ts >= to_timestamp(${startTimestamp})
+WHERE  transactions.ts >= to_timestamp(${startTimestamp})
        ${timestampLessThan}
+       ${bridgeNameCondition}
+       ${chainCondition}
 ORDER BY transactions.ts DESC
+${limitClause}
        `;
 };
 
@@ -379,6 +385,122 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   }, 0);
 
   return totalVolume / 2;
+};
+
+const queryBridgeTxCounts24h = async (chain?: string) => {
+  if (!chain) {
+    return await sql<IBridgeTxCounts24H[]>`
+      WITH latest_per_bridge AS (
+        SELECT
+          c.bridge_name,
+          MAX(t.ts) AS max_ts
+        FROM bridges.config c
+        LEFT JOIN bridges.transactions t
+          ON t.bridge_id = c.id
+        GROUP BY c.bridge_name
+      )
+      SELECT
+        c.bridge_name,
+        CAST(
+          COALESCE(
+            SUM(
+              CASE
+                WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                ELSE 0
+              END
+            ),
+            0
+          ) AS INTEGER
+        ) AS deposit_txs_24h,
+        CAST(
+          COALESCE(
+            SUM(
+              CASE
+                WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                ELSE 0
+              END
+            ),
+            0
+          ) AS INTEGER
+        ) AS withdraw_txs_24h
+      FROM bridges.config c
+      LEFT JOIN latest_per_bridge latest
+        ON latest.bridge_name = c.bridge_name
+      LEFT JOIN bridges.transactions t
+        ON t.bridge_id = c.id
+       AND latest.max_ts IS NOT NULL
+       AND t.ts > latest.max_ts - INTERVAL '24 hours'
+       AND t.ts <= latest.max_ts
+      GROUP BY c.bridge_name
+      ORDER BY c.bridge_name;
+    `;
+  }
+
+  return await sql<IBridgeTxCounts24H[]>`
+    WITH latest_per_bridge AS (
+      SELECT
+        c.bridge_name,
+        MAX(t.ts) AS max_ts
+      FROM bridges.config c
+      LEFT JOIN bridges.transactions t
+        ON t.bridge_id = c.id
+      WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
+      GROUP BY c.bridge_name
+    )
+    SELECT
+      c.bridge_name,
+      CAST(
+        COALESCE(
+          SUM(
+            CASE
+              WHEN c.chain = ${chain} THEN
+                CASE
+                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                  ELSE 0
+                END
+              WHEN c.destination_chain = ${chain} THEN
+                CASE
+                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                  ELSE 0
+                END
+              ELSE 0
+            END
+          ),
+          0
+        ) AS INTEGER
+      ) AS deposit_txs_24h,
+      CAST(
+        COALESCE(
+          SUM(
+            CASE
+              WHEN c.chain = ${chain} THEN
+                CASE
+                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                  ELSE 0
+                END
+              WHEN c.destination_chain = ${chain} THEN
+                CASE
+                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
+                  ELSE 0
+                END
+              ELSE 0
+            END
+          ),
+          0
+        ) AS INTEGER
+      ) AS withdraw_txs_24h
+    FROM bridges.config c
+    LEFT JOIN latest_per_bridge latest
+      ON latest.bridge_name = c.bridge_name
+    LEFT JOIN bridges.transactions t
+      ON t.bridge_id = c.id
+     AND latest.max_ts IS NOT NULL
+     AND t.ts > latest.max_ts - INTERVAL '24 hours'
+     AND t.ts <= latest.max_ts
+    WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
+    GROUP BY c.bridge_name
+    ORDER BY c.bridge_name;
+  `;
 };
 
 const getNetflows = async (period: TimePeriod) => {
@@ -485,6 +607,7 @@ export {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
+  queryBridgeTxCounts24h,
   getNetflows,
   queryAggregatedTokensInRange,
 };

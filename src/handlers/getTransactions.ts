@@ -4,8 +4,6 @@ import { queryTransactionsTimestampRangeByBridgeNetwork } from "../utils/wrappa/
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
 
-const maxResponseTxs = 6000; // maximum number of transactions to return
-
 const getTransactions = async (
   startTimestamp?: string,
   endTimestamp?: string,
@@ -26,7 +24,8 @@ const getTransactions = async (
       message: "Cannot include both 'chain' and 'sourceChain' as query params.",
     });
   }
-  const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : 0;
+  const defaultStartTimestamp = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
+  const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : defaultStartTimestamp;
   const queryEndTimestamp = endTimestamp ? parseInt(endTimestamp) : undefined;
   const queryChain = sourceChain ? normalizeChain(sourceChain) : chain ? normalizeChain(chain) : chain;
   let queryName = undefined;
@@ -40,14 +39,14 @@ const getTransactions = async (
   if (typeof address === "string") {
     [addressChain, addressHash] = address?.split(":");
   }
-  const integerLimit = isNaN(parseInt(limit ?? "100000")) ? maxResponseTxs : parseInt(limit ?? "100000");
-  const responseLimit = Math.min(maxResponseTxs, integerLimit);
+  const queryLimit = limit && !isNaN(parseInt(limit)) ? parseInt(limit) : undefined;
 
   const transactions = (await queryTransactionsTimestampRangeByBridgeNetwork(
     queryStartTimestamp,
     queryEndTimestamp,
     queryName,
-    queryChain
+    queryChain,
+    queryLimit
   )) as any[];
 
   const response = transactions
@@ -71,8 +70,7 @@ const getTransactions = async (
       }
       return tx;
     })
-    .filter((tx) => tx)
-    .slice(0, responseLimit);
+    .filter((tx) => tx);
 
   return response;
 };
