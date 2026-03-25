@@ -82,6 +82,10 @@ const deployments = {
     oapp: "0x56Fe74A2e3b484b921c447357203431a3485CC60",
     token: "0x9151434b16b9763660705744891fA906F660EcC5",
   }],
+  tempo: [{
+    oapp: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
+    token: "0x20C00000000000000000000014f22CA97301EB73",
+  }],
   stable: [{
     oapp: "0xedaba024be4d87974d5aB11C6Dd586963CcCB027",
     token: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
