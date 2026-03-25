@@ -5,7 +5,7 @@ dotenv.config();
 
 const connectionString =
   process.env.DB_URL ??
-  `postgresql://${process.env.PSQL_USERNAME}:${process.env.PSQL_PW}@${process.env.PSQL_URL}:${process.env.PSQL_PORT || "5433"}/${process.env.DB_NAME || "postgres"}`;
+  `postgresql://${process.env.PSQL_USERNAME}:${process.env.PSQL_PW}@${process.env.PSQL_URL}:5433/postgres`;
 
 let sql = postgres(connectionString, {
   idle_timeout: 120,
