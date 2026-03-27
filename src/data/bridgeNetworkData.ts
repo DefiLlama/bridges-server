@@ -931,7 +931,7 @@ export default [
 
   {
     id: 32,
-    displayName: "Squid (Powered by Axelar)",
+    displayName: "Squid",
     bridgeDbName: "squidrouter",
     iconLink: "icons:squid",
     largeTxThreshold: 10000,
