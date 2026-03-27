@@ -15,6 +15,7 @@ import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
 import { handler as runCashmere } from "../handlers/runCashmere";
 import { getAllGetLogsCounts } from "../utils/cache";
+import { handler as runSnowbridge } from "../handlers/runSnowbridge";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -80,8 +81,11 @@ const cron = () => {
 
   console.log(`[INFO] Starting cron service at ${new Date().toISOString()}`);
 
-  runAfterDelay("aggregateLayerZero", 5, () =>
-    runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"), 15
+  runAfterDelay(
+    "aggregateLayerZero",
+    5,
+    () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"),
+    15
   );
 
   runAfterDelay("aggregateAll", 5, runAggregateAllAdapters, 15);
@@ -97,6 +101,7 @@ const cron = () => {
   runAfterDelay("runCashmere", 25, runCashmere, 25);
   runAfterDelay("runTeleswap", 25, runTeleswap, 25);
   runAfterDelay("runCCIP", 25, runCCIP, 25);
+  runAfterDelay("runSnowbridge", 25, runSnowbridge, 25);
 
   exit();
 };
