@@ -2471,6 +2471,7 @@ export default [
       "Rootstock",
       "Sei",
       "Stable",
+      "Tempo",
       "Unichain",
     ],
     chainMapping: {
