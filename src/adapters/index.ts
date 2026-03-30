@@ -95,6 +95,7 @@ import usdt0 from "./usdt0";
 import pheasantNetwork from "./pheasant-network";
 import teleswap from "./teleswap";
 import agglayer from "./agglayer";
+import aori from "./aori";
 import fxrp from "./flare/fxrp";
 import snowbridge from "./snowbridge";
 import kaspabridge from "./kaspabridge";
@@ -200,6 +201,7 @@ export default {
   pheasantNetwork,
   teleswap,
   agglayer,
+  aori,
   fxrp,
   snowbridge,
   kaspabridge,

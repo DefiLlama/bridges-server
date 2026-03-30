@@ -2892,4 +2892,14 @@ export default [
       "blast",
     ],
   },
+  {
+    id: 107,
+    displayName: "Aori",
+    bridgeDbName: "aori",
+    slug: "aori",
+    iconLink: "icons:aori",
+    largeTxThreshold: 10000,
+    url: "https://aori.io/",
+    chains: ["Ethereum", "Base", "Arbitrum", "Optimism", "Plasma", "BSC", "Monad", "Stable", "MegaETH"],
+  },
 ] as BridgeNetwork[];
