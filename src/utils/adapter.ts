@@ -23,6 +23,7 @@ const retry = require("async-retry");
 const SECONDS_IN_DAY = 86400;
 
 export const bridgesToSkip = [
+  "across",
   "wormhole",
   "layerzero",
   "hyperlane",

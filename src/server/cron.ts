@@ -16,6 +16,7 @@ import { handler as runRelay } from "../handlers/runRelay";
 import { handler as runCashmere } from "../handlers/runCashmere";
 import { getAllGetLogsCounts } from "../utils/cache";
 import { handler as runSnowbridge } from "../handlers/runSnowbridge";
+import { handler as runAcross } from "../handlers/runAcross";
 
 const createTimeout = (minutes: number) =>
   new Promise((_, reject) =>
@@ -98,6 +99,7 @@ const cron = () => {
   runAfterDelay("runHyperlane", 25, runHyperlane, 25);
   runAfterDelay("runInterSoon", 25, runInterSoon, 25);
   runAfterDelay("runRelay", 25, runRelay, 25);
+  runAfterDelay("runAcross", 25, runAcross, 25);
   runAfterDelay("runCashmere", 25, runCashmere, 25);
   runAfterDelay("runTeleswap", 25, runTeleswap, 25);
   runAfterDelay("runCCIP", 25, runCCIP, 25);

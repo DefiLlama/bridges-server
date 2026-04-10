@@ -3,6 +3,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { sql } from "../utils/db";
 import { store } from "../utils/s3";
+import { shouldSkipBridge } from "../utils/adapter";
 
 const lambdaClient = new LambdaClient({});
 
@@ -64,7 +65,10 @@ export default wrapScheduledLambda(async (event) => {
     return;
   }
 
-  const bridgeIndices = bridgeNetworks.map((_, i) => i);
+  const bridgeIndices = bridgeNetworks
+    .map((bridge, i) => ({ bridge, i }))
+    .filter(({ bridge }) => !shouldSkipBridge(bridge.bridgeDbName))
+    .map(({ i }) => i);
   const randomIndices = bridgeIndices.sort(() => Math.random() - 0.5);
 
   const groupedIndices = [];

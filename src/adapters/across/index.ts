@@ -20,7 +20,7 @@ const MAX_LIMIT = 1000;
 const PAGINATION_SAFETY_LIMIT = 100000;
 
 // Chain slug to chain ID mapping
-const chainIdMapping: Record<string, number> = {
+export const chainIdMapping: Record<string, number> = {
   ethereum: 1,
   optimism: 10,
   bsc: 56,
@@ -49,7 +49,8 @@ const chainIdMapping: Record<string, number> = {
 };
 
 // Response type from the Across Indexer API
-interface AcrossDeposit {
+export interface AcrossDeposit {
+  depositId?: string | number;
   depositor: string;
   recipient: string;
   inputToken: string;
@@ -79,7 +80,7 @@ enum ApiErrorType {
 /**
  * Fetch deposits from the Across Indexer API with retry logic
  */
-const fetchDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
+export const fetchDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
   const queryParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     queryParams.append(key, String(value));
@@ -89,7 +90,12 @@ const fetchDeposits = async (params: Record<string, string | number>): Promise<A
   
   return retry(
     async () => {
-      const response = await fetch(url, { timeout: 30000 });
+      const response = await fetch(url, {
+        timeout: 30000,
+        headers: {
+          "user-agent": "defillama-bridges-across-runner",
+        },
+      });
       if (!response.ok) {
         const errorType =
           response.status === 429
@@ -124,7 +130,7 @@ const fetchDeposits = async (params: Record<string, string | number>): Promise<A
 /**
  * Fetch all deposits with pagination
  */
-const fetchAllDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
+export const fetchAllDeposits = async (params: Record<string, string | number>): Promise<AcrossDeposit[]> => {
   const allDeposits: AcrossDeposit[] = [];
   let skip = 0;
   
@@ -158,7 +164,7 @@ const fetchAllDeposits = async (params: Record<string, string | number>): Promis
  * Convert a deposit from the API to the EventData format for a DEPOSIT event
  * (funds leaving the origin chain)
  */
-const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
+export const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
   if (!deposit.depositTxHash || !deposit.inputToken || !deposit.inputAmount) {
     return null;
   }
@@ -185,7 +191,7 @@ const convertToDepositEvent = (deposit: AcrossDeposit): EventData | null => {
  * Convert a deposit from the API to the EventData format for a WITHDRAWAL event
  * (funds arriving on the destination chain)
  */
-const convertToWithdrawalEvent = (deposit: AcrossDeposit): EventData | null => {
+export const convertToWithdrawalEvent = (deposit: AcrossDeposit): EventData | null => {
   // Only include filled deposits for withdrawals
   if (!deposit.fillTx || !deposit.outputToken || !deposit.outputAmount) {
     return null;
