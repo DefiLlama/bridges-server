@@ -549,6 +549,13 @@ const v2Addresses: Record<string, { token: string; pool: string }[]> = {
     { token: "0x19e26B0638bf63aa9fa4d14c6baF8D52eBE86C5C", pool: "0x77C71633C34C3784ede189d74223122422492a0f" }, // usdc
     { token: "0x9c2dc7377717603eB92b2655c5f2E7997a4945BD", pool: "0x1C10CC06DC6D35970d1D53B2A23c76ef370d4135" }, // usdt
   ],
+  // Tempo Mainnet "Presto" (chainId 4217) — Stargate v2 OFT spoke deployment.
+  // Mint-burn for inbound USDC.e/EURC.e from Ethereum Pool.
+  // Source: https://github.com/stargate-protocol/stargate-v2/tree/main/packages/stg-evm-v2/deployments/tempo-mainnet
+  tempo: [
+    { token: "0x20C000000000000000000000b9537d11c60E8b50", pool: "0x8c76e2F6C5ceDA9AA7772e7efF30280226c44392" }, // usdc.e
+    { token: "0x20c0000000000000000000001621e21F71CF12fb", pool: "0x7753Dc8d4bd48Db599Da21E08b1Ab1D6FDFfdC71" }, // eurc.e
+  ],
   telos: [
     { token: "0xF1815bd50389c46847f0Bda824eC8da914045D14", pool: "0x2086f755A6d9254045C257ea3d382ef854849B0f" }, // usdc
     { token: "0x674843C06FF83502ddb4D37c2E09C01cdA38cbc8", pool: "0x3a1293Bdb83bBbDd5Ebf4fAc96605aD2021BbC0f" }, // usdt
@@ -775,6 +782,7 @@ const adapter: BridgeAdapter = {
   superposition: constructParams("spn"),
   taiko: constructParams("taiko"),
   telos: constructParams("telos"),
+  tempo: constructParams("tempo"),
   unichain: constructParams("unichain"),
   xchain: constructParams("idex"),
   xdc: constructParams("xdc"),
