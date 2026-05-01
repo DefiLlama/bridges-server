@@ -261,6 +261,7 @@ export default [
       "Superposition",
       "Taiko",
       "Telos",
+      "Tempo",
       "Unichain",
       "IDEX",
       "XDC",
