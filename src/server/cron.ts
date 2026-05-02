@@ -84,19 +84,19 @@ const cron = () => {
 
   runAfterDelay(
     "aggregateLayerZero",
-    5,
+    0,
     () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"),
     15
   );
 
   runAfterDelay(
     "aggregateHyperlane",
-    5,
+    0,
     () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "hyperlane"),
     20
   );
 
-  runAfterDelay("aggregateAll", 5, runAggregateAllAdapters, 15);
+  runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15);
   runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15);
   runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15);
   runAfterDelay("runAllAdapters", 5, runAllAdapters, 40);
