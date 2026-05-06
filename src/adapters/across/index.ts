@@ -46,6 +46,8 @@ export const chainIdMapping: Record<string, number> = {
   zora: 7777777,
   monad: 143,
   hyperevm: 999,
+  tempo: 4217,
+  megaeth: 4326,
 };
 
 // Response type from the Across Indexer API
