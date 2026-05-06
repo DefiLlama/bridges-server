@@ -2903,4 +2903,49 @@ export default [
     url: "https://aori.io/",
     chains: ["Ethereum", "Base", "Arbitrum", "Optimism", "Plasma", "BSC", "Monad", "Stable", "MegaETH"],
   },
+  {
+    id: 108,
+    displayName: "Clementine",
+    bridgeDbName: "clementine",
+    slug: "clementine",
+    iconLink: "chain:citrea",
+    largeTxThreshold: 10000,
+    url: "https://citrea.xyz/",
+    chains: ["Bitcoin", "Citrea"],
+    // Bitcoin side has no event indexing — the Citrea bridge contract is the
+    // system of record. Marking Bitcoin as destinationChain makes the runner
+    // skip Bitcoin block lookups (the field is functionally a "don't index"
+    // flag despite its name).
+    destinationChain: "Bitcoin",
+  },
+  {
+    id: 109,
+    displayName: "Citrea USDC.e Bridge",
+    bridgeDbName: "citrea-usdc",
+    slug: "citrea-usdc",
+    iconLink: "chain:citrea",
+    largeTxThreshold: 10000,
+    url: "https://citrea.xyz/",
+    chains: ["Ethereum", "Citrea"],
+  },
+  {
+    id: 110,
+    displayName: "Citrea USDT.e Bridge",
+    bridgeDbName: "citrea-usdt",
+    slug: "citrea-usdt",
+    iconLink: "chain:citrea",
+    largeTxThreshold: 10000,
+    url: "https://citrea.xyz/",
+    chains: ["Ethereum", "Citrea"],
+  },
+  {
+    id: 111,
+    displayName: "Citrea WBTC.e Bridge",
+    bridgeDbName: "citrea-wbtc",
+    slug: "citrea-wbtc",
+    iconLink: "chain:citrea",
+    largeTxThreshold: 10000,
+    url: "https://citrea.xyz/",
+    chains: ["Ethereum", "Citrea"],
+  },
 ] as BridgeNetwork[];

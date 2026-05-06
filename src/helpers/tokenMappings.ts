@@ -90,6 +90,12 @@ export const transformTokens = {
   tron: {
     "0xa614f803b6fd780986a42c78ec9c7f77e6ded13c": "tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", // USDT
   },
+  citrea: {
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "coingecko:bitcoin", // cBTC (native, 18 dec) → BTC price
+    "0xe045e6c36cf77faa2cfb54466d71a3aef7bbe839": "ethereum:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC.e → USDC
+    "0x9f3096bac87e7f03dc09b0b416eb0df837304dc4": "ethereum:0xdac17f958d2ee523a2206206994597c13d831ec7", // USDT.e → USDT
+    "0xdf240dc08b0fdad1d93b74d5048871232f6bea3d": "ethereum:0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC.e → WBTC
+  },
 } as {
   [chain: string]: {
     [token: string]: string;
@@ -154,6 +160,11 @@ export const transformTokenDecimals = {
   },
   fantom: {
     "0x12edea9cd262006cc3c4e77c90d2cd2dd4b1eb97": 6,
+  },
+  citrea: {
+    // cBTC is the native asset (18 dec); priced via coingecko:bitcoin which would
+    // otherwise report 8 dec, scaling volume by 1e10.
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": 18,
   },
 } as {
   [chain: string]: {
