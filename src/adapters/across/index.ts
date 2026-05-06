@@ -46,6 +46,8 @@ export const chainIdMapping: Record<string, number> = {
   zora: 7777777,
   monad: 143,
   hyperevm: 999,
+  tempo: 4217,
+  megaeth: 4326,
 };
 
 // Response type from the Across Indexer API
@@ -285,29 +287,12 @@ const constructParams = (chain: string) => {
   };
 };
 
-const adapter: BridgeAdapter = {
-  ethereum: constructParams("ethereum"),
-  optimism: constructParams("optimism"),
-  polygon: constructParams("polygon"),
-  "zksync era": constructParams("zksync era"),
-  lisk: constructParams("lisk"),
-  unichain: constructParams("unichain"),
-  base: constructParams("base"),
-  mode: constructParams("mode"),
-  arbitrum: constructParams("arbitrum"),
-  linea: constructParams("linea"),
-  blast: constructParams("blast"),
-  scroll: constructParams("scroll"),
-  soneium: constructParams("soneium"),
-  "world chain": constructParams("world chain"),
-  ink: constructParams("ink"),
-  zora: constructParams("zora"),
-  redstone: constructParams("redstone"),
-  monad: constructParams("monad"),
-  boba: constructParams("boba"),
-  plasma: constructParams("plasma"),
-  solana: constructParams("solana"),
-  hyperevm: constructParams("hyperevm"),
-};
+export const chainIdToSlug: Record<number, string> = Object.fromEntries(
+  Object.entries(chainIdMapping).map(([slug, id]) => [id, slug])
+) as Record<number, string>;
+
+const adapter: BridgeAdapter = Object.fromEntries(
+  Object.keys(chainIdMapping).map((chain) => [chain, constructParams(chain)])
+);
 
 export default adapter;
