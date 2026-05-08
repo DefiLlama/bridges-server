@@ -390,113 +390,40 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
 const queryBridgeTxCounts24h = async (chain?: string) => {
   if (!chain) {
     return await sql<IBridgeTxCounts24H[]>`
-      WITH latest_per_bridge AS (
-        SELECT
-          c.bridge_name,
-          MAX(t.ts) AS max_ts
-        FROM bridges.config c
-        LEFT JOIN bridges.transactions t
-          ON t.bridge_id = c.id
-        GROUP BY c.bridge_name
-      )
       SELECT
         c.bridge_name,
-        CAST(
-          COALESCE(
-            SUM(
-              CASE
-                WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                ELSE 0
-              END
-            ),
-            0
-          ) AS INTEGER
-        ) AS deposit_txs_24h,
-        CAST(
-          COALESCE(
-            SUM(
-              CASE
-                WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                ELSE 0
-              END
-            ),
-            0
-          ) AS INTEGER
-        ) AS withdraw_txs_24h
+        CAST(COALESCE(SUM(ha.total_deposit_txs), 0) AS INTEGER) AS deposit_txs_24h,
+        CAST(COALESCE(SUM(ha.total_withdrawal_txs), 0) AS INTEGER) AS withdraw_txs_24h
       FROM bridges.config c
-      LEFT JOIN latest_per_bridge latest
-        ON latest.bridge_name = c.bridge_name
-      LEFT JOIN bridges.transactions t
-        ON t.bridge_id = c.id
-       AND latest.max_ts IS NOT NULL
-       AND t.ts > latest.max_ts - INTERVAL '24 hours'
-       AND t.ts <= latest.max_ts
+      LEFT JOIN bridges.hourly_aggregated ha
+        ON ha.bridge_id = c.id
+       AND ha.ts >= NOW() - INTERVAL '24 hours'
       GROUP BY c.bridge_name
       ORDER BY c.bridge_name;
     `;
   }
 
   return await sql<IBridgeTxCounts24H[]>`
-    WITH latest_per_bridge AS (
-      SELECT
-        c.bridge_name,
-        MAX(t.ts) AS max_ts
-      FROM bridges.config c
-      LEFT JOIN bridges.transactions t
-        ON t.bridge_id = c.id
-      WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
-      GROUP BY c.bridge_name
-    )
     SELECT
       c.bridge_name,
-      CAST(
-        COALESCE(
-          SUM(
-            CASE
-              WHEN c.chain = ${chain} THEN
-                CASE
-                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                  ELSE 0
-                END
-              WHEN c.destination_chain = ${chain} THEN
-                CASE
-                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                  ELSE 0
-                END
-              ELSE 0
-            END
-          ),
-          0
-        ) AS INTEGER
-      ) AS deposit_txs_24h,
-      CAST(
-        COALESCE(
-          SUM(
-            CASE
-              WHEN c.chain = ${chain} THEN
-                CASE
-                  WHEN NOT t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                  ELSE 0
-                END
-              WHEN c.destination_chain = ${chain} THEN
-                CASE
-                  WHEN t.is_deposit THEN COALESCE(NULLIF(t.txs_counted_as, 0), 1)
-                  ELSE 0
-                END
-              ELSE 0
-            END
-          ),
-          0
-        ) AS INTEGER
-      ) AS withdraw_txs_24h
+      CAST(COALESCE(SUM(
+        CASE
+          WHEN c.chain = ${chain} THEN ha.total_deposit_txs
+          WHEN c.destination_chain = ${chain} THEN ha.total_withdrawal_txs
+          ELSE 0
+        END
+      ), 0) AS INTEGER) AS deposit_txs_24h,
+      CAST(COALESCE(SUM(
+        CASE
+          WHEN c.chain = ${chain} THEN ha.total_withdrawal_txs
+          WHEN c.destination_chain = ${chain} THEN ha.total_deposit_txs
+          ELSE 0
+        END
+      ), 0) AS INTEGER) AS withdraw_txs_24h
     FROM bridges.config c
-    LEFT JOIN latest_per_bridge latest
-      ON latest.bridge_name = c.bridge_name
-    LEFT JOIN bridges.transactions t
-      ON t.bridge_id = c.id
-     AND latest.max_ts IS NOT NULL
-     AND t.ts > latest.max_ts - INTERVAL '24 hours'
-     AND t.ts <= latest.max_ts
+    LEFT JOIN bridges.hourly_aggregated ha
+      ON ha.bridge_id = c.id
+     AND ha.ts >= NOW() - INTERVAL '24 hours'
     WHERE (c.chain = ${chain} OR c.destination_chain = ${chain})
     GROUP BY c.bridge_name
     ORDER BY c.bridge_name;
@@ -551,46 +478,83 @@ const getNetflows = async (period: TimePeriod) => {
   `;
 };
 
-const queryAggregatedTokensInRange = async (
+const queryAggregatedTokenStatsTop30 = async (
   startTimestamp: number,
   endTimestamp: number,
   chain?: string,
-  bridgeNetworkName?: string
+  bridgeNetworkName?: string,
+  limit: number = 30
 ) => {
-  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})::date 
+  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})::date
     AND ha.ts <= to_timestamp(${endTimestamp})::date`;
 
   if (chain) {
     conditions = sql`${conditions} AND c.chain = ${chain}`;
   }
-
   if (bridgeNetworkName) {
     conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
   }
 
   return await sql<
     {
-      bridge_id: string;
-      ts: Date;
-      total_tokens_deposited: string[];
-      total_tokens_withdrawn: string[];
-      total_address_deposited: string[];
-      total_address_withdrawn: string[];
+      kind: "dt" | "wt" | "da" | "wa";
+      key: string;
+      amount: string | null;
+      usd_value: string;
+      txs: number | null;
     }[]
   >`
-    SELECT 
-      ha.bridge_id,
-      ha.ts,
-      ha.total_tokens_deposited,
-      ha.total_tokens_withdrawn,
-      ha.total_address_deposited,
-      ha.total_address_withdrawn
-    FROM 
-      bridges.hourly_aggregated ha
-    JOIN
-      bridges.config c ON ha.bridge_id = c.id
-    ${conditions}
-    ORDER BY ts;
+    WITH base AS (
+      SELECT ha.total_tokens_deposited, ha.total_tokens_withdrawn,
+             ha.total_address_deposited, ha.total_address_withdrawn
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      ${conditions}
+    ),
+    dt AS (
+      SELECT replace((tok).token, '''', '') AS key,
+             trim_scale(SUM(replace(replace((tok).amount, '''', ''), ' ', '')::numeric))::text AS amount,
+             SUM((tok).usd_value)::text AS usd_value
+      FROM base CROSS JOIN LATERAL unnest(total_tokens_deposited) tok
+      WHERE (tok).token IS NOT NULL
+      GROUP BY replace((tok).token, '''', '')
+      ORDER BY SUM((tok).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    wt AS (
+      SELECT replace((tok).token, '''', '') AS key,
+             trim_scale(SUM(replace(replace((tok).amount, '''', ''), ' ', '')::numeric))::text AS amount,
+             SUM((tok).usd_value)::text AS usd_value
+      FROM base CROSS JOIN LATERAL unnest(total_tokens_withdrawn) tok
+      WHERE (tok).token IS NOT NULL
+      GROUP BY replace((tok).token, '''', '')
+      ORDER BY SUM((tok).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    da AS (
+      SELECT replace((a).address, '''', '') AS key,
+             SUM((a).usd_value)::text AS usd_value,
+             COALESCE(SUM((a).txs), 0)::integer AS txs
+      FROM base CROSS JOIN LATERAL unnest(total_address_deposited) a
+      WHERE (a).address IS NOT NULL
+      GROUP BY replace((a).address, '''', '')
+      ORDER BY SUM((a).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    wa AS (
+      SELECT replace((a).address, '''', '') AS key,
+             SUM((a).usd_value)::text AS usd_value,
+             COALESCE(SUM((a).txs), 0)::integer AS txs
+      FROM base CROSS JOIN LATERAL unnest(total_address_withdrawn) a
+      WHERE (a).address IS NOT NULL
+      GROUP BY replace((a).address, '''', '')
+      ORDER BY SUM((a).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    )
+    SELECT 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
+    UNION ALL SELECT 'wt', key, amount, usd_value, NULL::integer FROM wt
+    UNION ALL SELECT 'da', key, NULL::text, usd_value, txs FROM da
+    UNION ALL SELECT 'wa', key, NULL::text, usd_value, txs FROM wa
   `;
 };
 
@@ -609,5 +573,5 @@ export {
   getLast24HVolume,
   queryBridgeTxCounts24h,
   getNetflows,
-  queryAggregatedTokensInRange,
+  queryAggregatedTokenStatsTop30,
 };

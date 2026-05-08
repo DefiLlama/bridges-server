@@ -139,6 +139,24 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
   }
 };
 
+const prewarmCriticalCaches = async () => {
+  const targets: { routePath: string; pathParameters: Record<string, string>; handler: Function }[] = [
+    { routePath: "/bridgetxcounts/:chain", pathParameters: { chain: "all" }, handler: getBridgeTxCounts },
+  ];
+
+  for (const { routePath, pathParameters, handler } of targets) {
+    const event = { pathParameters, queryStringParameters: {}, body: {}, routePath };
+    const cacheKey = generateApiCacheKey(event);
+    registerCacheHandler(cacheKey, () => handler(event));
+    try {
+      await warmCache(cacheKey);
+      console.log(`[INFO] Prewarmed ${routePath} ${JSON.stringify(pathParameters)}`);
+    } catch (error) {
+      console.error(`[ERROR] Prewarm failed for ${routePath} ${JSON.stringify(pathParameters)}:`, error);
+    }
+  }
+};
+
 const start = async () => {
   try {
     await server.register(cors, {
@@ -164,6 +182,8 @@ const start = async () => {
     });
 
     startHealthMonitoring();
+
+    prewarmCriticalCaches().catch((e) => console.error("[ERROR] Initial prewarm failed:", e));
 
     setInterval(async () => {
       try {

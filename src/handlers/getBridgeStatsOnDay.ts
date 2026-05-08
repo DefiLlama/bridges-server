@@ -1,32 +1,18 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
-import {
-  queryAggregatedDailyTimestampRange,
-  queryAggregatedTokensInRange,
-  queryConfig,
-} from "../utils/wrappa/postgres/query";
+import { queryAggregatedTokenStatsTop30 } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
-import BigNumber from "bignumber.js";
 import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
 import { getCache } from "../utils/cache";
 
-const numberOfTokensToReturn = 30; // also determines # of addresses returned
-
-// the following 2 types should probably be combined
 type TokenRecord = {
   [token: string]: {
     amount: string;
     usdValue: number;
     symbol?: string;
     decimals?: number;
-  };
-};
-
-type TokenRecordBn = {
-  [token: string]: {
-    amountBn: BigNumber;
   };
 };
 
@@ -37,77 +23,28 @@ type AddressRecord = {
   };
 };
 
-interface IAggregatedData {
-  bridge_id: string;
-  ts: Date;
-  total_tokens_deposited: string[];
-  total_tokens_withdrawn: string[];
-  total_deposited_usd: string;
-  total_withdrawn_usd: string;
-  total_deposit_txs: number;
-  total_withdrawal_txs: number;
-  total_address_deposited: string[];
-  total_address_withdrawn: string[];
-}
-
-const sumTokenTxs = async (
-	tokenTotals: string[],
-	dailyTokensRecord: TokenRecord,
-	  prices: Record<string, any>,
-	lzSymbols: Record<string, string>
-) => {
-  if (!tokenTotals) return;
-  let dailyTokensRecordBn = {} as TokenRecordBn;
-  
-
-
-  tokenTotals.map((tokenString) => {
-    const tokenData = tokenString.replace(/[('") ]/g, "").split(",");
-    const token = tokenData[0];
-    
-    const amountBn = BigNumber(tokenData[1]);
-    const usdValue = parseFloat(tokenData[2]);
-    dailyTokensRecordBn[token] = dailyTokensRecordBn[token] || {};
-    dailyTokensRecordBn[token].amountBn = dailyTokensRecordBn[token].amountBn
-      ? dailyTokensRecordBn[token].amountBn.plus(amountBn)
-      : BigNumber(amountBn);
-    dailyTokensRecord[token] = dailyTokensRecord[token] || {};
-    dailyTokensRecord[token].usdValue = (dailyTokensRecord[token].usdValue ?? 0) + usdValue;
-  });
-  Object.entries(dailyTokensRecordBn).map(([token, tokenData]) => {
-    dailyTokensRecord[token].amount = tokenData.amountBn?.toFixed() ?? "0";
-    const key = token?.toLowerCase?.() ?? token;
-    const priceEntry = prices?.[key] ?? prices?.[token];
-    const addrOnly = key.includes(":") ? key.split(":")[1] : key;
-    const fallbackSymbol = lzSymbols?.[addrOnly] ?? lzSymbols?.[key] ?? "";
-    const symbol = priceEntry?.symbol ?? fallbackSymbol ?? "";
-    dailyTokensRecord[token].symbol = normlizeTokenSymbol(symbol);
-    const decimalsVal = priceEntry?.decimals;
-    dailyTokensRecord[token].decimals = typeof decimalsVal === "string" ? Number(decimalsVal) : decimalsVal ?? 0;
-  });
+type StatsRow = {
+  kind: "dt" | "wt" | "da" | "wa";
+  key: string;
+  amount: string | null;
+  usd_value: string;
+  txs: number | null;
 };
 
-const sumAddressTxs = (addressTotals: string[], dailyAddresssRecord: AddressRecord) => {
-  if (!addressTotals) return;
-  addressTotals.map((addressString) => {
-    const addressData = addressString.replace(/[('") ]/g, "").split(",");
-    const address = addressData[0];
-    const usdValue = parseFloat(addressData[1]);
-    const txs = parseInt(addressData[2]);
-    dailyAddresssRecord[address] = dailyAddresssRecord[address] || {};
-    dailyAddresssRecord[address].usdValue = (dailyAddresssRecord[address].usdValue ?? 0) + usdValue;
-    dailyAddresssRecord[address].txs = (dailyAddresssRecord[address].txs ?? 0) + txs;
-  });
+const isValidPriceId = (id?: string) => {
+  if (!id) return false;
+  if (id.includes("\\") || id.includes("/") || id.includes(" ")) return false;
+  const parts = id.split(":");
+  if (parts.length !== 2) return false;
+  if (!parts[0] || !parts[1]) return false;
+  if (parts[1] === "\\N" || parts[1] === "\\n" || parts[1].toLowerCase() === "null" || parts[1].toLowerCase() === "undefined") return false;
+  return true;
 };
 
-// can also return total deposit/withdraw USD, deposit/withdraw #txs here if needed
-// don't let chain be 'all'
 const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridgeId?: string) => {
   let bridgeDbName = undefined as any;
   const queryChain = chain === "" ? "" : normalizeChain(chain);
-  if (!bridgeId) {
-    bridgeDbName = undefined;
-  } else {
+  if (bridgeId) {
     try {
       const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeId));
       if (!bridgeNetwork) {
@@ -115,143 +52,86 @@ const getBridgeStatsOnDay = async (timestamp: string = "0", chain: string, bridg
       }
       ({ bridgeDbName } = bridgeNetwork);
     } catch (e) {
-      return errorResponse({
-        message: "Invalid bridgeId entered.",
-      });
+      return errorResponse({ message: "Invalid bridgeId entered." });
     }
   }
-
-  const sourceChainConfigs = (await queryConfig(undefined, undefined, queryChain)).filter((config) => {
-    if (bridgeId) {
-      return config.bridge_name === bridgeDbName;
-    }
-    return true;
-  });
 
   const queryTimestamp = getTimestampAtStartOfDay(parseInt(timestamp));
   const maxEndTimestamp = queryTimestamp + 86400;
   const currentTimestamp = getCurrentUnixTimestamp();
   const endTimestamp = Math.max(queryTimestamp, Math.min(maxEndTimestamp, currentTimestamp));
 
-  let sourceChainsDailyData = [] as IAggregatedData[];
-  await Promise.all(
-    sourceChainConfigs.map(async (config) => {
-      const sourceChainData = await queryAggregatedDailyTimestampRange(
-        queryTimestamp,
-        endTimestamp,
-        config.chain,
-        config.bridge_name
-      );
-      sourceChainsDailyData.push(...sourceChainData);
-    })
-  );
+  const rows = (await queryAggregatedTokenStatsTop30(
+    queryTimestamp,
+    endTimestamp,
+    queryChain,
+    bridgeDbName
+  )) as StatsRow[];
 
-  const dailyData = await queryAggregatedTokensInRange(queryTimestamp, endTimestamp, queryChain, bridgeDbName);
-  let dailyTokensDeposited = {} as TokenRecord;
-  let dailyTokensWithdrawn = {} as TokenRecord;
-  let dailyAddressesDeposited = {} as AddressRecord;
-  let dailyAddressesWithdrawn = {} as AddressRecord;
+  const dt = rows.filter((r) => r.kind === "dt");
+  const wt = rows.filter((r) => r.kind === "wt");
+  const da = rows.filter((r) => r.kind === "da");
+  const wa = rows.filter((r) => r.kind === "wa");
+
+  const tokenIds = new Set<string>();
+  for (const r of dt) {
+    const id = r.key?.toLowerCase();
+    if (isValidPriceId(id)) tokenIds.add(id);
+  }
+  for (const r of wt) {
+    const id = r.key?.toLowerCase();
+    if (isValidPriceId(id)) tokenIds.add(id);
+  }
+
   const lzSymbols = ((await getCache("lz_token_symbols")) || {}) as Record<string, string>;
-  
-  const allTokenIds = new Set<string>();
-  const isValidPriceId = (id?: string) => {
-    if (!id) return false;
-    if (id.includes("\\") || id.includes("/") || id.includes(" ")) return false;
-    const parts = id.split(":");
-    if (parts.length !== 2) return false;
-    if (!parts[0] || !parts[1]) return false;
-    if (parts[1] === "\\N" || parts[1] === "\\n" || parts[1].toLowerCase() === "null" || parts[1].toLowerCase() === "undefined") return false;
-    return true;
-  };
-  const collectTokenIds = (tokenTotals?: string[]) => {
-    if (!tokenTotals) return;
-    tokenTotals.forEach((tokenString) => {
-      const tokenData = tokenString.replace(/[('\") ]/g, "").split(",");
-      const tokenId = (tokenData[0] || "").toLowerCase();
-      if (isValidPriceId(tokenId)) allTokenIds.add(tokenId);
-    });
-  };
-  dailyData.forEach(({ total_tokens_deposited, total_tokens_withdrawn }) => {
-    collectTokenIds(total_tokens_deposited);
-    collectTokenIds(total_tokens_withdrawn);
-  });
-  sourceChainsDailyData.forEach(({ total_tokens_deposited, total_tokens_withdrawn }) => {
-    collectTokenIds(total_tokens_deposited);
-    collectTokenIds(total_tokens_withdrawn);
-  });
-
   let prices: Record<string, any> = {};
   try {
     prices = (await Promise.race([
-      getLlamaPrices(Array.from(allTokenIds)),
+      getLlamaPrices(Array.from(tokenIds)),
       new Promise((resolve) => setTimeout(() => resolve({}), 5000)),
     ])) as Record<string, any>;
   } catch {
     prices = {};
   }
 
-  const dailyDataPromises = Promise.all(
-    dailyData.map(async (dayData) => {
-      const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
-        dayData;
-      await sumTokenTxs(total_tokens_deposited, dailyTokensDeposited, prices, lzSymbols);
-      await sumTokenTxs(total_tokens_withdrawn, dailyTokensWithdrawn, prices, lzSymbols);
-      await sumAddressTxs(total_address_deposited, dailyAddressesDeposited);
-      await sumAddressTxs(total_address_withdrawn, dailyAddressesWithdrawn);
-    })
-  );
-  await dailyDataPromises;
-
-  const sourceChainsPromises = Promise.all(
-    sourceChainsDailyData.map(async (dayData) => {
-      const { total_tokens_deposited, total_tokens_withdrawn, total_address_deposited, total_address_withdrawn } =
-        dayData;
-      await sumTokenTxs(total_tokens_deposited, dailyTokensWithdrawn, prices, lzSymbols);
-      await sumTokenTxs(total_tokens_withdrawn, dailyTokensDeposited, prices, lzSymbols);
-      await sumAddressTxs(total_address_deposited, dailyAddressesWithdrawn);
-      await sumAddressTxs(total_address_withdrawn, dailyAddressesDeposited);
-    })
-  );
-  await sourceChainsPromises;
-
-  const sortedDailyTokensDeposited = Object.fromEntries(
-    Object.entries(dailyTokensDeposited)
-      .sort((a, b) => {
-        return b[1].usdValue - a[1].usdValue;
-      })
-      .slice(0, numberOfTokensToReturn)
-  );
-  const sortedDailyTokensWithdrawn = Object.fromEntries(
-    Object.entries(dailyTokensWithdrawn)
-      .sort((a, b) => {
-        return b[1].usdValue - a[1].usdValue;
-      })
-      .slice(0, numberOfTokensToReturn)
-  );
-  const sortedDailyAddressesDeposited = Object.fromEntries(
-    Object.entries(dailyAddressesDeposited)
-      .sort((a, b) => {
-        return b[1].usdValue - a[1].usdValue;
-      })
-      .slice(0, numberOfTokensToReturn)
-  );
-  const sortedDailyAddressesWithdrawn = Object.fromEntries(
-    Object.entries(dailyAddressesWithdrawn)
-      .sort((a, b) => {
-        return b[1].usdValue - a[1].usdValue;
-      })
-      .slice(0, numberOfTokensToReturn)
-  );
-
-  const response = {
-    date: queryTimestamp,
-    totalTokensDeposited: sortedDailyTokensDeposited,
-    totalTokensWithdrawn: sortedDailyTokensWithdrawn,
-    totalAddressDeposited: sortedDailyAddressesDeposited,
-    totalAddressWithdrawn: sortedDailyAddressesWithdrawn,
+  const buildTokenRecord = (xs: typeof dt): TokenRecord => {
+    const out: TokenRecord = {};
+    for (const r of xs) {
+      const token = r.key;
+      const lower = token?.toLowerCase?.() ?? token;
+      const priceEntry = prices?.[lower] ?? prices?.[token];
+      const addrOnly = lower.includes(":") ? lower.split(":")[1] : lower;
+      const fallbackSymbol = lzSymbols?.[addrOnly] ?? lzSymbols?.[lower] ?? "";
+      const symbol = priceEntry?.symbol ?? fallbackSymbol ?? "";
+      const decimalsVal = priceEntry?.decimals;
+      out[token] = {
+        amount: r.amount ?? "0",
+        usdValue: Number(r.usd_value),
+        symbol: normlizeTokenSymbol(symbol),
+        decimals: typeof decimalsVal === "string" ? Number(decimalsVal) : decimalsVal ?? 0,
+      };
+    }
+    return out;
   };
 
-  return response;
+  const buildAddressRecord = (xs: typeof da): AddressRecord => {
+    const out: AddressRecord = {};
+    for (const r of xs) {
+      out[r.key] = {
+        usdValue: Number(r.usd_value),
+        txs: r.txs ?? 0,
+      };
+    }
+    return out;
+  };
+
+  return {
+    date: queryTimestamp,
+    totalTokensDeposited: buildTokenRecord(dt),
+    totalTokensWithdrawn: buildTokenRecord(wt),
+    totalAddressDeposited: buildAddressRecord(da),
+    totalAddressWithdrawn: buildAddressRecord(wa),
+  };
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
