@@ -398,6 +398,7 @@ export default [
       "Ethereum",
       "Polygon",
       "Optimism",
+      "BSC",
       "ZKsync Era",
       "Base",
       "Arbitrum",
@@ -414,6 +415,9 @@ export default [
       "World Chain",
       "Redstone",
       "Lens",
+      "Plasma",
+      "Solana",
+      "HyperEVM",
     ],
     chainMapping: {
       "zksync era": "era",
