@@ -485,8 +485,8 @@ const queryAggregatedTokenStatsTop30 = async (
   bridgeNetworkName?: string,
   limit: number = 30
 ) => {
-  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})::date
-    AND ha.ts <= to_timestamp(${endTimestamp})::date`;
+  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})
+    AND ha.ts < to_timestamp(${endTimestamp})`;
 
   if (chain) {
     conditions = sql`${conditions} AND c.chain = ${chain}`;
@@ -558,6 +558,182 @@ const queryAggregatedTokenStatsTop30 = async (
   `;
 };
 
+const queryAggregatedTokenStatsTop30Rolling = async (
+  hours: number,
+  chain?: string,
+  bridgeNetworkName?: string,
+  limit: number = 30
+) => {
+  let latestConditions = sql`WHERE 1 = 1`;
+  let baseConditions = sql``;
+
+  if (bridgeNetworkName) {
+    latestConditions = sql`${latestConditions} AND c.bridge_name = ${bridgeNetworkName}`;
+    baseConditions = sql`${baseConditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+  if (chain) {
+    baseConditions = sql`${baseConditions} AND c.chain = ${chain}`;
+    if (!bridgeNetworkName) {
+      latestConditions = sql`${latestConditions} AND c.chain = ${chain}`;
+    }
+  }
+
+  return await sql<
+    {
+      kind: "dt" | "wt" | "da" | "wa";
+      key: string;
+      amount: string | null;
+      usd_value: string;
+      txs: number | null;
+    }[]
+  >`
+    WITH latest_ts AS (
+      SELECT MAX(ha.ts) AS max_ts
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      ${latestConditions}
+    ),
+    base AS (
+      SELECT ha.total_tokens_deposited, ha.total_tokens_withdrawn,
+             ha.total_address_deposited, ha.total_address_withdrawn
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      CROSS JOIN latest_ts lt
+      WHERE lt.max_ts IS NOT NULL
+        AND ha.ts > lt.max_ts - make_interval(hours => ${hours})
+        AND ha.ts <= lt.max_ts
+        ${baseConditions}
+    ),
+    dt AS (
+      SELECT replace((tok).token, '''', '') AS key,
+             trim_scale(SUM(replace(replace((tok).amount, '''', ''), ' ', '')::numeric))::text AS amount,
+             SUM((tok).usd_value)::text AS usd_value
+      FROM base CROSS JOIN LATERAL unnest(total_tokens_deposited) tok
+      WHERE (tok).token IS NOT NULL
+      GROUP BY replace((tok).token, '''', '')
+      ORDER BY SUM((tok).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    wt AS (
+      SELECT replace((tok).token, '''', '') AS key,
+             trim_scale(SUM(replace(replace((tok).amount, '''', ''), ' ', '')::numeric))::text AS amount,
+             SUM((tok).usd_value)::text AS usd_value
+      FROM base CROSS JOIN LATERAL unnest(total_tokens_withdrawn) tok
+      WHERE (tok).token IS NOT NULL
+      GROUP BY replace((tok).token, '''', '')
+      ORDER BY SUM((tok).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    da AS (
+      SELECT replace((a).address, '''', '') AS key,
+             SUM((a).usd_value)::text AS usd_value,
+             COALESCE(SUM((a).txs), 0)::integer AS txs
+      FROM base CROSS JOIN LATERAL unnest(total_address_deposited) a
+      WHERE (a).address IS NOT NULL
+      GROUP BY replace((a).address, '''', '')
+      ORDER BY SUM((a).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    ),
+    wa AS (
+      SELECT replace((a).address, '''', '') AS key,
+             SUM((a).usd_value)::text AS usd_value,
+             COALESCE(SUM((a).txs), 0)::integer AS txs
+      FROM base CROSS JOIN LATERAL unnest(total_address_withdrawn) a
+      WHERE (a).address IS NOT NULL
+      GROUP BY replace((a).address, '''', '')
+      ORDER BY SUM((a).usd_value) DESC NULLS LAST
+      LIMIT ${limit}
+    )
+    SELECT 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
+    UNION ALL SELECT 'wt', key, amount, usd_value, NULL::integer FROM wt
+    UNION ALL SELECT 'da', key, NULL::text, usd_value, txs FROM da
+    UNION ALL SELECT 'wa', key, NULL::text, usd_value, txs FROM wa
+  `;
+};
+
+const queryAggregatedTotalsTimestampRange = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  chain?: string,
+  bridgeNetworkName?: string
+) => {
+  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})
+    AND ha.ts < to_timestamp(${endTimestamp})`;
+
+  if (chain) {
+    conditions = sql`${conditions} AND c.chain = ${chain}`;
+  }
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+
+  return (
+    await sql<
+      {
+        total_deposited_usd: string;
+        total_withdrawn_usd: string;
+        total_deposit_txs: number;
+        total_withdrawal_txs: number;
+      }[]
+    >`
+      SELECT
+        COALESCE(SUM(ha.total_deposited_usd), 0)::text AS total_deposited_usd,
+        COALESCE(SUM(ha.total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+        COALESCE(SUM(ha.total_deposit_txs), 0)::integer AS total_deposit_txs,
+        COALESCE(SUM(ha.total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      ${conditions}
+    `
+  )[0];
+};
+
+const queryAggregatedTotalsRolling = async (hours: number, chain?: string, bridgeNetworkName?: string) => {
+  let latestConditions = sql`WHERE 1 = 1`;
+  let baseConditions = sql``;
+
+  if (bridgeNetworkName) {
+    latestConditions = sql`${latestConditions} AND c.bridge_name = ${bridgeNetworkName}`;
+    baseConditions = sql`${baseConditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+  if (chain) {
+    baseConditions = sql`${baseConditions} AND c.chain = ${chain}`;
+    if (!bridgeNetworkName) {
+      latestConditions = sql`${latestConditions} AND c.chain = ${chain}`;
+    }
+  }
+
+  return (
+    await sql<
+      {
+        total_deposited_usd: string;
+        total_withdrawn_usd: string;
+        total_deposit_txs: number;
+        total_withdrawal_txs: number;
+      }[]
+    >`
+      WITH latest_ts AS (
+        SELECT MAX(ha.ts) AS max_ts
+        FROM bridges.hourly_aggregated ha
+        JOIN bridges.config c ON ha.bridge_id = c.id
+        ${latestConditions}
+      )
+      SELECT
+        COALESCE(SUM(ha.total_deposited_usd), 0)::text AS total_deposited_usd,
+        COALESCE(SUM(ha.total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+        COALESCE(SUM(ha.total_deposit_txs), 0)::integer AS total_deposit_txs,
+        COALESCE(SUM(ha.total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+      FROM bridges.hourly_aggregated ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      CROSS JOIN latest_ts lt
+      WHERE lt.max_ts IS NOT NULL
+        AND ha.ts > lt.max_ts - make_interval(hours => ${hours})
+        AND ha.ts <= lt.max_ts
+        ${baseConditions}
+    `
+  )[0];
+};
+
 export {
   getBridgeID,
   getConfigsWithDestChain,
@@ -574,4 +750,7 @@ export {
   queryBridgeTxCounts24h,
   getNetflows,
   queryAggregatedTokenStatsTop30,
+  queryAggregatedTokenStatsTop30Rolling,
+  queryAggregatedTotalsTimestampRange,
+  queryAggregatedTotalsRolling,
 };
