@@ -332,7 +332,7 @@ const constructParams = (chain: SupportedChains) => {
           const asset = itsAssets.find((item: any) => item.id.toLowerCase() === log.tokenId.toLowerCase());
           const chainName = chain === "avax" ? "avalanche" : chain;
           return asset && asset.chains && asset.chains[chainName] && asset.chains[chainName].tokenAddress
-            ? asset.chains[chain].tokenAddress
+            ? asset.chains[chainName].tokenAddress
             : "";
         },
       },
