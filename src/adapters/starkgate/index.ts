@@ -12,7 +12,12 @@ Contract Addresses:
 - ERC20 Bridge (USDC, USDT, DAI, WBTC, etc): Various token-specific bridges
 
 Events:
-- LogDeposit: Triggered when tokens are deposited from L1 to L2
+- Deposit: Triggered when tokens are deposited from L1 to L2. The StarkGate
+  proxy implementations were upgraded in Feb 2025 and now emit the
+  six-arg Deposit event (with an indexed `token` field) rather than
+  the legacy five-arg LogDeposit. Verified on the live STRK, USDT,
+  ETH and wstETH bridges; the legacy LogDeposit topic is silent on
+  every sub-bridge except for a 4% tail on the ETH bridge.
 - LogMessageToL1: Triggered when tokens are withdrawn from L2(StarkNet Core) to L1
 */
 
@@ -58,12 +63,16 @@ const tokenAddresses: { [key: string]: string } = {
   fxs: "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
 };
 
-// Deposit event for ERC20 tokens
+// Deposit event for ERC20 tokens.
+// The post-upgrade implementation indexes a `token` arg in topic2, but for
+// every sub-bridge it equals the L1 ERC20 we already track per-contract, so
+// we keep `fixedEventData.token` (matches the ETH bridge sentinel handling
+// below and stays drop-in compatible with the historical adapter shape).
 const erc20DepositParams = (contractAddress: string, tokenAddress: string): PartialContractEventParams => ({
   target: contractAddress,
-  topic: "LogDeposit(address,uint256,uint256,uint256,uint256)",
+  topic: "Deposit(address,address,uint256,uint256,uint256,uint256)",
   abi: [
-    "event LogDeposit(address indexed sender, uint256 amount, uint256 indexed l2Recipient, uint256 nonce, uint256 fee)",
+    "event Deposit(address indexed sender, address indexed token, uint256 amount, uint256 indexed l2Recipient, uint256 nonce, uint256 fee)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
@@ -117,12 +126,16 @@ const erc20WithdrawalParams = (
   isDeposit: false,
 });
 
-// ETH-specific events
+// ETH-specific events.
+// The ETH bridge emits the same Deposit signature, but its indexed `token`
+// arg is the on-chain sentinel 0x0000000000000000000000000000000000455448
+// (ASCII "ETH") rather than a real ERC20. We override with WETH so the
+// downstream pricing layer can value it.
 const ethDepositParams: PartialContractEventParams = {
   target: ethBridgeContract,
-  topic: "LogDeposit(address,uint256,uint256,uint256,uint256)",
+  topic: "Deposit(address,address,uint256,uint256,uint256,uint256)",
   abi: [
-    "event LogDeposit(address indexed sender, uint256 amount, uint256 indexed l2Recipient, uint256 nonce, uint256 fee)",
+    "event Deposit(address indexed sender, address indexed token, uint256 amount, uint256 indexed l2Recipient, uint256 nonce, uint256 fee)",
   ],
   logKeys: {
     blockNumber: "blockNumber",
