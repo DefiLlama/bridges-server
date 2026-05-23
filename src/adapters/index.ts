@@ -103,6 +103,7 @@ import hyperbridge from "./hyperbridge";
 import starkgate from "./starkgate";
 import onesec from "./1sec";
 import firefly from "./firefly";
+import dbisGru from "./dbis-gru";
 import clementine from "./clementine";
 import citreaUsdc from "./citrea-usdc";
 import citreaUsdt from "./citrea-usdt";
