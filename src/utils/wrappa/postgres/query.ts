@@ -387,6 +387,47 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   return totalVolume / 2;
 };
 
+const getAllLast24HVolumes = async (): Promise<Record<string, number>> => {
+  const WORMHOLE_HOURS = 28;
+  const DEFAULT_HOURS = 24;
+
+  const result = await sql<{ bridge_name: string; volume: string }[]>`
+    WITH per_bridge_latest AS (
+      SELECT
+        c.bridge_name,
+        MAX(ha.ts) AS max_ts
+      FROM bridges.hourly_volume ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      GROUP BY c.bridge_name
+    ),
+    per_bridge_rows AS (
+      SELECT
+        c.bridge_name,
+        (ha.total_deposited_usd + ha.total_withdrawn_usd) AS volume,
+        c.chain
+      FROM bridges.hourly_volume ha
+      JOIN bridges.config c ON ha.bridge_id = c.id
+      JOIN per_bridge_latest pbl ON c.bridge_name = pbl.bridge_name
+      WHERE ha.ts > pbl.max_ts - make_interval(
+        hours => CASE WHEN c.bridge_name = 'wormhole' THEN ${WORMHOLE_HOURS} ELSE ${DEFAULT_HOURS} END
+      )
+    ),
+    per_bridge_chain AS (
+      SELECT bridge_name, chain, SUM(volume) AS chain_volume
+      FROM per_bridge_rows
+      GROUP BY bridge_name, chain
+    )
+    SELECT bridge_name, (SUM(chain_volume) / 2)::text AS volume
+    FROM per_bridge_chain
+    GROUP BY bridge_name
+  `;
+
+  return result.reduce((acc, { bridge_name, volume }) => {
+    acc[bridge_name] = parseFloat(volume) || 0;
+    return acc;
+  }, {} as Record<string, number>);
+};
+
 const queryBridgeTxCounts24h = async (chain?: string) => {
   if (!chain) {
     return await sql<IBridgeTxCounts24H[]>`
@@ -747,6 +788,7 @@ export {
   queryAggregatedDailyTimestampRange,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
+  getAllLast24HVolumes,
   queryBridgeTxCounts24h,
   getNetflows,
   queryAggregatedTokenStatsTop30,
