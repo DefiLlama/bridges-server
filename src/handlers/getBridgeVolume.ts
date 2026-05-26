@@ -18,9 +18,7 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
     try {
       const bridgeNetwork = importBridgeNetwork(undefined, queryId);
       if (!bridgeNetwork) {
-        if (!bridgeNetwork) {
-          throw new Error("No bridge network found.");
-        }
+        throw new Error("No bridge network found.");
       }
     } catch (e) {
       return errorResponse({

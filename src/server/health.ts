@@ -1,5 +1,6 @@
 import { cpuUsage } from "process";
 import { cpus, freemem, totalmem, hostname, loadavg } from "os";
+import { querySql as sql } from "../utils/db";
 
 const CPU_HISTORY_HOURS = 24;
 const cpuHistory: Array<{ timestamp: string; usage: string }> = [];
@@ -38,6 +39,16 @@ function updateCpuHistory() {
 export function startHealthMonitoring() {
   setInterval(updateCpuHistory, 3600000);
   updateCpuHistory();
+}
+
+export async function checkDbConnectivity(): Promise<{ status: "OK" | "ERROR"; latencyMs?: number; error?: string }> {
+  const start = Date.now();
+  try {
+    await sql`SELECT 1`;
+    return { status: "OK", latencyMs: Date.now() - start };
+  } catch (e: any) {
+    return { status: "ERROR", error: e?.message ?? "unknown" };
+  }
 }
 
 export function getHealthStatus() {
