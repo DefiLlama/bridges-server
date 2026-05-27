@@ -2952,4 +2952,17 @@ export default [
     url: "https://citrea.xyz/",
     chains: ["Ethereum", "Citrea"],
   },
+  {
+    id: 108,
+    slug: "dbis-gru-bridge",
+    displayName: "DBIS GRU Bridge",
+    bridgeDbName: "dbis-gru",
+    iconLink: "chain:defi-oracle-meta",
+    largeTxThreshold: 10000,
+    url: "https://explorer.d-bis.org/",
+    chains: ["Defi Oracle Meta", "Ethereum", "BSC", "Polygon", "Arbitrum", "Optimism", "Base", "Avalanche", "Gnosis", "Cronos", "Celo", "Wemix"],
+    destinationChain: "Defi Oracle Meta",
+    chainMapping: {defi_oracle_meta: "dfio_meta_main"},
+    defillamaId: undefined
+  },
 ] as BridgeNetwork[];
