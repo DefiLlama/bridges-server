@@ -2952,4 +2952,14 @@ export default [
     url: "https://citrea.xyz/",
     chains: ["Ethereum", "Citrea"],
   },
+  {
+    id: 112,
+    displayName: "WavesBridge",
+    bridgeDbName: "wavesbridge",
+    iconLink: "icons:wavesbridge",
+    largeTxThreshold: 10000,
+    url: "https://wavesbridge.io/",
+    chains: ["Ethereum", "BSC"],
+    destinationChain: "Waves",
+  },
 ] as BridgeNetwork[];
