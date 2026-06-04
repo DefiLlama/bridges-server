@@ -46,6 +46,7 @@ export const chainIdMapping: Record<string, number> = {
   hyperevm: 999,
   tempo: 4217,
   megaeth: 4326,
+  tron: 728126428,
 };
 
 // Response type from the Across Indexer API
