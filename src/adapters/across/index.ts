@@ -43,7 +43,7 @@ export const chainIdMapping: Record<string, number> = {
   solana: 34268394551451,
   zora: 7777777,
   monad: 143,
-  hyperevm: 999,
+  hyperliquid: 999,
   tempo: 4217,
   megaeth: 4326,
   tron: 728126428,
