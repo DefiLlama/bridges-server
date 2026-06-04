@@ -417,7 +417,8 @@ export default [
       "Lens",
       "Plasma",
       "Solana",
-      "HyperEVM",
+      "Hyperliquid",
+      "Tron",
     ],
     chainMapping: {
       "zksync era": "era",
