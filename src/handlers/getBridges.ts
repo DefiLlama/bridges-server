@@ -88,7 +88,7 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const includeChains = event.queryStringParameters?.includeChains === "true";
   const promises = [getBridges()];
   if (includeChains) {
-    promises.push(craftBridgeChainsResponse());
+    promises.push(craftBridgeChainsResponse() as Promise<any>);
   }
   const [bridges, chainData] = await Promise.all(promises);
   let response: any = { bridges };

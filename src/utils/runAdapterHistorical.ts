@@ -148,7 +148,7 @@ class BackfillProgress {
     }
   }
 
-  succeed(chain: string, date: string) {
+  succeed(chain: string, _date: string) {
     this.succeeded++;
     this.chainDaysDone.set(chain, (this.chainDaysDone.get(chain) || 0) + 1);
     this.print();
