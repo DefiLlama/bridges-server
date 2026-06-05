@@ -417,7 +417,8 @@ export default [
       "Lens",
       "Plasma",
       "Solana",
-      "HyperEVM",
+      "Hyperliquid",
+      "Tron",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -2953,7 +2954,17 @@ export default [
     chains: ["Ethereum", "Citrea"],
   },
   {
-    id: 108,
+    id: 112,
+    displayName: "WavesBridge",
+    bridgeDbName: "wavesbridge",
+    iconLink: "icons:wavesbridge",
+    largeTxThreshold: 10000,
+    url: "https://wavesbridge.io/",
+    chains: ["Ethereum", "BSC"],
+    destinationChain: "Waves",
+  },
+  {
+    id: 113,
     slug: "dbis-gru-bridge",
     displayName: "DBIS GRU Bridge",
     bridgeDbName: "dbis-gru",

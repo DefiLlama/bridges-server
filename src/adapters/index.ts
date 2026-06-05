@@ -108,6 +108,7 @@ import clementine from "./clementine";
 import citreaUsdc from "./citrea-usdc";
 import citreaUsdt from "./citrea-usdt";
 import citreaWbtc from "./citrea-wbtc";
+import wavesbridge from "./wavesbridge";
 
 export default {
   polygon,
@@ -214,10 +215,12 @@ export default {
   starkgate,
   "1sec": onesec,
   firefly,
+  "dbis-gru": dbisGru,
   clementine,
   "citrea-usdc": citreaUsdc,
   "citrea-usdt": citreaUsdt,
   "citrea-wbtc": citreaWbtc,
+  wavesbridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
