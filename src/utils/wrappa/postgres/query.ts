@@ -409,7 +409,7 @@ const getAllLast24HVolumes = async (): Promise<Record<string, number>> => {
       JOIN bridges.config c ON ha.bridge_id = c.id
       JOIN per_bridge_latest pbl ON c.bridge_name = pbl.bridge_name
       WHERE ha.ts > pbl.max_ts - make_interval(
-        hours => CASE WHEN c.bridge_name = 'wormhole' THEN ${WORMHOLE_HOURS} ELSE ${DEFAULT_HOURS} END
+        hours => (CASE WHEN c.bridge_name = 'wormhole' THEN ${WORMHOLE_HOURS} ELSE ${DEFAULT_HOURS} END)::int
       )
     ),
     per_bridge_chain AS (
@@ -641,7 +641,7 @@ const queryAggregatedTokenStatsTop30Rolling = async (
       JOIN bridges.config c ON ha.bridge_id = c.id
       CROSS JOIN latest_ts lt
       WHERE lt.max_ts IS NOT NULL
-        AND ha.ts > lt.max_ts - make_interval(hours => ${hours})
+        AND ha.ts > lt.max_ts - make_interval(hours => ${hours}::int)
         AND ha.ts <= lt.max_ts
         ${baseConditions}
     ),
@@ -768,7 +768,7 @@ const queryAggregatedTotalsRolling = async (hours: number, chain?: string, bridg
       JOIN bridges.config c ON ha.bridge_id = c.id
       CROSS JOIN latest_ts lt
       WHERE lt.max_ts IS NOT NULL
-        AND ha.ts > lt.max_ts - make_interval(hours => ${hours})
+        AND ha.ts > lt.max_ts - make_interval(hours => ${hours}::int)
         AND ha.ts <= lt.max_ts
         ${baseConditions}
     `
