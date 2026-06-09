@@ -598,7 +598,7 @@ export const aggregateData = async (
       console.error(errString, e);
     }
   }
-  largeTxs.map(async (largeTx) => {
+  await Promise.all(largeTxs.map(async (largeTx) => {
     const txPK = largeTx.id;
     const timestamp = largeTx.ts;
     const usdValue = largeTx.usdValue;
@@ -620,5 +620,5 @@ export const aggregateData = async (
       });
       console.log(errString, e);
     }
-  });
+  }));
 };

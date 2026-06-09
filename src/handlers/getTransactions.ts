@@ -62,7 +62,7 @@ const getTransactions = async (
       if (addressHash) {
         if (
           !(
-            (addressHash === tx.tx_to.toLowerCase() || addressHash === tx.tx_from.toLowerCase()) &&
+            (addressHash === tx.tx_to?.toLowerCase() || addressHash === tx.tx_from?.toLowerCase()) &&
             addressChain === tx.chain
           )
         )
