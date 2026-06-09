@@ -8,6 +8,7 @@ import getBridge from "../handlers/getBridge";
 import getBridgeChains from "../handlers/getBridgeChains";
 import getBridgeTxCounts from "../handlers/getBridgeTxCounts";
 import getLargeTransactions from "../handlers/getLargeTransactions";
+import getLargeTransactionsPaginated from "../handlers/getLargeTransactionsPaginated";
 import getLastBlocks from "../handlers/getLastBlocks";
 import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
@@ -174,6 +175,7 @@ const start = async () => {
     server.get("/bridge/:id", lambdaToFastify(getBridge));
     server.get("/bridgechains", lambdaToFastify(getBridgeChains));
     server.get("/largetransactions/:chain", lambdaToFastify(getLargeTransactions));
+    server.get("/v2/largetransactions/:chain", lambdaToFastify(getLargeTransactionsPaginated));
     server.get("/lastblocks", lambdaToFastify(getLastBlocks));
     server.get("/netflows/:period", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
