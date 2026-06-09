@@ -2,6 +2,7 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 
 export const bridgesAddress = {
+  ethereum: "0x20A41749545eB0C6266838257aDeA7b86d5369Ac",
   optimism: "0x0C4F10259c8b5Ed7238B76A0a6EfEf82cd2908Bf",
   arbitrum: "0x97450C9B5fC6D1b86bF87EFDCbB137f26F8b497e",
   scroll: "0xcAebc3309bFe45313922BFBa1a36C4458937E2A2",
