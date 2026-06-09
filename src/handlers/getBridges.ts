@@ -68,7 +68,7 @@ const getBridges = async () => {
         volumePrev2Day: dayBeforeLastVolume,
         lastHourlyVolume: 0,
         last24hVolume,
-        lastDailyVolume: last24hVolume,
+        lastDailyVolume: lastDailyVolume,
         dayBeforeLastVolume,
         weeklyVolume,
         monthlyVolume,
