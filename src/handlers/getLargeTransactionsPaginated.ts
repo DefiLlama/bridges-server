@@ -1,4 +1,4 @@
-import { IResponse, successResponse } from "../utils/lambda-response";
+import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
@@ -7,10 +7,23 @@ import { transformTokens } from "../helpers/tokenMappings";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
 
-const getLargeTransactions = async (
+const MAX_LIMIT = 2000;
+const DEFAULT_LIMIT = 100;
+
+const parseIntegerQueryParam = (value?: string) => {
+  if (value === undefined) return undefined;
+  if (value.trim() === "") return null;
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+};
+
+const getLargeTransactionsPaginated = async (
   chain: string = "all",
   startTimestamp: string = "0",
-  endTimestamp: string = "0"
+  endTimestamp: string = "0",
+  limit: number = DEFAULT_LIMIT,
+  offset: number = 0
 ) => {
   const queryStartTimestamp = parseInt(startTimestamp);
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
@@ -38,7 +51,7 @@ const getLargeTransactions = async (
   });
   const prices = await getLlamaPrices(Array.from(tokenSet));
 
-  const response = largeTransactions.map((tx: any) => {
+  const allResults = largeTransactions.map((tx: any) => {
     const bridgeName = configMapping[tx.bridge_id] ?? "unknown";
     const transformedToken = transformTokens[tx.chain]?.[tx.token] ?? `${tx.chain}:${tx.token}`;
     const symbol = prices?.[transformedToken]?.symbol ?? "unknown";
@@ -57,14 +70,35 @@ const getLargeTransactions = async (
     };
   });
 
-  return response.slice(0, 2000);
+  return {
+    total: allResults.length,
+    limit,
+    offset,
+    transactions: allResults.slice(offset, offset + limit),
+  };
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const chain = event.pathParameters?.chain?.toLowerCase();
   const startTimestamp = event.queryStringParameters?.starttimestamp;
   const endTimestamp = event.queryStringParameters?.endtimestamp;
-  const response = await getLargeTransactions(chain, startTimestamp, endTimestamp);
+  const limitParam = event.queryStringParameters?.limit;
+  const offsetParam = event.queryStringParameters?.offset;
+  const parsedLimit = parseIntegerQueryParam(limitParam);
+  const parsedOffset = parseIntegerQueryParam(offsetParam);
+
+  if (parsedLimit === null || (parsedLimit !== undefined && (parsedLimit < 1 || parsedLimit > MAX_LIMIT))) {
+    return errorResponse({ message: `limit must be an integer between 1 and ${MAX_LIMIT}.` });
+  }
+
+  if (parsedOffset === null || (parsedOffset !== undefined && parsedOffset < 0)) {
+    return errorResponse({ message: "offset must be a non-negative integer." });
+  }
+
+  const limit = parsedLimit ?? DEFAULT_LIMIT;
+  const offset = parsedOffset ?? 0;
+
+  const response = await getLargeTransactionsPaginated(chain, startTimestamp, endTimestamp, limit, offset);
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 

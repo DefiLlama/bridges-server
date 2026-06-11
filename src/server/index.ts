@@ -8,6 +8,7 @@ import getBridge from "../handlers/getBridge";
 import getBridgeChains from "../handlers/getBridgeChains";
 import getBridgeTxCounts from "../handlers/getBridgeTxCounts";
 import getLargeTransactions from "../handlers/getLargeTransactions";
+import getLargeTransactionsPaginated from "../handlers/getLargeTransactionsPaginated";
 import getLastBlocks from "../handlers/getLastBlocks";
 import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
@@ -18,7 +19,7 @@ import searchBridges from "../handlers/searchBridges";
 import getNetflowsCompare from "../handlers/getNetflowsCompare";
 import getTopGetLogs from "../handlers/getTopGetLogs";
 import { generateApiCacheKey, registerCacheHandler, warmCache, needsWarming, setCache, getCache } from "../utils/cache";
-import { startHealthMonitoring, getHealthStatus } from "./health";
+import { startHealthMonitoring, getHealthStatus, checkDbConnectivity } from "./health";
 import { warmAllCaches } from "./jobs/warmCache";
 
 dotenv.config();
@@ -174,6 +175,7 @@ const start = async () => {
     server.get("/bridge/:id", lambdaToFastify(getBridge));
     server.get("/bridgechains", lambdaToFastify(getBridgeChains));
     server.get("/largetransactions/:chain", lambdaToFastify(getLargeTransactions));
+    server.get("/v2/largetransactions/:chain", lambdaToFastify(getLargeTransactionsPaginated));
     server.get("/lastblocks", lambdaToFastify(getLastBlocks));
     server.get("/netflows/:period", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
@@ -183,8 +185,13 @@ const start = async () => {
     server.get("/bridge-search", lambdaToFastify(searchBridges));
     server.get("/netflows/compare", lambdaToFastify(getNetflowsCompare));
     server.get("/healthcheck", async (_, reply) => {
-      const { health, statusCode } = getHealthStatus();
-      return reply.code(statusCode).send(health);
+      const [{ health, statusCode }, db] = await Promise.all([
+        Promise.resolve(getHealthStatus()),
+        checkDbConnectivity(),
+      ]);
+      const fullHealth = { ...health, db };
+      const finalStatusCode = db.status === "ERROR" ? 503 : statusCode;
+      return reply.code(finalStatusCode).send(fullHealth);
     });
 
     startHealthMonitoring();
