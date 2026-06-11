@@ -1,4 +1,4 @@
-import { IResponse, successResponse } from "../utils/lambda-response";
+import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
 import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
@@ -9,6 +9,14 @@ import { normalizeChain } from "../utils/normalizeChain";
 
 const MAX_LIMIT = 2000;
 const DEFAULT_LIMIT = 100;
+
+const parseIntegerQueryParam = (value?: string) => {
+  if (value === undefined) return undefined;
+  if (value.trim() === "") return null;
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+};
 
 const getLargeTransactionsPaginated = async (
   chain: string = "all",
@@ -76,8 +84,19 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const endTimestamp = event.queryStringParameters?.endtimestamp;
   const limitParam = event.queryStringParameters?.limit;
   const offsetParam = event.queryStringParameters?.offset;
-  const limit = Math.min(limitParam ? parseInt(limitParam) : DEFAULT_LIMIT, MAX_LIMIT);
-  const offset = offsetParam ? Math.max(parseInt(offsetParam), 0) : 0;
+  const parsedLimit = parseIntegerQueryParam(limitParam);
+  const parsedOffset = parseIntegerQueryParam(offsetParam);
+
+  if (parsedLimit === null || (parsedLimit !== undefined && (parsedLimit < 1 || parsedLimit > MAX_LIMIT))) {
+    return errorResponse({ message: `limit must be an integer between 1 and ${MAX_LIMIT}.` });
+  }
+
+  if (parsedOffset === null || (parsedOffset !== undefined && parsedOffset < 0)) {
+    return errorResponse({ message: "offset must be a non-negative integer." });
+  }
+
+  const limit = parsedLimit ?? DEFAULT_LIMIT;
+  const offset = parsedOffset ?? 0;
 
   const response = await getLargeTransactionsPaginated(chain, startTimestamp, endTimestamp, limit, offset);
   return successResponse(response, 10 * 60); // 10 mins cache

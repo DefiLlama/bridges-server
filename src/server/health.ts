@@ -41,13 +41,13 @@ export function startHealthMonitoring() {
   updateCpuHistory();
 }
 
-export async function checkDbConnectivity(): Promise<{ status: "OK" | "ERROR"; latencyMs?: number; error?: string }> {
+export async function checkDbConnectivity(): Promise<{ status: "OK" | "ERROR"; latencyMs?: number }> {
   const start = Date.now();
   try {
     await sql`SELECT 1`;
     return { status: "OK", latencyMs: Date.now() - start };
-  } catch (e: any) {
-    return { status: "ERROR", error: e?.message ?? "unknown" };
+  } catch {
+    return { status: "ERROR" };
   }
 }
 
