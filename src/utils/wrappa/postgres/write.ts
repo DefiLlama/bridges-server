@@ -128,10 +128,11 @@ export const insertConfigRow = async (
   }
   for (let i = 0; i < 5; i++) {
     try {
-      return sql`
-        INSERT INTO bridges.config ${sql(paramsToAvoidTsError)} 
+      await sql`
+        INSERT INTO bridges.config ${sql(paramsToAvoidTsError)}
         ON CONFLICT (bridge_name, chain) DO NOTHING;
       `;
+      return;
     } catch (e) {
       if (i >= 4) {
         throw new Error(`Could not insert config row for ${params.bridge_name} on ${params.chain}`);
