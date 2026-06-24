@@ -126,8 +126,9 @@ const queryAggregatedDailyTimestampRange = async (
   chain?: string,
   bridgeNetworkName?: string
 ) => {
-  let conditions = sql`WHERE date_trunc('day', dv.ts) >= to_timestamp(${startTimestamp})::date 
-    AND date_trunc('day', dv.ts) <= to_timestamp(${endTimestamp})::date`;
+  let conditions = sql`WHERE dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
 
   if (chain) {
     conditions = sql`${conditions} AND dv.chain = ${chain}`;
@@ -483,14 +484,16 @@ const getNetflows = async (period: TimePeriod) => {
     case "week":
       tableAndWhere = sql`FROM bridges.daily_volume hv
       JOIN bridges.config c ON hv.bridge_id = c.id
-      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - interval '1 week'
-      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')`;
+      WHERE hv.ts >= (date_trunc('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC') - interval '1 week'
+      AND hv.ts < (date_trunc('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND hv.ts = (date_trunc('day', hv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
       break;
     case "month":
       tableAndWhere = sql`FROM bridges.daily_volume hv
       JOIN bridges.config c ON hv.bridge_id = c.id
-      WHERE hv.ts >= date_trunc('day', NOW() AT TIME ZONE 'UTC') - interval '1 month'
-      AND hv.ts < date_trunc('day', NOW() AT TIME ZONE 'UTC')`;
+      WHERE hv.ts >= (date_trunc('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC') - interval '1 month'
+      AND hv.ts < (date_trunc('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND hv.ts = (date_trunc('day', hv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
       break;
   }
 

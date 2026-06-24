@@ -14,7 +14,7 @@ async function aggregateDailyVolume() {
       )
       SELECT 
         ha.bridge_id,
-        date_trunc('day', ha.ts) as ts,
+        (date_trunc('day', ha.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC') as ts,
         SUM(CAST(ha.total_deposited_usd AS NUMERIC)) as total_deposited_usd,
         SUM(CAST(ha.total_withdrawn_usd AS NUMERIC)) as total_withdrawn_usd,
         SUM(CAST(ha.total_deposit_txs AS INTEGER)) as total_deposit_txs,
@@ -24,7 +24,7 @@ async function aggregateDailyVolume() {
       JOIN bridges.config c ON ha.bridge_id = c.id
       GROUP BY 
         ha.bridge_id,
-        date_trunc('day', ha.ts),
+        (date_trunc('day', ha.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'),
         c.chain
       ON CONFLICT (bridge_id, ts, chain) DO UPDATE SET
         total_deposited_usd = EXCLUDED.total_deposited_usd,
