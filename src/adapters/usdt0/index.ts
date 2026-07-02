@@ -127,6 +127,7 @@ const withdrawalParams = {
 } satisfies Partial<PartialContractEventParams>;
 
 const constructParams = (chain: keyof typeof deployments) => {
+  const queryChain = chain === "rootstock" ? "rsk" : chain;
   const eventParams = deployments[chain].flatMap(deployment => [
     {
       ...depositParams,
@@ -147,7 +148,7 @@ const constructParams = (chain: keyof typeof deployments) => {
   ]);
 
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("usdt0", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("usdt0", queryChain, fromBlock, toBlock, eventParams);
 }
 
 const adapter: BridgeAdapter = Object.fromEntries((Object.keys(deployments) as Array<keyof typeof deployments>).map(chain => [chain, constructParams(chain)]));
