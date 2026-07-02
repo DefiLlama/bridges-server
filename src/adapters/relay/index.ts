@@ -171,10 +171,11 @@ const fetchRequestsByTime = async (
 ): Promise<RelayRequestsResponse> => {
   let url = `https://api.relay.link/requests/v2?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}&limit=50&referrer=`;
   if (continuation) url = `${url}&continuation=${continuation}`;
+  const headers = process.env.RELAY_API_KEY ? { "x-api-key": process.env.RELAY_API_KEY } : undefined;
 
   return retry(
     async () => {
-      const response = await fetch(url, { timeout: 30000 });
+      const response = await fetch(url, { timeout: 30000, headers });
       if (!response.ok) {
         const errorType =
           response.status === 429

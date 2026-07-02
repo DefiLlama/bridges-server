@@ -6,7 +6,7 @@ import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
 
-const HOURS_CONCURRENCY = 12;
+const HOURS_CONCURRENCY = 6;
 
 export const handler = async () => {
   try {
@@ -24,9 +24,9 @@ export const handler = async () => {
     const startTs = dayjs().subtract(48, "hour").unix();
     const endTs = dayjs().unix();
     console.log(
-      `Running Relay adapter for ${startTs} (${dayjs
-        .unix(startTs)
-        .format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs.unix(endTs).format("YYYY-MM-DD HH:mm:ss")})`
+      `Running Relay adapter for ${startTs} (${dayjs.unix(startTs).format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs
+        .unix(endTs)
+        .format("YYYY-MM-DD HH:mm:ss")})`
     );
 
     const windows: Array<[number, number]> = [];
@@ -34,7 +34,11 @@ export const handler = async () => {
       windows.push([t, Math.min(t + 3600, endTs)]);
     }
 
-    const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
+    const mapLimit = async <T, R>(
+      items: T[],
+      limit: number,
+      fn: (item: T, index: number) => Promise<R>
+    ): Promise<R[]> => {
       const results: R[] = new Array(items.length);
       let inFlight = 0;
       let i = 0;
@@ -60,9 +64,7 @@ export const handler = async () => {
     };
 
     const processHourWindow = async ([from, to]: [number, number]): Promise<number> => {
-      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs
-        .unix(to)
-        .format("HH:mm")}]`;
+      const label = `[hour ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs.unix(to).format("HH:mm")}]`;
       console.log(`${label} start`);
       let hourDepositUsd = 0;
       let pageIndex = 0;
@@ -127,7 +129,8 @@ export const handler = async () => {
           if (sourceTransactions.length || destinationTransactions.length) {
             await sql.begin(async (sql) => {
               if (sourceTransactions.length) await insertTransactionRows(sql, true, sourceTransactions, "upsert");
-              if (destinationTransactions.length) await insertTransactionRows(sql, true, destinationTransactions, "upsert");
+              if (destinationTransactions.length)
+                await insertTransactionRows(sql, true, destinationTransactions, "upsert");
             });
             console.log(
               `${label} inserted page ${pageIndex}: ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
@@ -152,6 +155,5 @@ export const handler = async () => {
     throw error;
   }
 };
-
 
 export default wrapScheduledLambda(handler);
