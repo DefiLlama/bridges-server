@@ -1431,6 +1431,32 @@ export default [
       "world chain": "wc",
     },
   },
+  {
+    id: 114,
+    displayName: "Circle Gateway",
+    bridgeDbName: "circle-gateway",
+    iconLink: "protocols:circle_cctp",
+    slug: "circle-gateway",
+    largeTxThreshold: 10000,
+    url: "https://www.circle.com/gateway",
+    chains: [
+      "Ethereum",
+      "Optimism",
+      "Polygon",
+      "Base",
+      "Arbitrum",
+      "Avalanche",
+      "Unichain",
+      "Sonic",
+      "World Chain",
+      "Sei",
+      "Hyperliquid",
+    ],
+    chainMapping: {
+      avalanche: "avax",
+      "world chain": "wc",
+    },
+  },
 
   {
     id: 53,

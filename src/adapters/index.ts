@@ -49,6 +49,7 @@ import shimmerbridge from "./shimmerbridge";
 import butternetwork from "./butternetwork";
 import xy from "./xy-finance";
 import circle from "./circle";
+import circleGateway from "./circle-gateway";
 import garden from "./garden";
 import rootstock from "./rootstock";
 import mode from "./mode";
@@ -163,6 +164,7 @@ export default {
   rootstock,
   mode,
   circle,
+  "circle-gateway": circleGateway,
   router,
   tokenbridge,
   butterswap,
