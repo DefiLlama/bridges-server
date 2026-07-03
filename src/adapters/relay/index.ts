@@ -3,16 +3,16 @@ import fetch from "node-fetch";
 import { EventData } from "../../utils/types";
 import { RelayRequestsResponse } from "./types";
 import { ethers } from "ethers";
-const retry = require("async-retry");
 
-const requestQueues = new Map<string, Promise<any>>();
+let requestQueue: Promise<void> = Promise.resolve();
 
-enum ApiErrorType {
-  NETWORK = "network",
-  API_LIMIT = "api_limit",
-  DATA_PARSING = "data_parsing",
-  UNKNOWN = "unknown",
-}
+const PAGE_LIMIT = 50;
+const REQUEST_RETRIES = 8;
+const REQUEST_BASE_RETRY_MS = 5_000;
+const REQUEST_MAX_RETRY_MS = 60_000;
+const REQUEST_TIMEOUT_MS = 60_000;
+const REQUEST_INTERVAL_MS = 250;
+const MAX_PAGES_PER_WINDOW = 5_000;
 
 /**
  * Relay is a cross-chain payments system that enables low cost instant bridging and cross-chain execution.
@@ -70,6 +70,24 @@ const startingBlocks: Record<string, number> = {
 };
 
 const MAX_USD_AMOUNT = 10_000_000;
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getRetryDelay = (response: any, attempt: number) => {
+  const retryAfter = Number(response.headers?.get?.("retry-after"));
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000;
+  return Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
+};
+
+const makeRequestsUrl = (startTimestamp: number, endTimestamp: number, continuation?: string) => {
+  const params = new URLSearchParams({
+    startTimestamp: String(startTimestamp),
+    endTimestamp: String(endTimestamp),
+    limit: String(PAGE_LIMIT),
+    referrer: "",
+  });
+  if (continuation) params.set("continuation", continuation);
+  return `https://api.relay.link/requests/v2?${params.toString()}`;
+};
 
 const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
   if (!amountUsd) return ethers.BigNumber.from(0);
@@ -120,90 +138,95 @@ export const convertRequestToEvent = (
     deposit:
       depositTx && depositTx.data && deposit && depositAmount.gt(0)
         ? {
-          blockNumber: depositTx.block!,
-          txHash: depositTx.hash as string,
-          timestamp: getTimestamp(depositTx, withdrawTx, request),
-          from: (depositTx.data as any).from
-            ? (depositTx.data as any).from
-            : depositTx.data
+            blockNumber: depositTx.block!,
+            txHash: depositTx.hash as string,
+            timestamp: getTimestamp(depositTx, withdrawTx, request),
+            from: (depositTx.data as any).from
+              ? (depositTx.data as any).from
+              : depositTx.data
               ? (depositTx.data as any).signer
               : undefined,
-          to: (depositTx.data as any).to
-            ? (depositTx.data as any).to
-            : withdrawTx?.data
+            to: (depositTx.data as any).to
+              ? (depositTx.data as any).to
+              : withdrawTx?.data
               ? (withdrawTx.data as any).signer
               : undefined,
-          token: deposit?.currency?.address!,
-          amount: depositAmount,
-          isDeposit: true,
-          isUSDVolume: true,
-        }
+            token: deposit?.currency?.address!,
+            amount: depositAmount,
+            isDeposit: true,
+            isUSDVolume: true,
+          }
         : undefined,
     withdrawChainId: withdrawTx?.chainId,
     withdraw:
       withdrawTx && withdrawTx.data && withdraw && withdrawAmount.gt(0)
         ? {
-          blockNumber: withdrawTx.block!,
-          txHash: withdrawTx.hash!,
-          timestamp: getTimestamp(withdrawTx, depositTx, request),
-          from: (withdrawTx.data as any).from
-            ? (withdrawTx.data as any).from
-            : withdrawTx.data
+            blockNumber: withdrawTx.block!,
+            txHash: withdrawTx.hash!,
+            timestamp: getTimestamp(withdrawTx, depositTx, request),
+            from: (withdrawTx.data as any).from
+              ? (withdrawTx.data as any).from
+              : withdrawTx.data
               ? (withdrawTx.data as any).signer
               : undefined,
-          to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
-          token: withdraw?.currency?.address!,
-          amount: withdrawAmount,
-          isDeposit: false,
-          isUSDVolume: true,
-        }
+            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
+            token: withdraw?.currency?.address!,
+            amount: withdrawAmount,
+            isDeposit: false,
+            isUSDVolume: true,
+          }
         : undefined,
   };
 };
-
-
-
 
 const fetchRequestsByTime = async (
   startTimestamp: number,
   endTimestamp: number,
   continuation?: string
 ): Promise<RelayRequestsResponse> => {
-  let url = `https://api.relay.link/requests/v2?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}&limit=50&referrer=`;
-  if (continuation) url = `${url}&continuation=${continuation}`;
-  const headers = process.env.RELAY_API_KEY ? { "x-api-key": process.env.RELAY_API_KEY } : undefined;
+  const apiKey = process.env.RELAY_API_KEY;
+  if (!apiKey) throw new Error("RELAY_API_KEY is required for Relay adapter requests.");
 
-  return retry(
-    async () => {
-      const response = await fetch(url, { timeout: 30000, headers });
-      if (!response.ok) {
-        const errorType =
-          response.status === 429
-            ? ApiErrorType.API_LIMIT
-            : response.status >= 500
-              ? ApiErrorType.NETWORK
-              : ApiErrorType.UNKNOWN;
-        const error = new Error(
-          `[${errorType}] HTTP ${response.status} for ts ${startTimestamp}-${endTimestamp}`
+  const url = makeRequestsUrl(startTimestamp, endTimestamp, continuation);
+
+  for (let attempt = 0; attempt <= REQUEST_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        timeout: REQUEST_TIMEOUT_MS,
+        headers: { "x-api-key": apiKey },
+      });
+
+      if (response.ok) return await response.json();
+
+      const retryable = response.status === 429 || response.status >= 500;
+      const body = await response.text().catch(() => "");
+      if (!retryable || attempt === REQUEST_RETRIES) {
+        const error: any = new Error(
+          `Relay API failed for ${startTimestamp}-${endTimestamp} continuation=${continuation ?? "first"}: ` +
+            `HTTP ${response.status} ${body}`
         );
-        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-          (error as any).name = "NoRetryError";
-        }
+        error.retryable = retryable;
         throw error;
       }
-      return response.json();
-    },
-    {
-      retries: 3,
-      factor: 2,
-      minTimeout: 1000,
-      maxTimeout: 10000,
-      randomize: true,
-      onRetry: (error: any) => {
-        if (error.name === "NoRetryError") throw error;
-      },
+
+      const delay = getRetryDelay(response, attempt);
+      console.warn(
+        `[relay] HTTP ${response.status}; retrying in ${Math.round(delay / 1000)}s ` +
+          `(${attempt + 1}/${REQUEST_RETRIES}) for ts ${startTimestamp}-${endTimestamp}`
+      );
+      await wait(delay);
+    } catch (error: any) {
+      if (error?.retryable === false || attempt === REQUEST_RETRIES) throw error;
+      const delay = Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
+      console.warn(
+        `[relay] ${error?.type ?? error?.name ?? "network"} error; retrying in ` +
+          `${Math.round(delay / 1000)}s (${attempt + 1}/${REQUEST_RETRIES}) for ts ${startTimestamp}-${endTimestamp}`
+      );
+      await wait(delay);
     }
-  );
+  }
+
+  throw new Error("Unreachable Relay retry state.");
 };
 
 const rateLimitedFetchByTime = async (
@@ -211,71 +234,49 @@ const rateLimitedFetchByTime = async (
   endTimestamp: number,
   continuation?: string
 ): Promise<RelayRequestsResponse> => {
-  const delay = continuation ? 500 : 200;
-  const queueKey = `${startTimestamp}:${endTimestamp}`;
-  const lastRequest = requestQueues.get(queueKey) || Promise.resolve();
-  const currentRequest = lastRequest
-    .then(() => new Promise((resolve) => setTimeout(resolve, delay)))
+  const currentRequest = requestQueue
+    .catch(() => {})
+    .then(() => wait(REQUEST_INTERVAL_MS))
     .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation));
-  requestQueues.set(queueKey, currentRequest);
+  requestQueue = currentRequest.then(
+    () => undefined,
+    () => undefined
+  );
   return currentRequest;
 };
-
 
 export const forEachRequestsByTimePage = async (
   startTimestamp: number,
   endTimestamp: number,
   onPage: (requests: NonNullable<RelayRequestsResponse["requests"]>) => Promise<void> | void
-): Promise<void> => {
-  let consecutiveErrors = 0;
-  const maxConsecutiveErrors = 3;
+): Promise<{ pages: number; requests: number }> => {
   console.log(`Streaming requests for ts ${startTimestamp}-${endTimestamp}`);
 
-  try {
-    const first = await rateLimitedFetchByTime(startTimestamp, endTimestamp);
-    const firstPage = first.requests ?? [];
-    if (firstPage.length) {
-      await onPage(firstPage);
-    } else {
+  let continuation: string | undefined;
+  let pageCount = 0;
+  let totalRequests = 0;
+
+  do {
+    const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation);
+    continuation = page.continuation || undefined;
+    const reqs = page.requests ?? [];
+
+    pageCount += 1;
+    totalRequests += reqs.length;
+    if (reqs.length) {
+      await onPage(reqs);
+    } else if (pageCount === 1) {
       console.log(`No requests in first page for ts ${startTimestamp}-${endTimestamp}`);
     }
 
-    let continuation = first.continuation;
-    let pageCount = firstPage.length ? 1 : 0;
-    let totalRequests = firstPage.length;
-    const maxPages = 1000;
-
-    while (continuation !== undefined && pageCount < maxPages) {
-      try {
-        const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation);
-        continuation = page.continuation;
-        const reqs = page.requests ?? [];
-        if (reqs.length) await onPage(reqs);
-        pageCount += 1;
-        totalRequests += reqs.length;
-        consecutiveErrors = 0;
-      } catch (error) {
-        consecutiveErrors++;
-        console.error(
-          `Pagination error ${consecutiveErrors}/${maxConsecutiveErrors} while streaming ts ${startTimestamp}-${endTimestamp}:`,
-          error
-        );
-        if (consecutiveErrors >= maxConsecutiveErrors) {
-          console.error(`Circuit breaker activated after ${consecutiveErrors} consecutive errors`);
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, consecutiveErrors) * 1000));
-      }
+    if (pageCount >= MAX_PAGES_PER_WINDOW && continuation) {
+      throw new Error(`Hit Relay pagination page limit for ts ${startTimestamp}-${endTimestamp}.`);
     }
+  } while (continuation);
 
-    if (pageCount >= maxPages && continuation) {
-      console.warn(`Hit pagination page limit for ts ${startTimestamp}-${endTimestamp}. Some data may be missing.`);
-    }
-  } catch (error) {
-    console.error(`Critical error streaming requests for ts ${startTimestamp}-${endTimestamp}:`, error);
-  }
+  console.log(`Processed ${totalRequests} requests across ${pageCount} pages for ts ${startTimestamp}-${endTimestamp}`);
+  return { pages: pageCount, requests: totalRequests };
 };
-
 
 export const slugToChainId: Record<string, number> = {
   ethereum: 1,
@@ -328,8 +329,6 @@ export const chainIdToSlug: Record<number, string> = Object.fromEntries(
   Object.entries(slugToChainId).map(([slug, id]) => [id, slug])
 ) as Record<number, string>;
 
-const adapter = Object.fromEntries(
-  Object.entries(slugToChainId).map(([slug, _id]) => [slug, true])
-) as any
+const adapter = Object.fromEntries(Object.entries(slugToChainId).map(([slug, _id]) => [slug, true])) as any;
 
 export default adapter;
