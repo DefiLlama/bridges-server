@@ -22,7 +22,15 @@ interface APIEvent {
   routePath?: string;
 }
 
-export const handlerRegistry = new Map<string, Function>();
+export interface CacheHandlerEntry {
+  handler: Function;
+  lastAccessedAt: number;
+  pinned: boolean;
+}
+
+const MAX_REGISTRY_ENTRIES = 1000;
+
+export const handlerRegistry = new Map<string, CacheHandlerEntry>();
 
 export const generateApiCacheKey = (event: APIEvent): string => {
   const eventToNormalize = {
@@ -51,21 +59,25 @@ export const needsWarming = async (cacheKey: string): Promise<boolean> => {
 };
 
 export const warmCache = async (cacheKey: string): Promise<void> => {
-  const handler = handlerRegistry.get(cacheKey);
-  if (!handler) {
+  const entry = handlerRegistry.get(cacheKey);
+  if (!entry) {
     return;
   }
-  try {
-    const result = await handler();
-    const parsedBody = JSON.parse(result.body);
-    await redis.set(cacheKey, JSON.stringify(parsedBody), "EX", DEFAULT_TTL);
-  } catch (error) {
-    throw error;
-  }
+  const result = await entry.handler();
+  const parsedBody = JSON.parse(result.body);
+  await redis.set(cacheKey, JSON.stringify(parsedBody), "EX", DEFAULT_TTL);
 };
 
-export const registerCacheHandler = (cacheKey: string, handler: Function) => {
-  handlerRegistry.set(cacheKey, handler);
+export const registerCacheHandler = (cacheKey: string, handler: Function, opts?: { pinned?: boolean }) => {
+  const pinned = opts?.pinned ?? handlerRegistry.get(cacheKey)?.pinned ?? false;
+  handlerRegistry.delete(cacheKey);
+  handlerRegistry.set(cacheKey, { handler, lastAccessedAt: Date.now(), pinned });
+  if (handlerRegistry.size > MAX_REGISTRY_ENTRIES) {
+    for (const [key, entry] of handlerRegistry) {
+      if (handlerRegistry.size <= MAX_REGISTRY_ENTRIES) break;
+      if (!entry.pinned) handlerRegistry.delete(key);
+    }
+  }
 };
 
 export const getCacheKey = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(":");

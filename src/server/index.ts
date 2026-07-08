@@ -24,6 +24,10 @@ import { warmAllCaches } from "./jobs/warmCache";
 
 dotenv.config();
 
+process.on("unhandledRejection", (reason) => {
+  console.error("[FATAL-AVOIDED] Unhandled promise rejection:", reason);
+});
+
 const debugLevel = Number(process.env.LLAMA_DEBUG_LEVEL ?? "0");
 const requestDebugEnabled = process.env.FASTIFY_REQUEST_DEBUG === "1" || debugLevel >= 3;
 const verboseRequestDebugEnabled = process.env.FASTIFY_REQUEST_DEBUG_VERBOSE === "1" || debugLevel >= 4;
@@ -110,7 +114,7 @@ const lambdaToFastify = (handler: Function) => async (request: any, reply: any) 
 
   if (cachedData) {
     if (await needsWarming(cacheKey)) {
-      warmCache(cacheKey);
+      warmCache(cacheKey).catch((e) => request.log.error({ err: e, cacheKey }, "background cache warm failed"));
     }
     return reply.code(200).send(cachedData);
   }
@@ -151,7 +155,7 @@ const prewarmCriticalCaches = async () => {
   for (const { routePath, pathParameters, handler } of targets) {
     const event = { pathParameters, queryStringParameters: {}, body: {}, routePath };
     const cacheKey = generateApiCacheKey(event);
-    registerCacheHandler(cacheKey, () => handler(event));
+    registerCacheHandler(cacheKey, () => handler(event), { pinned: true });
     try {
       await warmCache(cacheKey);
       console.log(`[INFO] Prewarmed ${routePath} ${JSON.stringify(pathParameters)}`);

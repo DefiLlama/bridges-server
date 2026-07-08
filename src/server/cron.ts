@@ -23,21 +23,49 @@ const createTimeout = (minutes: number) =>
     setTimeout(() => reject(new Error(`Operation timed out after ${minutes} minutes`)), minutes * 60 * 1000)
   );
 
-const withTimeout = async (jobName: string, promise: Promise<any>, timeoutMinutes: number) => {
-  try {
-    console.log(`[INFO] Starting job: ${jobName}`);
+type JobResult = { name: string; status: "ok" | "failed"; durationSec: number; error?: string };
+const scheduledJobNames: string[] = [];
+const jobResults: JobResult[] = [];
 
-    const startTime = Date.now();
+const withTimeout = async (jobName: string, promise: Promise<any>, timeoutMinutes: number) => {
+  console.log(`[INFO] Starting job: ${jobName}`);
+  const startTime = Date.now();
+  try {
     const result = await Promise.race([promise, createTimeout(timeoutMinutes)]);
 
     const duration = (Date.now() - startTime) / 1000;
+    jobResults.push({ name: jobName, status: "ok", durationSec: duration });
     console.log(`[INFO] Job ${jobName} completed successfully in ${duration.toFixed(2)}s`);
 
     return result;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
+    jobResults.push({ name: jobName, status: "failed", durationSec: (Date.now() - startTime) / 1000, error: errorMsg });
     console.error(`[ERROR] Job ${jobName} failed: ${errorMsg}`);
   }
+};
+
+const printJobSummary = () => {
+  const failed = jobResults.filter((r) => r.status === "failed");
+  const settled = new Set(jobResults.map((r) => r.name));
+  const neverSettled = scheduledJobNames.filter((name) => !settled.has(name));
+
+  console.log("[SUMMARY] Job results:");
+  for (const r of jobResults) {
+    const line = `  ${r.status === "ok" ? "OK    " : "FAILED"} ${r.name} (${r.durationSec.toFixed(0)}s)${
+      r.error ? ` - ${r.error}` : ""
+    }`;
+    console.log(line);
+  }
+  for (const name of neverSettled) {
+    console.log(`  STUCK  ${name} - still running or never started at shutdown`);
+  }
+  console.log(
+    `[SUMMARY] ${jobResults.length - failed.length}/${scheduledJobNames.length} ok, ${failed.length} failed, ${
+      neverSettled.length
+    } stuck`
+  );
+  return failed.length + neverSettled.length;
 };
 
 const printGetLogsSummary = async () => {
@@ -53,10 +81,15 @@ const printGetLogsSummary = async () => {
 const exit = () => {
   setTimeout(async () => {
     console.log("[INFO] Timeout! Shutting down. Bye bye!");
-    await printGetLogsSummary();
-    await sql.end();
-    await querySql.end();
-    process.exit(0);
+    const failedCount = printJobSummary();
+    try {
+      await printGetLogsSummary();
+      await sql.end();
+      await querySql.end();
+    } catch (e) {
+      console.error("[ERROR] Shutdown cleanup failed:", e);
+    }
+    process.exit(failedCount > 0 ? 1 : 0);
   }, 1000 * 60 * 54);
 };
 
@@ -66,10 +99,12 @@ const runAfterDelay = async (
   fn: () => Promise<void>,
   timeoutMinutes: number = 5
 ) => {
+  scheduledJobNames.push(jobName);
   setTimeout(async () => {
     try {
       await withTimeout(jobName, fn(), timeoutMinutes);
     } catch (error) {
+      jobResults.push({ name: jobName, status: "failed", durationSec: 0, error: String(error) });
       console.error(`[ERROR] Job ${jobName} failed:`, error);
     }
   }, delayMinutes * 60 * 1000);
