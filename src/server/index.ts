@@ -12,7 +12,6 @@ import getLargeTransactionsPaginated from "../handlers/getLargeTransactionsPagin
 import getLastBlocks from "../handlers/getLastBlocks";
 import getNetflows from "../handlers/getNetflows";
 import getTransactions from "../handlers/getTransactions";
-import runAdapter from "../handlers/runAdapter";
 import getBridgeStatsOnDay from "../handlers/getBridgeStatsOnDay";
 import getStaleBridges from "../handlers/getStaleBridges";
 import searchBridges from "../handlers/searchBridges";
@@ -183,7 +182,6 @@ const start = async () => {
     server.get("/lastblocks", lambdaToFastify(getLastBlocks));
     server.get("/netflows/:period", lambdaToFastify(getNetflows));
     server.get("/transactions/:id", lambdaToFastify(getTransactions));
-    server.post("/run-adapter", lambdaToFastify(runAdapter));
     server.get("/top-getlogs", lambdaToFastify(getTopGetLogs));
     server.get("/stale-bridges", lambdaToFastify(getStaleBridges));
     server.get("/bridge-search", lambdaToFastify(searchBridges));

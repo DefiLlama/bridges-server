@@ -63,7 +63,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
           monthlyVolume += volume;
           monthlyTxs.deposits = (monthlyTxs.deposits ?? 0) + depositTxs;
           monthlyTxs.withdrawals = (monthlyTxs.withdrawals ?? 0) + withdrawTxs;
-          if (i < 7) {
+          if (i >= lastMonthDailyVolume.length - 7) {
             weeklyVolume += volume;
             weeklyTxs.deposits = (weeklyTxs.deposits ?? 0) + depositTxs;
             weeklyTxs.withdrawals = (weeklyTxs.withdrawals ?? 0) + withdrawTxs;

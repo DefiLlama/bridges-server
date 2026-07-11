@@ -175,7 +175,7 @@ export const getHourlyBridgeVolume = async (
         config.chain,
         config.bridge_name
       );
-      sourceChainsHourlyData = [...sourceChainHourlyData, ...sourceChainsHourlyData];
+      sourceChainsHourlyData = [...sourceChainsHourlyData, ...sourceChainHourlyData];
     })
   );
 
