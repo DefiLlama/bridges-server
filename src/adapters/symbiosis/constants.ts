@@ -49,6 +49,8 @@ export enum ChainId {
     PLASMA_MAINNET = 9745,
     MONAD_MAINNET = 143,
     CITREA_MAINNET = 4114,
+    TEMPO_MAINNET = 4217,
+    QUAI_MAINNET = 9,
 }
 
 export const AddressZero = "0x0000000000000000000000000000000000000000"
@@ -104,6 +106,8 @@ export const CHAINS_MAP: Record<ChainId, string> = {
     [ChainId.PLASMA_MAINNET]: 'plasma',
     [ChainId.MONAD_MAINNET]: 'monad',
     [ChainId.CITREA_MAINNET]: 'citrea',
+    [ChainId.TEMPO_MAINNET]: 'tempo',
+    [ChainId.QUAI_MAINNET]: 'quai',
 }
 
 export const CHAIN_ADAPTER_MAP: Record<string, string> = {
