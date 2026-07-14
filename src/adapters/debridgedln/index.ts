@@ -33,6 +33,7 @@ const nativeTokenAddress = {
   plume: "0x0000000000000000000000000000000000000000", // PLUME
   plasma: "0x0000000000000000000000000000000000000000", // XPL
   monad: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A", // WMON
+  robinhood: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73", // WETH
 };
 
 type SupportedChains = keyof typeof nativeTokenAddress;
@@ -159,6 +160,7 @@ const adapter: BridgeAdapter = {
   plasma: constructParams("plasma"),
   plume: constructParams("plume"),
   monad: constructParams("monad"),
+  robinhood: constructParams("robinhood"),
 };
 
 export default adapter;

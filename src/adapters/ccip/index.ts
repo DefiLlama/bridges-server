@@ -296,8 +296,9 @@ const chains = [
   "x layer",
   "zircuit",
   "zora",
-  "pharos"
-]
+  "pharos",
+  "robinhood",
+];
 
 export const adapter: BridgeAdapter = Object.fromEntries(chains.map(chain => [chain, fetchCCIPEvents as any]));
 

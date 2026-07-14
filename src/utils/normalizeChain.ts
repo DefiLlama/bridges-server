@@ -29,6 +29,7 @@ export const normalizedChainReplacements = {
   "rari chain": "rari",
   "plume mainnet": "plume",
   astar_zkevm: "astar_zkevm",
+  "robinhood chain": "robinhood",
 } as {
   [chain: string]: string;
 };
@@ -64,6 +65,14 @@ export const chainCoingeckoIds = {
     categories: ["EVM", "Rollup"],
     parent: "Ethereum",
     chainId: 42161,
+  },
+  "Robinhood Chain": {
+    geckoId: null,
+    symbol: "ETH",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Ethereum",
+    chainId: 4663,
   },
   "zkSync Era": {
     geckoId: null,
@@ -1228,6 +1237,8 @@ export function getChainDisplayName(normalizedChain: string, useNewChainNames: b
       return useNewChainNames ? "CosmosHub" : "Cosmos";
     case "avax":
       return "Avalanche";
+    case "robinhood":
+      return "Robinhood Chain";
     case "xdaiarb":
       return "XdaiArb";
     case "okexchain":

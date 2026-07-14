@@ -87,6 +87,8 @@ export const layerZeroChainMapping: { [key: string]: string } = {
   BounceBit: "bouncebit",
   Katana: "katana",
   Monad: "monad",
+  Robinhood: "robinhood",
+  "Robinhood Chain": "robinhood",
 };
 
 async function assumeRole(retryCount = 0, maxRetries = 3) {
@@ -136,7 +138,20 @@ async function assumeRole(retryCount = 0, maxRetries = 3) {
   }
 }
 
-export async function* processLayerZeroData(bucketName: string, processedFiles: Set<string>) {
+type LayerZeroFile = {
+  Key?: string;
+  LastModified?: Date;
+};
+
+type ProcessLayerZeroDataOptions = {
+  fileFilter?: (file: LayerZeroFile) => boolean;
+};
+
+export async function* processLayerZeroData(
+  bucketName: string,
+  processedFiles: Set<string>,
+  options: ProcessLayerZeroDataOptions = {}
+) {
   let s3Client: S3Client | null = null;
   let temporaryCredentials: any = null;
 
@@ -190,7 +205,9 @@ export async function* processLayerZeroData(bucketName: string, processedFiles: 
       return (a.LastModified?.getTime() || 0) - (b.LastModified?.getTime() || 0);
     });
 
-    const filesToProcess = allContents.filter((file) => file.Key && !processedFiles.has(file.Key)).reverse();
+    const filesToProcess = allContents
+      .filter((file) => file.Key && !processedFiles.has(file.Key) && (!options.fileFilter || options.fileFilter(file)))
+      .reverse();
     console.log(`Processing ${filesToProcess.length} new files`);
 
     for (const file of filesToProcess) {

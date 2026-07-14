@@ -180,6 +180,7 @@ export const chainMappings: Record<string, string> = {
   zksync: "era",
   zksync_era: "era",
   "polygon zkevm": "polygon_zkevm",
+  "robinhood chain": "robinhood",
   zkpolygon: "polygon_zkevm",
   polygonzkevm: "polygon_zkevm",
   "arbitrum nova": "arbitrum_nova",

@@ -45,6 +45,7 @@ export const chainIdMapping: Record<string, number> = {
   monad: 143,
   hyperliquid: 999,
   tempo: 4217,
+  robinhood: 4663,
   megaeth: 4326,
   tron: 728126428,
 };

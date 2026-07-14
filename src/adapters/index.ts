@@ -110,6 +110,7 @@ import citreaUsdc from "./citrea-usdc";
 import citreaUsdt from "./citrea-usdt";
 import citreaWbtc from "./citrea-wbtc";
 import wavesbridge from "./wavesbridge";
+import robinhood from "./robinhood";
 
 export default {
   polygon,
@@ -223,6 +224,7 @@ export default {
   "citrea-usdt": citreaUsdt,
   "citrea-wbtc": citreaWbtc,
   wavesbridge,
+  robinhood,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };

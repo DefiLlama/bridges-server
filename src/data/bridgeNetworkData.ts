@@ -419,6 +419,7 @@ export default [
       "Solana",
       "Hyperliquid",
       "Tron",
+      "Robinhood",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -449,6 +450,7 @@ export default [
       "Sonic",
       "Plume Mainnet",
       "Monad",
+      "Robinhood",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -2630,6 +2632,7 @@ export default [
       "Xai",
       "Zero Network",
       "Zksync",
+      "Robinhood",
     ],
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",
@@ -2720,6 +2723,7 @@ export default [
       "X Layer",
       "Zircuit",
       "Zora",
+      "Robinhood",
     ],
     chainMapping: {
       "World Chain": "wc",
@@ -3001,5 +3005,16 @@ export default [
     destinationChain: "Defi Oracle Meta",
     chainMapping: {defi_oracle_meta: "dfio_meta_main"},
     defillamaId: undefined
+  },
+  {
+    id: 115,
+    displayName: "Robinhood Chain Bridge",
+    bridgeDbName: "robinhood",
+    slug: "robinhood-chain-bridge",
+    iconLink: "chain:robinhood",
+    largeTxThreshold: 10000,
+    url: "https://portal.arbitrum.io/",
+    chains: ["Ethereum", "Robinhood Chain"],
+    destinationChain: "Robinhood Chain",
   },
 ] as BridgeNetwork[];

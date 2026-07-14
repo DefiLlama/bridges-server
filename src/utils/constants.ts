@@ -66,6 +66,7 @@ export const maxBlocksToQueryByChain = {
   moonbeam: 3000,
   filecoin: 3000,
   kava: 3000,
+  robinhood: 3000,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter

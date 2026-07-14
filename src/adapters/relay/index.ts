@@ -78,7 +78,7 @@ const getRetryDelay = (response: any, attempt: number) => {
   return Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
 };
 
-const makeRequestsUrl = (startTimestamp: number, endTimestamp: number, continuation?: string) => {
+const makeRequestsUrl = (startTimestamp: number, endTimestamp: number, continuation?: string, chainId?: number) => {
   const params = new URLSearchParams({
     startTimestamp: String(startTimestamp),
     endTimestamp: String(endTimestamp),
@@ -86,6 +86,7 @@ const makeRequestsUrl = (startTimestamp: number, endTimestamp: number, continuat
     referrer: "",
   });
   if (continuation) params.set("continuation", continuation);
+  if (chainId !== undefined) params.set("chainId", String(chainId));
   return `https://api.relay.link/requests/v2?${params.toString()}`;
 };
 
@@ -182,12 +183,13 @@ export const convertRequestToEvent = (
 const fetchRequestsByTime = async (
   startTimestamp: number,
   endTimestamp: number,
-  continuation?: string
+  continuation?: string,
+  chainId?: number
 ): Promise<RelayRequestsResponse> => {
   const apiKey = process.env.RELAY_API_KEY;
   if (!apiKey) throw new Error("RELAY_API_KEY is required for Relay adapter requests.");
 
-  const url = makeRequestsUrl(startTimestamp, endTimestamp, continuation);
+  const url = makeRequestsUrl(startTimestamp, endTimestamp, continuation, chainId);
 
   for (let attempt = 0; attempt <= REQUEST_RETRIES; attempt++) {
     try {
@@ -232,12 +234,13 @@ const fetchRequestsByTime = async (
 const rateLimitedFetchByTime = async (
   startTimestamp: number,
   endTimestamp: number,
-  continuation?: string
+  continuation?: string,
+  chainId?: number
 ): Promise<RelayRequestsResponse> => {
   const currentRequest = requestQueue
     .catch(() => {})
     .then(() => wait(REQUEST_INTERVAL_MS))
-    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation));
+    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation, chainId));
   requestQueue = currentRequest.then(
     () => undefined,
     () => undefined
@@ -248,7 +251,8 @@ const rateLimitedFetchByTime = async (
 export const forEachRequestsByTimePage = async (
   startTimestamp: number,
   endTimestamp: number,
-  onPage: (requests: NonNullable<RelayRequestsResponse["requests"]>) => Promise<void> | void
+  onPage: (requests: NonNullable<RelayRequestsResponse["requests"]>) => Promise<void> | void,
+  chainId?: number
 ): Promise<{ pages: number; requests: number }> => {
   console.log(`Streaming requests for ts ${startTimestamp}-${endTimestamp}`);
 
@@ -257,7 +261,7 @@ export const forEachRequestsByTimePage = async (
   let totalRequests = 0;
 
   do {
-    const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation);
+    const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation, chainId);
     continuation = page.continuation || undefined;
     const reqs = page.requests ?? [];
 
@@ -323,6 +327,7 @@ export const slugToChainId: Record<string, number> = {
   "proof-of-play-boss": 70701,
   katana: 747474,
   monad: 143,
+  robinhood: 4663,
 };
 
 export const chainIdToSlug: Record<number, string> = Object.fromEntries(
