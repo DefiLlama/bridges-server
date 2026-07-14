@@ -110,12 +110,14 @@ import citreaUsdc from "./citrea-usdc";
 import citreaUsdt from "./citrea-usdt";
 import citreaWbtc from "./citrea-wbtc";
 import wavesbridge from "./wavesbridge";
+import robinhood from "./robinhood";
 
 export default {
   polygon,
   synapse,
   hop,
   arbitrum,
+  robinhood,
   avalanche,
   optimism,
   multichain,
