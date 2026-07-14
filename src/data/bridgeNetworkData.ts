@@ -3002,4 +3002,16 @@ export default [
     chainMapping: {defi_oracle_meta: "dfio_meta_main"},
     defillamaId: undefined
   },
+  {
+    id: 115,
+    defillamaId: "8145",
+    displayName: "Robinhood Chain Bridge",
+    bridgeDbName: "robinhood",
+    iconLink: "chain:robinhood",
+    largeTxThreshold: 10000,
+    url: "https://robinhood.com/us/en/chain/",
+    chains: ["Ethereum", "Robinhood Chain"],
+    slug: "robinhood-bridge",
+    destinationChain: "Robinhood Chain",
+  },
 ] as BridgeNetwork[];
