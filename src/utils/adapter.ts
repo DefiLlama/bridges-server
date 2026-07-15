@@ -18,6 +18,7 @@ import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
 import { chainMappings } from "../helpers/tokenMappings";
 import { getCache, setCache } from "./cache";
+import { normalizeChain } from "./normalizeChain";
 const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
@@ -696,17 +697,27 @@ export const insertConfigEntriesForAdapter = async (
   bridgeDbName: string,
   destinationChain?: string
 ) => {
+  const normalizedDestinationChain = destinationChain ? normalizeChain(destinationChain) : undefined;
+
   await Promise.all(
     Object.keys(adapter).map(async (chain) => {
       const existingEntry = await getBridgeID(bridgeDbName, chain);
       if (existingEntry) {
+        if (normalizedDestinationChain) {
+          await sql`
+            UPDATE bridges.config
+            SET destination_chain = ${normalizedDestinationChain}
+            WHERE id = ${existingEntry.id}
+              AND destination_chain IS DISTINCT FROM ${normalizedDestinationChain}
+          `;
+        }
         return;
       }
       return sql.begin(async (sql) => {
         return insertConfigRow(sql, {
           bridge_name: bridgeDbName,
           chain: chain,
-          destination_chain: destinationChain,
+          destination_chain: normalizedDestinationChain,
         });
       });
     })
