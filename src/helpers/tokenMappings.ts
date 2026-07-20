@@ -16,7 +16,7 @@ export const transformTokens = {
     "0x77776b40c3d75cb07ce54dea4b2fd1d07f865222": "bsc:0xe9e7cea3dedca5984780bafc599bd69add087d56",
     "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer",
     "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-3",
-    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat",
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": "coingecko:openchat",
     "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao",
   },
   bsc: {
@@ -52,7 +52,7 @@ export const transformTokens = {
     "0x600e576f9d853c95d58029093a16ee49646f3ca5": "arbitrum:0x93b346b6bc2548da6a1e7d98e9a421b42541425b",
     "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer",
     "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-3",
-    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat",
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": "coingecko:openchat",
     "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao",
   },
   optimism: {
@@ -84,7 +84,7 @@ export const transformTokens = {
   base: {
     "0x00f3c42833c3170159af4e92dbb451fb3f708917": "coingecko:internet-computer",
     "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": "coingecko:bob-3",
-    "0xdb95092c454235e7e666c4e226dbbbbcdeb499d25": "coingecko:openchat",
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": "coingecko:openchat",
     "0x86856814e74456893cfc8946bedcbb472b5fa856": "coingecko:gold-dao",
   },
   tron: {
@@ -117,6 +117,11 @@ export const transformTokenDecimals = {
     "0xd8772edbf88bba2667ed011542343b0eddacda47": 18,
     "0x430ebff5e3e80a6c58e7e6ada1d90f5c28aa116d": 6,
     "0xf5e11df1ebcf78b6b6d26e04ff19cd786a1e81dc": 18,
+    // ICP-native assets: priced by coingecko id, which carries no decimals
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": 8,
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": 8,
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": 8,
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": 8,
   },
   bsc: {
     "0x98a5737749490856b401db5dc27f522fc314a4e1": 6,
@@ -147,6 +152,18 @@ export const transformTokenDecimals = {
     "0xaa4bf442f024820b2c28cd0fd72b82c63e66f56c": 6,
     "0xf39b7be294cb36de8c510e267b82bb588705d977": 6,
     "0x600e576f9d853c95d58029093a16ee49646f3ca5": 6,
+    // ICP-native assets: priced by coingecko id, which carries no decimals
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": 8,
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": 8,
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": 8,
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": 8,
+  },
+  base: {
+    // ICP-native assets: priced by coingecko id, which carries no decimals
+    "0x00f3c42833c3170159af4e92dbb451fb3f708917": 8,
+    "0xecc5f868add75f4ff9fd00bbbde12c35ba2c9c89": 8,
+    "0xdb95092c454235e7e666c4e226dbbbcdeb499d25": 8,
+    "0x86856814e74456893cfc8946bedcbb472b5fa856": 8,
   },
   optimism: {
     "0xdecc0c09c3b5f6e92ef4184125d5648a66e35298": 6,
