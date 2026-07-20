@@ -50,6 +50,61 @@ interface IBridgeTxCounts24H {
   withdraw_txs_24h: number;
 }
 
+interface IDailyBridgeVolumeTotal {
+  ts: Date;
+  total_deposited_usd: string;
+  total_withdrawn_usd: string;
+  total_deposit_txs: number;
+  total_withdrawal_txs: number;
+}
+
+interface IDailyBridgeVolumeByBridge extends IDailyBridgeVolumeTotal {
+  bridge_name: string;
+}
+
+interface IDailyBridgeVolumeByChain extends IDailyBridgeVolumeTotal {
+  chain: string;
+}
+
+interface IAggregatedStatsRow {
+  kind: "dt" | "wt" | "da" | "wa";
+  key: string;
+  amount: string | null;
+  usd_value: string;
+  txs: number | null;
+}
+
+interface IAggregatedStatsTotals {
+  total_deposited_usd: string;
+  total_withdrawn_usd: string;
+  total_deposit_txs: number;
+  total_withdrawal_txs: number;
+}
+
+interface IAggregatedStatsQueryRow extends IAggregatedStatsTotals {
+  kind: IAggregatedStatsRow["kind"] | null;
+  key: string | null;
+  amount: string | null;
+  usd_value: string | null;
+  txs: number | null;
+}
+
+const unpackAggregatedStats = (result: IAggregatedStatsQueryRow[]) => {
+  const first = result[0];
+  const totals: IAggregatedStatsTotals = {
+    total_deposited_usd: first?.total_deposited_usd ?? "0",
+    total_withdrawn_usd: first?.total_withdrawn_usd ?? "0",
+    total_deposit_txs: first?.total_deposit_txs ?? 0,
+    total_withdrawal_txs: first?.total_withdrawal_txs ?? 0,
+  };
+  const rows = result
+    .filter((row): row is IAggregatedStatsQueryRow & { kind: IAggregatedStatsRow["kind"]; key: string; usd_value: string } =>
+      row.kind !== null && row.key !== null && row.usd_value !== null
+    )
+    .map(({ kind, key, amount, usd_value, txs }) => ({ kind, key, amount, usd_value, txs }));
+  return { rows, totals };
+};
+
 type TimePeriod = "day" | "week" | "month";
 
 const getBridgeID = async (bridgNetworkName: string, chain: string) => {
@@ -159,6 +214,128 @@ const queryAggregatedDailyTimestampRange = async (
     ORDER BY ts;
   `;
   return result;
+};
+
+const queryDailyBridgeVolumeTotals = async (
+  startTimestamp: number,
+  endTimestamp: number,
+  chain?: string,
+  bridgeNetworkName?: string
+) => {
+  let conditions = sql`WHERE dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')`;
+
+  if (bridgeNetworkName) {
+    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
+  }
+  if (chain) {
+    conditions = sql`${conditions}
+      AND (dv.chain = ${chain} OR LOWER(c.destination_chain) = LOWER(${chain}))`;
+  }
+
+  const depositedUsd = chain
+    ? sql`(
+        CASE WHEN dv.chain = ${chain} THEN dv.total_deposited_usd ELSE 0 END
+        + CASE WHEN LOWER(c.destination_chain) = LOWER(${chain}) THEN dv.total_withdrawn_usd ELSE 0 END
+      )`
+    : sql`dv.total_deposited_usd`;
+  const withdrawnUsd = chain
+    ? sql`(
+        CASE WHEN dv.chain = ${chain} THEN dv.total_withdrawn_usd ELSE 0 END
+        + CASE WHEN LOWER(c.destination_chain) = LOWER(${chain}) THEN dv.total_deposited_usd ELSE 0 END
+      )`
+    : sql`dv.total_withdrawn_usd`;
+  const depositTxs = chain
+    ? sql`(
+        CASE WHEN dv.chain = ${chain} THEN dv.total_deposit_txs ELSE 0 END
+        + CASE WHEN LOWER(c.destination_chain) = LOWER(${chain}) THEN dv.total_withdrawal_txs ELSE 0 END
+      )`
+    : sql`dv.total_deposit_txs`;
+  const withdrawalTxs = chain
+    ? sql`(
+        CASE WHEN dv.chain = ${chain} THEN dv.total_withdrawal_txs ELSE 0 END
+        + CASE WHEN LOWER(c.destination_chain) = LOWER(${chain}) THEN dv.total_deposit_txs ELSE 0 END
+      )`
+    : sql`dv.total_withdrawal_txs`;
+
+  return await sql<IDailyBridgeVolumeTotal[]>`
+    SELECT
+      dv.ts,
+      COALESCE(SUM(${depositedUsd}), 0)::text AS total_deposited_usd,
+      COALESCE(SUM(${withdrawnUsd}), 0)::text AS total_withdrawn_usd,
+      COALESCE(SUM(${depositTxs}), 0)::integer AS total_deposit_txs,
+      COALESCE(SUM(${withdrawalTxs}), 0)::integer AS total_withdrawal_txs
+    FROM bridges.daily_volume dv
+    JOIN bridges.config c ON dv.bridge_id = c.id
+    ${conditions}
+    GROUP BY dv.ts
+    ORDER BY dv.ts;
+  `;
+};
+
+const queryDailyBridgeVolumesByBridge = async (startTimestamp: number, endTimestamp: number) => {
+  return await sql<IDailyBridgeVolumeByBridge[]>`
+    SELECT
+      c.bridge_name,
+      dv.ts,
+      COALESCE(SUM(dv.total_deposited_usd), 0)::text AS total_deposited_usd,
+      COALESCE(SUM(dv.total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+      COALESCE(SUM(dv.total_deposit_txs), 0)::integer AS total_deposit_txs,
+      COALESCE(SUM(dv.total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+    FROM bridges.daily_volume dv
+    JOIN bridges.config c ON dv.bridge_id = c.id
+    WHERE dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    GROUP BY c.bridge_name, dv.ts
+    ORDER BY c.bridge_name, dv.ts;
+  `;
+};
+
+const queryDailyBridgeVolumesByChain = async (startTimestamp: number, endTimestamp: number) => {
+  return await sql<IDailyBridgeVolumeByChain[]>`
+    WITH contributions AS (
+      SELECT
+        LOWER(dv.chain) AS chain,
+        dv.ts,
+        dv.total_deposited_usd,
+        dv.total_withdrawn_usd,
+        dv.total_deposit_txs,
+        dv.total_withdrawal_txs
+      FROM bridges.daily_volume dv
+      JOIN bridges.config c ON dv.bridge_id = c.id
+      WHERE dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+        AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+        AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+
+      UNION ALL
+
+      SELECT
+        LOWER(c.destination_chain) AS chain,
+        dv.ts,
+        dv.total_withdrawn_usd AS total_deposited_usd,
+        dv.total_deposited_usd AS total_withdrawn_usd,
+        dv.total_withdrawal_txs AS total_deposit_txs,
+        dv.total_deposit_txs AS total_withdrawal_txs
+      FROM bridges.daily_volume dv
+      JOIN bridges.config c ON dv.bridge_id = c.id
+      WHERE c.destination_chain IS NOT NULL
+        AND dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+        AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+        AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    )
+    SELECT
+      chain,
+      ts,
+      COALESCE(SUM(total_deposited_usd), 0)::text AS total_deposited_usd,
+      COALESCE(SUM(total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+      COALESCE(SUM(total_deposit_txs), 0)::integer AS total_deposit_txs,
+      COALESCE(SUM(total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+    FROM contributions
+    GROUP BY chain, ts
+    ORDER BY chain, ts;
+  `;
 };
 
 const queryAggregatedHourlyTimestampRange = async (
@@ -522,7 +699,7 @@ const getNetflows = async (period: TimePeriod) => {
   `;
 };
 
-const queryAggregatedTokenStatsTop30 = async (
+const queryAggregatedStatsTop30 = async (
   startTimestamp: number,
   endTimestamp: number,
   chain?: string,
@@ -539,18 +716,12 @@ const queryAggregatedTokenStatsTop30 = async (
     conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
   }
 
-  return await sql<
-    {
-      kind: "dt" | "wt" | "da" | "wa";
-      key: string;
-      amount: string | null;
-      usd_value: string;
-      txs: number | null;
-    }[]
-  >`
+  const result = await sql<IAggregatedStatsQueryRow[]>`
     WITH base AS (
       SELECT ha.total_tokens_deposited, ha.total_tokens_withdrawn,
-             ha.total_address_deposited, ha.total_address_withdrawn
+             ha.total_address_deposited, ha.total_address_withdrawn,
+             ha.total_deposited_usd, ha.total_withdrawn_usd,
+             ha.total_deposit_txs, ha.total_withdrawal_txs
       FROM bridges.hourly_aggregated ha
       JOIN bridges.config c ON ha.bridge_id = c.id
       ${conditions}
@@ -594,15 +765,33 @@ const queryAggregatedTokenStatsTop30 = async (
       GROUP BY replace((a).address, '''', '')
       ORDER BY SUM((a).usd_value) DESC NULLS LAST
       LIMIT ${limit}
+    ),
+    stats AS (
+      SELECT 1 AS kind_order, 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
+      UNION ALL SELECT 2, 'wt', key, amount, usd_value, NULL::integer FROM wt
+      UNION ALL SELECT 3, 'da', key, NULL::text, usd_value, txs FROM da
+      UNION ALL SELECT 4, 'wa', key, NULL::text, usd_value, txs FROM wa
+    ),
+    totals AS (
+      SELECT
+        COALESCE(SUM(total_deposited_usd), 0)::text AS total_deposited_usd,
+        COALESCE(SUM(total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+        COALESCE(SUM(total_deposit_txs), 0)::integer AS total_deposit_txs,
+        COALESCE(SUM(total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+      FROM base
     )
-    SELECT 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
-    UNION ALL SELECT 'wt', key, amount, usd_value, NULL::integer FROM wt
-    UNION ALL SELECT 'da', key, NULL::text, usd_value, txs FROM da
-    UNION ALL SELECT 'wa', key, NULL::text, usd_value, txs FROM wa
+    SELECT
+      stats.kind, stats.key, stats.amount, stats.usd_value, stats.txs,
+      totals.total_deposited_usd, totals.total_withdrawn_usd,
+      totals.total_deposit_txs, totals.total_withdrawal_txs
+    FROM totals
+    LEFT JOIN stats ON TRUE
+    ORDER BY stats.kind_order, stats.usd_value::numeric DESC NULLS LAST
   `;
+  return unpackAggregatedStats(result);
 };
 
-const queryAggregatedTokenStatsTop30Rolling = async (
+const queryAggregatedStatsTop30Rolling = async (
   hours: number,
   chain?: string,
   bridgeNetworkName?: string,
@@ -622,15 +811,7 @@ const queryAggregatedTokenStatsTop30Rolling = async (
     }
   }
 
-  return await sql<
-    {
-      kind: "dt" | "wt" | "da" | "wa";
-      key: string;
-      amount: string | null;
-      usd_value: string;
-      txs: number | null;
-    }[]
-  >`
+  const result = await sql<IAggregatedStatsQueryRow[]>`
     WITH latest_ts AS (
       SELECT MAX(ha.ts) AS max_ts
       FROM bridges.hourly_aggregated ha
@@ -639,7 +820,9 @@ const queryAggregatedTokenStatsTop30Rolling = async (
     ),
     base AS (
       SELECT ha.total_tokens_deposited, ha.total_tokens_withdrawn,
-             ha.total_address_deposited, ha.total_address_withdrawn
+             ha.total_address_deposited, ha.total_address_withdrawn,
+             ha.total_deposited_usd, ha.total_withdrawn_usd,
+             ha.total_deposit_txs, ha.total_withdrawal_txs
       FROM bridges.hourly_aggregated ha
       JOIN bridges.config c ON ha.bridge_id = c.id
       CROSS JOIN latest_ts lt
@@ -687,95 +870,30 @@ const queryAggregatedTokenStatsTop30Rolling = async (
       GROUP BY replace((a).address, '''', '')
       ORDER BY SUM((a).usd_value) DESC NULLS LAST
       LIMIT ${limit}
+    ),
+    stats AS (
+      SELECT 1 AS kind_order, 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
+      UNION ALL SELECT 2, 'wt', key, amount, usd_value, NULL::integer FROM wt
+      UNION ALL SELECT 3, 'da', key, NULL::text, usd_value, txs FROM da
+      UNION ALL SELECT 4, 'wa', key, NULL::text, usd_value, txs FROM wa
+    ),
+    totals AS (
+      SELECT
+        COALESCE(SUM(total_deposited_usd), 0)::text AS total_deposited_usd,
+        COALESCE(SUM(total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
+        COALESCE(SUM(total_deposit_txs), 0)::integer AS total_deposit_txs,
+        COALESCE(SUM(total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
+      FROM base
     )
-    SELECT 'dt' AS kind, key, amount, usd_value, NULL::integer AS txs FROM dt
-    UNION ALL SELECT 'wt', key, amount, usd_value, NULL::integer FROM wt
-    UNION ALL SELECT 'da', key, NULL::text, usd_value, txs FROM da
-    UNION ALL SELECT 'wa', key, NULL::text, usd_value, txs FROM wa
+    SELECT
+      stats.kind, stats.key, stats.amount, stats.usd_value, stats.txs,
+      totals.total_deposited_usd, totals.total_withdrawn_usd,
+      totals.total_deposit_txs, totals.total_withdrawal_txs
+    FROM totals
+    LEFT JOIN stats ON TRUE
+    ORDER BY stats.kind_order, stats.usd_value::numeric DESC NULLS LAST
   `;
-};
-
-const queryAggregatedTotalsTimestampRange = async (
-  startTimestamp: number,
-  endTimestamp: number,
-  chain?: string,
-  bridgeNetworkName?: string
-) => {
-  let conditions = sql`WHERE ha.ts >= to_timestamp(${startTimestamp})
-    AND ha.ts < to_timestamp(${endTimestamp})`;
-
-  if (chain) {
-    conditions = sql`${conditions} AND c.chain = ${chain}`;
-  }
-  if (bridgeNetworkName) {
-    conditions = sql`${conditions} AND c.bridge_name = ${bridgeNetworkName}`;
-  }
-
-  return (
-    await sql<
-      {
-        total_deposited_usd: string;
-        total_withdrawn_usd: string;
-        total_deposit_txs: number;
-        total_withdrawal_txs: number;
-      }[]
-    >`
-      SELECT
-        COALESCE(SUM(ha.total_deposited_usd), 0)::text AS total_deposited_usd,
-        COALESCE(SUM(ha.total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
-        COALESCE(SUM(ha.total_deposit_txs), 0)::integer AS total_deposit_txs,
-        COALESCE(SUM(ha.total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
-      FROM bridges.hourly_aggregated ha
-      JOIN bridges.config c ON ha.bridge_id = c.id
-      ${conditions}
-    `
-  )[0];
-};
-
-const queryAggregatedTotalsRolling = async (hours: number, chain?: string, bridgeNetworkName?: string) => {
-  let latestConditions = sql`WHERE 1 = 1`;
-  let baseConditions = sql``;
-
-  if (bridgeNetworkName) {
-    latestConditions = sql`${latestConditions} AND c.bridge_name = ${bridgeNetworkName}`;
-    baseConditions = sql`${baseConditions} AND c.bridge_name = ${bridgeNetworkName}`;
-  }
-  if (chain) {
-    baseConditions = sql`${baseConditions} AND c.chain = ${chain}`;
-    if (!bridgeNetworkName) {
-      latestConditions = sql`${latestConditions} AND c.chain = ${chain}`;
-    }
-  }
-
-  return (
-    await sql<
-      {
-        total_deposited_usd: string;
-        total_withdrawn_usd: string;
-        total_deposit_txs: number;
-        total_withdrawal_txs: number;
-      }[]
-    >`
-      WITH latest_ts AS (
-        SELECT MAX(ha.ts) AS max_ts
-        FROM bridges.hourly_aggregated ha
-        JOIN bridges.config c ON ha.bridge_id = c.id
-        ${latestConditions}
-      )
-      SELECT
-        COALESCE(SUM(ha.total_deposited_usd), 0)::text AS total_deposited_usd,
-        COALESCE(SUM(ha.total_withdrawn_usd), 0)::text AS total_withdrawn_usd,
-        COALESCE(SUM(ha.total_deposit_txs), 0)::integer AS total_deposit_txs,
-        COALESCE(SUM(ha.total_withdrawal_txs), 0)::integer AS total_withdrawal_txs
-      FROM bridges.hourly_aggregated ha
-      JOIN bridges.config c ON ha.bridge_id = c.id
-      CROSS JOIN latest_ts lt
-      WHERE lt.max_ts IS NOT NULL
-        AND ha.ts > lt.max_ts - make_interval(hours => ${hours}::int)
-        AND ha.ts <= lt.max_ts
-        ${baseConditions}
-    `
-  )[0];
+  return unpackAggregatedStats(result);
 };
 
 export {
@@ -789,13 +907,14 @@ export {
   queryAggregatedHourlyDataAtTimestamp,
   queryAggregatedDailyDataAtTimestamp,
   queryAggregatedDailyTimestampRange,
+  queryDailyBridgeVolumeTotals,
+  queryDailyBridgeVolumesByBridge,
+  queryDailyBridgeVolumesByChain,
   queryAggregatedHourlyTimestampRange,
   getLast24HVolume,
   getAllLast24HVolumes,
   queryBridgeTxCounts24h,
   getNetflows,
-  queryAggregatedTokenStatsTop30,
-  queryAggregatedTokenStatsTop30Rolling,
-  queryAggregatedTotalsTimestampRange,
-  queryAggregatedTotalsRolling,
+  queryAggregatedStatsTop30,
+  queryAggregatedStatsTop30Rolling,
 };

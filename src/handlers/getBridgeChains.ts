@@ -1,6 +1,6 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import { getDailyBridgeVolume } from "../utils/bridgeVolume";
+import { getDailyBridgeVolumesByChain } from "../utils/bridgeVolume";
 import { getChainDisplayName, chainCoingeckoIds } from "../utils/normalizeChain";
 import { getCurrentUnixTimestamp, secondsInDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
@@ -10,34 +10,30 @@ export async function craftBridgeChainsResponse() {
   const chainsMap = new Map<string, string>();
   const currentTimestamp = getCurrentUnixTimestamp();
 
-  await Promise.all(
-    bridgeNetworks.map(async (bridgeNetwork) => {
-      const { chains, destinationChain } = bridgeNetwork;
+  for (const { chains, destinationChain } of bridgeNetworks) {
+    if (destinationChain) {
+      const normalizedName = normalizeChain(destinationChain);
+      chainsMap.set(normalizedName, destinationChain);
+    }
 
-      if (destinationChain) {
-        const normalizedName = normalizeChain(destinationChain);
-        chainsMap.set(normalizedName, destinationChain);
-      }
+    chains.forEach((chain) => {
+      const normalizedName = normalizeChain(chain);
+      chainsMap.set(normalizedName, chain);
+    });
+  }
 
-      chains.forEach((chain) => {
-        const normalizedName = normalizeChain(chain);
-        chainsMap.set(normalizedName, chain);
-      });
-    })
+  const lastWeekVolumesByChain = await getDailyBridgeVolumesByChain(
+    currentTimestamp - 7 * secondsInDay,
+    currentTimestamp
   );
-
-  const chainPromises = Promise.all(
-    Array.from(chainsMap.keys()).map(async (normalizedChain) => {
+  const raw = Array.from(chainsMap.keys())
+    .map((normalizedChain) => {
       const chainName = getChainDisplayName(normalizedChain, true);
       if (chainCoingeckoIds[chainName] === undefined) {
         return;
       }
 
-      const lastWeekDailyBridgeVolume = await getDailyBridgeVolume(
-        currentTimestamp - 7 * secondsInDay,
-        currentTimestamp,
-        normalizedChain
-      );
+      const lastWeekDailyBridgeVolume = lastWeekVolumesByChain[normalizedChain] ?? [];
 
       let volumePrevDay = 0;
       if (lastWeekDailyBridgeVolume.length > 1) {
@@ -52,8 +48,7 @@ export async function craftBridgeChainsResponse() {
         name: chainName,
       };
     })
-  );
-  const raw = (await chainPromises).filter((chain) => chain) as Array<{
+    .filter((chain) => chain) as Array<{
     gecko_id: string | null;
     volumePrevDay: number;
     tokenSymbol: string | null;

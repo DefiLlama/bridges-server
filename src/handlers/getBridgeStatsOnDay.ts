@@ -2,10 +2,8 @@ import { IResponse, successResponse, errorResponse } from "../utils/lambda-respo
 import wrap from "../utils/wrap";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
 import {
-  queryAggregatedTokenStatsTop30,
-  queryAggregatedTokenStatsTop30Rolling,
-  queryAggregatedTotalsRolling,
-  queryAggregatedTotalsTimestampRange,
+  queryAggregatedStatsTop30,
+  queryAggregatedStatsTop30Rolling,
 } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
@@ -84,17 +82,12 @@ const getBridgeStatsOnDay = async (
   const currentTimestamp = getCurrentUnixTimestamp();
   const endTimestamp = Math.max(queryTimestamp, Math.min(maxEndTimestamp, currentTimestamp));
 
-  const [rows, totals] = (await Promise.all(
-    rollingHours
-      ? [
-          queryAggregatedTokenStatsTop30Rolling(rollingHours, queryChain, bridgeDbName),
-          queryAggregatedTotalsRolling(rollingHours, queryChain, bridgeDbName),
-        ]
-      : [
-          queryAggregatedTokenStatsTop30(queryTimestamp, endTimestamp, queryChain, bridgeDbName),
-          queryAggregatedTotalsTimestampRange(queryTimestamp, endTimestamp, queryChain, bridgeDbName),
-        ]
-  )) as [StatsRow[], StatsTotals];
+  const { rows, totals } = (rollingHours
+    ? await queryAggregatedStatsTop30Rolling(rollingHours, queryChain, bridgeDbName)
+    : await queryAggregatedStatsTop30(queryTimestamp, endTimestamp, queryChain, bridgeDbName)) as {
+    rows: StatsRow[];
+    totals: StatsTotals;
+  };
 
   const dt = rows.filter((r) => r.kind === "dt");
   const wt = rows.filter((r) => r.kind === "wt");

@@ -1,92 +1,71 @@
-import { cpuUsage } from "process";
-import { cpus, freemem, totalmem, hostname, loadavg } from "os";
 import { querySql as sql } from "../utils/db";
+import { checkRedisConnectivity } from "../utils/cache";
 
-const CPU_HISTORY_HOURS = 24;
-const cpuHistory: Array<{ timestamp: string; usage: string }> = [];
+const DEPENDENCY_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const DB_CHECK_TIMEOUT_MS = 1500;
 
-function formatBytes(bytes: number) {
-  const gb = bytes / (1024 * 1024 * 1024);
-  return `${gb.toFixed(2)} GB`;
-}
+type DependencyResult = {
+  status: "OK" | "ERROR" | "DISABLED" | "UNKNOWN";
+  latencyMs?: number;
+  checkedAt: string;
+};
 
-function formatUptime(seconds: number) {
-  const days = Math.floor(seconds / (24 * 60 * 60));
-  const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
-  const minutes = Math.floor((seconds % (60 * 60)) / 60);
-  return `${days}d ${hours}h ${minutes}m`;
-}
+export type DependencyHealth = {
+  db: DependencyResult;
+  redis: DependencyResult;
+  checkedAt: string;
+};
 
-function updateCpuHistory() {
-  const startUsage = cpuUsage();
+const neverChecked = new Date(0).toISOString();
+let dependencyHealth: DependencyHealth = {
+  db: { status: "UNKNOWN", checkedAt: neverChecked },
+  redis: { status: process.env.REDIS_URL ? "UNKNOWN" : "DISABLED", checkedAt: neverChecked },
+  checkedAt: neverChecked,
+};
+let dependencyCheck: Promise<void> | undefined;
+let monitoringStarted = false;
 
-  setTimeout(() => {
-    const endUsage = cpuUsage(startUsage);
-    const totalUsage = endUsage.user + endUsage.system;
-    const usagePercent = (totalUsage / 1000000 / 3600).toFixed(1);
+const checkDependencies = () => {
+  if (dependencyCheck) return dependencyCheck;
 
-    cpuHistory.push({
-      timestamp: new Date().toISOString(),
-      usage: `${usagePercent}%`,
-    });
+  dependencyCheck = (async () => {
+    const startedAt = Date.now();
+    const dbCheck = Promise.race([
+      Promise.resolve(sql`SELECT 1`).then(() => ({ status: "OK" as const, latencyMs: Date.now() - startedAt })),
+      new Promise<{ status: "ERROR"; latencyMs: number }>((resolve) =>
+        setTimeout(() => resolve({ status: "ERROR", latencyMs: Date.now() - startedAt }), DB_CHECK_TIMEOUT_MS)
+      ),
+    ]).catch(() => ({ status: "ERROR" as const, latencyMs: Date.now() - startedAt }));
 
-    if (cpuHistory.length > CPU_HISTORY_HOURS) {
-      cpuHistory.shift();
-    }
-  }, 1000);
-}
+    const [db, redis] = await Promise.all([dbCheck, checkRedisConnectivity()]);
+    const checkedAt = new Date().toISOString();
+    dependencyHealth = {
+      db: { ...db, checkedAt },
+      redis: { ...redis, checkedAt },
+      checkedAt,
+    };
+  })().finally(() => {
+    dependencyCheck = undefined;
+  });
+
+  return dependencyCheck;
+};
 
 export function startHealthMonitoring() {
-  setInterval(updateCpuHistory, 3600000);
-  updateCpuHistory();
+  if (monitoringStarted) return;
+  monitoringStarted = true;
+  void checkDependencies();
+  const interval = setInterval(() => void checkDependencies(), DEPENDENCY_CHECK_INTERVAL_MS);
+  interval.unref?.();
 }
 
-export async function checkDbConnectivity(): Promise<{ status: "OK" | "ERROR"; latencyMs?: number }> {
-  const start = Date.now();
-  try {
-    await sql`SELECT 1`;
-    return { status: "OK", latencyMs: Date.now() - start };
-  } catch {
-    return { status: "ERROR" };
-  }
+export function getDependencyHealth() {
+  return dependencyHealth;
 }
 
 export function getHealthStatus() {
-  const memoryTotal = totalmem();
-  const memoryFree = freemem();
-  const memoryUsed = memoryTotal - memoryFree;
-  const memoryUsagePercent = ((memoryUsed / memoryTotal) * 100).toFixed(1);
-
-  const [oneMin, fiveMin, fifteenMin] = loadavg();
-  const cpuCount = cpus().length;
-
-  const health = {
+  return {
     status: "OK",
     timestamp: new Date().toISOString(),
-    server: {
-      hostname: hostname(),
-      uptime: formatUptime(process.uptime()),
-    },
-    memory: {
-      total: formatBytes(memoryTotal),
-      used: formatBytes(memoryUsed),
-      free: formatBytes(memoryFree),
-      usage: `${memoryUsagePercent}%`,
-      status: Number(memoryUsagePercent) > 90 ? "WARNING" : "OK",
-    },
-    cpu: {
-      cores: cpuCount,
-      load: {
-        "1min": ((oneMin / cpuCount) * 100).toFixed(1) + "%",
-        "5min": ((fiveMin / cpuCount) * 100).toFixed(1) + "%",
-        "15min": ((fifteenMin / cpuCount) * 100).toFixed(1) + "%",
-      },
-      history: cpuHistory,
-      status: oneMin / cpuCount > 0.8 ? "WARNING" : "OK",
-    },
   };
-
-  const statusCode = health.memory.status === "WARNING" || health.cpu.status === "WARNING" ? 207 : 200;
-
-  return { health, statusCode };
 }

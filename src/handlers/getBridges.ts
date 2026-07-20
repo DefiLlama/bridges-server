@@ -1,6 +1,6 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import { getDailyBridgeVolume } from "../utils/bridgeVolume";
+import { getDailyBridgeVolumesByBridge } from "../utils/bridgeVolume";
 import { craftBridgeChainsResponse } from "./getBridgeChains";
 import { secondsInDay, getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
@@ -11,18 +11,18 @@ const getBridges = async () => {
   const startOfTheDayTs = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
   const dailyStartTimestamp = startOfTheDayTs - 30 * secondsInDay;
 
-  const [all24hVolumes, ...allMonthlyVolumes] = await Promise.all([
+  const [all24hVolumes, monthlyVolumesByBridge] = await Promise.all([
     getAllLast24HVolumes(),
-    ...bridgeNetworks.map(({ id }) => getDailyBridgeVolume(dailyStartTimestamp, startOfTheDayTs, undefined, id)),
+    getDailyBridgeVolumesByBridge(dailyStartTimestamp, startOfTheDayTs),
   ]);
 
   const response = bridgeNetworks
-    .map((bridgeNetwork, i) => {
+    .map((bridgeNetwork) => {
       const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain, slug, defillamaId } =
         bridgeNetwork;
 
       const last24hVolume = all24hVolumes[bridgeDbName] ?? 0;
-      const lastMonthDailyVolume = allMonthlyVolumes[i];
+      const lastMonthDailyVolume = monthlyVolumesByBridge[bridgeDbName] ?? [];
 
       let lastDailyVolume = 0;
       let dayBeforeLastVolume = 0;

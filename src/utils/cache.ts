@@ -3,16 +3,36 @@ import hash from "object-hash";
 import { PromisePool } from "@supercharge/promise-pool";
 
 const REDIS_URL = process.env.REDIS_URL;
+const REDIS_COMMAND_TIMEOUT_MS = 750;
+const REDIS_CONNECT_TIMEOUT_MS = 1000;
+const API_CACHE_STALE_TTL_SECONDS = 6 * 60 * 60;
 
-let redis: Redis;
+let redis: Redis | undefined;
+let lastRedisErrorLogAt = 0;
+let suppressedRedisErrors = 0;
+
+const logRedisError = (operation: string, error: unknown) => {
+  const now = Date.now();
+  suppressedRedisErrors++;
+  if (now - lastRedisErrorLogAt < 30_000) return;
+  console.error(`[CACHE] Redis ${operation} failed (${suppressedRedisErrors} errors since last log):`, error);
+  lastRedisErrorLogAt = now;
+  suppressedRedisErrors = 0;
+};
 
 if (REDIS_URL) {
   redis = new Redis(REDIS_URL, {
+    commandTimeout: REDIS_COMMAND_TIMEOUT_MS,
+    connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
+    maxRetriesPerRequest: 1,
+    enableOfflineQueue: false,
+    autoResendUnfulfilledCommands: false,
     retryStrategy: (times) => {
       const delay = Math.min(times * 50, 2000);
       return delay;
     },
   });
+  redis.on("error", (error) => logRedisError("connection", error));
 }
 
 interface APIEvent {
@@ -21,16 +41,6 @@ interface APIEvent {
   body?: any;
   routePath?: string;
 }
-
-export interface CacheHandlerEntry {
-  handler: Function;
-  lastAccessedAt: number;
-  pinned: boolean;
-}
-
-const MAX_REGISTRY_ENTRIES = 1000;
-
-export const handlerRegistry = new Map<string, CacheHandlerEntry>();
 
 export const generateApiCacheKey = (event: APIEvent): string => {
   const eventToNormalize = {
@@ -48,35 +58,80 @@ export const generateApiCacheKey = (event: APIEvent): string => {
   }).substring(0, 16);
 };
 
-export const CACHE_WARM_THRESHOLD = 1000 * 60 * 10;
 export const DEFAULT_TTL = 60 * 70; // 70 minutes
 
-export const needsWarming = async (cacheKey: string): Promise<boolean> => {
-  const ttl = await redis.ttl(cacheKey);
-  if (ttl === -2) return true;
-  if (ttl === -1) return false;
-  return ttl * 1000 < CACHE_WARM_THRESHOLD;
+type ApiCacheMetadata = {
+  cacheTTL: number;
+  storedAt: number;
 };
 
-export const warmCache = async (cacheKey: string): Promise<void> => {
-  const entry = handlerRegistry.get(cacheKey);
-  if (!entry) {
-    return;
+export type ApiCacheLookup = {
+  state: "fresh" | "stale" | "miss";
+  value?: any;
+  metadata?: ApiCacheMetadata;
+};
+
+const staleApiCacheKey = (key: string) => `api-stale:${key}`;
+const apiCacheMetadataKey = (key: string) => `api-meta:${key}`;
+
+const parsePipelineValue = (entry: [Error | null, unknown] | null | undefined) => {
+  if (!entry || entry[0]) {
+    if (entry?.[0]) throw entry[0];
+    return null;
   }
-  const result = await entry.handler();
-  const parsedBody = JSON.parse(result.body);
-  await redis.set(cacheKey, JSON.stringify(parsedBody), "EX", DEFAULT_TTL);
+  return typeof entry[1] === "string" ? entry[1] : null;
 };
 
-export const registerCacheHandler = (cacheKey: string, handler: Function, opts?: { pinned?: boolean }) => {
-  const pinned = opts?.pinned ?? handlerRegistry.get(cacheKey)?.pinned ?? false;
-  handlerRegistry.delete(cacheKey);
-  handlerRegistry.set(cacheKey, { handler, lastAccessedAt: Date.now(), pinned });
-  if (handlerRegistry.size > MAX_REGISTRY_ENTRIES) {
-    for (const [key, entry] of handlerRegistry) {
-      if (handlerRegistry.size <= MAX_REGISTRY_ENTRIES) break;
-      if (!entry.pinned) handlerRegistry.delete(key);
-    }
+export const getApiCache = async (key: string): Promise<ApiCacheLookup> => {
+  if (!redis) return { state: "miss" };
+
+  try {
+    const result = await redis.pipeline().get(key).get(staleApiCacheKey(key)).get(apiCacheMetadataKey(key)).exec();
+    const freshRaw = parsePipelineValue(result?.[0]);
+    const staleRaw = parsePipelineValue(result?.[1]);
+    const metadataRaw = parsePipelineValue(result?.[2]);
+    const metadata = metadataRaw ? (JSON.parse(metadataRaw) as ApiCacheMetadata) : undefined;
+
+    if (freshRaw) return { state: "fresh", value: JSON.parse(freshRaw), metadata };
+    if (staleRaw) return { state: "stale", value: JSON.parse(staleRaw), metadata };
+    return { state: "miss" };
+  } catch (error) {
+    logRedisError("API cache read", error);
+    return { state: "miss" };
+  }
+};
+
+export const setApiCache = async (key: string, value: any, ttl: number): Promise<void> => {
+  if (!redis || !Number.isInteger(ttl) || ttl < 1) return;
+
+  const serialized = JSON.stringify(value);
+  const metadata: ApiCacheMetadata = { cacheTTL: ttl, storedAt: Date.now() };
+  const staleTTL = ttl + API_CACHE_STALE_TTL_SECONDS;
+
+  try {
+    await redis
+      .pipeline()
+      .set(key, serialized, "EX", ttl)
+      .set(staleApiCacheKey(key), serialized, "EX", staleTTL)
+      .set(apiCacheMetadataKey(key), JSON.stringify(metadata), "EX", staleTTL)
+      .exec();
+  } catch (error) {
+    logRedisError("API cache write", error);
+  }
+};
+
+export const checkRedisConnectivity = async (): Promise<{
+  status: "OK" | "ERROR" | "DISABLED";
+  latencyMs?: number;
+}> => {
+  if (!redis) return { status: "DISABLED" };
+  const start = Date.now();
+  try {
+    await redis.ping();
+    return { status: "OK", latencyMs: Date.now() - start };
+  } catch (error) {
+    logRedisError("ping", error);
+    return { status: "ERROR" };
   }
 };
 
@@ -88,14 +143,9 @@ export const getCache = async (key: string): Promise<any> => {
   }
   try {
     const value = await redis.get(key);
-    if (value) {
-      console.log("Cache HIT", key);
-    } else {
-      console.log("Cache MISS", key);
-    }
     return value ? JSON.parse(value) : null;
   } catch (e) {
-    console.error(`[CACHE] getCache error for ${key}:`, e);
+    logRedisError("read", e);
     return null;
   }
 };
@@ -111,7 +161,7 @@ export const setCache = async (key: string, value: any, ttl: number | null = DEF
       await redis.set(key, JSON.stringify(value), "EX", ttl);
     }
   } catch (e) {
-    console.error(`[CACHE] setCache error for ${key}:`, e);
+    logRedisError("write", e);
   }
 };
 
@@ -122,7 +172,7 @@ export const deleteCache = async (key: string): Promise<void> => {
   try {
     await redis.del(key);
   } catch (e) {
-    console.error(`[CACHE] deleteCache error for ${key}:`, e);
+    logRedisError("delete", e);
   }
 };
 
