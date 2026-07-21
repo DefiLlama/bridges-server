@@ -1,6 +1,5 @@
 import bridgeNetworkData from "../../../data/bridgeNetworkData";
 import { querySql as sql } from "../../db";
-import { getCache, setCache } from "../../cache";
 
 interface IConfig {
   id: string;
@@ -29,6 +28,21 @@ interface ITransaction {
   is_usd_volume?: boolean;
   txs_counted_as?: number;
   origin_chain?: string;
+}
+
+export interface ILargeTransactionRow {
+  id: number;
+  bridge_id: string;
+  ts: number;
+  tx_block?: number;
+  tx_hash?: string;
+  tx_from?: string;
+  tx_to?: string;
+  token: string;
+  amount: string;
+  is_deposit: boolean;
+  chain: string;
+  usd_value?: number;
 }
 
 interface IAggregatedData {
@@ -98,8 +112,9 @@ const unpackAggregatedStats = (result: IAggregatedStatsQueryRow[]) => {
     total_withdrawal_txs: first?.total_withdrawal_txs ?? 0,
   };
   const rows = result
-    .filter((row): row is IAggregatedStatsQueryRow & { kind: IAggregatedStatsRow["kind"]; key: string; usd_value: string } =>
-      row.kind !== null && row.key !== null && row.usd_value !== null
+    .filter(
+      (row): row is IAggregatedStatsQueryRow & { kind: IAggregatedStatsRow["kind"]; key: string; usd_value: string } =>
+        row.kind !== null && row.key !== null && row.usd_value !== null
     )
     .map(({ kind, key, amount, usd_value, txs }) => ({ kind, key, amount, usd_value, txs }));
   return { rows, totals };
@@ -427,34 +442,65 @@ const queryAggregatedDailyDataAtTimestamp = async (timestamp: number, chain?: st
 const queryLargeTransactionsTimestampRange = async (
   chain: string | null,
   startTimestamp: number,
+  endTimestamp: number,
+  limit: number = 2000,
+  offset: number = 0
+) => {
+  let chainCondition = sql``;
+  if (chain) {
+    chainCondition = sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})`;
+  }
+
+  return await sql<ILargeTransactionRow[]>`
+    SELECT
+      transactions.id,
+      transactions.bridge_id,
+      EXTRACT(EPOCH FROM transactions.ts)::double precision AS ts,
+      transactions.tx_block,
+      transactions.tx_hash,
+      transactions.tx_from,
+      transactions.tx_to,
+      transactions.token,
+      transactions.amount,
+      transactions.is_deposit,
+      transactions.chain,
+      large_transactions.usd_value
+    FROM bridges.large_transactions
+    JOIN bridges.transactions
+      ON transactions.id = large_transactions.tx_pk
+    JOIN bridges.config config
+      ON config.id = transactions.bridge_id
+    WHERE large_transactions.ts >= to_timestamp(${startTimestamp})
+      AND large_transactions.ts <= to_timestamp(${endTimestamp})
+      ${chainCondition}
+    ORDER BY transactions.ts DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
+};
+
+const countLargeTransactionsTimestampRange = async (
+  chain: string | null,
+  startTimestamp: number,
   endTimestamp: number
 ) => {
-  const cacheKey = `largeTxs:${chain ?? "all"}:${startTimestamp}:${endTimestamp}`;
-  const cached = await getCache(cacheKey);
-  if (cached) return cached;
-  let chainEqual = sql``;
+  let chainCondition = sql``;
   if (chain) {
-    chainEqual = sql`WHERE chain = ${chain} OR destination_chain = ${chain}`;
+    chainCondition = sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})`;
   }
-  const result = await sql<ITransaction[]>`
-  SELECT transactions.id, transactions.bridge_id, transactions.ts, transactions.tx_block, transactions.tx_hash, transactions.tx_from, transactions.tx_to, transactions.token, transactions.amount, transactions.is_deposit, transactions.chain, large_transactions.usd_value
-  FROM       bridges.transactions
-  INNER JOIN bridges.large_transactions
-  ON         transactions.id = large_transactions.tx_pk
-  WHERE      transactions.id IN
-             (
-                    SELECT tx_pk
-                    FROM   bridges.large_transactions
-                    WHERE  ts >= to_timestamp(${startTimestamp})
-                    AND    ts <= to_timestamp(${endTimestamp}))
-  AND        bridge_id IN
-             (
-                    SELECT id
-                    FROM   bridges.config ${chainEqual})
-  ORDER BY   ts DESC
+
+  const [result] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count
+    FROM bridges.large_transactions
+    JOIN bridges.transactions
+      ON transactions.id = large_transactions.tx_pk
+    JOIN bridges.config config
+      ON config.id = transactions.bridge_id
+    WHERE large_transactions.ts >= to_timestamp(${startTimestamp})
+      AND large_transactions.ts <= to_timestamp(${endTimestamp})
+      ${chainCondition}
   `;
-  await setCache(cacheKey, result, 3600);
-  return result;
+  return Number(result?.count ?? 0);
 };
 
 const queryTransactionsTimestampRangeByBridgeNetwork = async (
@@ -565,11 +611,22 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
   return totalVolume / 2;
 };
 
-const getAllLast24HVolumes = async (): Promise<Record<string, number>> => {
+const getAllLast24HVolumes = async (): Promise<{
+  last24hVolumes: Record<string, number>;
+  lastHourlyVolumes: Record<string, number>;
+  dataUpdatedAt: string | null;
+}> => {
   const WORMHOLE_HOURS = 28;
   const DEFAULT_HOURS = 24;
 
-  const result = await sql<{ bridge_name: string; volume: string }[]>`
+  const result = await sql<
+    {
+      bridge_name: string;
+      volume: string;
+      last_hourly_volume: string;
+      max_ts: Date | string;
+    }[]
+  >`
     WITH per_bridge_latest AS (
       SELECT
         c.bridge_name,
@@ -581,29 +638,40 @@ const getAllLast24HVolumes = async (): Promise<Record<string, number>> => {
     per_bridge_rows AS (
       SELECT
         c.bridge_name,
-        (ha.total_deposited_usd + ha.total_withdrawn_usd) AS volume,
-        c.chain
+        pbl.max_ts,
+        ha.ts,
+        (ha.total_deposited_usd + ha.total_withdrawn_usd) AS volume
       FROM bridges.hourly_volume ha
       JOIN bridges.config c ON ha.bridge_id = c.id
       JOIN per_bridge_latest pbl ON c.bridge_name = pbl.bridge_name
       WHERE ha.ts > pbl.max_ts - make_interval(
         hours => (CASE WHEN c.bridge_name = 'wormhole' THEN ${WORMHOLE_HOURS} ELSE ${DEFAULT_HOURS} END)::int
       )
-    ),
-    per_bridge_chain AS (
-      SELECT bridge_name, chain, SUM(volume) AS chain_volume
-      FROM per_bridge_rows
-      GROUP BY bridge_name, chain
+        AND ha.ts <= pbl.max_ts
     )
-    SELECT bridge_name, (SUM(chain_volume) / 2)::text AS volume
-    FROM per_bridge_chain
-    GROUP BY bridge_name
+    SELECT
+      rows.bridge_name,
+      (SUM(rows.volume) / 2)::text AS volume,
+      (COALESCE(SUM(rows.volume) FILTER (WHERE rows.ts = rows.max_ts), 0) / 2)::text AS last_hourly_volume,
+      rows.max_ts
+    FROM per_bridge_rows rows
+    GROUP BY rows.bridge_name, rows.max_ts
   `;
 
-  return result.reduce((acc, { bridge_name, volume }) => {
-    acc[bridge_name] = parseFloat(volume) || 0;
-    return acc;
-  }, {} as Record<string, number>);
+  const last24hVolumes: Record<string, number> = {};
+  const lastHourlyVolumes: Record<string, number> = {};
+  let latestTimestamp = 0;
+  for (const { bridge_name, volume, last_hourly_volume, max_ts } of result) {
+    last24hVolumes[bridge_name] = parseFloat(volume) || 0;
+    lastHourlyVolumes[bridge_name] = parseFloat(last_hourly_volume) || 0;
+    latestTimestamp = Math.max(latestTimestamp, new Date(max_ts).getTime());
+  }
+
+  return {
+    last24hVolumes,
+    lastHourlyVolumes,
+    dataUpdatedAt: latestTimestamp > 0 ? new Date(latestTimestamp).toISOString() : null,
+  };
 };
 
 const queryBridgeTxCounts24h = async (chain?: string) => {
@@ -901,6 +969,7 @@ export {
   getConfigsWithDestChain,
   getLargeTransaction,
   queryLargeTransactionsTimestampRange,
+  countLargeTransactionsTimestampRange,
   queryConfig,
   queryTransactionsTimestampRangeByBridge,
   queryTransactionsTimestampRangeByBridgeNetwork,

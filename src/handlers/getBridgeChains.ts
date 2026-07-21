@@ -2,13 +2,13 @@ import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getDailyBridgeVolumesByChain } from "../utils/bridgeVolume";
 import { getChainDisplayName, chainCoingeckoIds } from "../utils/normalizeChain";
-import { getCurrentUnixTimestamp, secondsInDay } from "../utils/date";
+import { getCurrentUnixTimestamp, getTimestampAtStartOfDay, secondsInDay } from "../utils/date";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { normalizeChain } from "../utils/normalizeChain";
 
 export async function craftBridgeChainsResponse() {
   const chainsMap = new Map<string, string>();
-  const currentTimestamp = getCurrentUnixTimestamp();
+  const currentTimestamp = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
 
   for (const { chains, destinationChain } of bridgeNetworks) {
     if (destinationChain) {
@@ -55,7 +55,10 @@ export async function craftBridgeChainsResponse() {
     name: string;
   }>;
 
-  const merged = new Map<string, { gecko_id: string | null; volumePrevDay: number; tokenSymbol: string | null; name: string }>();
+  const merged = new Map<
+    string,
+    { gecko_id: string | null; volumePrevDay: number; tokenSymbol: string | null; name: string }
+  >();
 
   for (const item of raw) {
     const key = item.gecko_id ?? item.name;

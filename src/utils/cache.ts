@@ -6,6 +6,7 @@ const REDIS_URL = process.env.REDIS_URL;
 const REDIS_COMMAND_TIMEOUT_MS = 750;
 const REDIS_CONNECT_TIMEOUT_MS = 1000;
 const API_CACHE_STALE_TTL_SECONDS = 6 * 60 * 60;
+const REDIS_READY_WAIT_MS = REDIS_CONNECT_TIMEOUT_MS + 250;
 
 let redis: Redis | undefined;
 let lastRedisErrorLogAt = 0;
@@ -34,6 +35,27 @@ if (REDIS_URL) {
   });
   redis.on("error", (error) => logRedisError("connection", error));
 }
+
+const waitForRedisReady = async () => {
+  if (!redis || redis.status === "end") return false;
+  if (redis.status === "ready") return true;
+
+  return await new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (ready: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      redis?.off("ready", onReady);
+      resolve(ready);
+    };
+    const onReady = () => finish(true);
+    const timeout = setTimeout(() => finish(false), REDIS_READY_WAIT_MS);
+    timeout.unref?.();
+    redis.once("ready", onReady);
+    if (redis.status === "ready") finish(true);
+  });
+};
 
 interface APIEvent {
   pathParameters?: Record<string, any>;
@@ -126,6 +148,7 @@ export const checkRedisConnectivity = async (): Promise<{
 }> => {
   if (!redis) return { status: "DISABLED" };
   const start = Date.now();
+  if (!(await waitForRedisReady())) return { status: "ERROR" };
   try {
     await redis.ping();
     return { status: "OK", latencyMs: Date.now() - start };

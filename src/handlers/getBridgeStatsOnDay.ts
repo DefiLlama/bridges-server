@@ -1,14 +1,12 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import { getCurrentUnixTimestamp, getTimestampAtStartOfDay } from "../utils/date";
-import {
-  queryAggregatedStatsTop30,
-  queryAggregatedStatsTop30Rolling,
-} from "../utils/wrappa/postgres/query";
+import { queryAggregatedStatsTop30, queryAggregatedStatsTop30Rolling } from "../utils/wrappa/postgres/query";
 import { getLlamaPrices } from "../utils/prices";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
 import { getCache } from "../utils/cache";
+import { isValidPriceId } from "../utils/priceIds";
 
 type TokenRecord = {
   [token: string]: {
@@ -41,22 +39,6 @@ type StatsTotals = {
   total_withdrawal_txs: number;
 };
 
-const isValidPriceId = (id?: string) => {
-  if (!id) return false;
-  if (id.includes("\\") || id.includes("/") || id.includes(" ")) return false;
-  const parts = id.split(":");
-  if (parts.length !== 2) return false;
-  if (!parts[0] || !parts[1]) return false;
-  if (
-    parts[1] === "\\N" ||
-    parts[1] === "\\n" ||
-    parts[1].toLowerCase() === "null" ||
-    parts[1].toLowerCase() === "undefined"
-  )
-    return false;
-  return true;
-};
-
 const getBridgeStatsOnDay = async (
   timestamp: string = "0",
   chain: string,
@@ -82,9 +64,11 @@ const getBridgeStatsOnDay = async (
   const currentTimestamp = getCurrentUnixTimestamp();
   const endTimestamp = Math.max(queryTimestamp, Math.min(maxEndTimestamp, currentTimestamp));
 
-  const { rows, totals } = (rollingHours
-    ? await queryAggregatedStatsTop30Rolling(rollingHours, queryChain, bridgeDbName)
-    : await queryAggregatedStatsTop30(queryTimestamp, endTimestamp, queryChain, bridgeDbName)) as {
+  const { rows, totals } = (
+    rollingHours
+      ? await queryAggregatedStatsTop30Rolling(rollingHours, queryChain, bridgeDbName)
+      : await queryAggregatedStatsTop30(queryTimestamp, endTimestamp, queryChain, bridgeDbName)
+  ) as {
     rows: StatsRow[];
     totals: StatsTotals;
   };
@@ -161,11 +145,6 @@ const getBridgeStatsOnDay = async (
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const timestamp = event.pathParameters?.timestamp;
-  if (Number(timestamp) % 3600 !== 0) {
-    return errorResponse({
-      message: "timestamp must be divible by 3600",
-    });
-  }
   const chain = event.pathParameters?.chain?.toLowerCase() ?? "";
   const bridgeNetworkId = event.queryStringParameters?.id;
   const rollingHoursParam = event.queryStringParameters?.rollingHours;

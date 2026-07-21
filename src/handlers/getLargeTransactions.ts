@@ -1,11 +1,11 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
-import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
-import { getLlamaPrices } from "../utils/prices";
-import { transformTokens } from "../helpers/tokenMappings";
-import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import { queryLargeTransactionsTimestampRange } from "../utils/wrappa/postgres/query";
+import { getCurrentUnixTimestamp } from "../utils/date";
 import { normalizeChain } from "../utils/normalizeChain";
+import { enrichLargeTransactions } from "./largeTransactions.shared";
+
+const MAX_TRANSACTIONS = 2000;
 
 const getLargeTransactions = async (
   chain: string = "all",
@@ -16,56 +16,25 @@ const getLargeTransactions = async (
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
   const queryChain = chain === "all" ? null : normalizeChain(chain);
 
-  const configs = await queryConfig();
-  const configMapping = {} as Record<string, string>;
-  configs.forEach((config) => {
-    const bridgeNetwork = importBridgeNetwork(config.bridge_name);
-    if (bridgeNetwork) {
-      configMapping[config.id] = bridgeNetwork.displayName;
-    }
-  });
-
   const largeTransactions = await queryLargeTransactionsTimestampRange(
     queryChain,
     queryStartTimestamp,
-    queryEndTimestamp
+    queryEndTimestamp,
+    MAX_TRANSACTIONS
   );
-
-  const tokenSet = new Set<string>();
-  largeTransactions.forEach((tx: any) => {
-    const symbol = transformTokens[tx.chain]?.[tx.token] ?? `${tx.chain}:${tx.token}`;
-    tokenSet.add(symbol);
-  });
-  const prices = await getLlamaPrices(Array.from(tokenSet));
-
-  const response = largeTransactions.map((tx: any) => {
-    const bridgeName = configMapping[tx.bridge_id] ?? "unknown";
-    const transformedToken = transformTokens[tx.chain]?.[tx.token] ?? `${tx.chain}:${tx.token}`;
-    const symbol = prices?.[transformedToken]?.symbol ?? "unknown";
-    return {
-      date: convertToUnixTimestamp(tx.ts),
-      txHash: `${tx.chain}:${tx.tx_hash}`,
-      from: tx.tx_from,
-      to: tx.tx_to,
-      token: `${tx.chain}:${tx.token}`,
-      symbol,
-      amount: tx.amount,
-      isDeposit: tx.is_deposit,
-      bridge: bridgeName,
-      chain: tx.chain,
-      usdValue: tx.usd_value,
-    };
-  });
-
-  return response.slice(0, 2000);
+  return enrichLargeTransactions(largeTransactions);
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const chain = event.pathParameters?.chain?.toLowerCase();
   const startTimestamp = event.queryStringParameters?.starttimestamp;
   const endTimestamp = event.queryStringParameters?.endtimestamp;
-  const response = await getLargeTransactions(chain, startTimestamp, endTimestamp);
-  return successResponse(response, 10 * 60); // 10 mins cache
+  const { transactions, pricingDegraded } = await getLargeTransactions(chain, startTimestamp, endTimestamp);
+  return successResponse(
+    transactions,
+    pricingDegraded ? undefined : 10 * 60,
+    pricingDegraded ? { "Cache-Control": "no-store" } : undefined
+  );
 };
 
 export default wrap(handler);

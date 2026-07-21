@@ -11,17 +11,19 @@ const getBridges = async () => {
   const startOfTheDayTs = getTimestampAtStartOfDay(getCurrentUnixTimestamp());
   const dailyStartTimestamp = startOfTheDayTs - 30 * secondsInDay;
 
-  const [all24hVolumes, monthlyVolumesByBridge] = await Promise.all([
+  const [recentVolumes, monthlyVolumesByBridge] = await Promise.all([
     getAllLast24HVolumes(),
     getDailyBridgeVolumesByBridge(dailyStartTimestamp, startOfTheDayTs),
   ]);
+  const { last24hVolumes, lastHourlyVolumes, dataUpdatedAt } = recentVolumes;
 
   const response = bridgeNetworks
     .map((bridgeNetwork) => {
       const { id, bridgeDbName, url, displayName, iconLink, chains, destinationChain, slug, defillamaId } =
         bridgeNetwork;
 
-      const last24hVolume = all24hVolumes[bridgeDbName] ?? 0;
+      const last24hVolume = last24hVolumes[bridgeDbName] ?? 0;
+      const lastHourlyVolume = lastHourlyVolumes[bridgeDbName] ?? 0;
       const lastMonthDailyVolume = monthlyVolumesByBridge[bridgeDbName] ?? [];
 
       let lastDailyVolume = 0;
@@ -66,7 +68,7 @@ const getBridges = async () => {
         icon: iconLink,
         volumePrevDay: last24hVolume,
         volumePrev2Day: dayBeforeLastVolume,
-        lastHourlyVolume: 0,
+        lastHourlyVolume,
         last24hVolume,
         lastDailyVolume: lastDailyVolume,
         dayBeforeLastVolume,
@@ -81,17 +83,16 @@ const getBridges = async () => {
     .filter((b) => b !== null)
     .sort((a, b) => b.lastDailyVolume - a.lastDailyVolume);
 
-  return response;
+  return { bridges: response, dataUpdatedAt };
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const includeChains = event.queryStringParameters?.includeChains === "true";
-  const promises = [getBridges()];
-  if (includeChains) {
-    promises.push(craftBridgeChainsResponse() as Promise<any>);
-  }
-  const [bridges, chainData] = await Promise.all(promises);
-  let response: any = { bridges };
+  const [bridgeData, chainData] = await Promise.all([
+    getBridges(),
+    includeChains ? craftBridgeChainsResponse() : Promise.resolve(undefined),
+  ]);
+  let response: any = { bridges: bridgeData.bridges, dataUpdatedAt: bridgeData.dataUpdatedAt };
   if (includeChains) {
     response.chains = chainData;
   }

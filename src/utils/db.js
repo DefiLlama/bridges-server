@@ -13,9 +13,6 @@ let sql = postgres(connectionString, {
   max: 10,
   connect_timeout: 30,
   keep_alive: true,
-  onclose: async function (connId) {
-    console.log(`[WARN] Connection ${connId} closed unexpectedly`);
-  }
 });
 
 let querySql = postgres(connectionString, {
@@ -24,9 +21,6 @@ let querySql = postgres(connectionString, {
   max: 6,
   connect_timeout: 30,
   keep_alive: true,
-  onclose: async function (connId) {
-    console.log(`[WARN] Query connection ${connId} closed unexpectedly`);
-  }
 });
 
 export { sql, querySql };

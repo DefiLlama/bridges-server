@@ -23,6 +23,8 @@ import { DEFAULT_TTL, generateApiCacheKey, getApiCache, setApiCache } from "../u
 import { getDependencyHealth, getHealthStatus, startHealthMonitoring } from "./health";
 import { Singleflight } from "./singleflight";
 import { routeSchemas } from "./routeSchemas";
+import { normalizeBridgeDayStatsEvent, normalizeBridgesEvent } from "./requestNormalization";
+import { responseAllowsCaching } from "./cachePolicy";
 
 dotenv.config();
 
@@ -87,13 +89,16 @@ const finishActiveRequest = (request: RequestWithTiming) => {
   activeRequests = Math.max(0, activeRequests - 1);
 };
 
+const isHealthcheckRequest = (request: RequestWithTiming) =>
+  request.routeOptions?.url === "/healthcheck" || request.url.split("?", 1)[0] === "/healthcheck";
+
 server.addHook("onRequest", async (request: any, reply) => {
   request.requestStartTime = Date.now();
   request.countedAsActive = true;
   activeRequests++;
   reply.raw.setTimeout(requestTimeoutMs + 5000);
 
-  if (requestDebugEnabled) {
+  if (requestDebugEnabled && !isHealthcheckRequest(request)) {
     request.log.info(
       {
         reqId: request.id,
@@ -115,6 +120,7 @@ server.addHook("onResponse", async (request: any, reply) => {
   finishActiveRequest(request);
   const durationMs = typeof request.requestStartTime === "number" ? Date.now() - request.requestStartTime : undefined;
   const isSlow = typeof durationMs === "number" && durationMs >= slowRequestLogMs;
+  if (isHealthcheckRequest(request) && !isSlow) return;
   if (!requestDebugEnabled && !isSlow) return;
 
   const payload = {
@@ -161,8 +167,11 @@ const withRequestTimeout = <T>(promise: Promise<T>): Promise<T> => {
 };
 
 const cacheTTLFromResponse = (response: IResponse) => {
-  const cacheControlEntry = Object.entries(response.headers ?? {}).find(([name]) => name.toLowerCase() === "cache-control");
-  const match = typeof cacheControlEntry?.[1] === "string" ? cacheControlEntry[1].match(/(?:^|,)\s*max-age=(\d+)/i) : null;
+  const cacheControlEntry = Object.entries(response.headers ?? {}).find(
+    ([name]) => name.toLowerCase() === "cache-control"
+  );
+  const match =
+    typeof cacheControlEntry?.[1] === "string" ? cacheControlEntry[1].match(/(?:^|,)\s*max-age=(\d+)/i) : null;
   const parsed = match ? Number(match[1]) : NaN;
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_TTL;
 };
@@ -177,7 +186,11 @@ const applyHandlerHeaders = (reply: any, headers: Record<string, any>) => {
   }
 };
 
-const runHandlerAndCache = async (cacheKey: string, handler: Function, event: any): Promise<PreparedHandlerResponse> => {
+const runHandlerAndCache = async (
+  cacheKey: string,
+  handler: Function,
+  event: any
+): Promise<PreparedHandlerResponse> => {
   const response = (await handler(event)) as IResponse;
   if (!response || typeof response.statusCode !== "number" || typeof response.body !== "string") {
     throw new Error("Handler returned an invalid response");
@@ -185,7 +198,7 @@ const runHandlerAndCache = async (cacheKey: string, handler: Function, event: an
 
   const body = JSON.parse(response.body);
   const headers = response.headers ?? {};
-  if (response.statusCode >= 200 && response.statusCode < 300) {
+  if (responseAllowsCaching(headers) && response.statusCode >= 200 && response.statusCode < 300) {
     await setApiCache(cacheKey, body, cacheTTLFromResponse(response));
   }
   return { statusCode: response.statusCode, body, headers };
@@ -207,88 +220,93 @@ const sendCachedResponse = (reply: any, cached: Awaited<ReturnType<typeof getApi
 };
 
 type RequestValidator = (request: any) => string | undefined;
+type EventNormalizer = (event: any) => any;
 
 const validBridgeIds = new Set(bridgeNetworks.map(({ id }) => String(id)));
-const validBridgeSlugs = new Set(bridgeNetworks.map(({ slug }) => slug).filter((slug): slug is string => Boolean(slug)));
+const validBridgeSlugs = new Set(
+  bridgeNetworks.map(({ slug }) => slug).filter((slug): slug is string => Boolean(slug))
+);
 
-const validateBridgeId = (
-  location: "params" | "query",
-  name: string,
-  allowAll: boolean = false
-): RequestValidator => (request) => {
-  const value = request[location]?.[name];
-  if (value === undefined || (allowAll && value === "all")) return undefined;
-  return validBridgeIds.has(String(value)) ? undefined : `Unknown bridge ID: ${value}`;
-};
+const validateBridgeId =
+  (location: "params" | "query", name: string, allowAll: boolean = false): RequestValidator =>
+  (request) => {
+    const value = request[location]?.[name];
+    if (value === undefined || (allowAll && value === "all")) return undefined;
+    return validBridgeIds.has(String(value)) ? undefined : `Unknown bridge ID: ${value}`;
+  };
 
 const validateBridgeSlug: RequestValidator = (request) => {
   const slug = request.params?.slug;
   return validBridgeSlugs.has(slug) ? undefined : `Unknown bridge slug: ${slug}`;
 };
 
-const lambdaToFastify = (handler: Function, validate?: RequestValidator) => async (request: any, reply: any) => {
-  const validationError = validate?.(request);
-  if (validationError) {
-    return reply.code(400).send({ error: "Bad Request", message: validationError });
-  }
-
-  const event = {
-    pathParameters: request.params,
-    queryStringParameters: request.query,
-    body: {},
-    routePath: request.routeOptions.url,
-  };
-  const cacheKey = generateApiCacheKey(event);
-  const cached = await getApiCache(cacheKey);
-
-  if (cached.state === "fresh") {
-    cacheMetrics.freshHits++;
-    return sendCachedResponse(reply, cached);
-  }
-
-  if (cached.state === "stale") {
-    cacheMetrics.staleHits++;
-    refreshCache(cacheKey, handler, event).catch((error) => {
-      cacheMetrics.backgroundRefreshFailures++;
-      request.log.error({ err: error, cacheKey }, "background cache refresh failed");
-    });
-    return sendCachedResponse(reply, cached);
-  }
-
-  cacheMetrics.misses++;
-  try {
-    const response = await withRequestTimeout(refreshCache(cacheKey, handler, event));
-    applyHandlerHeaders(reply, response.headers);
-    reply.header("X-Bridges-Cache", "MISS");
-    return reply.code(response.statusCode).send(response.body);
-  } catch (error: any) {
-    if (error instanceof RequestTimeoutError) {
-      cacheMetrics.requestTimeouts++;
-      return reply.code(504).send({
-        error: "Gateway Timeout",
-        message: "Request took too long to process",
-      });
+const lambdaToFastify =
+  (handler: Function, validate?: RequestValidator, normalizeEvent?: EventNormalizer) =>
+  async (request: any, reply: any) => {
+    const validationError = validate?.(request);
+    if (validationError) {
+      return reply.code(400).send({ error: "Bad Request", message: validationError });
     }
 
-    request.log.error({ err: error, cacheKey }, "handler execution failed");
-    return reply.code(500).send({
-      error: "Internal Server Error",
-      message: error?.message || "An unexpected error occurred",
-    });
-  }
-};
+    const rawEvent = {
+      pathParameters: request.params,
+      queryStringParameters: request.query,
+      body: {},
+      routePath: request.routeOptions.url,
+    };
+    const event = normalizeEvent ? normalizeEvent(rawEvent) : rawEvent;
+    const cacheKey = generateApiCacheKey(event);
+    const cached = await getApiCache(cacheKey);
+
+    if (cached.state === "fresh") {
+      cacheMetrics.freshHits++;
+      return sendCachedResponse(reply, cached);
+    }
+
+    if (cached.state === "stale") {
+      cacheMetrics.staleHits++;
+      refreshCache(cacheKey, handler, event).catch((error) => {
+        cacheMetrics.backgroundRefreshFailures++;
+        request.log.error({ err: error, cacheKey }, "background cache refresh failed");
+      });
+      return sendCachedResponse(reply, cached);
+    }
+
+    cacheMetrics.misses++;
+    try {
+      const response = await withRequestTimeout(refreshCache(cacheKey, handler, event));
+      applyHandlerHeaders(reply, response.headers);
+      reply.header("X-Bridges-Cache", "MISS");
+      return reply.code(response.statusCode).send(response.body);
+    } catch (error: any) {
+      if (error instanceof RequestTimeoutError) {
+        cacheMetrics.requestTimeouts++;
+        return reply.code(504).send({
+          error: "Gateway Timeout",
+          message: "Request took too long to process",
+        });
+      }
+
+      request.log.error({ err: error, cacheKey }, "handler execution failed");
+      return reply.code(500).send({
+        error: "Internal Server Error",
+        message: error?.message || "An unexpected error occurred",
+      });
+    }
+  };
 
 const registerCachedGet = (
   url: string,
   schema: Record<string, unknown>,
   handler: Function,
-  validate?: RequestValidator
+  validate?: RequestValidator,
+  normalizeEvent?: EventNormalizer
 ) => {
   server.route({
     method: "GET",
     url,
     schema: schema as any,
-    handler: lambdaToFastify(handler, validate),
+    handler: lambdaToFastify(handler, validate, normalizeEvent),
   });
 };
 
@@ -327,7 +345,8 @@ const start = async () => {
       "/bridgedaystats/:timestamp/:chain",
       routeSchemas.bridgeDayStats,
       getBridgeStatsOnDay,
-      validateBridgeId("query", "id")
+      validateBridgeId("query", "id"),
+      normalizeBridgeDayStatsEvent
     );
     registerCachedGet(
       "/bridgevolume/slug/:slug",
@@ -342,11 +361,15 @@ const start = async () => {
       validateBridgeId("query", "id")
     );
     registerCachedGet("/bridgetxcounts/:chain", routeSchemas.bridgeTxCounts, getBridgeTxCounts);
-    registerCachedGet("/bridges", routeSchemas.bridges, getBridges);
+    registerCachedGet("/bridges", routeSchemas.bridges, getBridges, undefined, normalizeBridgesEvent);
     registerCachedGet("/bridge/:id", routeSchemas.bridge, getBridge, validateBridgeId("params", "id"));
     registerCachedGet("/bridgechains", routeSchemas.noQuery, getBridgeChains);
     registerCachedGet("/largetransactions/:chain", routeSchemas.largeTransactions, getLargeTransactions);
-    registerCachedGet("/v2/largetransactions/:chain", routeSchemas.largeTransactionsPaginated, getLargeTransactionsPaginated);
+    registerCachedGet(
+      "/v2/largetransactions/:chain",
+      routeSchemas.largeTransactionsPaginated,
+      getLargeTransactionsPaginated
+    );
     registerCachedGet("/lastblocks", routeSchemas.noQuery, getLastBlocks);
     registerCachedGet("/netflows/:period", routeSchemas.netflows, getNetflows);
     registerCachedGet(

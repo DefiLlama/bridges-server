@@ -1,11 +1,12 @@
 import { IResponse, successResponse, errorResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
-import { queryLargeTransactionsTimestampRange, queryConfig } from "../utils/wrappa/postgres/query";
-import { getCurrentUnixTimestamp, convertToUnixTimestamp } from "../utils/date";
-import { getLlamaPrices } from "../utils/prices";
-import { transformTokens } from "../helpers/tokenMappings";
-import { importBridgeNetwork } from "../data/importBridgeNetwork";
+import {
+  countLargeTransactionsTimestampRange,
+  queryLargeTransactionsTimestampRange,
+} from "../utils/wrappa/postgres/query";
+import { getCurrentUnixTimestamp } from "../utils/date";
 import { normalizeChain } from "../utils/normalizeChain";
+import { enrichLargeTransactions } from "./largeTransactions.shared";
 
 const MAX_LIMIT = 2000;
 const DEFAULT_LIMIT = 100;
@@ -29,52 +30,18 @@ const getLargeTransactionsPaginated = async (
   const queryEndTimestamp = endTimestamp === "0" ? getCurrentUnixTimestamp() : parseInt(endTimestamp);
   const queryChain = chain === "all" ? null : normalizeChain(chain);
 
-  const configs = await queryConfig();
-  const configMapping = {} as Record<string, string>;
-  configs.forEach((config) => {
-    const bridgeNetwork = importBridgeNetwork(config.bridge_name);
-    if (bridgeNetwork) {
-      configMapping[config.id] = bridgeNetwork.displayName;
-    }
-  });
-
-  const largeTransactions = await queryLargeTransactionsTimestampRange(
-    queryChain,
-    queryStartTimestamp,
-    queryEndTimestamp
-  );
-
-  const tokenSet = new Set<string>();
-  largeTransactions.forEach((tx: any) => {
-    const symbol = transformTokens[tx.chain]?.[tx.token] ?? `${tx.chain}:${tx.token}`;
-    tokenSet.add(symbol);
-  });
-  const prices = await getLlamaPrices(Array.from(tokenSet));
-
-  const allResults = largeTransactions.map((tx: any) => {
-    const bridgeName = configMapping[tx.bridge_id] ?? "unknown";
-    const transformedToken = transformTokens[tx.chain]?.[tx.token] ?? `${tx.chain}:${tx.token}`;
-    const symbol = prices?.[transformedToken]?.symbol ?? "unknown";
-    return {
-      date: convertToUnixTimestamp(tx.ts),
-      txHash: `${tx.chain}:${tx.tx_hash}`,
-      from: tx.tx_from,
-      to: tx.tx_to,
-      token: `${tx.chain}:${tx.token}`,
-      symbol,
-      amount: tx.amount,
-      isDeposit: tx.is_deposit,
-      bridge: bridgeName,
-      chain: tx.chain,
-      usdValue: tx.usd_value,
-    };
-  });
+  const [largeTransactions, total] = await Promise.all([
+    queryLargeTransactionsTimestampRange(queryChain, queryStartTimestamp, queryEndTimestamp, limit, offset),
+    countLargeTransactionsTimestampRange(queryChain, queryStartTimestamp, queryEndTimestamp),
+  ]);
+  const { transactions, pricingDegraded } = await enrichLargeTransactions(largeTransactions);
 
   return {
-    total: allResults.length,
+    total,
     limit,
     offset,
-    transactions: allResults.slice(offset, offset + limit),
+    transactions,
+    pricingDegraded,
   };
 };
 
@@ -99,7 +66,12 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const offset = parsedOffset ?? 0;
 
   const response = await getLargeTransactionsPaginated(chain, startTimestamp, endTimestamp, limit, offset);
-  return successResponse(response, 10 * 60); // 10 mins cache
+  const { pricingDegraded, ...body } = response;
+  return successResponse(
+    body,
+    pricingDegraded ? undefined : 10 * 60,
+    pricingDegraded ? { "Cache-Control": "no-store" } : undefined
+  );
 };
 
 export default wrap(handler);
