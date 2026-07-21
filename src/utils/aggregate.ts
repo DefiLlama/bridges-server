@@ -10,7 +10,7 @@ import {
   getCurrentUnixTimestamp,
   getTimestampAtStartOfDayUTC,
 } from "./date";
-import { getLlamaPrices } from "./prices";
+import { assertCompleteLlamaPriceFetch, getLlamaPricesWithStatus } from "./prices";
 import { getBridgeID } from "./wrappa/postgres/query";
 import {
   insertHourlyAggregatedRow,
@@ -300,7 +300,12 @@ export const aggregateData = async (
   );
   await uniqueTokenPromises;
   tokensForPricing = Object.keys(uniqueTokens);
-  const llamaPrices = await getLlamaPrices(tokensForPricing, startTimestamp); // this prices tokens all at the same timestamp, can revise how this is done later
+  const priceResult = await getLlamaPricesWithStatus(tokensForPricing, startTimestamp);
+  assertCompleteLlamaPriceFetch(
+    priceResult,
+    `${hourly ? "hourly" : "daily"} aggregate for ${bridgeID} from ${startTimestamp} to ${endTimestamp}`
+  );
+  const llamaPrices = priceResult.prices; // this prices tokens all at the same timestamp, can revise how this is done later
   if (Object.keys(llamaPrices).length === 0 && tokensForPricing.length > 0) {
     const errString = `No prices for any tokens were found for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
     await insertErrorRow({
@@ -373,7 +378,9 @@ export const aggregateData = async (
             if (!isNaN(calculatedUsdValue) && isFinite(calculatedUsdValue)) {
               usdValue = calculatedUsdValue;
             } else {
-              console.error(`Invalid calculated USD value for tx id ${id}: ${calculatedUsdValue}, price: ${price}, decimals: ${decimals}`);
+              console.error(
+                `Invalid calculated USD value for tx id ${id}: ${calculatedUsdValue}, price: ${price}, decimals: ${decimals}`
+              );
             }
           }
         }
@@ -457,7 +464,11 @@ export const aggregateData = async (
             await insertOrUpdateTokenWithoutPrice(token, "SOLANA_TOKEN");
             return;
           }
-          const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, mapChainName(chain))).output;
+          if (!/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+            await insertOrUpdateTokenWithoutPrice(token, "UNKNOWN");
+            return;
+          }
+          const tokenSymbol = (await sdk.api.erc20.symbol(tokenAddress, mapChainName(chain))).output || "UNKNOWN";
           await insertOrUpdateTokenWithoutPrice(token, tokenSymbol);
         } catch (e) {
           console.error(`Could not insert or update token without price: ${token}`, e);
@@ -598,27 +609,29 @@ export const aggregateData = async (
       console.error(errString, e);
     }
   }
-  await Promise.all(largeTxs.map(async (largeTx) => {
-    const txPK = largeTx.id;
-    const timestamp = largeTx.ts;
-    const usdValue = largeTx.usdValue;
-    try {
-      await sql.begin(async (sql) => {
-        await insertLargeTransactionRow(sql, {
-          tx_pk: txPK,
-          ts: timestamp,
-          usd_value: usdValue,
+  await Promise.all(
+    largeTxs.map(async (largeTx) => {
+      const txPK = largeTx.id;
+      const timestamp = largeTx.ts;
+      const usdValue = largeTx.usdValue;
+      try {
+        await sql.begin(async (sql) => {
+          await insertLargeTransactionRow(sql, {
+            tx_pk: txPK,
+            ts: timestamp,
+            usd_value: usdValue,
+          });
         });
-      });
-    } catch (e) {
-      const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
-      await insertErrorRow({
-        ts: currentTimestamp,
-        target_table: "large_transactions",
-        keyword: "data",
-        error: errString,
-      });
-      console.log(errString, e);
-    }
-  }));
+      } catch (e) {
+        const errString = `Failed inserting large transaction row for pk ${txPK} with timestamp ${timestamp}.`;
+        await insertErrorRow({
+          ts: currentTimestamp,
+          target_table: "large_transactions",
+          keyword: "data",
+          error: errString,
+        });
+        console.log(errString, e);
+      }
+    })
+  );
 };

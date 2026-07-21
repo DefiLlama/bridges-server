@@ -5,7 +5,7 @@
     "serve": "sls offline start",
     "build:aws": "sls package",
     "test": "tsx ./src/adapters/test.ts",
-    "test:server": "tsx --test src/server/*.test.ts src/handlers/*.test.ts src/utils/*.test.ts",
+    "test:server": "tsx --test src/server/*.test.ts src/handlers/*.test.ts src/helpers/*.test.ts src/utils/*.test.ts",
     "test-txs": "tsx ./src/utils/testAdapterHistorical.ts",
     "ts": "tsc --noEmit",
     "adapter": "export $(cat .env | xargs) &&  tsx  ./src/utils/runAdapterHistorical.ts",

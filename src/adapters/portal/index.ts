@@ -1,7 +1,7 @@
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { getTxsBlockRangeEtherscan, getLock } from "../../helpers/etherscan";
+import { getTxsBlockRangeEtherscan } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 import { ethers } from "ethers";
 import { PromisePool } from "@supercharge/promise-pool";
@@ -258,7 +258,6 @@ const constructParams = (chain: string) => {
     // skipped for chains without available API
     // TODO: change this when the token bridge emits the `TransferRedeemed` event
     if (chain !== "klaytn" && chain !== "base" && chain !== "moonbeam") {
-      await getLock();
       const txs = await getTxsBlockRangeEtherscan(chain, tokenBridge, fromBlock, toBlock, {
         includeSignatures: completeTransferSigs,
       });

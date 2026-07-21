@@ -86,7 +86,8 @@ const newConstructParams = (chain: string) => {
         await wait(500);
       }
       if (!txReceipt) {
-        break;
+        console.warn(`[ZKBRIDGE] Missing receipt for ${eventLogData.txHash}; skipping event`);
+        continue;
       }
       let contractAddr;
       if (eventLogData.isDeposit) {
@@ -95,7 +96,12 @@ const newConstructParams = (chain: string) => {
         contractAddr = eventLogData.from;
       }
       let bridge = bridges[contractAddr];
+      if (!bridge) {
+        console.warn(`[ZKBRIDGE] Unknown bridge contract ${contractAddr}; skipping ${eventLogData.txHash}`);
+        continue;
+      }
 
+      let resolvedToken = false;
       for (let log of txReceipt.logs) {
         if (log.topics[0].slice(0, 8) === "0x302b3e" || log.topics[0].slice(0, 8) === "0xe0442d") {
           let poolId = ethers.BigNumber.from(log.topics[3]);
@@ -112,18 +118,24 @@ const newConstructParams = (chain: string) => {
             } else {
               eventLogData.amount = ethers.BigNumber.from("0x" + log.data.slice(66, 130));
             }
+            resolvedToken = true;
           } else {
             // erc20 token
             for (let log of txReceipt.logs) {
               if (log.topics[0].slice(0, 8) === "0xddf252") {
                 eventLogData.token = log.address;
                 eventLogData.amount = ethers.BigNumber.from(log.data);
+                resolvedToken = true;
                 break;
               }
             }
           }
           break;
         }
+      }
+      if (!resolvedToken || !eventLogData.token || !eventLogData.amount) {
+        console.warn(`[ZKBRIDGE] Could not resolve token for ${eventLogData.txHash}; skipping event`);
+        continue;
       }
       res[j] = eventLogData;
       j++;

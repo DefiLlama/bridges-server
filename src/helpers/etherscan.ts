@@ -1,50 +1,128 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
+import { isNonRetryableError, NonRetryableError } from "../utils/errors";
 const axios = require("axios");
 const retry = require("async-retry");
 
-const endpoints = {
-  ethereum: "https://api.etherscan.io",
-  polygon: "https://api.polygonscan.com",
-  bsc: "https://api.bscscan.com",
-  avax: "https://api.snowtrace.io",
-  fantom: "https://api.ftmscan.com",
-  arbitrum: "https://api.arbiscan.io",
-  optimism: "https://api-optimistic.etherscan.io",
-  aurora: "https://explorer.mainnet.aurora.dev",
-  celo: "https://api.celoscan.io",
-  "zksync era": "https://block-explorer-api.mainnet.zksync.io",
-  base: "https://api.basescan.org",
-  linea: "https://api.lineascan.build",
-  scroll: "https://api.scrollscan.com",
-  blast: "https://api.blastscan.io",
-  polygon_zkevm: "https://api-zkevm.polygonscan.com",
-  arbitrum_nova: "https://api-nova.arbiscan.io",
-  era: "https://api-era.zksync.network",
-  zklink: "https://explorer-api.zklink.io",
-  taiko: "https://api.taikoscan.io",
-  mantle: "https://api.mantlescan.xyz",
-} as { [chain: string]: string };
+const ETHERSCAN_V2_API = "https://api.etherscan.io/v2/api";
+const REQUEST_TIMEOUT_MS = 30_000;
+export const EXPLORER_REQUEST_INTERVAL_MS = 350;
+export const EXPLORER_PAGE_SIZE = 1000;
+const MAX_EXPLORER_PAGES = 1000;
 
-const apiKeys = {
-  ethereum: "5HQGXJR79NH8AUHR42Y94GKDIZKUMJAJVH",
-  polygon: "AYPIRDI1CRI2MF6H2W11HT1CYYW55BM1NB",
-  bsc: "ERJVEKXQ2M8HGD6QZDE2FXAH8NIRW3XRI9",
-  avax: "1954NC5BEIT3N6H69CFBIAYUQ3A6FIZW3U",
-  fantom: "QWYPA9TEQKJVX4MKXVBT9A2SVA1B4F6X44",
-  arbitrum: "WH4E9QCMQTMQ9ZT2YEW1FJ3RQ3YUIAK5MA",
-  optimism: "HZM43U7MPE279MMQV4GY3M6HJN4QPIYE1M",
-  aurora: "U3XVFVGWEITKHK74PJPRZXVS4MQAXPC2KN",
-  celo: "K32MTI3Z84KVSQD752YQAFIINIMZ18BVFI",
-  base: "9SH8V4KKINTQ1WA6XSGKX34T7CS3VBMEVS",
-  linea: "BHIMJVAKNVNXWFKICD8P93M8CKBQQ8CBU9",
-  blast: "7XS7KGJ5KFK97UW8QEQRFUB5Q7EID5K6JH",
-  scroll: "CG49F8MBGMU9YQF51IU5D1I2PIWZQ2WP4F",
-  arbitrum_nova: "SZZE864TZH3MGRUUDPRPUS7NF8MAFZBDAZ",
-  polygon_zkevm: "XKFP275U27W7AI4NGUIT7VGEQ179P4XA1S",
-  era: "9HJZA6X8DEJ46WHMM2UEJ5WCXPG31C7EWI",
-  taiko: "DYUMJ7MP38G6TFY173JA2E9DJ9TXYI1RYD",
-  mantle: "K3J4M6QYEIFN1GRAQFIN7RT5UYXC3BAPXH"
-} as { [chain: string]: string };
+// Only chains served by the unified Etherscan V2 API belong here. Other explorers
+// must be configured explicitly instead of silently falling back to deprecated V1 URLs.
+const etherscanV2ChainIds: Record<string, string> = {
+  ethereum: "1",
+  bsc: "56",
+  polygon: "137",
+  optimism: "10",
+  arbitrum: "42161",
+  avax: "43114",
+  celo: "42220",
+  base: "8453",
+  linea: "59144",
+  blast: "81457",
+  taiko: "167000",
+  mantle: "5000",
+};
+
+type ExplorerConfig = {
+  endpoint: string;
+  apiKey?: string;
+  chainId?: string;
+};
+
+const envSuffix = (chain: string) => chain.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+
+export const getExplorerConfig = (chain: string, env: NodeJS.ProcessEnv = process.env): ExplorerConfig => {
+  const suffix = envSuffix(chain);
+  const customEndpoint = env[`EXPLORER_API_URL_${suffix}`];
+  if (customEndpoint) {
+    return {
+      endpoint: customEndpoint.endsWith("/api") ? customEndpoint : `${customEndpoint.replace(/\/$/, "")}/api`,
+      apiKey: env[`EXPLORER_API_KEY_${suffix}`],
+    };
+  }
+
+  const chainId = etherscanV2ChainIds[chain];
+  if (!chainId) {
+    throw new NonRetryableError(
+      `No supported explorer configured for ${chain}. Set EXPLORER_API_URL_${suffix} and optionally EXPLORER_API_KEY_${suffix}.`
+    );
+  }
+  if (!env.ETHERSCAN_API_KEY) {
+    throw new NonRetryableError(`ETHERSCAN_API_KEY is required for Etherscan V2 chain ${chain}.`);
+  }
+  return { endpoint: ETHERSCAN_V2_API, apiKey: env.ETHERSCAN_API_KEY, chainId };
+};
+
+const isRetryableExplorerError = (error: any) => {
+  const status = error?.response?.status;
+  if (status === 429 || status >= 500) return true;
+  const message = String(error?.message ?? error?.response?.data?.result ?? "").toLowerCase();
+  return ["rate limit", "timeout", "timed out", "temporar", "busy", "unavailable"].some((part) =>
+    message.includes(part)
+  );
+};
+
+let nextRequestAt = 0;
+
+export const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+export async function getLock() {
+  const now = Date.now();
+  const requestAt = Math.max(now, nextRequestAt);
+  nextRequestAt = requestAt + EXPLORER_REQUEST_INTERVAL_MS;
+  if (requestAt > now) await wait(requestAt - now);
+}
+
+export const etherscanWait = () => wait(500);
+
+export const parseExplorerTransactions = (data: any, address: string): any[] => {
+  if (data?.status === "1" && data?.message === "OK" && Array.isArray(data.result)) return data.result;
+
+  const responseText = `${data?.message ?? ""} ${typeof data?.result === "string" ? data.result : ""}`.toLowerCase();
+  if (responseText.includes("no transactions found")) return [];
+
+  if (["rate limit", "timeout", "temporar", "busy", "unavailable"].some((part) => responseText.includes(part))) {
+    throw new Error(`Explorer temporarily failed for ${address}: ${responseText.trim()}`);
+  }
+  throw new NonRetryableError(
+    `Explorer returned an invalid response for ${address}: ${responseText.trim() || "empty response"}`
+  );
+};
+
+const getTransactionKey = (transaction: any) =>
+  transaction?.hash ? String(transaction.hash).toLowerCase() : JSON.stringify(transaction);
+
+export const collectPaginatedExplorerTransactions = async (
+  fetchPage: (page: number) => Promise<any[]>,
+  context: string,
+  pageSize: number = EXPLORER_PAGE_SIZE
+) => {
+  const transactions: any[] = [];
+  const seenTransactions = new Set<string>();
+
+  for (let page = 1; page <= MAX_EXPLORER_PAGES; page++) {
+    const pageTransactions = await fetchPage(page);
+    for (const transaction of pageTransactions) {
+      const key = getTransactionKey(transaction);
+      if (seenTransactions.has(key)) {
+        throw new NonRetryableError(
+          `Explorer pagination returned duplicate transaction ${key} for ${context} on page ${page}; checkpoint will not advance.`
+        );
+      }
+      seenTransactions.add(key);
+      transactions.push(transaction);
+    }
+
+    if (pageTransactions.length < pageSize) return transactions;
+  }
+
+  throw new NonRetryableError(
+    `Explorer pagination exceeded ${MAX_EXPLORER_PAGES} pages for ${context}; checkpoint will not advance.`
+  );
+};
 
 export const getTxsBlockRangeEtherscan = async (
   chain: string,
@@ -53,117 +131,55 @@ export const getTxsBlockRangeEtherscan = async (
   endBlock: number,
   functionSignatureFilter?: FunctionSignatureFilter
 ) => {
-  const endpoint = endpoints[chain];
-  const apiKey = apiKeys[chain];
-  let res;
-  if (!endpoint) {
-    console.error(`WARNING: No Etherscan endpoint found for chain ${chain}.`);
-    return [];
-  }
-  if (!apiKey) {
-    res = (
-      await retry(
-        async () => {
-          const response = await axios.get(
-            `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}`
-          );
-          if (response.data?.message?.includes("rate limit")) {
-            throw new Error("Rate limit exceeded");
+  const config = getExplorerConfig(chain);
+  const fetchPage = async (page: number): Promise<any[]> => {
+    try {
+      return await retry(
+        async (bail: (error: Error) => never) => {
+          await getLock();
+          try {
+            const response = await axios.get(config.endpoint, {
+              timeout: REQUEST_TIMEOUT_MS,
+              params: {
+                chainid: config.chainId,
+                module: "account",
+                action: "txlist",
+                address,
+                startblock: startBlock,
+                endblock: endBlock,
+                page,
+                offset: EXPLORER_PAGE_SIZE,
+                sort: "asc",
+                apikey: config.apiKey,
+              },
+            });
+            return parseExplorerTransactions(response.data, address);
+          } catch (error: any) {
+            if (isNonRetryableError(error) || !isRetryableExplorerError(error)) return bail(error);
+            throw error;
           }
-          return response;
         },
-        {
-          retries: 5,
-          factor: 2,
-          minTimeout: 1000,
-          maxTimeout: 30000,
-          randomize: true
-        }
-      )
-    ).data as any;
-  } else {
-    res = (
-      await retry(
-        async () => {
-          const response = await axios.get(
-            `${endpoint}/api?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&apikey=${apiKey}`
-          );
-          if (response.data?.message?.includes("rate limit")) {
-            throw new Error("Rate limit exceeded");
-          }
-          return response;
-        },
-        {
-          retries: 5,
-          factor: 2,
-          minTimeout: 1000,
-          maxTimeout: 30000,
-          randomize: true
-        }
-      )
-    ).data as any;
-  }
-  if (res.message === "OK") {
-    const filteredResults = res.result.filter((tx: any) => {
-      if (functionSignatureFilter) {
-        const signature = tx.input.slice(0, 10); // 0x + 4 bytes of method id @todo bug to be reported
-        // alternatively, we can use the method signature like const signature = tx.methodId;
-        if (
-          functionSignatureFilter.includeSignatures &&
-          !functionSignatureFilter.includeSignatures.includes(signature)
-        ) {
-          return false;
-        }
-        if (
-          functionSignatureFilter.excludeSignatures &&
-          functionSignatureFilter.excludeSignatures.includes(signature)
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-    return filteredResults;
-  } else if (res.message === "No transactions found") {
-    return [];
-  }
-  console.log(res);
-  console.error(`WARNING: Etherscan did not return valid response for address ${address}.`);
-  return [];
+        { retries: 3, factor: 2, minTimeout: 1000, maxTimeout: 10_000, randomize: true }
+      );
+    } catch (error: any) {
+      if (isNonRetryableError(error)) throw error;
+      throw new NonRetryableError(
+        `Explorer request for ${chain}:${address} page ${page} failed after retries: ${error?.message ?? String(error)}`
+      );
+    }
+  };
+
+  const transactions = await collectPaginatedExplorerTransactions(fetchPage, `${chain}:${address}`);
+
+  return transactions.filter((tx: any) => {
+    if (!functionSignatureFilter) return true;
+    const signature = String(tx?.input ?? "").slice(0, 10);
+    if (functionSignatureFilter.includeSignatures && !functionSignatureFilter.includeSignatures.includes(signature)) {
+      return false;
+    }
+    if (functionSignatureFilter.excludeSignatures && functionSignatureFilter.excludeSignatures.includes(signature)) {
+      return false;
+    }
+    return true;
+  });
 };
-
-const etherscanDelay = 500; // in milliseconds
-
-export const etherscanWait = () =>
-  new Promise((resolve, _reject) => {
-    setTimeout(() => {
-      resolve("");
-    }, etherscanDelay);
-  });
-
-export const wait = (ms: number) =>
-  new Promise((resolve, _reject) => {
-    setTimeout(() => {
-      resolve("");
-    }, ms);
-  });
-
-const locks = [] as ((value: unknown) => void)[];
-export function getLock() {
-  return new Promise((resolve) => {
-    locks.push(resolve);
-  });
-}
-function releaseLock() {
-  const firstLock = locks.shift();
-  if (firstLock !== undefined) {
-    firstLock(null);
-  }
-}
-function setTimer(timeBetweenTicks: number) {
-  const timer = setInterval(() => {
-    releaseLock();
-  }, timeBetweenTicks);
-  return timer;
-}
-setTimer(500); // Rate limit is 5 calls/s for etherscan's API

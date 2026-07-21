@@ -1,7 +1,6 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { getProvider } from "@defillama/sdk";
 
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const WBTC = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
@@ -48,7 +47,7 @@ const erc20WithdrawParams: PartialContractEventParams = {
     from: "senderAddress",
     to: "recipientAddress",
     amount: "erc20AdjustedAmount",
-    token: "tokenID"
+    token: "tokenID",
   },
   argGetters: {
     token: (log) => getTokenAddressFromTokenID(log.tokenID),
@@ -63,7 +62,7 @@ const constructParams = () => {
   const eventParams = [erc20WithdrawParams, erc20DepositParams];
   return async (fromBlock: number, toBlock: number) => {
     const eventLogsRes = await getTxDataFromEVMEventLogs("suibridge", "ethereum", fromBlock, toBlock, eventParams);
-    return eventLogsRes.map((event) => {   
+    return eventLogsRes.map((event) => {
       if (event.isDeposit) {
         let erc20TokenAmount = formatSuiAmount(event.amount, event.token);
         event.amount = erc20TokenAmount;
@@ -74,8 +73,9 @@ const constructParams = () => {
 };
 
 // TODO: use config contract read to get the token address from tokenID
-const getTokenAddressFromTokenID = (tokenID: number) => {
-  switch (tokenID) {
+export const getTokenAddressFromTokenID = (tokenID: unknown) => {
+  const normalizedTokenId = BigNumber.from(tokenID).toNumber();
+  switch (normalizedTokenId) {
     case 2:
       return WETH;
     case 3:
@@ -83,23 +83,23 @@ const getTokenAddressFromTokenID = (tokenID: number) => {
     case 4:
       return USDT;
     default:
-      return "";
+      throw new Error(`Unsupported Sui bridge token ID: ${normalizedTokenId}`);
   }
-}
+};
 
 // TODO: get decimal values from on chain contract call
 const formatSuiAmount = (amount: BigNumber, token: string) => {
   switch (token) {
     case WETH:
-      return amount.mul(10**10);
+      return amount.mul(10 ** 10);
     case WBTC:
-      return amount.mul(10**10);
+      return amount.mul(10 ** 10);
     case USDT:
-      return amount.mul(10**12);
+      return amount.mul(10 ** 12);
     default:
       return amount;
   }
-}
+};
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams(),

@@ -2,7 +2,7 @@ import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeA
 import { Chain } from "@defillama/sdk/build/general";
 import { getTxDataFromEVMEventLogs, getNativeTokenTransfersFromHash } from "../../helpers/processTransactions";
 import { constructTransferParams } from "../../helpers/eventParams";
-import { getTxsBlockRangeEtherscan, getLock } from "../../helpers/etherscan";
+import { getTxsBlockRangeEtherscan } from "../../helpers/etherscan";
 import { EventData } from "../../utils/types";
 
 /*
@@ -305,7 +305,6 @@ const constructParams = (chain: string) => {
     if (EOAs) {
       await Promise.all(
         EOAs.map(async (address) => {
-          await getLock();
           const txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {
             includeSignatures: signatures,
           });

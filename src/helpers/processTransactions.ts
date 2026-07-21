@@ -7,6 +7,7 @@ import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
 import { incrementGetLogsCount } from "../utils/cache";
+import { NonRetryableError } from "../utils/errors";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -142,6 +143,11 @@ export const getTxDataFromEVMEventLogs = async (
         } catch (e) {
           if (i >= 4) {
             console.error(target, e);
+            throw new NonRetryableError(
+              `getLogs failed after 5 attempts for ${adapterName} on ${overriddenChain} at ${fromBlock}-${toBlock}: ${
+                e instanceof Error ? e.message : String(e)
+              }`
+            );
           } else {
             continue;
           }
@@ -159,7 +165,7 @@ export const getTxDataFromEVMEventLogs = async (
             await Promise.all(
               Object.entries(logKeys!).map(async ([eventKey, logKey]) => {
                 // @ts-ignore
-                const value = (await logGetters?.[eventKey]?.(provider, iface, txLog)) || txLog[logKey];
+                const value = (await logGetters?.[eventKey]?.(provider, iface, txLog)) ?? txLog[logKey];
                 if (typeof value !== EventKeyTypes[eventKey]) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${logKey} is ${typeof value} when it must be ${
@@ -174,6 +180,8 @@ export const getTxDataFromEVMEventLogs = async (
             console.error(
               `Unable to get log keys for ${adapterName} with log keys ${logKeys}. SKIPPING TX with hash ${txLog.transactionHash} ${chainContractsAreOn}`
             );
+            dataKeysToFilter.push(i);
+            return;
           }
           let parsedLog = {} as any;
           try {
@@ -198,7 +206,7 @@ export const getTxDataFromEVMEventLogs = async (
               }
               Object.entries(argKeys).map(([eventKey, argKey]) => {
                 // @ts-ignore
-                const value = argGetters?.[eventKey]?.(args) || get(args, argKey);
+                const value = argGetters?.[eventKey]?.(args) ?? get(args, argKey);
                 if (typeof value !== EventKeyTypes[eventKey] && !Array.isArray(value)) {
                   throw new Error(
                     `Type of ${eventKey} retrieved using ${argKey} is ${typeof value} when it must be ${
@@ -238,6 +246,7 @@ export const getTxDataFromEVMEventLogs = async (
                 Error: ${error?.message}
                 `
               );
+              dataKeysToFilter.push(i);
               return;
             }
           }

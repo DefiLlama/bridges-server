@@ -1,4 +1,5 @@
 import { PRICES_API } from "./constants";
+import { isValidPriceId } from "./priceIds";
 
 const axios = require("axios");
 const retry = require("async-retry");
@@ -37,6 +38,14 @@ export type LlamaPriceFetchResult = {
   totalBatches: number;
 };
 
+export const assertCompleteLlamaPriceFetch = (result: LlamaPriceFetchResult, context: string) => {
+  if (result.failedBatches > 0) {
+    throw new Error(
+      `[PRICES] Refusing to persist ${context}: ${result.failedBatches}/${result.totalBatches} price batches failed.`
+    );
+  }
+};
+
 export const buildLlamaPriceBatches = (tokens: string[], timestamp?: number) => {
   const urlPrefix = timestamp ? `${PRICES_API}/historical/${timestamp}/` : `${PRICES_API}/current/`;
   const batches: string[][] = [];
@@ -67,7 +76,11 @@ export const getLlamaPricesWithStatus = async (
   const finalPrices: { [key: string]: any } = {};
   let failedBatches = 0;
   let totalBatches = 0;
-  const mappedTokens = tokens.map((token) => {
+  const validTokens = tokens.filter(isValidPriceId);
+  if (validTokens.length !== tokens.length) {
+    console.warn(`[PRICES] Ignoring ${tokens.length - validTokens.length} malformed price IDs`);
+  }
+  const mappedTokens = validTokens.map((token) => {
     const [prefix, id] = splitOnce(token, ":");
     const mappedPrefix = NAME_MAPPING[prefix] || prefix;
     return `${mappedPrefix}:${id}`;

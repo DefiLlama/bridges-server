@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { sql } from "../../db";
+import { NonRetryableError } from "../../errors";
 
 const PG_INT_MAX = 2147483647;
 
@@ -28,30 +29,80 @@ const txTypes = {
   origin_chain: "string",
 } as { [key: string]: string };
 
+export type TransactionInsertParams = {
+  bridge_id: string;
+  chain: string;
+  tx_hash: string | null;
+  ts: number;
+  tx_block: number | null;
+  tx_from: string | null;
+  tx_to: string | null;
+  token: string;
+  amount: string;
+  is_deposit: boolean;
+  is_usd_volume: boolean;
+  txs_counted_as: number | null;
+  origin_chain: string | null;
+};
+
+const requiredTransactionFields = new Set([
+  "bridge_id",
+  "chain",
+  "ts",
+  "token",
+  "amount",
+  "is_deposit",
+  "is_usd_volume",
+]);
+
+export const sanitizeTransactionParams = (
+  params: TransactionInsertParams,
+  allowNullTxValues: boolean
+): TransactionInsertParams => {
+  const sanitized = { ...params, tx_block: normalizeBlockNumber(params.tx_block) } as Record<string, any>;
+  const bridgeId = typeof params?.bridge_id === "string" ? params.bridge_id : "unknown";
+
+  for (const [key, expectedType] of Object.entries(txTypes)) {
+    const value = sanitized[key];
+    if (value === undefined) {
+      if (allowNullTxValues && !requiredTransactionFields.has(key)) {
+        sanitized[key] = null;
+        continue;
+      }
+      throw new NonRetryableError(`Transaction for bridgeID ${bridgeId} is missing required field ${key}.`);
+    }
+    if (value === null) {
+      if (requiredTransactionFields.has(key) || !allowNullTxValues) {
+        throw new NonRetryableError(`Transaction for bridgeID ${bridgeId} has a null value for ${key}.`);
+      }
+      continue;
+    }
+    if (typeof value !== expectedType) {
+      throw new NonRetryableError(
+        `Transaction for bridgeID ${bridgeId} has ${typeof value} for ${key} when it must be ${expectedType}.`
+      );
+    }
+  }
+
+  for (const key of ["bridge_id", "chain", "token", "amount"]) {
+    if (sanitized[key].length === 0) {
+      throw new NonRetryableError(`Transaction for bridgeID ${bridgeId} has an empty value for ${key}.`);
+    }
+  }
+  if (!Number.isFinite(sanitized.ts)) {
+    throw new NonRetryableError(`Transaction for bridgeID ${bridgeId} has an invalid timestamp ${sanitized.ts}.`);
+  }
+
+  return sanitized as TransactionInsertParams;
+};
+
 export const insertTransactionRow = async (
   sql: postgres.TransactionSql<{}>,
   allowNullTxValues: boolean,
-  params: {
-    bridge_id: string;
-    chain: string;
-    tx_hash: string | null;
-    ts: number;
-    tx_block: number | null;
-    tx_from: string | null;
-    tx_to: string | null;
-    token: string;
-    amount: string;
-    is_deposit: boolean;
-    is_usd_volume: boolean;
-    txs_counted_as: number | null;
-    origin_chain: string | null;
-  },
+  params: TransactionInsertParams,
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  const safeParams = {
-    ...params,
-    tx_block: normalizeBlockNumber(params.tx_block),
-  } as typeof params;
+  const safeParams = sanitizeTransactionParams(params, allowNullTxValues);
   let sqlCommand = sql`
   insert into bridges.transactions ${sql(safeParams)}
 `;
@@ -68,20 +119,6 @@ export const insertTransactionRow = async (
     `;
   }
 
-  Object.entries(safeParams).map(([key, val]) => {
-    if (val == null) {
-      if (allowNullTxValues) {
-        // console.info(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
-      } else {
-        throw new Error(`Transaction for bridgeID ${safeParams.bridge_id} has a null value for ${key}.`);
-      }
-    } else {
-      if (typeof val !== txTypes[key])
-        throw new Error(
-          `Transaction for bridgeID ${safeParams.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
-        );
-    }
-  });
   for (let i = 0; i < 5; i++) {
     try {
       await sqlCommand;
@@ -306,44 +343,31 @@ export const insertOrUpdateTokenWithoutPrice = async (token: string, symbol: str
 export const insertTransactionRows = async (
   sql: postgres.TransactionSql<{}>,
   allowNullTxValues: boolean,
-  transactions: Array<{
-    bridge_id: string;
-    chain: string;
-    tx_hash: string | null;
-    ts: number;
-    tx_block: number | null;
-    tx_from: string | null;
-    tx_to: string | null;
-    token: string;
-    amount: string;
-    is_deposit: boolean;
-    is_usd_volume: boolean;
-    txs_counted_as: number | null;
-    origin_chain: string | null;
-  }>,
+  transactions: TransactionInsertParams[],
   onConflict: "ignore" | "error" | "upsert" = "error"
 ) => {
-  const validTransactions = transactions.filter((tx) => {
-    if (typeof tx.ts !== "number" && typeof tx.ts !== "string") {
-      console.error(
-        `Invalid timestamp type ${typeof tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
-      );
-      return false;
+  const validTransactions = transactions.flatMap((tx) => {
+    let sanitized: TransactionInsertParams;
+    try {
+      sanitized = sanitizeTransactionParams(tx, allowNullTxValues);
+    } catch (error) {
+      console.error(`[VALIDATION] Skipping invalid transaction: ${(error as Error).message}`);
+      return [];
     }
-    if (Number.isNaN(tx.ts)) {
+    if (Number.isNaN(sanitized.ts)) {
       console.error(
-        `Invalid timestamp value ${tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
+        `Invalid timestamp value ${sanitized.ts} for transaction: bridge_id=${sanitized.bridge_id}, tx_hash=${sanitized.tx_hash}`
       );
-      return false;
+      return [];
     }
-    const isValidTimestamp = tx.ts > 0 && tx.ts < 2147483647000;
+    const isValidTimestamp = sanitized.ts > 0 && sanitized.ts < 2147483647000;
     if (!isValidTimestamp) {
       console.error(
-        `Invalid timestamp value ${tx.ts} for transaction: bridge_id=${tx.bridge_id}, tx_hash=${tx.tx_hash}`
+        `Invalid timestamp value ${sanitized.ts} for transaction: bridge_id=${sanitized.bridge_id}, tx_hash=${sanitized.tx_hash}`
       );
-      return false;
+      return [];
     }
-    return true;
+    return [sanitized];
   });
 
   const uniqueTransactions = validTransactions.reduce((acc, tx) => {
@@ -361,26 +385,7 @@ export const insertTransactionRows = async (
     return;
   }
 
-  const sanitizedTransactions = dedupedTransactions.map((tx) => ({
-    ...tx,
-    tx_block: normalizeBlockNumber(tx.tx_block),
-  }));
-
-  sanitizedTransactions.forEach((params) => {
-    Object.entries(params).forEach(([key, val]) => {
-      if (val == null) {
-        if (allowNullTxValues) {
-        } else {
-          throw new Error(`Transaction for bridgeID ${params.bridge_id} has a null value for ${key}.`);
-        }
-      } else {
-        if (typeof val !== txTypes[key])
-          throw new Error(
-            `Transaction for bridgeID ${params.bridge_id} has ${typeof val} for ${key} when it must be ${txTypes[key]}.`
-          );
-      }
-    });
-  });
+  const sanitizedTransactions = dedupedTransactions;
 
   let sqlCommand;
   if (onConflict === "ignore") {
@@ -416,7 +421,6 @@ export const insertTransactionRows = async (
         throw new Error(`Could not insert transaction rows in batch.`);
       } else {
         console.error(`Failed batch insert attempt ${i + 1}:`, e);
-        console.error(sanitizedTransactions);
         continue;
       }
     }
