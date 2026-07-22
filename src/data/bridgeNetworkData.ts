@@ -2623,6 +2623,7 @@ export default [
       "Proof of Play Boss",
       "Rari",
       "Redstone",
+      "Robinhood",
       "Scroll",
       "Sei",
       "Shape",
