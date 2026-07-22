@@ -96,27 +96,40 @@ export type ApiCacheLookup = {
 const staleApiCacheKey = (key: string) => `api-stale:${key}`;
 const apiCacheMetadataKey = (key: string) => `api-meta:${key}`;
 
-const parsePipelineValue = (entry: [Error | null, unknown] | null | undefined) => {
-  if (!entry || entry[0]) {
-    if (entry?.[0]) throw entry[0];
-    return null;
+const isApiCacheMetadata = (value: unknown): value is ApiCacheMetadata => {
+  if (!value || Array.isArray(value) || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).length === 2 && Number.isFinite(record.cacheTTL) && Number.isFinite(record.storedAt);
+};
+
+export const resolveApiCacheLookup = (
+  freshRaw: string | null,
+  staleRaw: string | null,
+  metadataRaw: string | null
+): ApiCacheLookup => {
+  const parsedMetadata = metadataRaw ? JSON.parse(metadataRaw) : undefined;
+  const metadata = isApiCacheMetadata(parsedMetadata) ? parsedMetadata : undefined;
+
+  if (freshRaw) {
+    const value = JSON.parse(freshRaw);
+    if (!isApiCacheMetadata(value)) return { state: "fresh", value, metadata };
   }
-  return typeof entry[1] === "string" ? entry[1] : null;
+
+  if (staleRaw) {
+    const value = JSON.parse(staleRaw);
+    if (!isApiCacheMetadata(value)) return { state: "stale", value, metadata };
+  }
+
+  return { state: "miss" };
 };
 
 export const getApiCache = async (key: string): Promise<ApiCacheLookup> => {
   if (!redis) return { state: "miss" };
+  if (!(await waitForRedisReady())) return { state: "miss" };
 
   try {
-    const result = await redis.pipeline().get(key).get(staleApiCacheKey(key)).get(apiCacheMetadataKey(key)).exec();
-    const freshRaw = parsePipelineValue(result?.[0]);
-    const staleRaw = parsePipelineValue(result?.[1]);
-    const metadataRaw = parsePipelineValue(result?.[2]);
-    const metadata = metadataRaw ? (JSON.parse(metadataRaw) as ApiCacheMetadata) : undefined;
-
-    if (freshRaw) return { state: "fresh", value: JSON.parse(freshRaw), metadata };
-    if (staleRaw) return { state: "stale", value: JSON.parse(staleRaw), metadata };
-    return { state: "miss" };
+    const [freshRaw, staleRaw, metadataRaw] = await redis.mget(key, staleApiCacheKey(key), apiCacheMetadataKey(key));
+    return resolveApiCacheLookup(freshRaw, staleRaw, metadataRaw);
   } catch (error) {
     logRedisError("API cache read", error);
     return { state: "miss" };
