@@ -3,6 +3,19 @@ import wrap from "../utils/wrap";
 import { queryTransactionsTimestampRangeByBridgeNetwork } from "../utils/wrappa/postgres/query";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
+import {
+  decodeTransactionCursor,
+  DEFAULT_TRANSACTIONS_LIMIT,
+  encodeTransactionCursor,
+  parseTransactionsLimit,
+  TransactionCursor,
+} from "../utils/transactionCursor";
+
+interface TransactionsPage {
+  transactions: any[];
+  hasMore: boolean;
+  nextCursor?: string;
+}
 
 const getTransactions = async (
   startTimestamp?: string,
@@ -11,8 +24,9 @@ const getTransactions = async (
   chain?: string,
   sourceChain?: string,
   address?: string,
-  limit?: string
-) => {
+  limit: number = DEFAULT_TRANSACTIONS_LIMIT,
+  cursor?: TransactionCursor
+): Promise<TransactionsPage | IResponse> => {
   if (bridgeNetworkId && !(bridgeNetworkId === "all") && isNaN(parseInt(bridgeNetworkId))) {
     return errorResponse({
       message: "Invalid Bridge ID entered. Use Bridge ID from 'bridges' endpoint as path param, or `all`.",
@@ -39,18 +53,30 @@ const getTransactions = async (
   if (typeof address === "string") {
     [addressChain, addressHash] = address?.split(":");
   }
-  const queryLimit = limit && !isNaN(parseInt(limit)) ? parseInt(limit) : undefined;
-
   const transactions = (await queryTransactionsTimestampRangeByBridgeNetwork(
     queryStartTimestamp,
     queryEndTimestamp,
     queryName,
     queryChain,
-    queryLimit
+    limit + 1,
+    cursor
   )) as any[];
 
-  const response = transactions
+  const hasMore = transactions.length > limit;
+  const pageTransactions = transactions.slice(0, limit);
+  const lastTransaction = pageTransactions.at(-1);
+  const nextCursor =
+    hasMore && lastTransaction?.cursor_ts && lastTransaction?.transaction_id
+      ? encodeTransactionCursor({
+          timestamp: lastTransaction.cursor_ts,
+          id: String(lastTransaction.transaction_id),
+        })
+      : undefined;
+
+  const response = pageTransactions
     .map((tx) => {
+      delete tx.transaction_id;
+      delete tx.cursor_ts;
       delete tx.bridge_id;
       if (sourceChain) {
         tx.sourceChain = sourceChain;
@@ -72,7 +98,7 @@ const getTransactions = async (
     })
     .filter((tx) => tx);
 
-  return response;
+  return { transactions: response, hasMore, nextCursor };
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
@@ -82,9 +108,26 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const chain = event.queryStringParameters?.chain?.toLowerCase();
   const sourceChain = event.queryStringParameters?.sourcechain?.toLowerCase();
   const address = event.queryStringParameters?.address?.toLowerCase();
-  const limit = event.queryStringParameters?.limit;
-  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, sourceChain, address, limit);
-  return successResponse(response, 10 * 60); // 10 mins cache
+  const requestedLimit = event.queryStringParameters?.limit;
+  const limit = parseTransactionsLimit(requestedLimit);
+  if (limit === undefined) {
+    return errorResponse({ message: "Invalid limit. Use an integer from 1 to 10000." });
+  }
+
+  const cursorValue = event.queryStringParameters?.cursor;
+  const cursor = cursorValue ? decodeTransactionCursor(cursorValue) : undefined;
+  if (cursorValue && !cursor) {
+    return errorResponse({ message: "Invalid transaction cursor." });
+  }
+
+  const response = await getTransactions(startTimestamp, endTimestamp, id, chain, sourceChain, address, limit, cursor);
+  if ("statusCode" in response) return response;
+
+  return successResponse(response.transactions, undefined, {
+    "Cache-Control": "no-store",
+    "X-Has-More": String(response.hasMore),
+    ...(response.nextCursor ? { "X-Next-Cursor": response.nextCursor } : {}),
+  });
 };
 
 export default wrap(handler);

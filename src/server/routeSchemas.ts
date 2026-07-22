@@ -69,7 +69,8 @@ export const routeSchemas = {
       chain,
       sourcechain: chain,
       address: { type: "string", minLength: 1, maxLength: 300 },
-      limit: digits,
+      limit: { type: "string", pattern: "^(?:[1-9][0-9]{0,3}|10000)$" },
+      cursor: { type: "string", minLength: 1, maxLength: 512, pattern: "^[A-Za-z0-9_-]+$" },
     }),
   },
   bridgeSearch: {

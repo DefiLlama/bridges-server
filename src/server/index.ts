@@ -339,7 +339,10 @@ const runtimeStats = () => ({
 
 const start = async () => {
   try {
-    await server.register(cors, { origin: true });
+    await server.register(cors, {
+      origin: true,
+      exposedHeaders: ["X-Next-Cursor", "X-Has-More"],
+    });
 
     registerCachedGet(
       "/bridgedaystats/:timestamp/:chain",

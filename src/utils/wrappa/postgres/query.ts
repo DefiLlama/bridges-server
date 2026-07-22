@@ -1,5 +1,6 @@
 import bridgeNetworkData from "../../../data/bridgeNetworkData";
 import { querySql as sql } from "../../db";
+import { MAX_TRANSACTIONS_LIMIT, TransactionCursor } from "../../transactionCursor";
 
 interface IConfig {
   id: string;
@@ -14,6 +15,8 @@ interface IConfigID {
 
 interface ITransaction {
   id?: number;
+  transaction_id?: string;
+  cursor_ts?: string;
   bridge_id: string;
   chain: string;
   tx_hash?: string;
@@ -508,14 +511,23 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   endTimestamp?: number,
   bridgeNetworkName?: string,
   chain?: string,
-  limit?: number
+  limit?: number,
+  cursor?: TransactionCursor
 ) => {
   let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
   let bridgeNameCondition = bridgeNetworkName ? sql`AND config.bridge_name = ${bridgeNetworkName}` : sql``;
   let chainCondition = chain ? sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})` : sql``;
-  const limitClause = limit ? sql`LIMIT ${limit}` : sql``;
+  const cursorCondition = cursor
+    ? sql`AND (
+        transactions.ts < ${cursor.timestamp}::timestamptz
+        OR (transactions.ts = ${cursor.timestamp}::timestamptz AND transactions.id < ${cursor.id}::bigint)
+      )`
+    : sql``;
+  const queryLimit = Math.min(Math.max(Math.floor(limit ?? MAX_TRANSACTIONS_LIMIT + 1), 1), MAX_TRANSACTIONS_LIMIT + 1);
   return await sql<ITransaction[]>`
-  SELECT transactions.bridge_id,
+  SELECT transactions.id::text AS transaction_id,
+       to_char(transactions.ts AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_ts,
+       transactions.bridge_id,
        transactions.tx_hash,
        transactions.ts,
        transactions.tx_block,
@@ -538,8 +550,9 @@ WHERE  transactions.ts >= to_timestamp(${startTimestamp})
        ${timestampLessThan}
        ${bridgeNameCondition}
        ${chainCondition}
-ORDER BY transactions.ts DESC
-${limitClause}
+       ${cursorCondition}
+ORDER BY transactions.ts DESC, transactions.id DESC
+LIMIT ${queryLimit}
        `;
 };
 
