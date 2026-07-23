@@ -1,4 +1,4 @@
-import { runAllAdapters } from "./jobs/runAllAdapters";
+import { getRunAllAdaptersDiagnostics, runAllAdapters } from "./jobs/runAllAdapters";
 import { runAggregateAllAdapters } from "./jobs/runAggregateAllAdapter";
 import { handler as runWormhole } from "../handlers/runWormhole";
 import { handler as runMayan } from "../handlers/runMayan";
@@ -15,6 +15,7 @@ import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
 import { handler as runCashmere } from "../handlers/runCashmere";
 import { getAllGetLogsCounts } from "../utils/cache";
+import { getExplorerRequestStats } from "../helpers/etherscan";
 import { handler as runSnowbridge } from "../handlers/runSnowbridge";
 import { handler as runAcross } from "../handlers/runAcross";
 import { createAbortError } from "../utils/errors";
@@ -31,6 +32,7 @@ const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promi
   activeJobs.set(job.name, controller);
   let timedOut = false;
   let timeout: NodeJS.Timeout | undefined;
+  let jobPromise: Promise<any> | undefined;
   try {
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeout = setTimeout(() => {
@@ -39,14 +41,17 @@ const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promi
         reject(createAbortError(`Operation timed out after ${timeoutMinutes} minutes`));
       }, timeoutMinutes * 60 * 1000);
     });
-    const result = await Promise.race([fn(controller.signal), timeoutPromise]);
+    jobPromise = fn(controller.signal);
+    const result = await Promise.race([jobPromise, timeoutPromise]);
 
     const duration = (Date.now() - startTime) / 1000;
     const degraded = Boolean(result && typeof result === "object" && result.degraded === true);
     const detail = degraded && typeof result.error === "string" ? result.error : undefined;
     jobResults.push({ ...job, status: degraded ? "degraded" : "ok", durationSec: duration, error: detail });
     console.log(
-      `[${degraded ? "WARN" : "INFO"}] Job ${job.name} completed ${degraded ? "in degraded mode" : "successfully"} in ${duration.toFixed(2)}s`
+      `[${degraded ? "WARN" : "INFO"}] Job ${job.name} completed ${
+        degraded ? "in degraded mode" : "successfully"
+      } in ${duration.toFixed(2)}s`
     );
 
     return result;
@@ -59,9 +64,19 @@ const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promi
       error: errorMsg,
     });
     console.error(`[ERROR] ${job.criticality} job ${job.name} ${timedOut ? "timed out" : "failed"}: ${errorMsg}`);
+    if (job.diagnostics) {
+      console.error(`[DIAGNOSTICS] ${job.name}: ${job.diagnostics()}`);
+    }
   } finally {
     if (timeout) clearTimeout(timeout);
-    activeJobs.delete(job.name);
+    if (timedOut && jobPromise) {
+      jobPromise.then(
+        () => activeJobs.delete(job.name),
+        () => activeJobs.delete(job.name)
+      );
+    } else {
+      activeJobs.delete(job.name);
+    }
   }
 };
 
@@ -96,6 +111,16 @@ const printGetLogsSummary = async () => {
   console.log(`[GETLOGS SUMMARY] Total unique adapter:chain combinations: ${sorted.length}`);
 };
 
+const printExplorerSummary = () => {
+  const stats = getExplorerRequestStats();
+  console.log("[EXPLORER SUMMARY] Requests by chain:");
+  for (const [chain, values] of Object.entries(stats)) {
+    console.log(
+      `  ${chain}: ${values.requests} requests, ${values.successes} ok, ${values.failures} failed, ${values.cacheHits} cache hits`
+    );
+  }
+};
+
 const exit = () => {
   setTimeout(async () => {
     console.log("[INFO] Timeout! Shutting down. Bye bye!");
@@ -106,6 +131,7 @@ const exit = () => {
     const exitCode = printJobSummary();
     try {
       await printGetLogsSummary();
+      printExplorerSummary();
       await sql.end();
       await querySql.end();
     } catch (e) {
@@ -120,9 +146,10 @@ const runAfterDelay = async (
   delayMinutes: number,
   fn: (signal: AbortSignal) => Promise<any>,
   timeoutMinutes: number = 5,
-  criticality: JobCriticality = "recoverable"
+  criticality: JobCriticality = "recoverable",
+  diagnostics?: () => string
 ) => {
-  const job = { name: jobName, criticality };
+  const job = { name: jobName, criticality, diagnostics };
   scheduledJobs.push(job);
   setTimeout(async () => {
     await withTimeout(job, fn, timeoutMinutes);
@@ -155,7 +182,7 @@ const cron = () => {
   runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15, "critical");
   runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15, "critical");
   runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15, "critical");
-  runAfterDelay("runAllAdapters", 5, runAllAdapters, 40, "critical");
+  runAfterDelay("runAllAdapters", 5, runAllAdapters, 40, "critical", getRunAllAdaptersDiagnostics);
   runAfterDelay("runWormhole", 25, runWormhole, 25);
   runAfterDelay("runMayan", 25, runMayan, 25);
   runAfterDelay("runLayerZero", 25, runLayerZero, 25);

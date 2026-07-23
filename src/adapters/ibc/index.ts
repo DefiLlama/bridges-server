@@ -1,19 +1,19 @@
 import { BridgeNetwork } from "../../data/types";
 import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
-import { 
-  getBlockFromTimestamp, 
-  getIbcVolumeByZoneId, 
-  getLatestBlockForZone
-} from "../../helpers/mapofzones";
+import { getBlockFromTimestamp, getIbcVolumeByZoneId, getLatestBlockForZone } from "../../helpers/mapofzones";
 import bridges from "../../data/bridgeNetworkData";
+import { LatestBlockNotFoundError } from "./errors";
 
 const ibcBridgeNetwork = bridges.find((bridge) => bridge.bridgeDbName === "ibc");
 
-export const getLatestBlockForZoneFromMoz = async (zoneId: string): Promise<{
+export const getLatestBlockForZoneFromMoz = async (
+  zoneId: string,
+  signal?: AbortSignal
+): Promise<{
   number: number;
   timestamp: number;
 }> => {
-  const block = await getLatestBlockForZone(zoneId);
+  const block = await getLatestBlockForZone(zoneId, signal);
   if (!block) {
     throw new LatestBlockNotFoundError(zoneId);
   }
@@ -21,16 +21,16 @@ export const getLatestBlockForZoneFromMoz = async (zoneId: string): Promise<{
     number: block.block,
     timestamp: block.timestamp,
   };
-}
+};
 
 // this returns height only
-export const getLatestBlockHeightForZoneFromMoz = async (zoneId: string): Promise<number> => {
-  const block = await getLatestBlockForZone(zoneId);
+export const getLatestBlockHeightForZoneFromMoz = async (zoneId: string, signal?: AbortSignal): Promise<number> => {
+  const block = await getLatestBlockForZone(zoneId, signal);
   if (!block) {
     throw new LatestBlockNotFoundError(zoneId);
   }
   return block.block;
-}
+};
 
 export const findChainId = (bridgeNetwork: BridgeNetwork, chain: string) => {
   if (bridgeNetwork.chainMapping === undefined) {
@@ -42,18 +42,24 @@ export const findChainId = (bridgeNetwork: BridgeNetwork, chain: string) => {
   } else if (Object.values(bridgeNetwork.chainMapping).includes(chain)) {
     return chain;
   }
-}
+};
 
-export const ibcGetBlockFromTimestamp = async (bridge: BridgeNetwork, timestamp: number, chainName: string, position?: 'First' | 'Last') => {
-  if(position === undefined) {
+export const ibcGetBlockFromTimestamp = async (
+  bridge: BridgeNetwork,
+  timestamp: number,
+  chainName: string,
+  position?: "First" | "Last",
+  signal?: AbortSignal
+) => {
+  if (position === undefined) {
     throw new Error("Position is required for ibcGetBlockFromTimestamp");
   }
   const chainId = findChainId(bridge, chainName);
-  if(chainId === undefined) {
+  if (chainId === undefined) {
     throw new Error(`Could not find chain id for chain name ${chainName}`);
   }
-  return await getBlockFromTimestamp(timestamp, chainId, position);
-}
+  return await getBlockFromTimestamp(timestamp, chainId, position, signal);
+};
 
 const chainExports = () => {
   if (ibcBridgeNetwork === undefined) {
@@ -65,7 +71,7 @@ const chainExports = () => {
   const chainBreakdown = {} as BridgeAdapter;
   chainNames.forEach((chainName) => {
     const chainId = findChainId(ibcBridgeNetwork, chainName);
-    if(chainId) {
+    if (chainId) {
       chainBreakdown[chainName.toLowerCase()] = getIbcVolumeByZoneId(chainId);
     }
   });

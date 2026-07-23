@@ -16,28 +16,16 @@ import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
 import { getConnection } from "../helpers/solana";
-import { chainMappings } from "../helpers/tokenMappings";
 import { getCache, setCache } from "./cache";
 import { normalizeChain } from "./normalizeChain";
-import { isAbortError, isNonRetryableError, throwIfAborted } from "./errors";
+import { formatError, isAbortError, isNonRetryableError, throwIfAborted } from "./errors";
+import { resolveProviderChain } from "./chainResolver";
+import { bridgesToSkip, shouldSkipBridge } from "./bridgePolicy";
 const retry = require("async-retry");
 
 const SECONDS_IN_DAY = 86400;
 
-export const bridgesToSkip = [
-  "across",
-  "wormhole",
-  "layerzero",
-  "hyperlane",
-  "intersoon",
-  "relay",
-  "cashmere",
-  "teleswap",
-  "mayan",
-  "ccip",
-];
-
-export const shouldSkipBridge = (bridgeDbName: string) => bridgesToSkip.includes(bridgeDbName);
+export { bridgesToSkip, shouldSkipBridge };
 
 interface AdapterProgress {
   lastSuccessfulBlock: number;
@@ -75,7 +63,8 @@ const getBlocksForRunningAdapter = async (
   bridgeDbName: string,
   chain: string,
   chainContractsAreOn: string,
-  recordedBlocks?: Partial<RecordedBlocks>
+  recordedBlocks?: Partial<RecordedBlocks>,
+  signal?: AbortSignal
 ) => {
   const currentTimestamp = await getCurrentUnixTimestamp();
   // todo: fix this line
@@ -87,7 +76,7 @@ const getBlocksForRunningAdapter = async (
     // probably need timeouts here
     try {
       if (bridgeDbName === "ibc") {
-        endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName);
+        endBlock = await getLatestBlockNumber(chainContractsAreOn, bridgeDbName, signal);
       } else {
         endBlock = await getLatestBlockNumber(chainContractsAreOn);
       }
@@ -104,8 +93,12 @@ const getBlocksForRunningAdapter = async (
         return { startBlock, endBlock, useRecordedBlocks };
       }
     } catch (e: any) {
+      if (bridgeDbName === "ibc" && e?.name === "LatestBlockNotFoundError") {
+        console.info(`[IBC] Skipping ${chain}: MapOfZones has no indexed transfers for ${chainContractsAreOn}.`);
+        return { startBlock, endBlock, useRecordedBlocks, unavailableWithoutData: true };
+      }
       console.error(
-        `Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter. Error: ${JSON.stringify(e)}`
+        `Error getting latest block on ${chainContractsAreOn} for ${bridgeDbName} adapter. Error: ${formatError(e)}`
       );
       return { startBlock, endBlock, useRecordedBlocks };
     }
@@ -181,7 +174,13 @@ export const runAdapterToCurrentBlock = async (
     Object.keys(adapter).map(async (chain, i) => {
       await wait(200 * i);
       throwIfAborted(signal);
-      const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
+      const chainStartedAt = Date.now();
+      const logChainResult = (status: "OK" | "FAILED" | "SKIPPED" | "ABORTED", detail?: string) => {
+        const duration = ((Date.now() - chainStartedAt) / 1000).toFixed(1);
+        console.log(`[CHAIN] ${status} ${bridgeDbName}:${chain} (${duration}s)${detail ? ` - ${detail}` : ""}`);
+      };
+      console.log(`[CHAIN] START ${bridgeDbName}:${chain}`);
+      const chainContractsAreOn = resolveProviderChain(chain, bridgeDbName);
 
       let bridgeID: string;
       try {
@@ -190,31 +189,38 @@ export const runAdapterToCurrentBlock = async (
           throw new Error(`BridgeID not found for ${bridgeDbName} on chain ${chain}`);
         }
       } catch (e: any) {
-        console.error(`[ERROR] Failed to get bridgeID for ${bridgeDbName} on chain ${chain}. Error: ${e.message}`);
+        const detail = formatError(e);
+        console.error(`[ERROR] Failed to get bridgeID for ${bridgeDbName} on chain ${chain}. Error: ${detail}`);
         chainFailures.push(`${chain}: bridge ID lookup failed`);
+        logChainResult("FAILED", "bridge ID lookup failed");
         await insertErrorRow({
           ts: currentTimestamp,
           target_table: "transactions",
           keyword: "error",
-          error: `Failed to get bridgeID: ${e.message}`,
+          error: `Failed to get bridgeID: ${detail}`,
         });
         return;
       }
 
-      let { startBlock, endBlock } = await getBlocksForRunningAdapter(
+      let { startBlock, endBlock, unavailableWithoutData } = await getBlocksForRunningAdapter(
         bridgeDbName,
         chain,
         chainContractsAreOn,
-        lastRecordedBlocks[bridgeID]
+        lastRecordedBlocks[bridgeID],
+        signal
       );
+      if (unavailableWithoutData) {
+        logChainResult("SKIPPED", "upstream has no indexed data");
+        return;
+      }
       if (startBlock === undefined || endBlock === undefined) {
         console.warn(`[WARN] Skipping ${bridgeDbName} on ${chain} because blocks are undefined.`);
         chainFailures.push(`${chain}: block range unavailable`);
+        logChainResult("FAILED", "block range unavailable");
         return;
       }
       const step = maxBlocksToQueryByChain[chainContractsAreOn] || maxBlocksToQueryByChain.default;
 
-      if (startBlock == null) return;
       try {
         while (startBlock < endBlock) {
           throwIfAborted(signal);
@@ -232,10 +238,16 @@ export const runAdapterToCurrentBlock = async (
           );
           startBlock += step;
         }
+        logChainResult("OK");
       } catch (e: any) {
-        if (isAbortError(e) || signal?.aborted) throw e;
-        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed. Error: ${e.message}`;
-        chainFailures.push(`${chain}: ${e.message}`);
+        if (isAbortError(e) || signal?.aborted) {
+          logChainResult("ABORTED", formatError(e));
+          throw e;
+        }
+        const detail = formatError(e);
+        const errString = `Adapter txs for ${bridgeDbName} on chain ${chain} failed. Error: ${detail}`;
+        chainFailures.push(`${chain}: ${detail}`);
+        logChainResult("FAILED", detail);
         console.error(`[ERROR] ${errString}`, e);
         await insertErrorRow({
           ts: currentTimestamp,
@@ -289,7 +301,7 @@ export const runAllAdaptersToCurrentBlock = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(200 * i);
-        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
+        const chainContractsAreOn = resolveProviderChain(chain, bridgeDbName);
         const { startBlock, endBlock } = await getBlocksForRunningAdapter(bridgeDbName, chain, chainContractsAreOn, {});
         if (startBlock == null) return;
         try {
@@ -335,7 +347,7 @@ export const runAllAdaptersTimestampRange = async (
     const adapterPromises = Promise.all(
       Object.keys(adapter).map(async (chain, i) => {
         await wait(200 * i);
-        const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
+        const chainContractsAreOn = resolveProviderChain(chain, bridgeDbName);
         if (chainContractsAreOn === "tron" || chainContractsAreOn === "sui" || chainContractsAreOn === "solana") {
           console.info(`Skipping running adapter ${bridgeDbName} on chain ${chainContractsAreOn}.`);
           return;
@@ -451,7 +463,7 @@ export const runAdapterHistorical = async (
     });
     throw new Error(errString);
   }
-  const chainContractsAreOn = chainMappings[chain as Chain] ? chainMappings[chain as Chain] : chain;
+  const chainContractsAreOn = resolveProviderChain(chain, bridgeDbName);
 
   const bridgeID = (await getBridgeID(bridgeDbName, chain))?.id;
   if (!bridgeID) {
@@ -488,7 +500,7 @@ export const runAdapterHistorical = async (
           async (bail: (error: Error) => never) => {
             throwIfAborted(signal);
             try {
-              return await adapterChainEventsFn(block, endBlockForQuery);
+              return await adapterChainEventsFn(block, endBlockForQuery, { signal });
             } catch (e: any) {
               console.error(
                 `[ERROR] Failed to fetch event logs for ${bridgeDbName} on ${chain} from ${block} to ${endBlockForQuery}. Error: ${e.message}`

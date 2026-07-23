@@ -7,7 +7,7 @@ import { EventData } from "../utils/types";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
 import { incrementGetLogsCount } from "../utils/cache";
-import { NonRetryableError } from "../utils/errors";
+import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -56,11 +56,14 @@ export const getTxDataFromEVMEventLogs = async (
   chainContractsAreOn: Chain,
   fromBlock: number,
   toBlock: number,
-  paramsArray: (ContractEventParams | PartialContractEventParams)[]
+  paramsArray: (ContractEventParams | PartialContractEventParams)[],
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   let accEventData = [] as EventData[];
   const getLogsPromises = Promise.all(
     paramsArray.map(async (params) => {
+      throwIfAborted(signal);
       let {
         target,
         topic,
@@ -123,9 +126,21 @@ export const getTxDataFromEVMEventLogs = async (
       }
 
       const iface = new ethers.utils.Interface(abi);
+      let provider: any;
+      try {
+        provider = getProvider(overriddenChain);
+      } catch (error) {
+        throw new NonRetryableError(
+          `Provider initialization failed for ${adapterName} on ${overriddenChain}: ${formatError(error)}`
+        );
+      }
+      if (!provider) {
+        throw new NonRetryableError(`No provider configured for ${adapterName} on ${overriddenChain}.`);
+      }
       let data = {} as any;
       let logs = [] as any[];
       for (let i = 0; i < 5; i++) {
+        throwIfAborted(signal);
         try {
           incrementGetLogsCount(adapterName, overriddenChain);
           logs = (
@@ -144,9 +159,9 @@ export const getTxDataFromEVMEventLogs = async (
           if (i >= 4) {
             console.error(target, e);
             throw new NonRetryableError(
-              `getLogs failed after 5 attempts for ${adapterName} on ${overriddenChain} at ${fromBlock}-${toBlock}: ${
-                e instanceof Error ? e.message : String(e)
-              }`
+              `getLogs failed after 5 attempts for ${adapterName} on ${overriddenChain} at ${fromBlock}-${toBlock}: ${formatError(
+                e
+              )}`
             );
           } else {
             continue;
@@ -155,7 +170,6 @@ export const getTxDataFromEVMEventLogs = async (
       }
 
       let dataKeysToFilter = [] as number[];
-      const provider = getProvider(overriddenChain) as any;
       const { results, errors } = await PromisePool.withConcurrency(20)
         .for(logs)
         .process(async (txLog: any, i) => {

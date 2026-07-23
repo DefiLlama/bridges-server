@@ -4,6 +4,7 @@ export type JobStatus = "ok" | "degraded" | "failed" | "timed_out";
 export type ScheduledJob = {
   name: string;
   criticality: JobCriticality;
+  diagnostics?: () => string;
 };
 
 export type JobResult = ScheduledJob & {

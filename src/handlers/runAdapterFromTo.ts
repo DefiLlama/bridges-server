@@ -4,7 +4,7 @@ import { runAdapterHistorical } from "../utils/adapter";
 import { sql } from "../utils/db";
 import { getBridgeID } from "../utils/wrappa/postgres/query";
 import { getLatestBlock } from "../utils/blocks";
-import { chainMappings } from "../helpers/tokenMappings";
+import { normalizeAdapterChainName, resolveProviderChain } from "../utils/chainResolver";
 
 const handler = async (event: any) => {
   try {
@@ -16,19 +16,15 @@ const handler = async (event: any) => {
     console.log(`Running adapter for ${bridgeName} from timestamp ${fromTimestamp} to ${toTimestamp}`);
 
     const promises = adapter.chains.map(async (chain) => {
-      let nChain;
-      if (chainMappings[chain.toLowerCase()]) {
-        nChain = chainMappings[chain.toLowerCase()];
-      } else {
-        nChain = chain.toLowerCase();
-      }
-      if (nChain === adapter?.destinationChain?.toLowerCase()) return;
+      const adapterChain = normalizeAdapterChainName(chain);
+      const providerChain = resolveProviderChain(chain, bridgeName);
+      if (adapterChain === adapter?.destinationChain?.toLowerCase()) return;
 
-      console.log(`Processing chain ${nChain} for ${bridgeName}`);
+      console.log(`Processing chain ${adapterChain} (${providerChain}) for ${bridgeName}`);
 
-      const bridgeConfig = await getBridgeID(bridgeName, nChain);
+      const bridgeConfig = await getBridgeID(bridgeName, adapterChain);
       if (!bridgeConfig) {
-        console.error(`Could not find bridge config for ${nChain} on ${bridgeName}`);
+        console.error(`Could not find bridge config for ${adapterChain} on ${bridgeName}`);
         return;
       }
       let fromBlock, toBlock;
@@ -36,7 +32,7 @@ const handler = async (event: any) => {
         const fromTx = await sql<{ tx_block: number }[]>`
           SELECT tx_block FROM bridges.transactions 
           WHERE bridge_id = ${bridgeConfig.id}
-        AND chain = ${nChain}
+        AND chain = ${adapterChain}
         AND tx_block IS NOT NULL
         AND ts <= to_timestamp(${fromTimestamp})
         ORDER BY ts DESC LIMIT 1
@@ -47,25 +43,27 @@ const handler = async (event: any) => {
         const toTx = await sql<{ tx_block: number }[]>`
           SELECT tx_block FROM bridges.transactions 
           WHERE bridge_id = ${bridgeConfig.id}
-          AND chain = ${nChain}
+          AND chain = ${adapterChain}
           AND tx_block IS NOT NULL
           AND ts >= to_timestamp(${toTimestamp})
           ORDER BY ts ASC LIMIT 1
         `;
         toBlock = toTx[0].tx_block;
       } else {
-        const latestBlock = await getLatestBlock(nChain);
+        const latestBlock = await getLatestBlock(providerChain);
         toBlock = latestBlock.number;
       }
 
       if (!fromBlock || !toBlock) {
-        console.error(`Could not find transactions with blocks for ${nChain} on ${bridgeName}`);
+        console.error(`Could not find transactions with blocks for ${adapterChain} on ${bridgeName}`);
         return;
       }
 
-      await runAdapterHistorical(fromBlock, toBlock, adapter.id, nChain, true, false, "upsert");
+      await runAdapterHistorical(fromBlock, toBlock, adapter.id, adapterChain, true, false, "upsert");
 
-      console.log(`Adapter ${bridgeName} ran successfully for chain ${nChain} from block ${fromBlock} to ${toBlock}`);
+      console.log(
+        `Adapter ${bridgeName} ran successfully for chain ${adapterChain} from block ${fromBlock} to ${toBlock}`
+      );
     });
 
     await Promise.all(promises);

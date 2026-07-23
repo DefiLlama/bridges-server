@@ -21,7 +21,7 @@ async function getLatestSlot() {
   return await connection.getSlot("finalized");
 }
 
-export async function getLatestBlockNumber(chain: string, bridge?: string): Promise<number> {
+export async function getLatestBlockNumber(chain: string, bridge?: string, signal?: AbortSignal): Promise<number> {
   if (chain === "sui") {
     const client = getClient();
     return Number(await client.getLatestCheckpointSequenceNumber());
@@ -32,9 +32,9 @@ export async function getLatestBlockNumber(chain: string, bridge?: string): Prom
   } else if (chain === "tron") {
     return (await tronGetLatestBlock()).number;
   } else if (bridge && bridge === "ibc") {
-    return await getLatestBlockHeightForZoneFromMoz(chain);
+    return await getLatestBlockHeightForZoneFromMoz(chain, signal);
   }
-  return (await getLatestBlock(chain, bridge)).number;
+  return (await getLatestBlock(chain, bridge, signal)).number;
 }
 
 const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
@@ -67,7 +67,11 @@ async function getBlockTime(slotNumber: number) {
   return response;
 }
 
-export async function getLatestBlock(chain: string, bridge?: string): Promise<{ number: number; timestamp: number }> {
+export async function getLatestBlock(
+  chain: string,
+  bridge?: string,
+  signal?: AbortSignal
+): Promise<{ number: number; timestamp: number }> {
   if (chain === "sui") {
     const client = getClient();
     const seqNumber = await client.getLatestCheckpointSequenceNumber();
@@ -85,7 +89,7 @@ export async function getLatestBlock(chain: string, bridge?: string): Promise<{ 
   } else if (chain === "stellar") {
     return await getLatestLedger();
   } else if (bridge && bridge === "ibc") {
-    return await getLatestBlockForZoneFromMoz(chain);
+    return await getLatestBlockForZoneFromMoz(chain, signal);
   }
 
   const timestamp = Math.floor(Date.now() / 1000) - 60;
@@ -96,10 +100,11 @@ export async function getBlockByTimestamp(
   timestamp: number,
   chain: Chain,
   bridge?: BridgeNetwork,
-  position?: "First" | "Last"
+  position?: "First" | "Last",
+  signal?: AbortSignal
 ) {
   if (bridge && bridge.bridgeDbName === "ibc") {
-    return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position);
+    return await ibcGetBlockFromTimestamp(bridge, timestamp, chain, position, signal);
   } else if (chain === "solana") {
     const { timestamp: latestTimestamp, number: latestSlot } = await getLatestBlock(chain);
 

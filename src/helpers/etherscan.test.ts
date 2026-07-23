@@ -10,10 +10,19 @@ import {
 import { NonRetryableError } from "../utils/errors";
 
 test("Etherscan V2 config uses chainid and the shared key", () => {
-  assert.deepEqual(getExplorerConfig("base", { ETHERSCAN_API_KEY: "test" }), {
+  assert.deepEqual(getExplorerConfig("base", { ETHERSCAN_API_KEY: "test", ETHERSCAN_PLAN: "lite" }), {
     endpoint: "https://api.etherscan.io/v2/api",
     apiKey: "test",
     chainId: "8453",
+  });
+});
+
+test("free-tier policy rejects paid chains before making a request", () => {
+  assert.throws(() => getExplorerConfig("base", { ETHERSCAN_API_KEY: "test" }), NonRetryableError);
+  assert.deepEqual(getExplorerConfig("op_bnb", { ETHERSCAN_API_KEY: "test" }), {
+    endpoint: "https://api.etherscan.io/v2/api",
+    apiKey: "test",
+    chainId: "204",
   });
 });
 

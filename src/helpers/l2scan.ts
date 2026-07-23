@@ -1,11 +1,12 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
+import { getTxsBlockRangeMerlinScan } from "./merlin";
 const axios = require("axios");
 const retry = require("async-retry");
 
 const endpoints = {
   merlin: "https://scan.merlinchain.io",
   "b2-mainnet": "https://explorer.bsquared.network",
-  "rsk": "https://rootstock.blockscout.com",
+  rsk: "https://rootstock.blockscout.com",
 } as { [chain: string]: string };
 
 export const getTxsBlockRangeL2Scan = async (
@@ -15,6 +16,9 @@ export const getTxsBlockRangeL2Scan = async (
   endBlock: number,
   functionSignatureFilter?: FunctionSignatureFilter
 ) => {
+  if (chain === "merlin") {
+    return getTxsBlockRangeMerlinScan(address, startBlock, endBlock, functionSignatureFilter);
+  }
   let txList: any[] = await getBlockTXbyAddress(chain, address, startBlock, endBlock);
   // console.log(JSON.stringify(txList));
   if (txList.length > 0) {
@@ -42,29 +46,25 @@ export const getTxsBlockRangeL2Scan = async (
   }
 };
 
-const getBlockTXbyAddress = async (
-  chain: string,
-  address: string,
-  startBlock: number,
-  endBlock: number,
-) => {
+const getBlockTXbyAddress = async (chain: string, address: string, startBlock: number, endBlock: number) => {
   const endpoint = endpoints[chain];
-  let txList: any[] = []
-  let page = 1
-  while(true) {
+  let txList: any[] = [];
+  let page = 1;
+  while (true) {
     let res = await retry(
       () =>
         axios.get(
-          `${endpoint}/api?module=account&action=txlist&address=${address}&endblock=${endBlock}&sort=asc&startblock=${startBlock}&offset=1000&page=${page}`
+          `${endpoint}/api?module=account&action=txlist&address=${address}&endblock=${endBlock}&sort=asc&startblock=${startBlock}&offset=1000&page=${page}`,
+          { timeout: 30000 }
         ),
       { factor: 1, retries: 3 }
-    )
-    if (res.data.message == 'OK' && res.data.result.length != 0) {
-      txList = txList.concat(res.data.result)
+    );
+    if (res.data.message == "OK" && res.data.result.length != 0) {
+      txList = txList.concat(res.data.result);
     } else {
       break;
     }
-    page++
+    page++;
   }
   return txList;
-}
+};

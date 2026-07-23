@@ -7,7 +7,7 @@ import adapter, {
   AcrossDeposit,
 } from "../adapters/across";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
-import { chainMappings } from "../helpers/tokenMappings";
+import { resolveProviderChain } from "../utils/chainResolver";
 import { getBlockByTimestamp } from "../utils/blocks";
 import { sql } from "../utils/db";
 import { wrapScheduledLambda } from "../utils/wrap";
@@ -48,7 +48,9 @@ const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: nu
 };
 
 const toDepositKey = (deposit: AcrossDeposit) =>
-  `${deposit.depositTxHash || "0x"}:${deposit.fillTx || "0x"}:${deposit.originChainId}:${deposit.destinationChainId || 0}:${deposit.depositId ?? ""}:${deposit.depositBlockNumber ?? ""}:${deposit.fillBlockNumber ?? ""}`;
+  `${deposit.depositTxHash || "0x"}:${deposit.fillTx || "0x"}:${deposit.originChainId}:${
+    deposit.destinationChainId || 0
+  }:${deposit.depositId ?? ""}:${deposit.depositBlockNumber ?? ""}:${deposit.fillBlockNumber ?? ""}`;
 
 const dedupeDeposits = (deposits: AcrossDeposit[]) => {
   const deduped = new Map<string, AcrossDeposit>();
@@ -211,9 +213,9 @@ export const handler = async () => {
     const startTs = dayjs().subtract(48, "hour").unix();
     const endTs = dayjs().unix();
     console.log(
-      `Running Across adapter for ${startTs} (${dayjs
-        .unix(startTs)
-        .format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs.unix(endTs).format("YYYY-MM-DD HH:mm:ss")})`
+      `Running Across adapter for ${startTs} (${dayjs.unix(startTs).format("YYYY-MM-DD HH:mm:ss")}) to ${endTs} (${dayjs
+        .unix(endTs)
+        .format("YYYY-MM-DD HH:mm:ss")})`
     );
 
     const processChain = async (chain: string): Promise<{ deposits: number; withdrawals: number }> => {
@@ -229,7 +231,7 @@ export const handler = async () => {
         return { deposits: 0, withdrawals: 0 };
       }
 
-      const chainForBlocks = (chainMappings[chain.toLowerCase()] ?? chain.toLowerCase()) as Chain;
+      const chainForBlocks = resolveProviderChain(chain, "across") as Chain;
 
       try {
         const [startBlockRes, endBlockRes] = await Promise.all([
@@ -320,7 +322,9 @@ export const handler = async () => {
 
         insertedDeposits += sourceTransactions.length;
         insertedWithdrawals += destinationTransactions.length;
-        console.log(`${label} inserted ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`);
+        console.log(
+          `${label} inserted ${sourceTransactions.length} deposits, ${destinationTransactions.length} withdrawals`
+        );
       } catch (error) {
         console.error(`${label} failed:`, error);
         const message = error instanceof Error ? error.message : String(error);

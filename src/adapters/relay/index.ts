@@ -3,6 +3,13 @@ import fetch from "node-fetch";
 import { EventData } from "../../utils/types";
 import { RelayRequestsResponse } from "./types";
 import { ethers } from "ethers";
+import {
+  isAbortError,
+  isNonRetryableError,
+  NonRetryableError,
+  throwIfAborted,
+  waitWithSignal,
+} from "../../utils/errors";
 
 let requestQueue: Promise<void> = Promise.resolve();
 
@@ -70,24 +77,64 @@ const startingBlocks: Record<string, number> = {
 };
 
 const MAX_USD_AMOUNT = 10_000_000;
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const getRetryDelay = (response: any, attempt: number) => {
   const retryAfter = Number(response.headers?.get?.("retry-after"));
   if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000;
   return Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
 };
 
-const makeRequestsUrl = (startTimestamp: number, endTimestamp: number, continuation?: string, chainId?: number) => {
+export const makeRequestsUrl = (
+  startTimestamp: number,
+  endTimestamp: number,
+  continuation?: string,
+  chainId?: number
+) => {
   const params = new URLSearchParams({
     startTimestamp: String(startTimestamp),
     endTimestamp: String(endTimestamp),
     limit: String(PAGE_LIMIT),
     referrer: "",
+    sortBy: "updatedAt",
+    sortDirection: "asc",
   });
   if (continuation) params.set("continuation", continuation);
   if (chainId !== undefined) params.set("chainId", String(chainId));
   return `https://api.relay.link/requests/v2?${params.toString()}`;
+};
+
+export const parseRelayRequestsResponse = (data: unknown): RelayRequestsResponse => {
+  if (!data || typeof data !== "object" || !Array.isArray((data as RelayRequestsResponse).requests)) {
+    throw new NonRetryableError("Relay API returned a response without a requests array.");
+  }
+  const response = data as RelayRequestsResponse;
+  const continuation = response.continuation;
+  if (continuation !== undefined && typeof continuation !== "string") {
+    throw new NonRetryableError("Relay API returned a non-string continuation token.");
+  }
+
+  for (const [index, request] of response.requests!.entries()) {
+    if (!request || typeof request !== "object" || Array.isArray(request)) {
+      throw new NonRetryableError(`Relay API returned an invalid request at index ${index}.`);
+    }
+    if (typeof request.id !== "string" || request.id.trim().length === 0) {
+      throw new NonRetryableError(`Relay API returned a request without an id at index ${index}.`);
+    }
+    if (
+      typeof request.updatedAt !== "string" ||
+      request.updatedAt.trim().length === 0 ||
+      !Number.isFinite(Date.parse(request.updatedAt))
+    ) {
+      throw new NonRetryableError(`Relay API returned a request with an invalid updatedAt at index ${index}.`);
+    }
+    if (
+      request.data !== undefined &&
+      (!request.data || typeof request.data !== "object" || Array.isArray(request.data))
+    ) {
+      throw new NonRetryableError(`Relay API returned a request with invalid data at index ${index}.`);
+    }
+  }
+
+  return response;
 };
 
 const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
@@ -184,7 +231,8 @@ const fetchRequestsByTime = async (
   startTimestamp: number,
   endTimestamp: number,
   continuation?: string,
-  chainId?: number
+  chainId?: number,
+  signal?: AbortSignal
 ): Promise<RelayRequestsResponse> => {
   const apiKey = process.env.RELAY_API_KEY;
   if (!apiKey) throw new Error("RELAY_API_KEY is required for Relay adapter requests.");
@@ -192,13 +240,15 @@ const fetchRequestsByTime = async (
   const url = makeRequestsUrl(startTimestamp, endTimestamp, continuation, chainId);
 
   for (let attempt = 0; attempt <= REQUEST_RETRIES; attempt++) {
+    throwIfAborted(signal);
     try {
       const response = await fetch(url, {
         timeout: REQUEST_TIMEOUT_MS,
         headers: { "x-api-key": apiKey },
+        signal,
       });
 
-      if (response.ok) return await response.json();
+      if (response.ok) return parseRelayRequestsResponse(await response.json());
 
       const retryable = response.status === 429 || response.status >= 500;
       const body = await response.text().catch(() => "");
@@ -216,15 +266,16 @@ const fetchRequestsByTime = async (
         `[relay] HTTP ${response.status}; retrying in ${Math.round(delay / 1000)}s ` +
           `(${attempt + 1}/${REQUEST_RETRIES}) for ts ${startTimestamp}-${endTimestamp}`
       );
-      await wait(delay);
+      await waitWithSignal(delay, signal);
     } catch (error: any) {
-      if (error?.retryable === false || attempt === REQUEST_RETRIES) throw error;
+      if (isAbortError(error) || signal?.aborted) throw error;
+      if (isNonRetryableError(error) || error?.retryable === false || attempt === REQUEST_RETRIES) throw error;
       const delay = Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
       console.warn(
         `[relay] ${error?.type ?? error?.name ?? "network"} error; retrying in ` +
           `${Math.round(delay / 1000)}s (${attempt + 1}/${REQUEST_RETRIES}) for ts ${startTimestamp}-${endTimestamp}`
       );
-      await wait(delay);
+      await waitWithSignal(delay, signal);
     }
   }
 
@@ -235,12 +286,13 @@ const rateLimitedFetchByTime = async (
   startTimestamp: number,
   endTimestamp: number,
   continuation?: string,
-  chainId?: number
+  chainId?: number,
+  signal?: AbortSignal
 ): Promise<RelayRequestsResponse> => {
   const currentRequest = requestQueue
     .catch(() => {})
-    .then(() => wait(REQUEST_INTERVAL_MS))
-    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation, chainId));
+    .then(() => waitWithSignal(REQUEST_INTERVAL_MS, signal))
+    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation, chainId, signal));
   requestQueue = currentRequest.then(
     () => undefined,
     () => undefined
@@ -252,17 +304,29 @@ export const forEachRequestsByTimePage = async (
   startTimestamp: number,
   endTimestamp: number,
   onPage: (requests: NonNullable<RelayRequestsResponse["requests"]>) => Promise<void> | void,
-  chainId?: number
+  chainId?: number,
+  signal?: AbortSignal
 ): Promise<{ pages: number; requests: number }> => {
   console.log(`Streaming requests for ts ${startTimestamp}-${endTimestamp}`);
 
   let continuation: string | undefined;
   let pageCount = 0;
   let totalRequests = 0;
+  const seenContinuations = new Set<string>();
 
   do {
-    const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation, chainId);
-    continuation = page.continuation || undefined;
+    throwIfAborted(signal);
+    const page = await rateLimitedFetchByTime(startTimestamp, endTimestamp, continuation, chainId, signal);
+    const nextContinuation = page.continuation || undefined;
+    if (nextContinuation) {
+      if (seenContinuations.has(nextContinuation)) {
+        throw new Error(
+          `Relay pagination repeated continuation ${nextContinuation} for ts ${startTimestamp}-${endTimestamp}.`
+        );
+      }
+      seenContinuations.add(nextContinuation);
+    }
+    continuation = nextContinuation;
     const reqs = page.requests ?? [];
 
     pageCount += 1;

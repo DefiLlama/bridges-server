@@ -1,7 +1,7 @@
 import bridgeNetworks from "../../data/bridgeNetworkData";
-import { chainMappings } from "../../helpers/tokenMappings";
 import { runAdapterHistorical } from "../../utils/adapter";
 import { getBlockByTimestamp } from "../../utils/blocks";
+import { normalizeAdapterChainName, resolveProviderChain } from "../../utils/chainResolver";
 import dayjs from "dayjs";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getLast24HVolume } from "../../utils/wrappa/postgres/query";
@@ -56,40 +56,36 @@ export const runAdaptersFromTo = async () => {
         const bridgeName = adapter.bridgeDbName;
         await Promise.all(
           adapter.chains.map(async (chain) => {
-            let nChain;
-            if (chainMappings[chain.toLowerCase()]) {
-              nChain = chainMappings[chain.toLowerCase()];
-            } else {
-              nChain = chain.toLowerCase();
-            }
-            if (nChain === adapter?.destinationChain?.toLowerCase()) return;
+            const adapterChain = normalizeAdapterChainName(chain);
+            const providerChain = resolveProviderChain(chain, bridgeName);
+            if (adapterChain === adapter?.destinationChain?.toLowerCase()) return;
             let startBlock;
             let endBlock;
             if (bridgeName === "ibc") {
-              startBlock = await getBlockByTimestamp(fromTimestamp, nChain as Chain, adapter, "First");
+              startBlock = await getBlockByTimestamp(fromTimestamp, providerChain as Chain, adapter, "First");
               if (!startBlock) {
                 console.error(`Could not find start block for ${chain} on ${bridgeName}`);
                 return;
               }
-              endBlock = await getBlockByTimestamp(toTimestamp, nChain as Chain, adapter, "Last");
+              endBlock = await getBlockByTimestamp(toTimestamp, providerChain as Chain, adapter, "Last");
               if (!endBlock) {
                 console.error(`Could not find end block for ${chain} on ${bridgeName}`);
                 return;
               }
             } else {
-              const blocks = await getBlocksForChain(nChain);
+              const blocks = await getBlocksForChain(providerChain);
               startBlock = blocks.startBlock;
               endBlock = blocks.endBlock;
             }
 
-            console.log(`Processing chain ${nChain} for ${bridgeName}`);
+            console.log(`Processing chain ${adapterChain} (${providerChain}) for ${bridgeName}`);
 
             if (!startBlock || !endBlock) {
-              console.error(`Could not find transactions with blocks for ${nChain} on ${bridgeName}`);
+              console.error(`Could not find transactions with blocks for ${providerChain} on ${bridgeName}`);
               return;
             }
 
-            await runAdapterHistorical(startBlock, endBlock, adapter.id, nChain, true, false, "upsert");
+            await runAdapterHistorical(startBlock, endBlock, adapter.id, adapterChain, true, false, "upsert");
           })
         );
       } catch (e) {

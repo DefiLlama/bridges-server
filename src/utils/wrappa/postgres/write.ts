@@ -344,17 +344,24 @@ export const insertTransactionRows = async (
   sql: postgres.TransactionSql<{}>,
   allowNullTxValues: boolean,
   transactions: TransactionInsertParams[],
-  onConflict: "ignore" | "error" | "upsert" = "error"
+  onConflict: "ignore" | "error" | "upsert" = "error",
+  rejectInvalid: boolean = false
 ) => {
   const validTransactions = transactions.flatMap((tx) => {
     let sanitized: TransactionInsertParams;
     try {
       sanitized = sanitizeTransactionParams(tx, allowNullTxValues);
     } catch (error) {
+      if (rejectInvalid) throw error;
       console.error(`[VALIDATION] Skipping invalid transaction: ${(error as Error).message}`);
       return [];
     }
     if (Number.isNaN(sanitized.ts)) {
+      if (rejectInvalid) {
+        throw new NonRetryableError(
+          `Invalid timestamp value ${sanitized.ts} for transaction ${sanitized.tx_hash ?? "without hash"}.`
+        );
+      }
       console.error(
         `Invalid timestamp value ${sanitized.ts} for transaction: bridge_id=${sanitized.bridge_id}, tx_hash=${sanitized.tx_hash}`
       );
@@ -362,6 +369,11 @@ export const insertTransactionRows = async (
     }
     const isValidTimestamp = sanitized.ts > 0 && sanitized.ts < 2147483647000;
     if (!isValidTimestamp) {
+      if (rejectInvalid) {
+        throw new NonRetryableError(
+          `Invalid timestamp value ${sanitized.ts} for transaction ${sanitized.tx_hash ?? "without hash"}.`
+        );
+      }
       console.error(
         `Invalid timestamp value ${sanitized.ts} for transaction: bridge_id=${sanitized.bridge_id}, tx_hash=${sanitized.tx_hash}`
       );

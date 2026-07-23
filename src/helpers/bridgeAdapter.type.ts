@@ -4,8 +4,12 @@ import { ethers } from "ethers";
 import { EventKeyMapping } from "../utils/types";
 import { EventData } from "../utils/types";
 
+export type AdapterRunContext = {
+  signal?: AbortSignal;
+};
+
 export type BridgeAdapter = {
-  [chain: string]: (fromTimestamp: number, toTimestamp: number) => Promise<EventData[]>;
+  [chain: string]: (fromTimestamp: number, toTimestamp: number, context?: AdapterRunContext) => Promise<EventData[]>;
 };
 
 export type AsyncBridgeAdapter = {

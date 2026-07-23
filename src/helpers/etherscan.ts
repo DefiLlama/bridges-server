@@ -1,5 +1,7 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
 import { isNonRetryableError, NonRetryableError } from "../utils/errors";
+import { claimDailyRequestBudget } from "../utils/cache";
+import { createHash } from "node:crypto";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -8,6 +10,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 export const EXPLORER_REQUEST_INTERVAL_MS = 350;
 export const EXPLORER_PAGE_SIZE = 1000;
 const MAX_EXPLORER_PAGES = 1000;
+const DEFAULT_ETHERSCAN_DAILY_REQUEST_BUDGET = 90_000;
 
 // Only chains served by the unified Etherscan V2 API belong here. Other explorers
 // must be configured explicitly instead of silently falling back to deprecated V1 URLs.
@@ -24,7 +27,26 @@ const etherscanV2ChainIds: Record<string, string> = {
   blast: "81457",
   taiko: "167000",
   mantle: "5000",
+  fraxtal: "252",
+  xdai: "100",
+  gnosis: "100",
+  op_bnb: "204",
+  opbnb: "204",
+  wc: "480",
+  "world chain": "480",
+  moonbeam: "1284",
+  apechain: "33139",
+  berachain: "80094",
+  sonic: "146",
+  unichain: "130",
+  abstract: "2741",
+  monad: "143",
+  hyperevm: "999",
+  sei: "1329",
+  megaeth: "4326",
 };
+
+const paidOnlyEtherscanChains = new Set(["bsc", "base", "optimism", "avax"]);
 
 type ExplorerConfig = {
   endpoint: string;
@@ -35,6 +57,7 @@ type ExplorerConfig = {
 const envSuffix = (chain: string) => chain.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
 
 export const getExplorerConfig = (chain: string, env: NodeJS.ProcessEnv = process.env): ExplorerConfig => {
+  chain = chain.trim().toLowerCase();
   const suffix = envSuffix(chain);
   const customEndpoint = env[`EXPLORER_API_URL_${suffix}`];
   if (customEndpoint) {
@@ -53,6 +76,12 @@ export const getExplorerConfig = (chain: string, env: NodeJS.ProcessEnv = proces
   if (!env.ETHERSCAN_API_KEY) {
     throw new NonRetryableError(`ETHERSCAN_API_KEY is required for Etherscan V2 chain ${chain}.`);
   }
+  const plan = (env.ETHERSCAN_PLAN || "free").toLowerCase();
+  if (paidOnlyEtherscanChains.has(chain) && plan === "free") {
+    throw new NonRetryableError(
+      `Etherscan Free Tier does not support txlist for ${chain}. Configure EXPLORER_API_URL_${suffix} or set ETHERSCAN_PLAN to the paid Jenkins plan.`
+    );
+  }
   return { endpoint: ETHERSCAN_V2_API, apiKey: env.ETHERSCAN_API_KEY, chainId };
 };
 
@@ -66,6 +95,44 @@ const isRetryableExplorerError = (error: any) => {
 };
 
 let nextRequestAt = 0;
+
+export type ExplorerRequestStats = {
+  requests: number;
+  successes: number;
+  failures: number;
+  cacheHits: number;
+};
+
+const explorerRequestStats = new Map<string, ExplorerRequestStats>();
+const explorerTransactionCache = new Map<string, Promise<any[]>>();
+
+const updateExplorerStats = (chain: string, field: keyof ExplorerRequestStats) => {
+  const stats = explorerRequestStats.get(chain) ?? { requests: 0, successes: 0, failures: 0, cacheHits: 0 };
+  stats[field]++;
+  explorerRequestStats.set(chain, stats);
+};
+
+export const getExplorerRequestStats = (): Record<string, ExplorerRequestStats> =>
+  Object.fromEntries([...explorerRequestStats.entries()].sort(([a], [b]) => a.localeCompare(b)));
+
+const getDailyRequestBudget = () => {
+  const parsed = Number(process.env.ETHERSCAN_DAILY_REQUEST_BUDGET ?? DEFAULT_ETHERSCAN_DAILY_REQUEST_BUDGET);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_ETHERSCAN_DAILY_REQUEST_BUDGET;
+};
+
+const getBudgetNamespace = (apiKey?: string) => {
+  if (!apiKey) return "etherscan";
+  const keyHash = createHash("sha256").update(apiKey).digest("hex").slice(0, 12);
+  return `etherscan_${keyHash}`;
+};
+
+const rememberExplorerRequest = (key: string, request: Promise<any[]>) => {
+  explorerTransactionCache.set(key, request);
+  const forget = () => {
+    if (explorerTransactionCache.get(key) === request) explorerTransactionCache.delete(key);
+  };
+  request.then(forget, forget);
+};
 
 export const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -131,6 +198,7 @@ export const getTxsBlockRangeEtherscan = async (
   endBlock: number,
   functionSignatureFilter?: FunctionSignatureFilter
 ) => {
+  chain = chain.trim().toLowerCase();
   const config = getExplorerConfig(chain);
   const fetchPage = async (page: number): Promise<any[]> => {
     try {
@@ -138,6 +206,17 @@ export const getTxsBlockRangeEtherscan = async (
         async (bail: (error: Error) => never) => {
           await getLock();
           try {
+            if (config.chainId) {
+              const budget = await claimDailyRequestBudget(getBudgetNamespace(config.apiKey), getDailyRequestBudget());
+              if (!budget.allowed) {
+                return bail(
+                  new NonRetryableError(
+                    `Local Etherscan daily request budget exhausted at ${budget.count} requests; refusing to consume the provider hard limit.`
+                  )
+                );
+              }
+            }
+            updateExplorerStats(chain, "requests");
             const response = await axios.get(config.endpoint, {
               timeout: REQUEST_TIMEOUT_MS,
               params: {
@@ -153,8 +232,11 @@ export const getTxsBlockRangeEtherscan = async (
                 apikey: config.apiKey,
               },
             });
-            return parseExplorerTransactions(response.data, address);
+            const transactions = parseExplorerTransactions(response.data, address);
+            updateExplorerStats(chain, "successes");
+            return transactions;
           } catch (error: any) {
+            updateExplorerStats(chain, "failures");
             if (isNonRetryableError(error) || !isRetryableExplorerError(error)) return bail(error);
             throw error;
           }
@@ -169,7 +251,18 @@ export const getTxsBlockRangeEtherscan = async (
     }
   };
 
-  const transactions = await collectPaginatedExplorerTransactions(fetchPage, `${chain}:${address}`);
+  const cacheKey = `${config.endpoint}|${
+    config.chainId ?? "custom"
+  }|${chain}|${address.toLowerCase()}|${startBlock}|${endBlock}`;
+  let transactionRequest = explorerTransactionCache.get(cacheKey);
+  if (transactionRequest) {
+    updateExplorerStats(chain, "cacheHits");
+  } else {
+    transactionRequest = collectPaginatedExplorerTransactions(fetchPage, `${chain}:${address}`);
+    rememberExplorerRequest(cacheKey, transactionRequest);
+    transactionRequest.catch(() => explorerTransactionCache.delete(cacheKey));
+  }
+  const transactions = await transactionRequest;
 
   return transactions.filter((tx: any) => {
     if (!functionSignatureFilter) return true;
