@@ -1,5 +1,12 @@
 import { FunctionSignatureFilter } from "./bridgeAdapter.type";
-import { formatError, isAbortError, NonRetryableError, throwIfAborted, waitWithSignal } from "../utils/errors";
+import {
+  formatError,
+  isAbortError,
+  isNonRetryableError,
+  NonRetryableError,
+  throwIfAborted,
+  waitWithSignal,
+} from "../utils/errors";
 const axios = require("axios");
 const retry = require("async-retry");
 
@@ -19,6 +26,11 @@ export const getMerlinRetryAfterMs = (error: any, attempt: number) => {
   const rateLimitReset = Number(error?.response?.headers?.["x-ratelimit-reset"]);
   if (Number.isFinite(rateLimitReset) && rateLimitReset >= 0) return rateLimitReset;
   return Math.min(2_000 * 2 ** attempt, 30_000);
+};
+
+export const toMerlinExhaustedError = (error: unknown): Error => {
+  if (isAbortError(error) || isNonRetryableError(error)) return error as Error;
+  return new NonRetryableError(`Merlin explorer retries exhausted: ${formatError(error)}`);
 };
 
 const getMerlinLock = async (signal?: AbortSignal) => {
@@ -82,7 +94,9 @@ const fetchMerlinPage = async (
       }
     },
     { retries: 4, factor: 1, minTimeout: 0, maxTimeout: 0 }
-  );
+  ).catch((error: unknown) => {
+    throw toMerlinExhaustedError(error);
+  });
 
 const collectMerlinTransactions = async (
   address: string,

@@ -3,6 +3,18 @@ import { NonRetryableError } from "../utils/errors";
 export type RelayCheckpointSource = "redis" | "bootstrap";
 export const RELAY_CHECKPOINT_MAX_FUTURE_SKEW_SECONDS = 60;
 
+export const getRelayBootstrapCheckpoint = (now: number, bootstrapLookbackSeconds: number): number => {
+  if (!Number.isSafeInteger(now) || now <= 0) {
+    throw new NonRetryableError(`Relay bootstrap time must be a positive Unix timestamp; received ${now}.`);
+  }
+  if (!Number.isSafeInteger(bootstrapLookbackSeconds) || bootstrapLookbackSeconds <= 0) {
+    throw new NonRetryableError(
+      `Relay bootstrap lookback must be a positive integer; received ${bootstrapLookbackSeconds}.`
+    );
+  }
+  return Math.max(1, now - bootstrapLookbackSeconds);
+};
+
 export const requireRelayChainId = (leg: "deposit" | "withdrawal", chainId?: number): number => {
   if (!Number.isInteger(chainId) || Number(chainId) <= 0) {
     throw new NonRetryableError(`Relay ${leg} is missing a valid chain ID`);

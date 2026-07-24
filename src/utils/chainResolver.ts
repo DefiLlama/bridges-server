@@ -1,4 +1,5 @@
 import { chainMappings } from "../helpers/tokenMappings";
+import { isDeadChain } from "@defillama/sdk/build/util/chainUtils";
 
 // Provider aliases are intentionally separate from token/IBC mappings. Kava and
 // Sei have both EVM networks and Cosmos zone IDs, so using the shared mapping for
@@ -40,6 +41,8 @@ export const providerChainAliases: Record<string, string> = {
   cronosevm: "cronos",
   cyber: "cyeth",
   dfk_chain: "dfk",
+  "defi oracle meta": "dfio_meta_main",
+  defi_oracle_meta: "dfio_meta_main",
   etherlink: "etlk",
   "function x": "functionx",
   gravity_bridge: "gravity",
@@ -77,6 +80,7 @@ export const providerChainAliases: Record<string, string> = {
   superposition: "spn",
   swell: "swellchain",
   tomo: "tomochain",
+  unchain: "unichain",
   viction: "tomochain",
   vinuchain: "vinu",
   wanchain: "wan",
@@ -96,3 +100,6 @@ export const resolveProviderChain = (chain: string, bridgeDbName?: string): stri
   if (bridgeDbName === "ibc") return chainMappings[normalized] ?? normalized;
   return providerChainAliases[normalized] ?? normalized;
 };
+
+export const isRetiredProviderChain = (chain: string, bridgeDbName?: string): boolean =>
+  isDeadChain(resolveProviderChain(chain, bridgeDbName));

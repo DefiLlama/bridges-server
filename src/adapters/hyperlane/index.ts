@@ -4,6 +4,7 @@ import { Chain } from "@defillama/sdk/build/general";
 import * as yaml from "js-yaml";
 
 import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { NonRetryableError } from "../../utils/errors";
 
 const baseUri = "https://raw.githubusercontent.com/hyperlane-xyz/hyperlane-registry/main";
 const kyveApiBaseUri = "https://data.services.hyperlane.xyz";
@@ -24,7 +25,7 @@ export async function setUp(): Promise<string[]> {
   return chains;
 }
 
-interface KyveEvent {
+export interface KyveEvent {
   blockNumber: number;
   chain: string;
   from: string;
@@ -36,47 +37,75 @@ interface KyveEvent {
   usdAmount: string;
 }
 
-export const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<any[]> => {
+type HyperlaneFetch = (
+  input: string,
+  init?: { headers?: Record<string, string> }
+) => Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  text(): Promise<string>;
+  json(): Promise<unknown>;
+}>;
+
+export const fetchHyperlaneEvents = async (
+  fromTimestamp: number,
+  toTimestamp: number,
+  fetchImpl: HyperlaneFetch = fetch as HyperlaneFetch
+): Promise<KyveEvent[]> => {
   const apiUrl = `${kyveApiBaseUri}/events?fromTimestamp=${fromTimestamp}&toTimestamp=${toTimestamp}`;
   console.log(apiUrl);
-  try {
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      console.error(`Error fetching data from Kyve API: ${response.statusText}`);
-      return [];
+  const response = await fetchImpl(apiUrl, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "defillama-bridges-server/1.0",
+    },
+  });
+  if (!response.ok) {
+    const responseBody = await response.text().catch(() => "");
+    const detail = responseBody.trim().slice(0, 300);
+    const message = `Hyperlane events API HTTP ${response.status} ${response.statusText}${detail ? `: ${detail}` : ""}`;
+    if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+      throw new NonRetryableError(message);
     }
-    const events = (await response.json()) as KyveEvent[];
+    throw new Error(message);
+  }
 
-    const txData: any[] = events.map((event) => {
-      let usdAmount: number | undefined = undefined;
-      try {
-        usdAmount = parseFloat(event.usdAmount);
-        if (isNaN(usdAmount)) {
-          usdAmount = undefined;
-        }
-      } catch {
+  const events = await response.json();
+  if (!Array.isArray(events)) {
+    throw new NonRetryableError("Hyperlane events API returned a non-array response.");
+  }
+  return events as KyveEvent[];
+};
+
+export const getEvents = async (fromTimestamp: number, toTimestamp: number): Promise<any[]> => {
+  const events = await fetchHyperlaneEvents(fromTimestamp, toTimestamp);
+  const txData: any[] = events.map((event) => {
+    let usdAmount: number | undefined = undefined;
+    try {
+      usdAmount = parseFloat(event.usdAmount);
+      if (isNaN(usdAmount)) {
         usdAmount = undefined;
       }
+    } catch {
+      usdAmount = undefined;
+    }
 
-      return {
-        blockNumber: event.blockNumber,
-        chain: event.chain,
-        from: event.from,
-        isDeposit: event.isDeposit,
-        timestamp: event.timestamp,
-        to: event.to,
-        token: event.token,
-        txHash: event.txHash,
-        amount: usdAmount,
-        isUSDVolume: true,
-      };
-    });
+    return {
+      blockNumber: event.blockNumber,
+      chain: event.chain,
+      from: event.from,
+      isDeposit: event.isDeposit,
+      timestamp: event.timestamp,
+      to: event.to,
+      token: event.token,
+      txHash: event.txHash,
+      amount: usdAmount,
+      isUSDVolume: true,
+    };
+  });
 
-    return txData;
-  } catch (error) {
-    console.error(`Error processing Kyve API response:`, error);
-    return [];
-  }
+  return txData;
 };
 
 export async function build(): Promise<BridgeAdapter> {

@@ -243,7 +243,7 @@ const InterchainTransferReceivedParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-const constructParams = (chain: SupportedChains) => {
+const constructParams = (chain: SupportedChains, providerChain: string = chain) => {
   const axelarContractAddress = axelarChains[chain];
 
   const gatewayAddy = axelarContractAddress.gateway;
@@ -307,7 +307,7 @@ const constructParams = (chain: SupportedChains) => {
     const interchainTransferSentEvent = {
       ...InterchainTransferSentParams,
       target: itsAddy,
-      chain: chain,
+      chain: providerChain,
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
@@ -324,7 +324,7 @@ const constructParams = (chain: SupportedChains) => {
     const interchainTransferReceivedEvent = {
       ...InterchainTransferReceivedParams,
       target: itsAddy,
-      chain: chain,
+      chain: providerChain,
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
         to: (log: any) => log.destinationAddress,
@@ -348,7 +348,7 @@ const constructParams = (chain: SupportedChains) => {
       interchainTransferSentEvent,
       interchainTransferReceivedEvent
     );
-    return await getTxDataFromEVMEventLogs("axelar", chain, fromBlock, toBlock, eventParams);
+    return await getTxDataFromEVMEventLogs("axelar", providerChain as any, fromBlock, toBlock, eventParams);
   };
 };
 const adapter: BridgeAdapter = {
@@ -370,7 +370,7 @@ const adapter: BridgeAdapter = {
   mantle: constructParams("mantle"),
   moonbeam: constructParams("moonbeam"),
   optimism: constructParams("optimism"),
-  plume: constructParams("plume"),
+  plume: constructParams("plume", "plume_mainnet"),
   polygon: constructParams("polygon"),
   scroll: constructParams("scroll"),
   monad: constructParams("monad"),

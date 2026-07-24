@@ -79,7 +79,7 @@ const withdrawParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
-const constructParams = (chain: SupportedChains) => {
+const constructParams = (chain: SupportedChains, providerChain: string = chain) => {
   const eventParams: PartialContractEventParams[] = [];
 
   const token = nativeTokenAddress[chain];
@@ -97,7 +97,7 @@ const constructParams = (chain: SupportedChains) => {
   eventParams.push(finalDepositParams, finalWithdrawParams);
 
   return async (fromBlock: number, toBlock: number) =>
-    getTxDataFromEVMEventLogs("debridgedln", chain, fromBlock, toBlock, eventParams);
+    getTxDataFromEVMEventLogs("debridgedln", providerChain as any, fromBlock, toBlock, eventParams);
 };
 
 type ApiSolanaEvent = {
@@ -158,7 +158,7 @@ const adapter: BridgeAdapter = {
   solana: getSolanaEvents,
   sonic: constructParams("sonic"),
   plasma: constructParams("plasma"),
-  plume: constructParams("plume"),
+  plume: constructParams("plume", "plume_mainnet"),
   monad: constructParams("monad"),
   robinhood: constructParams("robinhood"),
 };

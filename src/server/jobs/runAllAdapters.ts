@@ -5,6 +5,7 @@ import { shouldSkipScheduledBridge } from "../../utils/bridgePolicy";
 import { PromisePool } from "@supercharge/promise-pool";
 import { isAbortError, throwIfAborted } from "../../utils/errors";
 import { classifyAdapterFailure, evaluateAdapterQuality } from "./adapterQuality";
+import { formatDiscordErrorDigest, sendDiscordText } from "../../utils/discord";
 
 type RunAllAdaptersSnapshot = {
   total: number;
@@ -63,6 +64,7 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
   const shuffledBridgeNetworks = [...bridgeNetworks].sort(() => Math.random() - 0.5);
   const activeAdapters = new Set<string>();
   const failedAdapters: string[] = [];
+  const failureNotifications: string[] = [];
   const failureCategories: Record<string, number> = {};
   let succeeded = 0;
   let failed = 0;
@@ -81,7 +83,7 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
       updateSnapshot({ started, active: Array.from(activeAdapters) });
       console.log(`[ADAPTER] START ${adapter.bridgeDbName}`);
       try {
-        await runAdapterToCurrentBlock(adapter, true, "upsert", storedBlocks, signal);
+        await runAdapterToCurrentBlock(adapter, true, "upsert", storedBlocks, signal, failureNotifications);
         throwIfAborted(signal);
         succeeded++;
         updateSnapshot({ succeeded });
@@ -117,6 +119,8 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
     )}%; result=${result}`
   );
   console.log(`[ADAPTERS] Failure categories: ${JSON.stringify(failureCategories)}`);
+  const discordDigest = formatDiscordErrorDigest(failureNotifications);
+  if (discordDigest) await sendDiscordText(discordDigest);
   if (quality.exceeded) {
     throw new Error(
       `Adapter quality gate failed: ${failed}/${total} adapters failed (${(quality.failedRatio * 100).toFixed(

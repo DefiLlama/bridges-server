@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { makeRequestsUrl, parseRelayRequestsResponse } from "../adapters/relay";
+import { makeRequestsUrl, parseRelayRequestsResponse, slugToChainId } from "../adapters/relay";
 
 test("Relay windows are filtered and sorted by updatedAt", () => {
   const url = new URL(makeRequestsUrl(100, 200, "next", 1));
@@ -10,6 +10,12 @@ test("Relay windows are filtered and sorted by updatedAt", () => {
   assert.equal(url.searchParams.get("sortDirection"), "asc");
   assert.equal(url.searchParams.get("continuation"), "next");
   assert.equal(url.searchParams.get("chainId"), "1");
+});
+
+test("Relay maps currently supported non-EVM and emerging chain IDs", () => {
+  assert.equal(slugToChainId.hyperliquid, 1337);
+  assert.equal(slugToChainId.ronin, 2020);
+  assert.equal(slugToChainId.somnia, 5031);
 });
 
 test("Relay rejects malformed successful responses before checkpoint advancement", () => {

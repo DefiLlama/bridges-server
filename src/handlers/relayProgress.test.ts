@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { requireRelayChainId, resolveRelayWindowFromCheckpoint } from "./relayProgress";
+import { getRelayBootstrapCheckpoint, requireRelayChainId, resolveRelayWindowFromCheckpoint } from "./relayProgress";
 
 const defaults = {
   now: 10_000,
@@ -27,6 +27,31 @@ test("Relay bootstraps from the configured lookback when the Redis key is missin
     source: "bootstrap",
     overlap: 0,
   });
+});
+
+test("Relay persists a stable bootstrap low-water mark across failed hourly runs", () => {
+  const checkpoint = getRelayBootstrapCheckpoint(defaults.now, defaults.bootstrapLookbackSeconds);
+  const firstRun = resolveRelayWindowFromCheckpoint({
+    ...defaults,
+    checkpoint,
+    source: "redis",
+  });
+  const nextHourlyRun = resolveRelayWindowFromCheckpoint({
+    ...defaults,
+    now: defaults.now + 3_600,
+    checkpoint,
+    source: "redis",
+  });
+
+  assert.equal(firstRun.startTs, 7_700);
+  assert.equal(nextHourlyRun.startTs, firstRun.startTs);
+  assert.equal(nextHourlyRun.endTs, defaults.now + 3_600);
+});
+
+test("Relay validates bootstrap checkpoint inputs", () => {
+  assert.equal(getRelayBootstrapCheckpoint(10_000, 2_000), 8_000);
+  assert.throws(() => getRelayBootstrapCheckpoint(0, 2_000), /positive Unix timestamp/);
+  assert.throws(() => getRelayBootstrapCheckpoint(10_000, 0), /positive integer/);
 });
 
 test("Relay fails closed with a far-future checkpoint", () => {

@@ -1,4 +1,4 @@
-import { getLatestBlock, getLatestBlockNumber, getTimestampBySolanaSlot } from "./blocks";
+import { getLatestBlockNumber } from "./blocks";
 import { Chain } from "@defillama/sdk/build/general";
 import { sql } from "./db";
 import { getBridgeID } from "./wrappa/postgres/query";
@@ -15,11 +15,11 @@ import { BridgeNetwork } from "../data/types";
 import { groupBy } from "lodash";
 import { getProvider } from "./provider";
 import { sendDiscordText } from "./discord";
-import { getConnection } from "../helpers/solana";
+import { getConnection, resolveSolanaEventTimestamps } from "../helpers/solana";
 import { getCache, setCache } from "./cache";
 import { normalizeChain } from "./normalizeChain";
 import { formatError, isAbortError, isNonRetryableError, throwIfAborted } from "./errors";
-import { resolveProviderChain } from "./chainResolver";
+import { isRetiredProviderChain, resolveProviderChain } from "./chainResolver";
 import { bridgesToSkip, shouldSkipBridge } from "./bridgePolicy";
 const retry = require("async-retry");
 
@@ -137,7 +137,8 @@ export const runAdapterToCurrentBlock = async (
   allowNullTxValues: boolean = false,
   onConflict: "ignore" | "error" | "upsert" = "error",
   lastRecordedBlocks: Record<string, RecordedBlocks> = {},
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  failureNotifications?: string[]
 ) => {
   throwIfAborted(signal);
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
@@ -181,6 +182,10 @@ export const runAdapterToCurrentBlock = async (
       };
       console.log(`[CHAIN] START ${bridgeDbName}:${chain}`);
       const chainContractsAreOn = resolveProviderChain(chain, bridgeDbName);
+      if (isRetiredProviderChain(chain, bridgeDbName)) {
+        logChainResult("SKIPPED", `retired chain ${chainContractsAreOn}`);
+        return;
+      }
 
       let bridgeID: string;
       try {
@@ -192,6 +197,7 @@ export const runAdapterToCurrentBlock = async (
         const detail = formatError(e);
         console.error(`[ERROR] Failed to get bridgeID for ${bridgeDbName} on chain ${chain}. Error: ${detail}`);
         chainFailures.push(`${chain}: bridge ID lookup failed`);
+        failureNotifications?.push(`${bridgeDbName}:${chain}: bridge ID lookup failed`);
         logChainResult("FAILED", "bridge ID lookup failed");
         await insertErrorRow({
           ts: currentTimestamp,
@@ -216,6 +222,7 @@ export const runAdapterToCurrentBlock = async (
       if (startBlock === undefined || endBlock === undefined) {
         console.warn(`[WARN] Skipping ${bridgeDbName} on ${chain} because blocks are undefined.`);
         chainFailures.push(`${chain}: block range unavailable`);
+        failureNotifications?.push(`${bridgeDbName}:${chain}: block range unavailable`);
         logChainResult("FAILED", "block range unavailable");
         return;
       }
@@ -234,7 +241,8 @@ export const runAdapterToCurrentBlock = async (
             true,
             onConflict,
             true,
-            signal
+            signal,
+            failureNotifications
           );
           startBlock += step;
         }
@@ -397,7 +405,8 @@ export const runAdapterHistorical = async (
   throwOnFailedInsert: boolean = true,
   onConflict: "ignore" | "error" | "upsert" = "error",
   updateProgress: boolean = true,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  failureNotifications?: string[]
 ) => {
   throwIfAborted(signal);
   const currentTimestamp = await getCurrentUnixTimestamp();
@@ -555,27 +564,10 @@ export const runAdapterHistorical = async (
                 let blockTimestamps = {} as { [bucket: number]: number };
                 let block = {} as { timestamp: number; number: number };
 
-                let latestSolanaBlock = null;
-                let averageBlockTimestamp = null;
-
                 let solanaTimestampsMap = {} as { [blockNumber: number]: number };
 
                 if (chain === "solana" && !["debridgedln", "portal", "garden", "relay"].includes(bridgeDbName)) {
-                  latestSolanaBlock = await getLatestBlock("solana");
-                  const connection = getConnection();
-
-                  const blockTimePromises = eventLogs.map(async (event: any) => {
-                    const blockTime = await retry(async () => connection.getBlockTime(event.blockNumber), {
-                      retries: 3,
-                    });
-                    return { blockNumber: event.blockNumber, blockTime, chainOverride: event.chainOverride };
-                  });
-
-                  const results = await Promise.all(blockTimePromises);
-
-                  results.forEach(({ blockNumber, blockTime, chainOverride: _chainOverride }) => {
-                    solanaTimestampsMap[blockNumber] = blockTime ?? 0;
-                  });
+                  solanaTimestampsMap = await resolveSolanaEventTimestamps(eventLogs, getConnection(), signal);
                 }
 
                 for (let i = 0; i < 10; i++) {
@@ -590,7 +582,7 @@ export const runAdapterHistorical = async (
                           break;
                         }
                       } else if (chain === "solana") {
-                        blockTimestamps[i] = averageBlockTimestamp as any;
+                        blockTimestamps[i] = 0;
                         break;
                       } else {
                         blockTimestamps[i] = currentTimestamp;
@@ -733,6 +725,7 @@ export const runAdapterHistorical = async (
             keyword: "missingBlocks",
             error: errString,
           });
+          failureNotifications?.push(errString);
           if (throwOnFailedInsert) throw e;
           return;
         }
@@ -750,7 +743,11 @@ export const runAdapterHistorical = async (
             keyword: "missingBlocks",
             error: errString,
           });
-          await sendDiscordText(errString);
+          if (failureNotifications) {
+            failureNotifications.push(errString);
+          } else {
+            await sendDiscordText(errString);
+          }
           if (throwOnFailedInsert) {
             throw new Error(errString);
           }

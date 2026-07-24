@@ -12,6 +12,7 @@ import {
   ibcGetBlockFromTimestamp,
 } from "../adapters/ibc";
 import bridgeNetworkData from "../data/bridgeNetworkData";
+import { getProvider } from "./provider";
 
 const retry = require("async-retry");
 
@@ -62,6 +63,24 @@ const lookupBlock = async (timestamp: number, { chain }: { chain: Chain }) => {
   }
 };
 
+type LatestBlockProvider = {
+  getBlockNumber(): Promise<number>;
+  getBlock(blockNumber: number): Promise<{ timestamp?: number | string } | null>;
+};
+
+export const getLatestBlockFromProvider = async (
+  chain: string,
+  provider: LatestBlockProvider
+): Promise<{ number: number; timestamp: number }> => {
+  const number = await provider.getBlockNumber();
+  const block = await provider.getBlock(number);
+  const timestamp = Number(block?.timestamp);
+  if (!Number.isSafeInteger(number) || number < 0 || !Number.isFinite(timestamp) || timestamp <= 0) {
+    throw new Error(`RPC returned an invalid latest block for ${chain}.`);
+  }
+  return { number, timestamp };
+};
+
 async function getBlockTime(slotNumber: number) {
   const response = await connection.getBlockTime(slotNumber);
   return response;
@@ -93,7 +112,19 @@ export async function getLatestBlock(
   }
 
   const timestamp = Math.floor(Date.now() / 1000) - 60;
-  return await lookupBlock(timestamp, { chain });
+  try {
+    return await lookupBlock(timestamp, { chain });
+  } catch (lookupError) {
+    try {
+      const block = await getLatestBlockFromProvider(chain, getProvider(chain) as LatestBlockProvider);
+      console.warn(
+        `[BLOCKS] Timestamp lookup is unavailable for ${chain}; using RPC latest block ${block.number} instead.`
+      );
+      return block;
+    } catch {
+      throw lookupError;
+    }
+  }
 }
 
 export async function getBlockByTimestamp(

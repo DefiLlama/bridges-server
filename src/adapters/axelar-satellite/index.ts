@@ -19,6 +19,7 @@ import {
   throwIfAborted,
   waitWithSignal,
 } from "../../utils/errors";
+import { ConsecutiveFailureCircuitBreaker } from "../../helpers/circuitBreaker";
 const retry = require("async-retry");
 
 const AXELAR_API_URL = "https://api.axelarscan.io/";
@@ -26,11 +27,18 @@ const AXELAR_REQUEST_TIMEOUT_MS = 30_000;
 const AXELAR_REQUEST_INTERVAL_MS = 350;
 const AXELAR_REQUEST_CONCURRENCY = 3;
 const AXELAR_REQUEST_RETRIES = 3;
+const AXELAR_CIRCUIT_FAILURE_THRESHOLD = 3;
+const AXELAR_CIRCUIT_COOLDOWN_MS = 10 * 60 * 1000;
 
 let activeAxelarRequests = 0;
 let nextAxelarRequestAt = 0;
 const axelarWaiters: Array<() => void> = [];
 let assetsPromise: Promise<any[]> | undefined;
+const axelarCircuit = new ConsecutiveFailureCircuitBreaker(
+  "Axelarscan",
+  AXELAR_CIRCUIT_FAILURE_THRESHOLD,
+  AXELAR_CIRCUIT_COOLDOWN_MS
+);
 
 const acquireAxelarSlot = async (signal?: AbortSignal) => {
   throwIfAborted(signal);
@@ -82,8 +90,10 @@ const fetchAxelar = async <T>(body: Record<string, unknown>, signal?: AbortSigna
       let acquired = false;
       try {
         throwIfAborted(signal);
+        axelarCircuit.assertAvailable();
         await acquireAxelarSlot(signal);
         acquired = true;
+        axelarCircuit.assertAvailable();
         const response = await fetch(AXELAR_API_URL, {
           method: "POST",
           headers: {
@@ -95,13 +105,21 @@ const fetchAxelar = async <T>(body: Record<string, unknown>, signal?: AbortSigna
         });
         if (!response.ok) {
           const responseBody = await response.text().catch(() => "");
-          const error =
-            response.status !== 429 && response.status < 500
-              ? new NonRetryableError(`Axelarscan HTTP ${response.status}: ${responseBody.slice(0, 300)}`)
-              : new Error(`Axelarscan HTTP ${response.status}: ${responseBody.slice(0, 300)}`);
+          const message = `Axelarscan HTTP ${response.status}: ${responseBody.slice(0, 300)}`;
+          let error: Error;
+          if (response.status >= 500 && axelarCircuit.recordFailure()) {
+            error = new NonRetryableError(
+              `${message}; circuit opened after ${AXELAR_CIRCUIT_FAILURE_THRESHOLD} consecutive server failures.`
+            );
+          } else {
+            error =
+              response.status !== 429 && response.status < 500 ? new NonRetryableError(message) : new Error(message);
+          }
           throw error;
         }
-        return (await response.json()) as T;
+        const result = (await response.json()) as T;
+        axelarCircuit.recordSuccess();
+        return result;
       } catch (error) {
         if (isAbortError(error) || signal?.aborted || isNonRetryableError(error)) return bail(error as Error);
         throw error;

@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
 import {
   RelayCheckpointSource,
+  getRelayBootstrapCheckpoint,
   requireRelayChainId,
   resolveRelayWindowFromCheckpoint,
   validateRelayCheckpoint,
@@ -81,9 +82,18 @@ const getLatestRelayCheckpoint = async (
   source: RelayCheckpointSource;
 }> => {
   const durableCheckpoint = await getDurableCheckpoint(RELAY_CHECKPOINT_KEY);
-  return durableCheckpoint !== null
-    ? { checkpoint: validateRelayCheckpoint(durableCheckpoint, now), source: "redis" }
-    : { checkpoint: null, source: "bootstrap" };
+  if (durableCheckpoint !== null) {
+    return { checkpoint: validateRelayCheckpoint(durableCheckpoint, now), source: "redis" };
+  }
+
+  const bootstrapCheckpoint = getRelayBootstrapCheckpoint(now, BOOTSTRAP_LOOKBACK_HOURS * 60 * 60);
+  const storedCheckpoint = await advanceDurableCheckpoint(RELAY_CHECKPOINT_KEY, bootstrapCheckpoint);
+  console.log(
+    `Relay bootstrap checkpoint initialized in Redis: ${dayjs
+      .unix(storedCheckpoint)
+      .toISOString()} (${RELAY_CHECKPOINT_KEY})`
+  );
+  return { checkpoint: validateRelayCheckpoint(storedCheckpoint, now), source: "redis" };
 };
 
 const resolveWindow = async () => {
