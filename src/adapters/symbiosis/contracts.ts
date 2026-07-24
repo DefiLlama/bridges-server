@@ -251,4 +251,14 @@ export const contracts: { chainId: ChainId; portal: string; synthesis: string }[
     portal: "0x0000000000000000000000000000000000000000",
     synthesis: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
   },
+  {
+    chainId: 9,
+    portal: "0x003d9F9666853fD4A10351FF5364c602470A7cF6",
+    synthesis: "0x004E53ED63b674B1e64Bed32eF037e1f94fc1996",
+  },
+  {
+    chainId: 4217,
+    portal: "0x5Aa5f7f84eD0E5db0a4a85C3947eA16B53352FD4",
+    synthesis: "0x0000000000000000000000000000000000000000",
+  },
 ] as const;
