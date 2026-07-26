@@ -31,7 +31,7 @@ export const maxBlocksToQueryByChain = {
   scroll: 2000,
   mode: 2000,
   mantle: 2000,
-  "b2-mainnet": 2000,
+  bsquared: 2000,
   berachain: 3000,
   hyperliquid: 3000,
   op_bnb: 5000,

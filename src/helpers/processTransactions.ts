@@ -8,6 +8,7 @@ import { PromisePool } from "@supercharge/promise-pool";
 import { getProvider } from "../utils/provider";
 import { incrementGetLogsCount } from "../utils/cache";
 import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
+import { resolveProviderChain } from "../utils/chainResolver";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -87,7 +88,7 @@ export const getTxDataFromEVMEventLogs = async (
       } = params;
       const targetValue = target;
       // if this is ever used, need to also overwrite fromBlock and toBlock
-      const overriddenChain = chain ? chain : chainContractsAreOn;
+      const overriddenChain = resolveProviderChain(chain ?? chainContractsAreOn, adapterName);
       if (isTransfer) {
         if (!target) {
           throw new Error(
@@ -152,6 +153,7 @@ export const getTxDataFromEVMEventLogs = async (
               toBlock: toBlock,
               topics: topics as string[],
               chain: overriddenChain,
+              provider,
             })
           ).output;
           break;

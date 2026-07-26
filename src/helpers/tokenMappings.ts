@@ -185,6 +185,8 @@ export const chainMappings: Record<string, string> = {
   polygonzkevm: "polygon_zkevm",
   "arbitrum nova": "arbitrum_nova",
   rootstock: "rsk",
+  // Price aggregation uses this internal namespace; provider resolution keeps
+  // both bsquared and b2-mainnet on the SDK's canonical bsquared provider.
   bsquared: "b2-mainnet",
   "x layer": "xlayer",
   x_layer: "xlayer",

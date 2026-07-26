@@ -9,6 +9,18 @@ test("normal adapters resolve EVM aliases without leaking Cosmos zone IDs", () =
   assert.equal(resolveProviderChain("PGN (Public Goods Network)", "layerswap"), "pgn");
   assert.equal(resolveProviderChain("Unchain", "butternetwork"), "unichain");
   assert.equal(resolveProviderChain("Defi Oracle Meta", "dbis-gru"), "dfio_meta_main");
+  assert.equal(resolveProviderChain("Ape", "stargate"), "apechain");
+  assert.equal(resolveProviderChain("Bera", "stargate"), "berachain");
+  assert.equal(resolveProviderChain("Iota", "stargate"), "iotaevm");
+  assert.equal(resolveProviderChain("Kaia", "stargate"), "klaytn");
+  assert.equal(resolveProviderChain("Lightlink", "stargate"), "lightlink_phoenix");
+  assert.equal(resolveProviderChain("Plume", "stargate"), "plume_mainnet");
+});
+
+test("B2 adapter and internal names use the SDK bsquared provider", () => {
+  assert.equal(resolveProviderChain("bsquared", "minibridge"), "bsquared");
+  assert.equal(resolveProviderChain("b2-mainnet", "oooo"), "bsquared");
+  assert.equal(resolveProviderChain("B2 Mainnet", "bunnyfi"), "bsquared");
 });
 
 test("IBC adapters still resolve Cosmos zone IDs", () => {

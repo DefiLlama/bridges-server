@@ -20,6 +20,9 @@ const REQUEST_MAX_RETRY_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 60_000;
 const REQUEST_INTERVAL_MS = 250;
 const MAX_PAGES_PER_WINDOW = 5_000;
+const RELAY_CHAINS_URL = "https://api.relay.link/chains";
+
+export type RelayChainCatalog = Record<number, string>;
 
 /**
  * Relay is a cross-chain payments system that enables low cost instant bridging and cross-chain execution.
@@ -135,6 +138,54 @@ export const parseRelayRequestsResponse = (data: unknown): RelayRequestsResponse
   }
 
   return response;
+};
+
+export const parseRelayChainsResponse = (data: unknown): RelayChainCatalog => {
+  if (!data || typeof data !== "object" || !Array.isArray((data as { chains?: unknown }).chains)) {
+    throw new NonRetryableError("Relay API returned a chain catalog without a chains array.");
+  }
+
+  const catalog: RelayChainCatalog = {};
+  for (const [index, chain] of (data as { chains: unknown[] }).chains.entries()) {
+    if (!chain || typeof chain !== "object" || Array.isArray(chain)) {
+      throw new NonRetryableError(`Relay API returned an invalid chain at index ${index}.`);
+    }
+
+    const { id, name } = chain as { id?: unknown; name?: unknown };
+    if (!Number.isSafeInteger(id) || Number(id) <= 0) {
+      throw new NonRetryableError(`Relay API returned a chain with an invalid id at index ${index}.`);
+    }
+    if (typeof name !== "string" || name.trim().length === 0) {
+      throw new NonRetryableError(`Relay API returned a chain without a name at index ${index}.`);
+    }
+    if (catalog[Number(id)] !== undefined) {
+      throw new NonRetryableError(`Relay API returned duplicate chain ID ${id}.`);
+    }
+
+    catalog[Number(id)] = name.trim().toLowerCase();
+  }
+
+  if (Object.keys(catalog).length === 0) {
+    throw new NonRetryableError("Relay API returned an empty chain catalog.");
+  }
+  return catalog;
+};
+
+export const serializeRelayChainCatalog = (catalog: RelayChainCatalog) => ({
+  chains: Object.entries(catalog).map(([id, name]) => ({ id: Number(id), name })),
+});
+
+export const fetchRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCatalog> => {
+  throwIfAborted(signal);
+  const response = await fetch(RELAY_CHAINS_URL, {
+    timeout: REQUEST_TIMEOUT_MS,
+    signal,
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Relay chain catalog request failed: HTTP ${response.status} ${body}`);
+  }
+  return parseRelayChainsResponse(await response.json());
 };
 
 const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {

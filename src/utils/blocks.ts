@@ -13,8 +13,11 @@ import {
 } from "../adapters/ibc";
 import bridgeNetworkData from "../data/bridgeNetworkData";
 import { getProvider } from "./provider";
+import { createAbortError, isAbortError, throwIfAborted } from "./errors";
 
 const retry = require("async-retry");
+const LATEST_BLOCK_RPC_TIMEOUT_MS = 10_000;
+const LATEST_BLOCK_TIMESTAMP_TIMEOUT_MS = 15_000;
 
 const connection = getConnection();
 
@@ -68,17 +71,86 @@ type LatestBlockProvider = {
   getBlock(blockNumber: number): Promise<{ timestamp?: number | string } | null>;
 };
 
+const runWithTimeoutAndSignal = <T>(
+  operation: () => Promise<T>,
+  timeoutMs: number,
+  signal: AbortSignal | undefined,
+  label: string
+): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    throwIfAborted(signal);
+    let settled = false;
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", onAbort);
+      callback();
+    };
+    const onAbort = () => finish(() => reject(createAbortError(`${label} aborted`)));
+    const timeout = setTimeout(
+      () => finish(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`))),
+      timeoutMs
+    );
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+    if (settled) return;
+
+    Promise.resolve()
+      .then(operation)
+      .then(
+        (value) => finish(() => resolve(value)),
+        (error) => finish(() => reject(error))
+      );
+  });
+
 export const getLatestBlockFromProvider = async (
   chain: string,
-  provider: LatestBlockProvider
+  provider: LatestBlockProvider,
+  signal?: AbortSignal,
+  timeoutMs: number = LATEST_BLOCK_RPC_TIMEOUT_MS
 ): Promise<{ number: number; timestamp: number }> => {
-  const number = await provider.getBlockNumber();
-  const block = await provider.getBlock(number);
-  const timestamp = Number(block?.timestamp);
-  if (!Number.isSafeInteger(number) || number < 0 || !Number.isFinite(timestamp) || timestamp <= 0) {
-    throw new Error(`RPC returned an invalid latest block for ${chain}.`);
+  return runWithTimeoutAndSignal(
+    async () => {
+      const number = await provider.getBlockNumber();
+      throwIfAborted(signal);
+      const block = await provider.getBlock(number);
+      const timestamp = Number(block?.timestamp);
+      if (!Number.isSafeInteger(number) || number < 0 || !Number.isFinite(timestamp) || timestamp <= 0) {
+        throw new Error(`RPC returned an invalid latest block for ${chain}.`);
+      }
+      return { number, timestamp };
+    },
+    timeoutMs,
+    signal,
+    `RPC latest-block lookup for ${chain}`
+  );
+};
+
+export const getLatestEvmBlock = async (
+  chain: string,
+  getRpcProvider: () => LatestBlockProvider | null | undefined,
+  lookupByTimestamp: () => Promise<{ number: number; timestamp: number }>,
+  signal?: AbortSignal,
+  rpcTimeoutMs: number = LATEST_BLOCK_RPC_TIMEOUT_MS,
+  timestampTimeoutMs: number = LATEST_BLOCK_TIMESTAMP_TIMEOUT_MS
+): Promise<{ number: number; timestamp: number }> => {
+  throwIfAborted(signal);
+  try {
+    const provider = getRpcProvider();
+    if (!provider) throw new Error(`No RPC provider configured for ${chain}.`);
+    return await getLatestBlockFromProvider(chain, provider, signal, rpcTimeoutMs);
+  } catch (rpcError) {
+    if (isAbortError(rpcError) || signal?.aborted) throw rpcError;
+    console.warn(`[BLOCKS] RPC latest block is unavailable for ${chain}; falling back to timestamp lookup.`);
+    throwIfAborted(signal);
+    return await runWithTimeoutAndSignal(
+      lookupByTimestamp,
+      timestampTimeoutMs,
+      signal,
+      `Timestamp latest-block lookup for ${chain}`
+    );
   }
-  return { number, timestamp };
 };
 
 async function getBlockTime(slotNumber: number) {
@@ -91,6 +163,7 @@ export async function getLatestBlock(
   bridge?: string,
   signal?: AbortSignal
 ): Promise<{ number: number; timestamp: number }> {
+  throwIfAborted(signal);
   if (chain === "sui") {
     const client = getClient();
     const seqNumber = await client.getLatestCheckpointSequenceNumber();
@@ -112,19 +185,12 @@ export async function getLatestBlock(
   }
 
   const timestamp = Math.floor(Date.now() / 1000) - 60;
-  try {
-    return await lookupBlock(timestamp, { chain });
-  } catch (lookupError) {
-    try {
-      const block = await getLatestBlockFromProvider(chain, getProvider(chain) as LatestBlockProvider);
-      console.warn(
-        `[BLOCKS] Timestamp lookup is unavailable for ${chain}; using RPC latest block ${block.number} instead.`
-      );
-      return block;
-    } catch {
-      throw lookupError;
-    }
-  }
+  return getLatestEvmBlock(
+    chain,
+    () => getProvider(chain) as LatestBlockProvider | null | undefined,
+    () => lookupBlock(timestamp, { chain }),
+    signal
+  );
 }
 
 export async function getBlockByTimestamp(

@@ -1,5 +1,13 @@
 import { wrapScheduledLambda } from "../utils/wrap";
-import adapter, { forEachRequestsByTimePage, convertRequestToEvent, chainIdToSlug } from "../adapters/relay";
+import adapter, {
+  RelayChainCatalog,
+  chainIdToSlug,
+  convertRequestToEvent,
+  fetchRelayChainCatalog,
+  forEachRequestsByTimePage,
+  parseRelayChainsResponse,
+  serializeRelayChainCatalog,
+} from "../adapters/relay";
 import { sql } from "../utils/db";
 import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
@@ -7,19 +15,19 @@ import dayjs from "dayjs";
 import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
 import {
   RelayCheckpointSource,
-  getRelayBootstrapCheckpoint,
   requireRelayChainId,
   resolveRelayWindowFromCheckpoint,
   validateRelayCheckpoint,
 } from "./relayProgress";
-import { advanceDurableCheckpoint, getDurableCheckpoint } from "../utils/cache";
+import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } from "../utils/cache";
 
 const HOURS_CONCURRENCY = 4;
 const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
-const BOOTSTRAP_LOOKBACK_HOURS = 48;
+const INITIAL_LOOKBACK_HOURS = 48;
 const MAX_CATCHUP_HOURS = 4;
 const INSERT_BATCH_PAGES = 10;
 const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
+const RELAY_CHAIN_CATALOG_CACHE_KEY = "relay:chain_catalog:last_good";
 
 type RelayBridgeIds = Record<string, string | undefined>;
 
@@ -65,8 +73,35 @@ const splitHourWindows = (startTs: number, endTs: number): Array<[number, number
   return windows;
 };
 
-const loadRelayBridgeIds = async (): Promise<RelayBridgeIds> => {
-  await insertConfigEntriesForAdapter(adapter, "relay");
+const loadRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCatalog> => {
+  try {
+    const liveCatalog = await fetchRelayChainCatalog(signal);
+    await setCache(RELAY_CHAIN_CATALOG_CACHE_KEY, serializeRelayChainCatalog(liveCatalog), null);
+    console.log(`Loaded ${Object.keys(liveCatalog).length} Relay chains from the live catalog.`);
+    return { ...chainIdToSlug, ...liveCatalog };
+  } catch (error) {
+    throwIfAborted(signal);
+    console.warn(`Relay live chain catalog failed: ${formatError(error)}`);
+  }
+
+  const cachedCatalog = await getCache(RELAY_CHAIN_CATALOG_CACHE_KEY);
+  if (cachedCatalog !== null) {
+    try {
+      const parsedCatalog = parseRelayChainsResponse(cachedCatalog);
+      console.warn(`Using ${Object.keys(parsedCatalog).length} Relay chains from the Redis last-known-good catalog.`);
+      return { ...chainIdToSlug, ...parsedCatalog };
+    } catch (error) {
+      console.warn(`Relay Redis chain catalog is invalid: ${formatError(error)}`);
+    }
+  }
+
+  console.warn(`Relay chain catalog is unavailable; using ${Object.keys(chainIdToSlug).length} static chain mappings.`);
+  return { ...chainIdToSlug };
+};
+
+const loadRelayBridgeIds = async (chainCatalog: RelayChainCatalog): Promise<RelayBridgeIds> => {
+  const dynamicAdapter = Object.fromEntries(Object.values(chainCatalog).map((chain) => [chain, true]));
+  await insertConfigEntriesForAdapter({ ...adapter, ...dynamicAdapter } as any, "relay");
   const rows = await sql<Array<{ chain: string; id: string }>>`
     SELECT LOWER(chain) AS chain, id::text AS id
     FROM bridges.config
@@ -85,15 +120,7 @@ const getLatestRelayCheckpoint = async (
   if (durableCheckpoint !== null) {
     return { checkpoint: validateRelayCheckpoint(durableCheckpoint, now), source: "redis" };
   }
-
-  const bootstrapCheckpoint = getRelayBootstrapCheckpoint(now, BOOTSTRAP_LOOKBACK_HOURS * 60 * 60);
-  const storedCheckpoint = await advanceDurableCheckpoint(RELAY_CHECKPOINT_KEY, bootstrapCheckpoint);
-  console.log(
-    `Relay bootstrap checkpoint initialized in Redis: ${dayjs
-      .unix(storedCheckpoint)
-      .toISOString()} (${RELAY_CHECKPOINT_KEY})`
-  );
-  return { checkpoint: validateRelayCheckpoint(storedCheckpoint, now), source: "redis" };
+  return { checkpoint: null, source: "lookback" };
 };
 
 const resolveWindow = async () => {
@@ -104,7 +131,7 @@ const resolveWindow = async () => {
     checkpoint,
     source,
     checkpointOverlapSeconds: CHECKPOINT_OVERLAP_SECONDS,
-    bootstrapLookbackSeconds: BOOTSTRAP_LOOKBACK_HOURS * 60 * 60,
+    initialLookbackSeconds: INITIAL_LOOKBACK_HOURS * 60 * 60,
     maxCatchupSeconds: MAX_CATCHUP_HOURS * 60 * 60,
   });
 };
@@ -116,7 +143,12 @@ const saveRelayCheckpoint = async (checkpoint: number) => {
   );
 };
 
-const convertSliceToRows = (slice: any[], bridgeIds: RelayBridgeIds, label: string) => {
+const convertSliceToRows = (
+  slice: any[],
+  bridgeIds: RelayBridgeIds,
+  chainCatalog: RelayChainCatalog,
+  label: string
+) => {
   const sourceTransactions: any[] = [];
   const destinationTransactions: any[] = [];
   let depositUsd = 0;
@@ -126,7 +158,7 @@ const convertSliceToRows = (slice: any[], bridgeIds: RelayBridgeIds, label: stri
       const event = convertRequestToEvent(req);
       if (event.deposit) {
         const depositChainId = requireRelayChainId("deposit", event.depositChainId);
-        const depositSlug = chainIdToSlug[depositChainId];
+        const depositSlug = chainCatalog[depositChainId];
         if (!depositSlug) {
           throw new NonRetryableError(`Relay returned unknown deposit chain ID ${event.depositChainId}`);
         }
@@ -154,7 +186,7 @@ const convertSliceToRows = (slice: any[], bridgeIds: RelayBridgeIds, label: stri
 
       if (event.withdraw) {
         const withdrawChainId = requireRelayChainId("withdrawal", event.withdrawChainId);
-        const withdrawSlug = chainIdToSlug[withdrawChainId];
+        const withdrawSlug = chainCatalog[withdrawChainId];
         if (!withdrawSlug) {
           throw new NonRetryableError(`Relay returned unknown withdrawal chain ID ${event.withdrawChainId}`);
         }
@@ -186,7 +218,12 @@ const convertSliceToRows = (slice: any[], bridgeIds: RelayBridgeIds, label: stri
   return { sourceTransactions, destinationTransactions, depositUsd };
 };
 
-const processHourWindow = async ([from, to]: [number, number], bridgeIds: RelayBridgeIds, signal?: AbortSignal) => {
+const processHourWindow = async (
+  [from, to]: [number, number],
+  bridgeIds: RelayBridgeIds,
+  chainCatalog: RelayChainCatalog,
+  signal?: AbortSignal
+) => {
   const label = `[relay ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs.unix(to).format("HH:mm")}]`;
   console.log(`${label} start`);
   let hourDepositUsd = 0;
@@ -219,7 +256,7 @@ const processHourWindow = async ([from, to]: [number, number], bridgeIds: RelayB
     async (slice) => {
       throwIfAborted(signal);
       pageIndex += 1;
-      const rows = convertSliceToRows(slice, bridgeIds, label);
+      const rows = convertSliceToRows(slice, bridgeIds, chainCatalog, label);
       hourDepositUsd += rows.depositUsd;
       insertedDeposits += rows.sourceTransactions.length;
       insertedWithdrawals += rows.destinationTransactions.length;
@@ -255,7 +292,8 @@ export const handler = async (signal?: AbortSignal) => {
   const relaySignal = relayController.signal;
   try {
     throwIfAborted(relaySignal);
-    const bridgeIds = await loadRelayBridgeIds();
+    const chainCatalog = await loadRelayChainCatalog(relaySignal);
+    const bridgeIds = await loadRelayBridgeIds(chainCatalog);
     const { checkpoint, startTs, endTs, source, overlap } = await resolveWindow();
 
     if (startTs >= endTs) {
@@ -274,7 +312,7 @@ export const handler = async (signal?: AbortSignal) => {
     const hourTotals = await mapLimit(
       windows,
       windowConcurrency,
-      (w) => processHourWindow(w, bridgeIds, relaySignal),
+      (w) => processHourWindow(w, bridgeIds, chainCatalog, relaySignal),
       abortRelay
     );
     throwIfAborted(relaySignal);

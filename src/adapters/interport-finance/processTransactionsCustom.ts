@@ -4,11 +4,12 @@ import { Chain } from "@defillama/sdk/build/general";
 import { get } from "lodash";
 import { ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { EventData } from "../../utils/types";
-import { getProvider } from "@defillama/sdk/build/general";
+import { getProvider } from "../../utils/provider";
 import { PromisePool } from "@supercharge/promise-pool";
 import { getConnection } from "../../helpers/solana";
 import web3, { Connection, PartiallyDecodedInstruction, PublicKey } from "@solana/web3.js";
 import { incrementGetLogsCount } from "../../utils/cache";
+import { resolveProviderChain } from "../../utils/chainResolver";
 
 const EventKeyTypes = {
     blockNumber: "number",
@@ -75,7 +76,7 @@ export const getTxDataFromEVMEventLogsCustom = async (
                 argGetters,
             } = params;
             // if this is ever used, need to also overwrite fromBlock and toBlock
-            const overriddenChain = chain ? chain : chainContractsAreOn;
+            const overriddenChain = resolveProviderChain(chain ?? chainContractsAreOn, adapterName);
             if (isTransfer) {
                 if (!target) {
                     throw new Error(
@@ -114,6 +115,10 @@ export const getTxDataFromEVMEventLogsCustom = async (
             }
 
             const iface = new ethers.utils.Interface(abi);
+            const provider = getProvider(overriddenChain) as any;
+            if (!provider) {
+                throw new Error(`No provider configured for ${adapterName} on ${overriddenChain}.`);
+            }
             let data = {} as any;
             let logs = [] as any[];
             for (let i = 0; i < 5; i++) {
@@ -127,6 +132,7 @@ export const getTxDataFromEVMEventLogsCustom = async (
                             toBlock: toBlock,
                             topics: topics as string[],
                             chain: overriddenChain,
+                            provider,
                         })
                     ).output;
                     incrementGetLogsCount(adapterName, overriddenChain);
@@ -141,7 +147,6 @@ export const getTxDataFromEVMEventLogsCustom = async (
             }
 
             let dataKeysToFilter = [] as number[];
-            const provider = getProvider(overriddenChain) as any;
             const { results, errors } = await PromisePool.withConcurrency(20)
                 .for(logs)
                 .process(async (txLog: any, i) => {

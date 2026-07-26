@@ -1,19 +1,7 @@
 import { NonRetryableError } from "../utils/errors";
 
-export type RelayCheckpointSource = "redis" | "bootstrap";
+export type RelayCheckpointSource = "redis" | "lookback";
 export const RELAY_CHECKPOINT_MAX_FUTURE_SKEW_SECONDS = 60;
-
-export const getRelayBootstrapCheckpoint = (now: number, bootstrapLookbackSeconds: number): number => {
-  if (!Number.isSafeInteger(now) || now <= 0) {
-    throw new NonRetryableError(`Relay bootstrap time must be a positive Unix timestamp; received ${now}.`);
-  }
-  if (!Number.isSafeInteger(bootstrapLookbackSeconds) || bootstrapLookbackSeconds <= 0) {
-    throw new NonRetryableError(
-      `Relay bootstrap lookback must be a positive integer; received ${bootstrapLookbackSeconds}.`
-    );
-  }
-  return Math.max(1, now - bootstrapLookbackSeconds);
-};
 
 export const requireRelayChainId = (leg: "deposit" | "withdrawal", chainId?: number): number => {
   if (!Number.isInteger(chainId) || Number(chainId) <= 0) {
@@ -43,7 +31,7 @@ export const resolveRelayWindowFromCheckpoint = ({
   checkpoint,
   source,
   checkpointOverlapSeconds,
-  bootstrapLookbackSeconds,
+  initialLookbackSeconds,
   maxCatchupSeconds,
   maxFutureSkewSeconds = RELAY_CHECKPOINT_MAX_FUTURE_SKEW_SECONDS,
 }: {
@@ -51,13 +39,13 @@ export const resolveRelayWindowFromCheckpoint = ({
   checkpoint: number | null;
   source: RelayCheckpointSource;
   checkpointOverlapSeconds: number;
-  bootstrapLookbackSeconds: number;
+  initialLookbackSeconds: number;
   maxCatchupSeconds: number;
   maxFutureSkewSeconds?: number;
 }) => {
   const safeCheckpoint = checkpoint === null ? null : validateRelayCheckpoint(checkpoint, now, maxFutureSkewSeconds);
   const overlap = source === "redis" ? checkpointOverlapSeconds : 0;
-  const startTs = Math.max(0, safeCheckpoint === null ? now - bootstrapLookbackSeconds : safeCheckpoint - overlap);
+  const startTs = Math.max(0, safeCheckpoint === null ? now - initialLookbackSeconds : safeCheckpoint - overlap);
   const endTs = Math.min(now, startTs + maxCatchupSeconds);
   return { checkpoint: safeCheckpoint, startTs, endTs, source, overlap };
 };

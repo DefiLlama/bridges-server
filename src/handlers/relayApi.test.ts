@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { makeRequestsUrl, parseRelayRequestsResponse, slugToChainId } from "../adapters/relay";
+import {
+  chainIdToSlug,
+  makeRequestsUrl,
+  parseRelayChainsResponse,
+  parseRelayRequestsResponse,
+  serializeRelayChainCatalog,
+  slugToChainId,
+} from "../adapters/relay";
 
 test("Relay windows are filtered and sorted by updatedAt", () => {
   const url = new URL(makeRequestsUrl(100, 200, "next", 1));
@@ -16,6 +23,36 @@ test("Relay maps currently supported non-EVM and emerging chain IDs", () => {
   assert.equal(slugToChainId.hyperliquid, 1337);
   assert.equal(slugToChainId.ronin, 2020);
   assert.equal(slugToChainId.somnia, 5031);
+});
+
+test("Relay parses and normalizes the dynamic chain catalog", () => {
+  const catalog = parseRelayChainsResponse({
+    chains: [
+      { id: 1, name: "ethereum" },
+      { id: 2741, name: "Abstract" },
+    ],
+  });
+
+  assert.deepEqual(catalog, { 1: "ethereum", 2741: "abstract" });
+  assert.deepEqual(parseRelayChainsResponse(serializeRelayChainCatalog(catalog)), catalog);
+  assert.deepEqual({ ...chainIdToSlug, ...catalog }[2741], "abstract");
+});
+
+test("Relay rejects malformed chain catalogs before replacing the last-known-good cache", () => {
+  assert.throws(() => parseRelayChainsResponse({}), /chains array/);
+  assert.throws(() => parseRelayChainsResponse({ chains: [] }), /empty chain catalog/);
+  assert.throws(() => parseRelayChainsResponse({ chains: [{ id: 0, name: "bad" }] }), /invalid id/);
+  assert.throws(() => parseRelayChainsResponse({ chains: [{ id: 1, name: "" }] }), /without a name/);
+  assert.throws(
+    () =>
+      parseRelayChainsResponse({
+        chains: [
+          { id: 1, name: "ethereum" },
+          { id: 1, name: "duplicate" },
+        ],
+      }),
+    /duplicate chain ID/
+  );
 });
 
 test("Relay rejects malformed successful responses before checkpoint advancement", () => {
