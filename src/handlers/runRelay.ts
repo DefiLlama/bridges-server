@@ -14,6 +14,7 @@ import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
 import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
 import {
+  createCompletionPrefix,
   RelayCheckpointSource,
   requireRelayChainId,
   resolveRelayWindowFromCheckpoint,
@@ -24,47 +25,53 @@ import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } fr
 const HOURS_CONCURRENCY = 4;
 const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
 const INITIAL_LOOKBACK_HOURS = 48;
-const MAX_CATCHUP_HOURS = 4;
+const MAX_CATCHUP_HOURS = 12;
+const SOFT_DEADLINE_MINUTES = 20;
 const INSERT_BATCH_PAGES = 10;
 const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
 const RELAY_CHAIN_CATALOG_CACHE_KEY = "relay:chain_catalog:last_good";
 
 type RelayBridgeIds = Record<string, string | undefined>;
 
-const mapLimit = async <T, R>(
+const runWindows = async <T>(
   items: T[],
   limit: number,
-  fn: (item: T, index: number) => Promise<R>,
-  onError?: () => void
-): Promise<R[]> => {
-  const results: R[] = new Array(items.length);
+  fn: (item: T, index: number) => Promise<void>,
+  { isExpired, onSettled }: { isExpired: () => boolean; onSettled: (index: number) => void | Promise<void> }
+): Promise<{ started: number; firstError?: unknown; expired: boolean }> => {
   let nextIndex = 0;
+  let started = 0;
   let stopped = false;
-  let hasError = false;
+  let expired = false;
   let firstError: unknown;
+
   const worker = async () => {
     while (!stopped) {
+      if (isExpired()) {
+        expired = true;
+        return;
+      }
       const index = nextIndex++;
       if (index >= items.length) return;
+      started += 1;
       try {
-        results[index] = await fn(items[index], index);
+        await fn(items[index], index);
+        await onSettled(index);
       } catch (error) {
         if (!stopped) {
           stopped = true;
-          hasError = true;
           firstError = error;
-          onError?.();
         }
         return;
       }
     }
   };
+
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
-  if (hasError) throw firstError;
-  return results;
+  return { started, firstError, expired };
 };
 
-const splitHourWindows = (startTs: number, endTs: number): Array<[number, number]> => {
+export const splitHourWindows = (startTs: number, endTs: number): Array<[number, number]> => {
   const windows: Array<[number, number]> = [];
   const startHour = Math.floor(startTs / 3600) * 3600;
   for (let t = startHour; t < endTs; t += 3600) {
@@ -73,7 +80,7 @@ const splitHourWindows = (startTs: number, endTs: number): Array<[number, number
   return windows;
 };
 
-const loadRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCatalog> => {
+export const loadRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCatalog> => {
   try {
     const liveCatalog = await fetchRelayChainCatalog(signal);
     await setCache(RELAY_CHAIN_CATALOG_CACHE_KEY, serializeRelayChainCatalog(liveCatalog), null);
@@ -99,7 +106,7 @@ const loadRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCa
   return { ...chainIdToSlug };
 };
 
-const loadRelayBridgeIds = async (chainCatalog: RelayChainCatalog): Promise<RelayBridgeIds> => {
+export const loadRelayBridgeIds = async (chainCatalog: RelayChainCatalog): Promise<RelayBridgeIds> => {
   const dynamicAdapter = Object.fromEntries(Object.values(chainCatalog).map((chain) => [chain, true]));
   await insertConfigEntriesForAdapter({ ...adapter, ...dynamicAdapter } as any, "relay");
   const rows = await sql<Array<{ chain: string; id: string }>>`
@@ -218,7 +225,7 @@ const convertSliceToRows = (
   return { sourceTransactions, destinationTransactions, depositUsd };
 };
 
-const processHourWindow = async (
+export const processHourWindow = async (
   [from, to]: [number, number],
   bridgeIds: RelayBridgeIds,
   chainCatalog: RelayChainCatalog,
@@ -301,30 +308,54 @@ export const handler = async (signal?: AbortSignal) => {
       return;
     }
 
-    const windowConcurrency = source === "redis" ? HOURS_CONCURRENCY : 1;
+    const windows = splitHourWindows(startTs, endTs);
+    const deadlineAt = Date.now() + SOFT_DEADLINE_MINUTES * 60 * 1000;
     console.log(
       `Running Relay adapter from ${dayjs.unix(startTs).toISOString()} to ${dayjs.unix(endTs).toISOString()} ` +
         `(checkpoint=${checkpoint ? dayjs.unix(checkpoint).toISOString() : "none"}, ` +
-        `source=${source}, overlap=${overlap}s, maxCatchup=${MAX_CATCHUP_HOURS}h, concurrency=${windowConcurrency})`
+        `source=${source}, overlap=${overlap}s, maxCatchup=${MAX_CATCHUP_HOURS}h, ` +
+        `windows=${windows.length}, concurrency=${HOURS_CONCURRENCY}, deadline=${SOFT_DEADLINE_MINUTES}m)`
     );
 
-    const windows = splitHourWindows(startTs, endTs);
-    const hourTotals = await mapLimit(
+    const prefix = createCompletionPrefix(windows.length);
+    let savedPrefix = 0;
+    let totalDepositUsd = 0;
+    let totalPages = 0;
+    let totalRequests = 0;
+
+    const { firstError, expired } = await runWindows(
       windows,
-      windowConcurrency,
-      (w) => processHourWindow(w, bridgeIds, chainCatalog, relaySignal),
-      abortRelay
+      HOURS_CONCURRENCY,
+      async (w, index) => {
+        const totals = await processHourWindow(w, bridgeIds, chainCatalog, relaySignal);
+        totalDepositUsd += totals.depositUsd;
+        totalPages += totals.pages;
+        totalRequests += totals.requests;
+        prefix.complete(index);
+      },
+      {
+        isExpired: () => Date.now() >= deadlineAt || relaySignal.aborted,
+        onSettled: async () => {
+          if (prefix.length <= savedPrefix) return;
+          savedPrefix = prefix.length;
+          await saveRelayCheckpoint(windows[savedPrefix - 1][1]);
+        },
+      }
     );
-    throwIfAborted(relaySignal);
-    const totalDepositUsd = hourTotals.reduce((sum, item) => sum + (item?.depositUsd || 0), 0);
-    const totalPages = hourTotals.reduce((sum, item) => sum + (item?.pages || 0), 0);
-    const totalRequests = hourTotals.reduce((sum, item) => sum + (item?.requests || 0), 0);
 
     console.log(
-      `Relay processing complete. ${totalPages} pages, ${totalRequests} requests, ` +
-        `total deposit USD: ${totalDepositUsd}`
+      `Relay processing ${savedPrefix === windows.length ? "complete" : "partial"}: ` +
+        `${savedPrefix}/${windows.length} windows checkpointed, ${totalPages} pages, ` +
+        `${totalRequests} requests, total deposit USD: ${totalDepositUsd}`
     );
-    await saveRelayCheckpoint(endTs);
+
+    if (firstError) throw firstError;
+    if (expired) {
+      console.warn(
+        `Relay stopped at the ${SOFT_DEADLINE_MINUTES}m deadline with ` +
+          `${windows.length - savedPrefix} window(s) left; the next run resumes from the checkpoint.`
+      );
+    }
   } catch (error) {
     console.error("Fatal error in Relay handler:", error);
     throw error;

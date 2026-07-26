@@ -3,6 +3,21 @@ import { NonRetryableError } from "../utils/errors";
 export type RelayCheckpointSource = "redis" | "lookback";
 export const RELAY_CHECKPOINT_MAX_FUTURE_SKEW_SECONDS = 60;
 
+export const createCompletionPrefix = (total: number) => {
+  const completed = new Array<boolean>(total).fill(false);
+  let prefix = 0;
+  return {
+    complete(index: number) {
+      completed[index] = true;
+      while (prefix < total && completed[prefix]) prefix += 1;
+      return prefix;
+    },
+    get length() {
+      return prefix;
+    },
+  };
+};
+
 export const requireRelayChainId = (leg: "deposit" | "withdrawal", chainId?: number): number => {
   if (!Number.isInteger(chainId) || Number(chainId) <= 0) {
     throw new NonRetryableError(`Relay ${leg} is missing a valid chain ID`);

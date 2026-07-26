@@ -11,16 +11,57 @@ import {
   waitWithSignal,
 } from "../../utils/errors";
 
-let requestQueue: Promise<void> = Promise.resolve();
-
 const PAGE_LIMIT = 50;
 const REQUEST_RETRIES = 8;
 const REQUEST_BASE_RETRY_MS = 5_000;
 const REQUEST_MAX_RETRY_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 60_000;
-const REQUEST_INTERVAL_MS = 250;
 const MAX_PAGES_PER_WINDOW = 5_000;
 const RELAY_CHAINS_URL = "https://api.relay.link/chains";
+
+const readPositiveEnv = (name: string, fallback: number) => {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const REQUEST_CONCURRENCY = readPositiveEnv("RELAY_REQUEST_CONCURRENCY", 4);
+const REQUESTS_PER_MINUTE = readPositiveEnv("RELAY_REQUESTS_PER_MINUTE", 330);
+
+export const createRequestGate = (concurrency: number, requestsPerMinute: number) => {
+  const minIntervalMs = requestsPerMinute > 0 ? 60_000 / requestsPerMinute : 0;
+  const waiters: Array<() => void> = [];
+  let active = 0;
+  let nextStartAt = 0;
+
+  const acquire = async () => {
+    if (active < concurrency) {
+      active += 1;
+      return;
+    }
+    await new Promise<void>((resolve) => waiters.push(resolve));
+  };
+
+  const release = () => {
+    const next = waiters.shift();
+    if (next) next();
+    else active -= 1;
+  };
+
+  return async <T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> => {
+    await acquire();
+    try {
+      const now = Date.now();
+      const startAt = Math.max(now, nextStartAt);
+      nextStartAt = startAt + minIntervalMs;
+      if (startAt > now) await waitWithSignal(startAt - now, signal);
+      return await fn();
+    } finally {
+      release();
+    }
+  };
+};
+
+const requestGate = createRequestGate(REQUEST_CONCURRENCY, REQUESTS_PER_MINUTE);
 
 export type RelayChainCatalog = Record<number, string>;
 
@@ -96,13 +137,12 @@ export const makeRequestsUrl = (
     startTimestamp: String(startTimestamp),
     endTimestamp: String(endTimestamp),
     limit: String(PAGE_LIMIT),
-    referrer: "",
     sortBy: "updatedAt",
     sortDirection: "asc",
   });
   if (continuation) params.set("continuation", continuation);
   if (chainId !== undefined) params.set("chainId", String(chainId));
-  return `https://api.relay.link/requests/v2?${params.toString()}`;
+  return `https://api.relay.link/requests/v3?${params.toString()}`;
 };
 
 export const parseRelayRequestsResponse = (data: unknown): RelayRequestsResponse => {
@@ -205,8 +245,11 @@ const parseUsdAmount = (amountUsd?: string): ethers.BigNumber => {
 export const convertRequestToEvent = (
   request: NonNullable<RelayRequestsResponse["requests"]>["0"]
 ): { deposit?: EventData; withdraw?: EventData; depositChainId?: number; withdrawChainId?: number } => {
-  const deposit = request.data?.metadata?.currencyIn;
-  const withdraw = request.data?.metadata?.currencyOut;
+  const route = request.data?.route;
+  const settledRoute = route?.actual ?? route?.quoted;
+
+  const deposit = settledRoute?.origin?.inputCurrency;
+  const withdraw = settledRoute?.destination?.inputCurrency ?? settledRoute?.origin?.outputCurrency;
 
   const depositTx = request.data?.inTxs?.[0];
   const withdrawTx = request.data?.outTxs?.[0];
@@ -238,7 +281,7 @@ export const convertRequestToEvent = (
       depositTx && depositTx.data && deposit && depositAmount.gt(0)
         ? {
             blockNumber: depositTx.block!,
-            txHash: depositTx.hash as string,
+            txHash: depositTx.txHash as string,
             timestamp: getTimestamp(depositTx, withdrawTx, request),
             from: (depositTx.data as any).from
               ? (depositTx.data as any).from
@@ -261,14 +304,14 @@ export const convertRequestToEvent = (
       withdrawTx && withdrawTx.data && withdraw && withdrawAmount.gt(0)
         ? {
             blockNumber: withdrawTx.block!,
-            txHash: withdrawTx.hash!,
+            txHash: withdrawTx.txHash!,
             timestamp: getTimestamp(withdrawTx, depositTx, request),
             from: (withdrawTx.data as any).from
               ? (withdrawTx.data as any).from
               : withdrawTx.data
               ? (withdrawTx.data as any).signer
               : undefined,
-            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.data?.metadata?.recipient,
+            to: (withdrawTx.data as any).to ? (withdrawTx.data as any).to : request.recipient,
             token: withdraw?.currency?.address!,
             amount: withdrawAmount,
             isDeposit: false,
@@ -339,17 +382,8 @@ const rateLimitedFetchByTime = async (
   continuation?: string,
   chainId?: number,
   signal?: AbortSignal
-): Promise<RelayRequestsResponse> => {
-  const currentRequest = requestQueue
-    .catch(() => {})
-    .then(() => waitWithSignal(REQUEST_INTERVAL_MS, signal))
-    .then(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation, chainId, signal));
-  requestQueue = currentRequest.then(
-    () => undefined,
-    () => undefined
-  );
-  return currentRequest;
-};
+): Promise<RelayRequestsResponse> =>
+  requestGate(() => fetchRequestsByTime(startTimestamp, endTimestamp, continuation, chainId, signal), signal);
 
 export const forEachRequestsByTimePage = async (
   startTimestamp: number,

@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { requireRelayChainId, resolveRelayWindowFromCheckpoint } from "./relayProgress";
+import { createCompletionPrefix, requireRelayChainId, resolveRelayWindowFromCheckpoint } from "./relayProgress";
+
+test("Relay checkpoint only advances across a contiguous run of completed windows", () => {
+  const prefix = createCompletionPrefix(4);
+  assert.equal(prefix.length, 0);
+
+  assert.equal(prefix.complete(1), 0);
+  assert.equal(prefix.complete(3), 0);
+  assert.equal(prefix.complete(0), 2);
+  assert.equal(prefix.complete(2), 4);
+  assert.equal(prefix.length, 4);
+});
+
+test("Relay checkpoint stays put while the earliest window is unfinished", () => {
+  const prefix = createCompletionPrefix(3);
+  prefix.complete(2);
+  prefix.complete(1);
+  assert.equal(prefix.length, 0);
+});
 
 const defaults = {
   now: 10_000,
