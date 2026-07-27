@@ -25,7 +25,7 @@ const readPositiveEnv = (name: string, fallback: number) => {
 };
 
 const REQUEST_CONCURRENCY = readPositiveEnv("RELAY_REQUEST_CONCURRENCY", 4);
-const REQUESTS_PER_MINUTE = readPositiveEnv("RELAY_REQUESTS_PER_MINUTE", 330);
+const REQUESTS_PER_MINUTE = readPositiveEnv("RELAY_REQUESTS_PER_MINUTE", 180);
 
 export const createRequestGate = (concurrency: number, requestsPerMinute: number) => {
   const minIntervalMs = requestsPerMinute > 0 ? 60_000 / requestsPerMinute : 0;
