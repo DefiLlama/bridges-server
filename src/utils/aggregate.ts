@@ -25,6 +25,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
 import { transformTokenDecimals, transformTokens, chainMappings } from "../helpers/tokenMappings";
+import { mergeRelayAggregationChains } from "./aggregationChains";
 
 const mapChainName = (chain: string): string => chainMappings[chain] || chain;
 import { blacklist } from "../data/blacklist";
@@ -45,6 +46,26 @@ type CumAddressUsdValues = {
     numberTxs: number;
     usdValue: number;
   };
+};
+
+const getAggregationChains = async (bridgeDbName: string, adapter: Record<string, unknown>) => {
+  const staticChains = Object.keys(adapter);
+  if (bridgeDbName !== "relay") return staticChains;
+
+  const configuredChains = await sql<Array<{ chain: string }>>`
+    SELECT chain
+    FROM bridges.config
+    WHERE bridge_name = 'relay'
+    ORDER BY id
+  `;
+  const chains = mergeRelayAggregationChains(
+    configuredChains.map(({ chain }) => chain),
+    staticChains
+  );
+  console.log(
+    `[AGGREGATE] Relay using ${chains.length} chains (${configuredChains.length} configured, ${staticChains.length} static).`
+  );
+  return chains;
 };
 
 export const runAggregateDataHistorical = async (
@@ -83,7 +104,7 @@ export const runAggregateDataHistorical = async (
     throw new Error(errString);
   }
 
-  const chains = Object.keys(adapter);
+  const chains = await getAggregationChains(bridgeDbName, adapter);
 
   let timestamp = endTimestamp;
   while (timestamp > startTimestamp) {
@@ -130,7 +151,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
       const { bridgeDbName, largeTxThreshold } = bridgeNetwork;
       let adapter = adapters[bridgeDbName];
       adapter = isAsyncAdapter(adapter) ? await adapter.build() : adapter;
-      const chains = Object.keys(adapter);
+      const chains = await getAggregationChains(bridgeDbName, adapter);
       const chainsPromises = Promise.all(
         chains.map(async (chain) => {
           try {

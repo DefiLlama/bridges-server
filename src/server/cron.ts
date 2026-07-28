@@ -20,6 +20,7 @@ import { handler as runSnowbridge } from "../handlers/runSnowbridge";
 import { handler as runAcross } from "../handlers/runAcross";
 import { createAbortError } from "../utils/errors";
 import { JobCriticality, JobResult, ScheduledJob, summarizeCronJobs } from "./cronState";
+import { publishDedicatedAggregations, runDedicatedIngestionPipeline } from "./dedicatedPipeline";
 
 const scheduledJobs: ScheduledJob[] = [];
 const jobResults: JobResult[] = [];
@@ -141,7 +142,7 @@ const exit = () => {
   }, 1000 * 60 * 54);
 };
 
-const runAfterDelay = async (
+const runAfterDelay = (
   jobName: string,
   delayMinutes: number,
   fn: (signal: AbortSignal) => Promise<any>,
@@ -151,10 +152,32 @@ const runAfterDelay = async (
 ) => {
   const job = { name: jobName, criticality, diagnostics };
   scheduledJobs.push(job);
-  setTimeout(async () => {
-    await withTimeout(job, fn, timeoutMinutes);
-  }, delayMinutes * 60 * 1000);
+  return new Promise<any>((resolve, reject) => {
+    setTimeout(() => {
+      withTimeout(job, fn, timeoutMinutes).then(resolve, reject);
+    }, delayMinutes * 60 * 1000);
+  });
 };
+
+type DedicatedJob = {
+  jobName: string;
+  bridgeName: string;
+  handler: (signal: AbortSignal) => Promise<any>;
+};
+
+const dedicatedJobs: DedicatedJob[] = [
+  { jobName: "runWormhole", bridgeName: "wormhole", handler: runWormhole },
+  { jobName: "runMayan", bridgeName: "mayan", handler: runMayan },
+  { jobName: "runLayerZero", bridgeName: "layerzero", handler: runLayerZero },
+  { jobName: "runHyperlane", bridgeName: "hyperlane", handler: runHyperlane },
+  { jobName: "runInterSoon", bridgeName: "intersoon", handler: runInterSoon },
+  { jobName: "runRelay", bridgeName: "relay", handler: runRelay },
+  { jobName: "runAcross", bridgeName: "across", handler: runAcross },
+  { jobName: "runCashmere", bridgeName: "cashmere", handler: runCashmere },
+  { jobName: "runTeleswap", bridgeName: "teleswap", handler: runTeleswap },
+  { jobName: "runCCIP", bridgeName: "ccip", handler: runCCIP },
+  { jobName: "runSnowbridge", bridgeName: "snowbridge", handler: runSnowbridge },
+];
 
 const cron = () => {
   if (process.env.NO_CRON) {
@@ -183,17 +206,28 @@ const cron = () => {
   runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15, "critical");
   runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15, "critical");
   runAfterDelay("runAllAdapters", 5, runAllAdapters, 40, "critical", getRunAllAdaptersDiagnostics);
-  runAfterDelay("runWormhole", 25, runWormhole, 25);
-  runAfterDelay("runMayan", 25, runMayan, 25);
-  runAfterDelay("runLayerZero", 25, runLayerZero, 25);
-  runAfterDelay("runHyperlane", 25, runHyperlane, 25);
-  runAfterDelay("runInterSoon", 25, runInterSoon, 25);
-  runAfterDelay("runRelay", 25, runRelay, 25);
-  runAfterDelay("runAcross", 25, runAcross, 25);
-  runAfterDelay("runCashmere", 25, runCashmere, 25);
-  runAfterDelay("runTeleswap", 25, runTeleswap, 25);
-  runAfterDelay("runCCIP", 25, runCCIP, 25);
-  runAfterDelay("runSnowbridge", 25, runSnowbridge, 25);
+  const dedicatedRuns = dedicatedJobs.map(({ jobName, bridgeName, handler }) =>
+    runAfterDelay(
+      jobName,
+      25,
+      (signal) =>
+        runDedicatedIngestionPipeline({
+          bridgeName,
+          signal,
+          ingest: handler,
+          aggregate: runAggregateHistoricalByName,
+          getCurrentTimestamp: () => dayjs().unix(),
+        }),
+      25
+    )
+  );
+  runAfterDelay(
+    "publishDedicatedAggregations",
+    25,
+    () => publishDedicatedAggregations(dedicatedRuns, aggregateHourlyVolume, aggregateDailyVolume),
+    27,
+    "critical"
+  );
 
   exit();
 };
