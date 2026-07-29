@@ -1,51 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { publishDedicatedAggregations, runDedicatedIngestionPipeline } from "./dedicatedPipeline";
+import { publishAggregations, runBridgeAggregationPipeline } from "./dedicatedPipeline";
 
-test("dedicated ingestion is aggregated immediately after a successful handler", async () => {
+test("bridge aggregation gets an independent window and abort signal", async () => {
   const calls: string[] = [];
   const controller = new AbortController();
 
-  const result = await runDedicatedIngestionPipeline({
+  await runBridgeAggregationPipeline({
     bridgeName: "relay",
     signal: controller.signal,
-    ingest: async (signal) => {
+    aggregate: async (startTimestamp, endTimestamp, bridgeName, signal) => {
       assert.equal(signal, controller.signal);
-      calls.push("ingest");
-      return { degraded: false };
-    },
-    aggregate: async (startTimestamp, endTimestamp, bridgeName) => {
       calls.push(`aggregate:${bridgeName}:${startTimestamp}-${endTimestamp}`);
     },
     getCurrentTimestamp: () => 200_000,
   });
 
-  assert.deepEqual(result, { degraded: false });
-  assert.deepEqual(calls, ["ingest", "aggregate:relay:70400-200000"]);
+  assert.deepEqual(calls, ["aggregate:relay:70400-200000"]);
 });
 
-test("dedicated aggregation is not run when ingestion fails", async () => {
-  let aggregated = false;
-
-  await assert.rejects(
-    runDedicatedIngestionPipeline({
-      bridgeName: "relay",
-      signal: new AbortController().signal,
-      ingest: async () => {
-        throw new Error("ingestion failed");
-      },
-      aggregate: async () => {
-        aggregated = true;
-      },
-      getCurrentTimestamp: () => 200_000,
-    }),
-    /ingestion failed/
-  );
-
-  assert.equal(aggregated, false);
-});
-
-test("dedicated publication waits for every ingestion pipeline and then rolls hourly before daily", async () => {
+test("publication waits for every aggregation and then rolls hourly before daily", async () => {
   const calls: string[] = [];
   let completeFirstRun: () => void = () => {};
   let completeSecondRun: () => void = () => {};
@@ -56,7 +30,7 @@ test("dedicated publication waits for every ingestion pipeline and then rolls ho
     completeSecondRun = resolve;
   });
 
-  const publication = publishDedicatedAggregations(
+  const publication = publishAggregations(
     [firstRun, secondRun],
     async () => {
       calls.push("hourly");

@@ -1,34 +1,30 @@
 const DEFAULT_AGGREGATION_LOOKBACK_SECONDS = 36 * 60 * 60;
 
-type DedicatedIngestionPipelineOptions<T> = {
+type BridgeAggregationPipelineOptions = {
   bridgeName: string;
   signal: AbortSignal;
-  ingest: (signal: AbortSignal) => Promise<T>;
-  aggregate: (startTimestamp: number, endTimestamp: number, bridgeName: string) => Promise<void>;
+  aggregate: (startTimestamp: number, endTimestamp: number, bridgeName: string, signal: AbortSignal) => Promise<void>;
   getCurrentTimestamp: () => number;
   lookbackSeconds?: number;
 };
 
-export const runDedicatedIngestionPipeline = async <T>({
+export const runBridgeAggregationPipeline = async ({
   bridgeName,
   signal,
-  ingest,
   aggregate,
   getCurrentTimestamp,
   lookbackSeconds = DEFAULT_AGGREGATION_LOOKBACK_SECONDS,
-}: DedicatedIngestionPipelineOptions<T>): Promise<T> => {
-  const result = await ingest(signal);
+}: BridgeAggregationPipelineOptions): Promise<void> => {
   const endTimestamp = getCurrentTimestamp();
-  await aggregate(endTimestamp - lookbackSeconds, endTimestamp, bridgeName);
-  return result;
+  await aggregate(endTimestamp - lookbackSeconds, endTimestamp, bridgeName, signal);
 };
 
-export const publishDedicatedAggregations = async (
-  dedicatedRuns: Promise<unknown>[],
+export const publishAggregations = async (
+  aggregationRuns: Promise<unknown>[],
   aggregateHourly: () => Promise<void>,
   aggregateDaily: () => Promise<void>
 ) => {
-  await Promise.all(dedicatedRuns);
+  await Promise.all(aggregationRuns);
   await aggregateHourly();
   await aggregateDaily();
 };

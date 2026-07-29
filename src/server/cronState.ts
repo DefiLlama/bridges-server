@@ -13,6 +13,15 @@ export type JobResult = ScheduledJob & {
   error?: string;
 };
 
+export type JobExecution<T = unknown> = {
+  status: JobStatus;
+  result?: T;
+  error?: unknown;
+};
+
+export const jobCompletedSuccessfully = (execution: JobExecution) =>
+  execution.status === "ok" || execution.status === "degraded";
+
 export type CronSummary = {
   ok: number;
   recoverableFailures: number;

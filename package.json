@@ -11,6 +11,7 @@
     "adapter": "export $(cat .env | xargs) &&  tsx  ./src/utils/runAdapterHistorical.ts",
     "aggregate": "export $(cat .env | xargs) &&  tsx ./src/utils/testaggregate.ts",
     "tmp:robinhood-week": "export $(cat .env | xargs) && tsx ./src/utils/tmpBackfillRobinhoodWeek.ts",
+    "cleanup:aggregation-errors": "tsx ./src/utils/cleanupAggregationErrors.ts",
     "daily-volume": "export $(cat .env | xargs) &&  tsx ./src/utils/testDailyVolume.ts",
     "dev": "export $(cat .env | xargs) &&  tsx watch ./src/server/index.ts",
     "build": "vite build",

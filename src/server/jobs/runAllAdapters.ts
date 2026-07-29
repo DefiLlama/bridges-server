@@ -13,6 +13,7 @@ type RunAllAdaptersSnapshot = {
   succeeded: number;
   failed: number;
   active: string[];
+  succeededAdapters: string[];
   failedAdapters: string[];
   failureCategories: Record<string, number>;
 };
@@ -23,9 +24,24 @@ let snapshot: RunAllAdaptersSnapshot = {
   succeeded: 0,
   failed: 0,
   active: [],
+  succeededAdapters: [],
   failedAdapters: [],
   failureCategories: {},
 };
+
+export type RunAllAdaptersResult = {
+  degraded: boolean;
+  error?: string;
+  succeededAdapters: string[];
+  failedAdapters: string[];
+};
+
+export class AdapterQualityGateError extends Error {
+  constructor(message: string, readonly result: RunAllAdaptersResult) {
+    super(message);
+    this.name = "AdapterQualityGateError";
+  }
+}
 
 const updateSnapshot = (updates: Partial<RunAllAdaptersSnapshot>) => {
   snapshot = { ...snapshot, ...updates };
@@ -63,6 +79,7 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
   }
   const shuffledBridgeNetworks = [...bridgeNetworks].sort(() => Math.random() - 0.5);
   const activeAdapters = new Set<string>();
+  const succeededAdapters: string[] = [];
   const failedAdapters: string[] = [];
   const failureNotifications: string[] = [];
   const failureCategories: Record<string, number> = {};
@@ -70,7 +87,16 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
   let failed = 0;
   let started = 0;
   const total = shuffledBridgeNetworks.filter((adapter) => !shouldSkipScheduledBridge(adapter.bridgeDbName)).length;
-  snapshot = { total, started: 0, succeeded: 0, failed: 0, active: [], failedAdapters: [], failureCategories: {} };
+  snapshot = {
+    total,
+    started: 0,
+    succeeded: 0,
+    failed: 0,
+    active: [],
+    succeededAdapters: [],
+    failedAdapters: [],
+    failureCategories: {},
+  };
 
   const { errors } = await PromisePool.withConcurrency(10)
     .for(shuffledBridgeNetworks)
@@ -86,7 +112,8 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
         await runAdapterToCurrentBlock(adapter, true, "upsert", storedBlocks, signal, failureNotifications);
         throwIfAborted(signal);
         succeeded++;
-        updateSnapshot({ succeeded });
+        succeededAdapters.push(adapter.bridgeDbName);
+        updateSnapshot({ succeeded, succeededAdapters: [...succeededAdapters] });
         console.log(`[ADAPTER] OK ${adapter.bridgeDbName} (${((Date.now() - startedAt) / 1000).toFixed(1)}s)`);
       } catch (e) {
         failed++;
@@ -121,15 +148,19 @@ export const runAllAdapters = async (signal?: AbortSignal) => {
   console.log(`[ADAPTERS] Failure categories: ${JSON.stringify(failureCategories)}`);
   const discordDigest = formatDiscordErrorDigest(failureNotifications);
   if (discordDigest) await sendDiscordText(discordDigest);
-  if (quality.exceeded) {
-    throw new Error(
-      `Adapter quality gate failed: ${failed}/${total} adapters failed (${(quality.failedRatio * 100).toFixed(
-        1
-      )}%); limits are ${quality.maxFailedAdapters} adapters and ${(quality.maxFailedRatio * 100).toFixed(1)}%`
-    );
-  }
-  return {
+  const runResult: RunAllAdaptersResult = {
     degraded: failed > 0,
     error: failed > 0 ? `${failed} adapter(s) failed: ${failedAdapters.join(", ")}` : undefined,
+    succeededAdapters: [...succeededAdapters],
+    failedAdapters: [...failedAdapters],
   };
+  if (quality.exceeded) {
+    throw new AdapterQualityGateError(
+      `Adapter quality gate failed: ${failed}/${total} adapters failed (${(quality.failedRatio * 100).toFixed(
+        1
+      )}%); limits are ${quality.maxFailedAdapters} adapters and ${(quality.maxFailedRatio * 100).toFixed(1)}%`,
+      runResult
+    );
+  }
+  return runResult;
 };

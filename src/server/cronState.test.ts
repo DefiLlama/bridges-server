@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { JobResult, ScheduledJob, summarizeCronJobs } from "./cronState";
+import { JobResult, ScheduledJob, jobCompletedSuccessfully, summarizeCronJobs } from "./cronState";
 
 test("recoverable failures leave the cron exit code successful", () => {
   const scheduled: ScheduledJob[] = [
@@ -42,4 +42,11 @@ test("a degraded critical job is reported without failing the cron", () => {
   assert.equal(summary.recoverableFailures, 1);
   assert.equal(summary.criticalFailures, 0);
   assert.equal(summary.exitCode, 0);
+});
+
+test("dependent phases only run after successful or degraded jobs", () => {
+  assert.equal(jobCompletedSuccessfully({ status: "ok" }), true);
+  assert.equal(jobCompletedSuccessfully({ status: "degraded" }), true);
+  assert.equal(jobCompletedSuccessfully({ status: "failed" }), false);
+  assert.equal(jobCompletedSuccessfully({ status: "timed_out" }), false);
 });

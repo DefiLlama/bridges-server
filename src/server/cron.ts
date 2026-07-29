@@ -1,4 +1,9 @@
-import { getRunAllAdaptersDiagnostics, runAllAdapters } from "./jobs/runAllAdapters";
+import {
+  AdapterQualityGateError,
+  getRunAllAdaptersDiagnostics,
+  RunAllAdaptersResult,
+  runAllAdapters,
+} from "./jobs/runAllAdapters";
 import { runAggregateAllAdapters } from "./jobs/runAggregateAllAdapter";
 import { handler as runWormhole } from "../handlers/runWormhole";
 import { handler as runMayan } from "../handlers/runMayan";
@@ -18,15 +23,27 @@ import { getAllGetLogsCounts } from "../utils/cache";
 import { getExplorerRequestStats } from "../helpers/etherscan";
 import { handler as runSnowbridge } from "../handlers/runSnowbridge";
 import { handler as runAcross } from "../handlers/runAcross";
-import { createAbortError } from "../utils/errors";
-import { JobCriticality, JobResult, ScheduledJob, summarizeCronJobs } from "./cronState";
-import { publishDedicatedAggregations, runDedicatedIngestionPipeline } from "./dedicatedPipeline";
+import { createAbortError, throwIfAborted } from "../utils/errors";
+import {
+  JobCriticality,
+  JobExecution,
+  JobResult,
+  ScheduledJob,
+  jobCompletedSuccessfully,
+  summarizeCronJobs,
+} from "./cronState";
+import { publishAggregations, runBridgeAggregationPipeline } from "./dedicatedPipeline";
+import { PromisePool } from "@supercharge/promise-pool";
 
 const scheduledJobs: ScheduledJob[] = [];
 const jobResults: JobResult[] = [];
 const activeJobs = new Map<string, AbortController>();
 
-const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promise<any>, timeoutMinutes: number) => {
+const withTimeout = async <T>(
+  job: ScheduledJob,
+  fn: (signal: AbortSignal) => Promise<T>,
+  timeoutMinutes: number
+): Promise<JobExecution<T>> => {
   console.log(`[INFO] Starting ${job.criticality} job: ${job.name}`);
   const startTime = Date.now();
   const controller = new AbortController();
@@ -55,12 +72,13 @@ const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promi
       } in ${duration.toFixed(2)}s`
     );
 
-    return result;
+    return { status: degraded ? "degraded" : "ok", result };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
+    const status = timedOut ? "timed_out" : "failed";
     jobResults.push({
       ...job,
-      status: timedOut ? "timed_out" : "failed",
+      status,
       durationSec: (Date.now() - startTime) / 1000,
       error: errorMsg,
     });
@@ -68,16 +86,19 @@ const withTimeout = async (job: ScheduledJob, fn: (signal: AbortSignal) => Promi
     if (job.diagnostics) {
       console.error(`[DIAGNOSTICS] ${job.name}: ${job.diagnostics()}`);
     }
+    const result = error instanceof AdapterQualityGateError ? (error.result as T) : undefined;
+    return { status, result, error };
   } finally {
     if (timeout) clearTimeout(timeout);
     if (timedOut && jobPromise) {
-      jobPromise.then(
-        () => activeJobs.delete(job.name),
-        () => activeJobs.delete(job.name)
-      );
-    } else {
-      activeJobs.delete(job.name);
+      try {
+        await jobPromise;
+      } catch {
+        // The timeout has already been recorded. Wait for the aborted work to settle
+        // so dependent publication cannot race background writes.
+      }
     }
+    activeJobs.delete(job.name);
   }
 };
 
@@ -142,21 +163,37 @@ const exit = () => {
   }, 1000 * 60 * 54);
 };
 
-const runAfterDelay = (
+const runAfterDelay = <T>(
   jobName: string,
   delayMinutes: number,
-  fn: (signal: AbortSignal) => Promise<any>,
+  fn: (signal: AbortSignal) => Promise<T>,
   timeoutMinutes: number = 5,
   criticality: JobCriticality = "recoverable",
   diagnostics?: () => string
-) => {
+): Promise<JobExecution<T>> => {
   const job = { name: jobName, criticality, diagnostics };
   scheduledJobs.push(job);
-  return new Promise<any>((resolve, reject) => {
+  return new Promise<JobExecution<T>>((resolve, reject) => {
     setTimeout(() => {
       withTimeout(job, fn, timeoutMinutes).then(resolve, reject);
     }, delayMinutes * 60 * 1000);
   });
+};
+
+const runDependentJob = async <TDependency, TResult>(
+  dependency: Promise<JobExecution<TDependency>>,
+  jobName: string,
+  shouldRun: (execution: JobExecution<TDependency>) => boolean,
+  fn: (execution: JobExecution<TDependency>, signal: AbortSignal) => Promise<TResult>,
+  timeoutMinutes: number,
+  criticality: JobCriticality = "recoverable"
+): Promise<JobExecution<TResult> | undefined> => {
+  const execution = await dependency;
+  if (!shouldRun(execution)) {
+    console.warn(`[WARN] Skipping ${jobName}: its ingestion dependency ended with status ${execution.status}.`);
+    return;
+  }
+  return runAfterDelay(jobName, 0, (signal) => fn(execution, signal), timeoutMinutes, criticality);
 };
 
 type DedicatedJob = {
@@ -186,46 +223,104 @@ const cron = () => {
 
   console.log(`[INFO] Starting cron service at ${new Date().toISOString()}`);
 
-  runAfterDelay(
-    "aggregateLayerZero",
-    0,
-    () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"),
+  const initialAggregationRuns = [
+    runAfterDelay(
+      "aggregateLayerZero",
+      0,
+      () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"),
+      15,
+      "critical"
+    ),
+    runAfterDelay(
+      "aggregateHyperlane",
+      0,
+      () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "hyperlane"),
+      20,
+      "critical"
+    ),
+  ];
+
+  const aggregateAllJob = runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15, "critical");
+  const initialPublicationRuns = [
+    runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15, "critical"),
+    runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15, "critical"),
+  ];
+
+  const runAllAdaptersJob = runAfterDelay<RunAllAdaptersResult>(
+    "runAllAdapters",
+    5,
+    runAllAdapters,
+    40,
+    "critical",
+    getRunAllAdaptersDiagnostics
+  );
+  const runAllAdaptersAfterPriorAggregation = Promise.all([runAllAdaptersJob, aggregateAllJob]).then(
+    ([execution]) => execution
+  );
+  const aggregateSuccessfulGenericAdapters = runDependentJob(
+    runAllAdaptersAfterPriorAggregation,
+    "aggregateSuccessfulGenericAdapters",
+    (execution) => Boolean(execution.result?.succeededAdapters.length),
+    async (execution, signal) => {
+      const bridgeNames = execution.result!.succeededAdapters;
+      const endTimestamp = dayjs().unix();
+      const startTimestamp = endTimestamp - 36 * 60 * 60;
+      console.log(`[AGGREGATE] Recomputing ${bridgeNames.length} successful generic adapters before publication.`);
+      const { errors } = await PromisePool.withConcurrency(5)
+        .for(bridgeNames)
+        .process(async (bridgeName) => {
+          throwIfAborted(signal);
+          await runAggregateHistoricalByName(startTimestamp, endTimestamp, bridgeName, signal);
+        });
+      throwIfAborted(signal);
+      if (errors.length > 0) throw errors[0].raw;
+    },
     15,
     "critical"
   );
 
-  runAfterDelay(
-    "aggregateHyperlane",
-    0,
-    () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "hyperlane"),
-    20,
-    "critical"
-  );
-
-  runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15, "critical");
-  runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15, "critical");
-  runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15, "critical");
-  runAfterDelay("runAllAdapters", 5, runAllAdapters, 40, "critical", getRunAllAdaptersDiagnostics);
-  const dedicatedRuns = dedicatedJobs.map(({ jobName, bridgeName, handler }) =>
-    runAfterDelay(
-      jobName,
-      25,
-      (signal) =>
-        runDedicatedIngestionPipeline({
+  const dedicatedIngestionRuns = dedicatedJobs.map((job) => ({
+    ...job,
+    execution: runAfterDelay(job.jobName, 25, job.handler, 25),
+  }));
+  const dedicatedAggregationRuns = dedicatedIngestionRuns.map(({ jobName, bridgeName, execution }) =>
+    runDependentJob(
+      execution,
+      `aggregateAfter${jobName[0].toUpperCase()}${jobName.slice(1)}`,
+      jobCompletedSuccessfully,
+      (_, signal) =>
+        runBridgeAggregationPipeline({
           bridgeName,
           signal,
-          ingest: handler,
           aggregate: runAggregateHistoricalByName,
           getCurrentTimestamp: () => dayjs().unix(),
         }),
-      25
+      8
     )
   );
+
   runAfterDelay(
-    "publishDedicatedAggregations",
-    25,
-    () => publishDedicatedAggregations(dedicatedRuns, aggregateHourlyVolume, aggregateDailyVolume),
-    27,
+    "publishPostIngestionAggregations",
+    0,
+    (signal) =>
+      publishAggregations(
+        [
+          ...initialAggregationRuns,
+          aggregateAllJob,
+          ...initialPublicationRuns,
+          aggregateSuccessfulGenericAdapters,
+          ...dedicatedAggregationRuns,
+        ],
+        async () => {
+          throwIfAborted(signal);
+          await aggregateHourlyVolume();
+        },
+        async () => {
+          throwIfAborted(signal);
+          await aggregateDailyVolume();
+        }
+      ),
+    53,
     "critical"
   );
 

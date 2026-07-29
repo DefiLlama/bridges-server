@@ -26,6 +26,7 @@ import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { defaultConfidenceThreshold } from "./constants";
 import { transformTokenDecimals, transformTokens, chainMappings } from "../helpers/tokenMappings";
 import { mergeRelayAggregationChains } from "./aggregationChains";
+import { isAbortError, throwIfAborted } from "./errors";
 
 const mapChainName = (chain: string): string => chainMappings[chain] || chain;
 import { blacklist } from "../data/blacklist";
@@ -73,8 +74,10 @@ export const runAggregateDataHistorical = async (
   endTimestamp: number,
   bridgeNetworkId: number,
   hourly: boolean = false,
-  chainToRestrictTo?: string
+  chainToRestrictTo?: string,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const currentTimestamp = getCurrentUnixTimestamp() * 1000;
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
 
@@ -108,10 +111,13 @@ export const runAggregateDataHistorical = async (
 
   let timestamp = endTimestamp;
   while (timestamp > startTimestamp) {
+    throwIfAborted(signal);
     if (chainToRestrictTo) {
       try {
         await aggregateData(timestamp, bridgeDbName, chainToRestrictTo, hourly, largeTxThreshold);
+        throwIfAborted(signal);
       } catch (e: any) {
+        if (isAbortError(e) || signal?.aborted) throw e;
         const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chainToRestrictTo}, skipping. ${e?.message}`;
         await insertErrorRow({
           ts: currentTimestamp,
@@ -122,11 +128,18 @@ export const runAggregateDataHistorical = async (
         console.error(errString, e);
       }
     } else {
-      const chainsPromises = Promise.all(
+      let abortError: unknown;
+      await Promise.all(
         chains.map(async (chain) => {
           try {
+            throwIfAborted(signal);
             await aggregateData(timestamp, bridgeDbName, chain, hourly, largeTxThreshold);
+            throwIfAborted(signal);
           } catch (e: any) {
+            if (isAbortError(e) || signal?.aborted) {
+              abortError ??= e;
+              return;
+            }
             const errString = `Unable to aggregate data for ${bridgeDbName} on chain ${chain}, skipping.${e?.message}`;
             await insertErrorRow({
               ts: currentTimestamp,
@@ -138,7 +151,7 @@ export const runAggregateDataHistorical = async (
           }
         })
       );
-      await chainsPromises;
+      if (abortError) throw abortError;
     }
     timestamp -= hourly ? secondsInHour : secondsInDay;
   }
@@ -194,13 +207,15 @@ export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: numb
 export const runAggregateHistoricalByName = async (
   startTimestamp: number,
   endTimestamp: number,
-  bridgeName: string
+  bridgeName: string,
+  signal?: AbortSignal
 ) => {
+  throwIfAborted(signal);
   const bridgeNetwork = bridgeNetworks.find((bridgeNetwork) => bridgeNetwork.bridgeDbName === bridgeName);
   if (!bridgeNetwork) {
     throw new Error(`Bridge network ${bridgeName} not found`);
   }
-  await runAggregateDataHistorical(startTimestamp, endTimestamp, bridgeNetwork.id, true);
+  await runAggregateDataHistorical(startTimestamp, endTimestamp, bridgeNetwork.id, true, undefined, signal);
 };
 
 const checkSolanaAddress = (address: string) => {
@@ -539,16 +554,7 @@ export const aggregateData = async (
       totalAddressWithdrawn.push(`('${address}', ${addressData.usdValue}, ${addressData.numberTxs})`);
     });
 
-  if (totalDepositedUsd === 0 || totalWithdrawnUsd === 0) {
-    const errString = `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`;
-    await insertErrorRow({
-      ts: currentTimestamp,
-      target_table: hourly ? "hourly_aggregated" : "daily_aggregated",
-      keyword: "data",
-      error: errString,
-    });
-    console.error(errString);
-  } else {
+  if (totalDepositedUsd > 0 && totalWithdrawnUsd > 0) {
     console.log(
       `Total Value Deposited = ${totalDepositedUsd} and Total Value Withdrawn = ${totalWithdrawnUsd} for ${bridgeID} from ${startTimestamp} to ${endTimestamp}.`
     );
