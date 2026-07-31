@@ -1,186 +1,330 @@
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
-import { constructTransferParams } from "../../helpers/eventParams";
-import { Chain } from "@defillama/sdk/build/general";
-import { getTxsBlockRangeEtherscan, wait } from "../../helpers/etherscan";
-import { getTxsBlockRangeMerlinScan } from "../../helpers/merlin";
+import fetch from "node-fetch";
+import { ethers } from "ethers";
 import { EventData } from "../../utils/types";
-import { BigNumber } from "ethers";
-import { getTxsBlockRangeBtrScan } from "../../helpers/btr";
+import {
+  isAbortError,
+  isNonRetryableError,
+  NonRetryableError,
+  throwIfAborted,
+  waitWithSignal,
+} from "../../utils/errors";
 
-const blackListedAddresses = ["0xe2e1808ed4cc4a6f701696086838f511ee187d57"].map((a) => a.toLowerCase());
+// Pages Layerswap's public explorer feed and turns each completed swap into a deposit (source leg) +
+// withdraw (dest leg), priced in USD. Fetch/store runs in the dedicated `runLayerswap` handler.
+const DEFAULT_EXPLORER_URL = "https://api.layerswap.io/api/v2/explorer";
+const PAGE_SIZE = 200;
+const MAX_PAGES = 1000;
+const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-const solverAddressesEOA = ["0x2fc617e933a52713247ce25730f6695920b3befe"];
-
-const solverAddressesEOAerc = [
-  "0x2fc617e933a52713247ce25730f6695920b3befe",
-  "0x08b00ceee2fb66029b53d76110b19eeaabfd1e65",
-];
-
-const nativeTokens: Record<string, string> = {
-  ethereum: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
-  optimism: "0x4200000000000000000000000000000000000006",
-  base: "0x4200000000000000000000000000000000000006",
-  linea: "0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f",
-  blast: "0x4300000000000000000000000000000000000004",
-  polygon: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-  scroll: "0x5300000000000000000000000000000000000004",
-  mode: "0x4200000000000000000000000000000000000006",
-  manta: "0x0Dc808adcE2099A9F62AA87D9670745AbA741746",
-  arbitrum_nova: "0x722E8BdD2ce80A4422E880164f2079488e115365",
-  polygon_zkevm: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
-  era: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91",
-  merlin: "0xF6D226f9Dc15d9bB51182815b320D3fBE324e1bA",
-  zklink: "0x000000000000000000000000000000000000800A",
-  btr: "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
-  xlayer: "0x5a77f1443d16ee5761d310e38b62f77f726bc71c",
-  op_bnb: "0xe7798f023fc62146e8aa1b36da45fb70855a77ea",
-  bsc: "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
-  mantle: "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
-  bouncebit: "0x7F150c293c97172C75983BD8ac084c187107eA19",
-  zkfair: "0x4b21b980d0Dc7D3C0C6175b0A412694F3A1c7c6b",
-  bsquared: "0x8dbf84c93727c85DB09478C83a8621e765D20eC2",
-  taiko: "0xA51894664A773981C6C112C43ce576f315d5b1B6",
-  abstract: "0x3439153eb7af838ad19d56e1571fbd09333c2809",
-  ancient8: "0x4200000000000000000000000000000000000006",
-  astar: "0x81ecac0d6be0550a00ff064a4f9dd2400585fe9c",
-  avax: "0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab",
-  berachain: "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
-  bob: "0x4200000000000000000000000000000000000006",
-  celo: "0x66803FB87aBd4aaC3cbB3fAd7C3aa01f6F3FB207",
-  fraxtal: "0xfc00000000000000000000000000000000000006",
-  fuse: "0xa722c13135930332eb3d749b2f0906559d2c5b99",
-  gnosis: "0x6a023ccd1ff6f2045c3309768ead9e68f978f6e1",
-  gravity: "0xf6f832466cd6c21967e0d954109403f36bc8ceaa",
-  immutable_zkevm: "0x52A6c53869Ce09a731CD772f245b97A4401d3348",
-  kcc: "0xf55af137a98607f7ed2efefa4cd2dfe70e4253b1",
-  kroma: "0x4200000000000000000000000000000000000001",
-  lisk: "0x4200000000000000000000000000000000000006",
-  mint: "0x4200000000000000000000000000000000000006",
-  morph: "0x5300000000000000000000000000000000000011",
-  redstone: "0x4200000000000000000000000000000000000006",
-  ronin: "0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5",
-  sei: "0x160345fc359604fc6e70e3c5facbde5f7a9342d8",
-  soneium: "0x4200000000000000000000000000000000000006",
-  superseed: "0x4200000000000000000000000000000000000006",
-  unichain: "0x4200000000000000000000000000000000000006",
-  wc: "0x4200000000000000000000000000000000000006",
-  zetachain: "0xd97B1de3619ed2c6BEb3860147E30cA8A7dC9891",
-  zircuit: "0x4200000000000000000000000000000000000006",
-  zora: "0x4200000000000000000000000000000000000006",
-  // fuel: "0x4ea6ccef1215d9479f1024dff70fc055ca538215d2c8c348beddffd54583d0e8",
+// Layerswap API network name -> bridges-server chain key.
+export const networkNameToSlug: Record<string, string> = {
+  ETHEREUM_MAINNET: "ethereum",
+  ARBITRUM_MAINNET: "arbitrum",
+  ARBITRUMNOVA_MAINNET: "arbitrum nova",
+  OPTIMISM_MAINNET: "optimism",
+  BASE_MAINNET: "base",
+  LINEA_MAINNET: "linea",
+  BLAST_MAINNET: "blast",
+  SCROLL_MAINNET: "scroll",
+  BSC_MAINNET: "bsc",
+  XLAYER_MAINNET: "xlayer",
+  TAIKO_MAINNET: "taiko",
+  ZKSYNCERA_MAINNET: "zksync era",
+  MODE_MAINNET: "mode",
+  MANTA_MAINNET: "manta",
+  POLYGONZK_MAINNET: "polygon zkevm",
+  POLYGON_MAINNET: "polygon",
+  AVAX_MAINNET: "avalanche",
+  OPBNB_MAINNET: "opbnb",
+  GRAVITY_MAINNET: "gravity",
+  BOB_MAINNET: "bob",
+  MANTLE_MAINNET: "mantle",
+  ZORA_MAINNET: "zora",
+  FRAXTAL_MAINNET: "fraxtal",
+  FUSE_MAINNET: "fuse",
+  GNOSIS_MAINNET: "gnosis",
+  ANCIENT8_MAINNET: "ancient8",
+  CELO_MAINNET: "celo",
+  IMMUTABLEZK_MAINNET: "immutable zkevm",
+  KAIA_MAINNET: "kaia",
+  LISK_MAINNET: "lisk",
+  RARI_MAINNET: "rari",
+  SHAPE_MAINNET: "shape",
+  SUPERSEED_MAINNET: "superseed",
+  WORLDCHAIN_MAINNET: "wc",
+  XAI_MAINNET: "xai",
+  ZIRCUIT_MAINNET: "zircuit",
+  SEI_MAINNET: "sei",
+  ZEROG_MAINNET: "0g",
+  ABSTRACT_MAINNET: "abstract",
+  BERACHAIN_MAINNET: "berachain",
+  FLARE_MAINNET: "flare",
+  HYPEREVM_MAINNET: "hyperliquid",
+  INK_MAINNET: "ink",
+  KATANA_MAINNET: "katana",
+  LIGHTLINK_MAINNET: "lightlink",
+  MEGAETH_MAINNET: "megaeth",
+  MONAD_MAINNET: "monad",
+  MORPH_MAINNET: "morph",
+  PLASMA_MAINNET: "plasma",
+  ROBINHOOD_MAINNET: "robinhood",
+  RONIN_MAINNET: "ronin",
+  ROOTSTOCK_MAINNET: "rootstock",
+  SONEIUM_MAINNET: "soneium",
+  SONIC_MAINNET: "sonic",
+  SOPHON_MAINNET: "sophon",
+  SUPERPOSITION_MAINNET: "superposition",
+  STABLE_MAINNET: "stable",
+  TELOS_MAINNET: "telos",
+  TEMPO_MAINNET: "tempo",
+  UNICHAIN_MAINNET: "unichain",
+  BITCOIN_MAINNET: "bitcoin",
+  SOLANA_MAINNET: "solana",
+  ECLIPSE_MAINNET: "eclipse",
+  STARKNET_MAINNET: "starknet",
+  PARADEX_MAINNET: "paradex",
+  TON_MAINNET: "ton",
+  TRON_MAINNET: "tron",
+  HYPERLIQUID_MAINNET: "hyperliquid",
+  FUEL_MAINNET: "fuel",
 };
 
-const constructParams = (chain: string) => {
-  let eventParams = [] as any;
-  solverAddressesEOAerc.map((address: string) => {
-    const transferWithdrawalParams: PartialContractEventParams = constructTransferParams(address, false);
-    const transferDepositParams: PartialContractEventParams = constructTransferParams(address, true);
-    eventParams.push(transferWithdrawalParams, transferDepositParams);
-  });
-
-  return async (fromBlock: number, toBlock: number) => {
-    const eventLogData = await getTxDataFromEVMEventLogs("layerswap", chain as Chain, fromBlock, toBlock, eventParams);
-
-    const nativeEvents = await Promise.all(
-      solverAddressesEOA.map(async (address: string, i: number) => {
-        await wait(500 * i); // for etherscan
-        let txs: any[] = [];
-        if (chain === "merlin") {
-          txs = await getTxsBlockRangeMerlinScan(address, fromBlock, toBlock, {});
-        } else if (chain === "btr") {
-          txs = await getTxsBlockRangeBtrScan(address, fromBlock, toBlock, {});
-        } else {
-          txs = await getTxsBlockRangeEtherscan(chain, address, fromBlock, toBlock, {});
-        }
-        const eventsRes: EventData[] = txs.map((tx: any) => {
-          const event: EventData = {
-            txHash: tx.hash,
-            blockNumber: +tx.blockNumber,
-            from: tx.from,
-            to: tx.to,
-            token: nativeTokens[chain],
-            amount: BigNumber.from(tx.value),
-            isDeposit: address === tx.to,
-          };
-          return event;
-        });
-
-        return eventsRes;
-      })
-    );
-
-    const allEvents: EventData[] = [...nativeEvents.flat(), ...eventLogData];
-    const filteredEvents = allEvents.filter(
-      (event) =>
-        !blackListedAddresses.includes(event?.from?.toLowerCase()) &&
-        !blackListedAddresses.includes(event?.to?.toLowerCase())
-    );
-    return filteredEvents;
+type FeedToken = { contract: string | null };
+type FeedTx = {
+  type: string;
+  transaction_hash: string | null;
+  timestamp?: string | null;
+  amount: number;
+  amount_in_usd?: number | null;
+  from?: string | null;
+  to?: string | null;
+};
+type FeedSwap = {
+  swap: {
+    id: string;
+    created_date: string;
+    close_date: string;
+    source_network: { name: string };
+    source_token: FeedToken;
+    destination_network: { name: string };
+    destination_token: FeedToken;
+    metadata: { sequence_number: number };
+    transactions: FeedTx[];
   };
 };
 
-const adapter: BridgeAdapter = {
-  ethereum: constructParams("ethereum"),
-  arbitrum: constructParams("arbitrum"),
-  optimism: constructParams("optimism"),
-  base: constructParams("base"),
-  linea: constructParams("linea"),
-  blast: constructParams("blast"),
-  polygon: constructParams("polygon"),
-  scroll: constructParams("scroll"),
-  bsc: constructParams("bsc"),
-  mode: constructParams("mode"),
-  manta: constructParams("manta"),
-  metis: constructParams("metis"),
-  mantle: constructParams("mantle"),
-  taiko: constructParams("taiko"),
-  opbnb: constructParams("op_bnb"),
-  bouncebit: constructParams("bouncebit-mainnet"),
-  mint: constructParams("mint"),
-  "x layer": constructParams("xlayer"),
-  "arbitrum nova": constructParams("arbitrum_nova"),
-  "polygon zkevm": constructParams("polygon_zkevm"),
-  "zksync era": constructParams("era"),
-  gnosis: constructParams("xdai"),
-  avalanche: constructParams("avax"),
-  gravity: constructParams("gravity"),
-  bob: constructParams("bob"),
-  zora: constructParams("zora"),
-  kroma: constructParams("kroma"),
-  fraxtal: constructParams("fraxtal"),
-  kcc: constructParams("kcc"),
-  astar: constructParams("astar"),
-  fuse: constructParams("fuse"),
-  ancient8: constructParams("ancient8"),
-  celo: constructParams("celo"),
-  "immutable zkevm": constructParams("imx"),
-  kaia: constructParams("klaytn"),
-  lisk: constructParams("lisk"),
-  "okxchain mainnet": constructParams("okexchain"),
-  paradex: constructParams("paradex"),
-  "PGN (Public Goods Network)": constructParams("pgn"),
-  rari: constructParams("rari"),
-  redstone: constructParams("redstone"),
-  rollux: constructParams("rollux"),
-  ronin: constructParams("ronin"),
-  sei: constructParams("sei"),
-  shape: constructParams("shape"),
-  superseed: constructParams("superseed"),
-  "World Chain": constructParams("wc"),
-  xai: constructParams("xai"),
-  zetachain: constructParams("zeta"),
-  zircuit: constructParams("zircuit"),
-  // sophon: constructParams("sophon"),
-  // abstract: constructParams("abstract"),
-  // soneium: constructParams("soneium"),
-  // unichain: constructParams("unichain"),
-  // berachain: constructParams("berachain"),
-  // morph: constructParams("morph"),
-  // fuel: constructParams("fuel"),
-  // ton: constructParams("ton"),
-  // tron: constructParams("tron"),
-  // starknet: constructParams("starknet"),
+// Whole-dollar USD, paired with isUSDVolume. Matches relay/cashmere, which round the same way.
+// Note the consequence: a leg under $0.50 rounds to zero, and both the caller below and
+// aggregation discard zero-amount rows, so it is dropped entirely - losing its tx count as well
+// as its (negligible) volume. Measured at ~2.4% of legs. Deliberate and conservative.
+const roundUsd = (value: number): ethers.BigNumber => {
+  if (!isFinite(value) || value <= 0) return ethers.BigNumber.from(0);
+  return ethers.BigNumber.from(Math.round(value));
 };
+
+const legUsd = (tx: FeedTx | undefined): ethers.BigNumber => {
+  if (!tx) return ethers.BigNumber.from(0);
+  if (tx.amount_in_usd != null) return roundUsd(tx.amount_in_usd);
+  return ethers.BigNumber.from(0);
+};
+
+// Real address from the feed, or "0x" if missing/zero (aggregation drops zero-address rows).
+const cleanAddr = (addr?: string | null): string => (addr && addr.toLowerCase() !== NULL_ADDRESS ? addr : "0x");
+
+const parseTimestamp = (...values: Array<string | null | undefined>): number => {
+  for (const value of values) {
+    if (!value) continue;
+    const timestamp = new Date(value).getTime();
+    if (Number.isFinite(timestamp) && timestamp > 0) return timestamp;
+  }
+  return NaN;
+};
+
+export const convertSwapToEvent = (
+  item: FeedSwap
+): { deposit?: EventData; withdraw?: EventData; depositChain?: string; withdrawChain?: string } => {
+  const s = item.swap;
+  const input = s.transactions?.find((t) => t.type === "input" && t.transaction_hash);
+  const output = s.transactions?.find((t) => t.type === "output" && t.transaction_hash);
+  // Each leg carries its own on-chain time (relay does the same). The feed is paged by close_date,
+  // so a slow swap inserts a deposit row older than the window `aggregateAll` rebuilds (36h) and
+  // that leg is never counted. Measured: p50 18s, p90 47s, but 0.1% of swaps exceed 36h (~2/day,
+  // ~0.05% of volume, tail up to 30 days). Accepted rather than tracking and re-aggregating buckets.
+  const depositTimestamp = parseTimestamp(input?.timestamp, s.created_date);
+  const withdrawTimestamp = parseTimestamp(output?.timestamp, s.close_date, s.created_date);
+  const depositChain = networkNameToSlug[s.source_network?.name];
+  const withdrawChain = networkNameToSlug[s.destination_network?.name];
+  const depositUsd = legUsd(input);
+  const withdrawUsd = legUsd(output);
+
+  return {
+    depositChain,
+    withdrawChain,
+    deposit:
+      input && depositChain && Number.isFinite(depositTimestamp) && depositUsd.gt(0)
+        ? {
+            blockNumber: 0,
+            txHash: input.transaction_hash!,
+            timestamp: depositTimestamp,
+            from: cleanAddr(input.from),
+            to: cleanAddr(input.to),
+            token: s.source_token?.contract ?? NULL_ADDRESS,
+            amount: depositUsd,
+            isDeposit: true,
+            isUSDVolume: true,
+          }
+        : undefined,
+    withdraw:
+      output && withdrawChain && Number.isFinite(withdrawTimestamp) && withdrawUsd.gt(0)
+        ? {
+            blockNumber: 0,
+            txHash: output.transaction_hash!,
+            timestamp: withdrawTimestamp,
+            from: cleanAddr(output.from),
+            to: cleanAddr(output.to),
+            token: s.destination_token?.contract ?? NULL_ADDRESS,
+            amount: withdrawUsd,
+            isDeposit: false,
+            isUSDVolume: true,
+          }
+        : undefined,
+  };
+};
+
+const REQUEST_RETRIES = 5;
+const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_BASE_RETRY_MS = 2_000;
+const REQUEST_MAX_RETRY_MS = 30_000;
+
+const backoffMs = (attempt: number): number => Math.min(REQUEST_BASE_RETRY_MS * 2 ** attempt, REQUEST_MAX_RETRY_MS);
+
+// Retry-After (429) if the server sends it, otherwise exponential backoff.
+const getRetryDelay = (res: any, attempt: number): number => {
+  const retryAfter = Number(res?.headers?.get?.("retry-after"));
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return retryAfter * 1000;
+  return backoffMs(attempt);
+};
+
+const getExplorerUrl = (): string => process.env.LAYERSWAP_EXPLORER_URL || DEFAULT_EXPLORER_URL;
+
+export const buildExplorerUrl = (startingAfter?: string, explorerUrl = getExplorerUrl()): string => {
+  const url = new URL(explorerUrl);
+  url.searchParams.set("statuses", "1");
+  url.searchParams.set("compact", "true");
+  url.searchParams.set("limit", String(PAGE_SIZE));
+  if (startingAfter) url.searchParams.set("starting_after", startingAfter);
+  return url.toString();
+};
+
+export const fetchPage = async (
+  startingAfter?: string,
+  signal?: AbortSignal,
+  fetchImpl: typeof fetch = fetch
+): Promise<FeedSwap[]> => {
+  const url = buildExplorerUrl(startingAfter);
+
+  for (let attempt = 0; attempt <= REQUEST_RETRIES; attempt++) {
+    throwIfAborted(signal);
+    try {
+      const res = await fetchImpl(url, { timeout: REQUEST_TIMEOUT_MS, signal });
+      if (res.ok) {
+        const json: any = await res.json();
+        if (!Array.isArray(json?.data)) {
+          throw new NonRetryableError(`Layerswap explorer returned invalid data for ${url}`);
+        }
+        return json.data as FeedSwap[];
+      }
+      await res.text().catch(() => {}); // drain body so the socket is freed before retrying
+      // Retry rate-limits (429) and server errors (5xx); a 4xx is a client error, so fail fast.
+      if (!(res.status === 429 || res.status >= 500)) {
+        throw new NonRetryableError(`Layerswap explorer HTTP ${res.status} for ${url}`);
+      }
+      if (attempt === REQUEST_RETRIES) throw new Error(`Layerswap explorer HTTP ${res.status} for ${url}`);
+      await waitWithSignal(getRetryDelay(res, attempt), signal);
+    } catch (err: any) {
+      // An abort is a cancellation, not a transient failure - retrying it would defeat the signal.
+      if (isAbortError(err) || signal?.aborted) throw err;
+      if (isNonRetryableError(err) || attempt === REQUEST_RETRIES) throw err;
+      await waitWithSignal(backoffMs(attempt), signal);
+    }
+  }
+  throw new Error(`Layerswap explorer: exhausted retries for ${url}`);
+};
+
+type SwapPaginationResult = {
+  pages: number;
+  swaps: number;
+  stopReason: "empty" | "close-date-cutoff";
+};
+
+// Discovers the completion feed newest -> oldest, then hands pages to the caller oldest -> newest.
+// Committing in that order keeps a transaction-derived checkpoint behind any work left after a crash.
+export const forEachSwapPage = async (
+  sinceCloseTs: number,
+  onPage: (swaps: FeedSwap[]) => Promise<void>,
+  signal?: AbortSignal,
+  fetchImpl: typeof fetch = fetch
+): Promise<SwapPaginationResult> => {
+  let cursor: string | undefined;
+  let pages = 0;
+  let totalSwaps = 0;
+  const pendingPages: FeedSwap[][] = [];
+  let result: SwapPaginationResult | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    throwIfAborted(signal);
+    const swaps = await fetchPage(cursor, signal, fetchImpl);
+    if (!swaps.length) {
+      result = { pages, swaps: totalSwaps, stopReason: "empty" };
+      break;
+    }
+
+    const closeTimestamps = swaps.map((x) => parseTimestamp(x.swap?.close_date));
+    if (closeTimestamps.some((timestamp) => !Number.isFinite(timestamp))) {
+      throw new NonRetryableError(`Layerswap explorer page after ${cursor ?? "start"} contains an invalid close_date`);
+    }
+
+    pendingPages.push(swaps);
+    pages += 1;
+    totalSwaps += swaps.length;
+
+    const oldestCloseTimestamp = Math.min(...closeTimestamps);
+    if (oldestCloseTimestamp < sinceCloseTs) {
+      result = { pages, swaps: totalSwaps, stopReason: "close-date-cutoff" };
+      break;
+    }
+
+    const nextCursor = swaps[swaps.length - 1]?.swap?.id;
+    if (!nextCursor) {
+      throw new NonRetryableError(`Layerswap explorer page after ${cursor ?? "start"} is missing its last swap id`);
+    }
+    if (nextCursor === cursor) {
+      throw new NonRetryableError(`Layerswap explorer cursor did not advance past ${cursor}`);
+    }
+    cursor = nextCursor;
+  }
+
+  // Every page is buffered before the first write, so hitting this limit discards the whole run.
+  // Any bulk backfill needs its own streaming path rather than this function.
+  if (!result) {
+    throw new NonRetryableError(`Layerswap explorer hit the ${MAX_PAGES}-page safety limit`);
+  }
+
+  for (let page = pendingPages.length - 1; page >= 0; page--) {
+    throwIfAborted(signal);
+    await onPage(pendingPages[page]);
+  }
+
+  return result;
+};
+
+// Stub adapter (real work is in runLayerswap); keys are the chains we create bridges.config rows for.
+// The values are `true`, not functions, so this only works because "layerswap" is in `bridgesToSkip`
+// (src/utils/bridgePolicy.ts). The generic runner calls `adapter[chain](from, to, ctx)`, and a truthy
+// non-function slips past its "Chain not found" guard - so un-skipping this bridge, or running
+// `npm run test layerswap`, throws `adapterChainEventsFn is not a function`.
+const adapter = Object.fromEntries(
+  Array.from(new Set(Object.values(networkNameToSlug))).map((slug) => [slug, true])
+) as any;
+
 export default adapter;
