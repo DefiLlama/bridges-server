@@ -38,11 +38,13 @@ import { PromisePool } from "@supercharge/promise-pool";
 const scheduledJobs: ScheduledJob[] = [];
 const jobResults: JobResult[] = [];
 const activeJobs = new Map<string, AbortController>();
+type TimeoutSettleMode = "wait" | "detach";
 
 const withTimeout = async <T>(
   job: ScheduledJob,
   fn: (signal: AbortSignal) => Promise<T>,
-  timeoutMinutes: number
+  timeoutMinutes: number,
+  timeoutSettleMode: TimeoutSettleMode = "wait"
 ): Promise<JobExecution<T>> => {
   console.log(`[INFO] Starting ${job.criticality} job: ${job.name}`);
   const startTime = Date.now();
@@ -50,7 +52,11 @@ const withTimeout = async <T>(
   activeJobs.set(job.name, controller);
   let timedOut = false;
   let timeout: NodeJS.Timeout | undefined;
-  let jobPromise: Promise<any> | undefined;
+  let jobPromise: Promise<T> | undefined;
+  let cleanupWhenSettled = false;
+  const clearActiveJob = () => {
+    if (activeJobs.get(job.name) === controller) activeJobs.delete(job.name);
+  };
   try {
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeout = setTimeout(() => {
@@ -63,8 +69,10 @@ const withTimeout = async <T>(
     const result = await Promise.race([jobPromise, timeoutPromise]);
 
     const duration = (Date.now() - startTime) / 1000;
-    const degraded = Boolean(result && typeof result === "object" && result.degraded === true);
-    const detail = degraded && typeof result.error === "string" ? result.error : undefined;
+    const resultMetadata =
+      result && typeof result === "object" ? (result as { degraded?: unknown; error?: unknown }) : undefined;
+    const degraded = resultMetadata?.degraded === true;
+    const detail = degraded && typeof resultMetadata.error === "string" ? resultMetadata.error : undefined;
     jobResults.push({ ...job, status: degraded ? "degraded" : "ok", durationSec: duration, error: detail });
     console.log(
       `[${degraded ? "WARN" : "INFO"}] Job ${job.name} completed ${
@@ -91,14 +99,22 @@ const withTimeout = async <T>(
   } finally {
     if (timeout) clearTimeout(timeout);
     if (timedOut && jobPromise) {
-      try {
-        await jobPromise;
-      } catch {
-        // The timeout has already been recorded. Wait for the aborted work to settle
-        // so dependent publication cannot race background writes.
+      if (timeoutSettleMode === "wait") {
+        try {
+          await jobPromise;
+        } catch {
+          // The timeout has already been recorded. Wait for aggregation writes to settle
+          // so dependent publication cannot race them.
+        }
+      } else {
+        // Adapter implementations are third-party code and do not all honor AbortSignal.
+        // Let dependencies observe the timeout immediately instead of blocking the whole
+        // cron cycle, while still tracking the adapter until its background work settles.
+        cleanupWhenSettled = true;
+        void jobPromise.then(clearActiveJob, clearActiveJob);
       }
     }
-    activeJobs.delete(job.name);
+    if (!cleanupWhenSettled) clearActiveJob();
   }
 };
 
@@ -169,13 +185,14 @@ const runAfterDelay = <T>(
   fn: (signal: AbortSignal) => Promise<T>,
   timeoutMinutes: number = 5,
   criticality: JobCriticality = "recoverable",
-  diagnostics?: () => string
+  diagnostics?: () => string,
+  timeoutSettleMode: TimeoutSettleMode = "wait"
 ): Promise<JobExecution<T>> => {
   const job = { name: jobName, criticality, diagnostics };
   scheduledJobs.push(job);
   return new Promise<JobExecution<T>>((resolve, reject) => {
     setTimeout(() => {
-      withTimeout(job, fn, timeoutMinutes).then(resolve, reject);
+      withTimeout(job, fn, timeoutMinutes, timeoutSettleMode).then(resolve, reject);
     }, delayMinutes * 60 * 1000);
   });
 };
@@ -223,24 +240,27 @@ const cron = () => {
 
   console.log(`[INFO] Starting cron service at ${new Date().toISOString()}`);
 
+  // Adapter ingestion and adapter-scoped aggregation are best-effort: upstream/provider
+  // failures must be visible in the summary without turning the hourly Jenkins job red.
+  // The database publication jobs below remain critical and still fail Jenkins.
   const initialAggregationRuns = [
     runAfterDelay(
       "aggregateLayerZero",
       0,
       () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "layerzero"),
       15,
-      "critical"
+      "recoverable"
     ),
     runAfterDelay(
       "aggregateHyperlane",
       0,
       () => runAggregateHistoricalByName(dayjs().subtract(2, "day").unix(), dayjs().unix(), "hyperlane"),
       20,
-      "critical"
+      "recoverable"
     ),
   ];
 
-  const aggregateAllJob = runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15, "critical");
+  const aggregateAllJob = runAfterDelay("aggregateAll", 0, runAggregateAllAdapters, 15, "recoverable");
   const initialPublicationRuns = [
     runAfterDelay("aggregateHourly", 5, aggregateHourlyVolume, 15, "critical"),
     runAfterDelay("aggregateDaily", 5, aggregateDailyVolume, 15, "critical"),
@@ -251,8 +271,9 @@ const cron = () => {
     5,
     runAllAdapters,
     40,
-    "critical",
-    getRunAllAdaptersDiagnostics
+    "recoverable",
+    getRunAllAdaptersDiagnostics,
+    "detach"
   );
   const runAllAdaptersAfterPriorAggregation = Promise.all([runAllAdaptersJob, aggregateAllJob]).then(
     ([execution]) => execution
@@ -276,12 +297,12 @@ const cron = () => {
       if (errors.length > 0) throw errors[0].raw;
     },
     15,
-    "critical"
+    "recoverable"
   );
 
   const dedicatedIngestionRuns = dedicatedJobs.map((job) => ({
     ...job,
-    execution: runAfterDelay(job.jobName, 25, job.handler, 25),
+    execution: runAfterDelay(job.jobName, 25, job.handler, 25, "recoverable", undefined, "detach"),
   }));
   const dedicatedAggregationRuns = dedicatedIngestionRuns.map(({ jobName, bridgeName, execution }) =>
     runDependentJob(
@@ -321,7 +342,7 @@ const cron = () => {
         }
       ),
     53,
-    "critical"
+    "recoverable"
   );
 
   exit();

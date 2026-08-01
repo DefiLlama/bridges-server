@@ -21,6 +21,31 @@ test("recoverable failures leave the cron exit code successful", () => {
   });
 });
 
+test("adapter pipeline failures keep Jenkins green when core jobs succeed", () => {
+  const scheduled: ScheduledJob[] = [
+    { name: "aggregateAll", criticality: "recoverable" },
+    { name: "aggregateHourly", criticality: "critical" },
+    { name: "runAllAdapters", criticality: "recoverable" },
+    { name: "runRelay", criticality: "recoverable" },
+    { name: "aggregateSuccessfulGenericAdapters", criticality: "recoverable" },
+    { name: "publishPostIngestionAggregations", criticality: "recoverable" },
+  ];
+  const results: JobResult[] = [
+    { ...scheduled[0], status: "timed_out", durationSec: 1, error: "adapter aggregation timed out" },
+    { ...scheduled[1], status: "ok", durationSec: 1 },
+    { ...scheduled[2], status: "failed", durationSec: 1, error: "adapter failures exceeded the quality gate" },
+    { ...scheduled[3], status: "timed_out", durationSec: 1, error: "provider timeout" },
+    { ...scheduled[4], status: "failed", durationSec: 1, error: "adapter aggregation failed" },
+  ];
+
+  const summary = summarizeCronJobs(scheduled, results);
+
+  assert.equal(summary.recoverableFailures, 5);
+  assert.equal(summary.criticalFailures, 0);
+  assert.deepEqual(summary.neverSettled, [scheduled[5]]);
+  assert.equal(summary.exitCode, 0);
+});
+
 test("failed or unsettled critical jobs fail the cron", () => {
   const scheduled: ScheduledJob[] = [
     { name: "failed", criticality: "critical" },
