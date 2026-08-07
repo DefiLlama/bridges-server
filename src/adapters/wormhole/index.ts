@@ -1,9 +1,10 @@
 import dayjs from "dayjs";
 import { queryAllium } from "../../helpers/allium";
+import { defaultConfidenceThreshold } from "../../utils/constants";
 import { getSingleLlamaPrice } from "../../utils/prices";
 
-type WormholeBridgeEvent = {
-  block_timestamp: string;
+export type WormholeBridgeEvent = {
+  block_timestamp: string | number;
   transaction_hash: string;
   token_transfer_from_address: string;
   token_transfer_to_address: string;
@@ -17,13 +18,25 @@ type WormholeBridgeEvent = {
   application_protocol_ids: string[] | string | null;
 };
 
-const WORMHOLE_REPRICE_USD_THRESHOLD = Number(process.env.WORMHOLE_REPRICE_USD_THRESHOLD ?? 1_000_000);
+type PriceData = {
+  price?: number | string;
+  decimals?: number | string;
+  confidence?: number;
+};
+
+type PriceFetcher = (chain: string, token: string, timestamp?: number) => Promise<PriceData | null | undefined>;
+
+type WormholeOutlierOptions = {
+  threshold?: number;
+  fetchPrice?: PriceFetcher;
+};
+
+const WORMHOLE_REPRICE_USD_THRESHOLD = 1_000_000;
 
 const priceChainMapping: Record<string, string> = {
   avalanche: "avax",
   avax: "avax",
   bnb_smart_chain: "bsc",
-  BNB_Smart_Chain: "bsc",
   bsc: "bsc",
   ethereum: "ethereum",
   polygon: "polygon",
@@ -37,116 +50,109 @@ const priceChainMapping: Record<string, string> = {
   scroll: "scroll",
 };
 
-const normalizeProtocolIds = (protocolIds: string[] | string | null | undefined): string[] => {
-  if (!protocolIds) return [];
-  if (Array.isArray(protocolIds)) return protocolIds.map(String);
-  return String(protocolIds)
-    .replace(/[{}\\[\\]\"]/g, "")
-    .split(",")
-    .map((protocolId) => protocolId.trim())
-    .filter(Boolean);
-};
-
-const shouldRepriceWormholeEvent = (event: WormholeBridgeEvent): boolean => {
-  const tokenUsdAmount = Number(event.token_usd_amount || 0);
-  if (!Number.isFinite(tokenUsdAmount) || tokenUsdAmount < WORMHOLE_REPRICE_USD_THRESHOLD) return false;
-  if (!event.source_token_address || !event.source_token_amount) return false;
-
-  const protocolIds = normalizeProtocolIds(event.application_protocol_ids);
-  return protocolIds.includes("MAYAN") && protocolIds.some((protocolId) => protocolId.startsWith("SWIFT"));
-};
-
 const getSourcePriceChainAndToken = (event: WormholeBridgeEvent) => {
-  const sourceChain = event.source_chain;
-  const priceChain = priceChainMapping[sourceChain] || priceChainMapping[sourceChain?.toLowerCase?.()];
+  const sourceChain = event.source_chain?.toLowerCase?.();
+  const priceChain = priceChainMapping[sourceChain];
   if (!priceChain || !event.source_token_address) return null;
 
   const token = priceChain === "solana" ? event.source_token_address : event.source_token_address.toLowerCase();
-
   return { priceChain, token };
 };
 
 const getRepricedUsdAmount = async (
   event: WormholeBridgeEvent,
-  priceCache: Map<string, Promise<any>>
+  priceCache: Map<string, Promise<PriceData | null | undefined>>,
+  fetchPrice: PriceFetcher
 ): Promise<number | null> => {
-  const sourceTokenAmount = Number(event.source_token_amount || 0);
+  const sourceTokenAmount = Number(event.source_token_amount);
   if (!Number.isFinite(sourceTokenAmount) || sourceTokenAmount <= 0) return null;
 
   const priceKey = getSourcePriceChainAndToken(event);
   if (!priceKey) return null;
 
-  const hourTimestamp = Math.floor(Number(event.block_timestamp) / 3600) * 3600;
+  const eventTimestamp = Number(event.block_timestamp);
+  if (!Number.isFinite(eventTimestamp) || eventTimestamp <= 0) return null;
+
+  const hourTimestamp = Math.floor(eventTimestamp / 3600) * 3600;
   const cacheKey = `${priceKey.priceChain}:${priceKey.token}:${hourTimestamp}`;
   if (!priceCache.has(cacheKey)) {
-    priceCache.set(cacheKey, getSingleLlamaPrice(priceKey.priceChain, priceKey.token, hourTimestamp));
+    priceCache.set(cacheKey, fetchPrice(priceKey.priceChain, priceKey.token, hourTimestamp));
   }
 
   const priceData = await priceCache.get(cacheKey);
+  const confidence = priceData?.confidence;
+  if (confidence !== undefined && confidence < defaultConfidenceThreshold) return null;
+
   const price = Number(priceData?.price);
   if (!Number.isFinite(price) || price <= 0) return null;
 
-  const alliumUsdAmount = Number(event.token_usd_amount || 0);
+  const upstreamUsdAmount = Number(event.token_usd_amount);
   const directUsdAmount = sourceTokenAmount * price;
   const decimals = Number(priceData?.decimals);
 
-  if (Number.isFinite(decimals) && decimals >= 0 && directUsdAmount > alliumUsdAmount * 100) {
+  if (
+    Number.isFinite(decimals) &&
+    decimals >= 0 &&
+    Number.isInteger(decimals) &&
+    directUsdAmount > upstreamUsdAmount * 100
+  ) {
     const decimalAdjustedUsdAmount = (sourceTokenAmount / 10 ** decimals) * price;
-    if (Number.isFinite(decimalAdjustedUsdAmount) && decimalAdjustedUsdAmount <= alliumUsdAmount * 10) {
+    if (
+      Number.isFinite(decimalAdjustedUsdAmount) &&
+      decimalAdjustedUsdAmount > 0 &&
+      decimalAdjustedUsdAmount <= upstreamUsdAmount * 10
+    ) {
       return decimalAdjustedUsdAmount;
     }
   }
 
-  return directUsdAmount;
+  return Number.isFinite(directUsdAmount) && directUsdAmount > 0 ? directUsdAmount : null;
 };
 
-const repriceSuspiciousWormholeEvents = async (events: WormholeBridgeEvent[]): Promise<WormholeBridgeEvent[]> => {
-  const priceCache = new Map<string, Promise<any>>();
-  const safeEvents = [] as WormholeBridgeEvent[];
-  let corrected = 0;
-  let skipped = 0;
+export const repriceWormholeOutliers = async (
+  events: WormholeBridgeEvent[],
+  options: WormholeOutlierOptions = {}
+): Promise<WormholeBridgeEvent[]> => {
+  const threshold = options.threshold ?? WORMHOLE_REPRICE_USD_THRESHOLD;
+  const fetchPrice = options.fetchPrice ?? getSingleLlamaPrice;
+  const priceCache = new Map<string, Promise<PriceData | null | undefined>>();
+  const safeEvents: WormholeBridgeEvent[] = [];
+  let repriced = 0;
+  let dropped = 0;
 
   for (const event of events) {
-    if (!shouldRepriceWormholeEvent(event)) {
+    const upstreamUsdAmount = Number(event.token_usd_amount);
+    if (!Number.isFinite(upstreamUsdAmount) || upstreamUsdAmount < threshold) {
       safeEvents.push(event);
       continue;
     }
 
-    const originalUsdAmount = Number(event.token_usd_amount || 0);
     let repricedUsdAmount: number | null = null;
+    let priceLookupError: unknown;
     try {
-      repricedUsdAmount = await getRepricedUsdAmount(event, priceCache);
-    } catch (e: any) {
-      console.warn(
-        `[Wormhole] Skipping suspicious event ${event.transaction_hash}; price lookup failed for ` +
-          `${event.source_chain}:${event.source_token_address}: ${e?.message}`
-      );
+      repricedUsdAmount = await getRepricedUsdAmount(event, priceCache, fetchPrice);
+    } catch (error) {
+      priceLookupError = error;
     }
 
-    if (repricedUsdAmount === null || !Number.isFinite(repricedUsdAmount)) {
-      skipped++;
+    if (repricedUsdAmount === null) {
+      dropped++;
+      const reason = priceLookupError
+        ? `price lookup failed: ${(priceLookupError as any)?.message}`
+        : "no trusted source amount/price";
       console.warn(
-        `[Wormhole] Skipping suspicious event ${event.transaction_hash}; no DefiLlama price for ` +
+        `[Wormhole] Dropping unverifiable outlier ${event.transaction_hash}; ${reason} for ` +
           `${event.source_chain}:${event.source_token_address}`
       );
       continue;
     }
 
-    corrected++;
-    safeEvents.push({
-      ...event,
-      token_usd_amount: String(repricedUsdAmount),
-    });
-
-    if (originalUsdAmount / Math.max(repricedUsdAmount, 1) > 100) {
-      console.warn(
-        `[Wormhole] Repriced suspicious event ${event.transaction_hash} from ${originalUsdAmount} to ${repricedUsdAmount}`
-      );
-    }
+    repriced++;
+    safeEvents.push({ ...event, token_usd_amount: String(repricedUsdAmount) });
   }
 
-  if (corrected || skipped) {
-    console.log(`[Wormhole] Repriced ${corrected} suspicious events; skipped ${skipped} without prices.`);
+  if (repriced || dropped) {
+    console.log(`[Wormhole] Repriced ${repriced} large events; dropped ${dropped} unverifiable outliers.`);
   }
 
   return safeEvents;
@@ -270,7 +276,7 @@ export const fetchWormholeEvents = async (
       token_usd_amount: String(parseFloat(row.token_usd_amount || "0") || 0),
       block_timestamp: dayjs(row.block_timestamp).unix(),
     }));
-    const repricedBatch = await repriceSuspiciousWormholeEvents(normalizedBatch);
+    const repricedBatch = await repriceWormholeOutliers(normalizedBatch);
 
     allResults = [...allResults, ...repricedBatch];
     console.log(`Fetched ${allResults.length} Wormhole events.`);
