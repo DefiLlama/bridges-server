@@ -15,6 +15,64 @@ import { formatError, isAbortError, NonRetryableError, throwIfAborted } from "..
 const endpoint = "https://api2.mapofzones.com/v1/graphql";
 const graphQLClient = new GraphQLClient(endpoint);
 const MAP_OF_ZONES_RETRIES = 2;
+export const MAP_OF_ZONES_UNVERIFIED_USD_THRESHOLD = 1_000_000;
+
+export type MapOfZonesTransferTx = {
+  destination_address: string;
+  height: any;
+  source_address: string;
+  timestamp: any;
+  tx_hash: string;
+  tx_type: string;
+  usd_value?: any | null;
+  token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
+};
+
+export const normalizeMapOfZonesTransfer = (tx: MapOfZonesTransferTx): EventData | null => {
+  const upstreamUsdAmount = Number(tx.usd_value);
+  if (
+    !Number.isFinite(upstreamUsdAmount) ||
+    upstreamUsdAmount <= 0 ||
+    upstreamUsdAmount >= MAP_OF_ZONES_UNVERIFIED_USD_THRESHOLD
+  ) {
+    console.warn(
+      `[MapOfZones] Dropping unverifiable USD value for ${tx.tx_hash}: ${String(tx.usd_value)}`
+    );
+    return null;
+  }
+
+  let from = tx.source_address;
+  let to = tx.destination_address;
+  const isDeposit = tx.tx_type === "Deposit";
+
+  if (isDeposit) {
+    from = tx.destination_address;
+    to = tx.source_address;
+  }
+  // handle long addresses
+  if (to?.length > 42) {
+    to = to.slice(0, 42) + "...";
+  }
+  if (from?.length > 42) {
+    from = from.slice(0, 42) + "...";
+  }
+
+  const date = new Date(tx.timestamp.replace(" ", "T") + "Z");
+  const unixTimestamp = Math.floor(date.getTime());
+
+  return {
+    blockNumber: tx.height,
+    txHash: tx.tx_hash,
+    from,
+    to,
+    token: tx.token?.symbol || tx.token?.base_denom,
+    amount: tx.usd_value,
+    isDeposit,
+    isUSDVolume: true,
+    txsCountedAs: 1,
+    timestamp: unixTimestamp,
+  } as EventData;
+};
 
 const requestWithTimeout = async <T>(
   query: RequestDocument,
@@ -241,49 +299,9 @@ export const getIbcVolumeByZoneId = (chainId: string) => {
       return [];
     }
 
-    return zoneData.ibc_transfer_txs.map(
-      (tx: {
-        destination_address: string;
-        height: any;
-        source_address: string;
-        timestamp: any;
-        tx_hash: string;
-        tx_type: string;
-        usd_value?: any | null;
-        token?: { base_denom: string; logo_url?: string | null; symbol?: string | null } | null;
-      }) => {
-        let from = tx.source_address;
-        let to = tx.destination_address;
-        const isDeposit = tx.tx_type === "Deposit";
-
-        if (isDeposit) {
-          from = tx.destination_address;
-          to = tx.source_address;
-        }
-        // handle long addresses
-        if (to?.length > 42) {
-          to = to.slice(0, 42) + "...";
-        }
-        if (from?.length > 42) {
-          from = from.slice(0, 42) + "...";
-        }
-
-        const date = new Date(tx.timestamp.replace(" ", "T") + "Z");
-        const unixTimestamp = Math.floor(date.getTime());
-
-        return {
-          blockNumber: tx.height,
-          txHash: tx.tx_hash,
-          from,
-          to,
-          token: tx.token?.symbol || tx.token?.base_denom,
-          amount: tx.usd_value,
-          isDeposit,
-          isUSDVolume: true,
-          txsCountedAs: 1,
-          timestamp: unixTimestamp,
-        } as EventData;
-      }
-    );
+    return zoneData.ibc_transfer_txs.flatMap((tx) => {
+      const event = normalizeMapOfZonesTransfer(tx);
+      return event ? [event] : [];
+    });
   };
 };
