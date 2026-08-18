@@ -9,6 +9,7 @@ export const bridgesToSkip = [
   "teleswap",
   "mayan",
   "ccip",
+  "layerswap",
 ];
 
 export const shouldSkipBridge = (bridgeDbName: string) => bridgesToSkip.includes(bridgeDbName);

@@ -18,6 +18,7 @@ import dayjs from "dayjs";
 import runHyperlane from "../handlers/runHyperlane";
 import runTeleswap from "../handlers/runTeleswap";
 import { handler as runRelay } from "../handlers/runRelay";
+import { handler as runLayerswap } from "../handlers/runLayerswap";
 import { handler as runCashmere } from "../handlers/runCashmere";
 import { getAllGetLogsCounts } from "../utils/cache";
 import { getExplorerRequestStats } from "../helpers/etherscan";
@@ -226,6 +227,7 @@ const dedicatedJobs: DedicatedJob[] = [
   { jobName: "runHyperlane", bridgeName: "hyperlane", handler: runHyperlane },
   { jobName: "runInterSoon", bridgeName: "intersoon", handler: runInterSoon },
   { jobName: "runRelay", bridgeName: "relay", handler: runRelay },
+  { jobName: "runLayerswap", bridgeName: "layerswap", handler: runLayerswap },
   { jobName: "runAcross", bridgeName: "across", handler: runAcross },
   { jobName: "runCashmere", bridgeName: "cashmere", handler: runCashmere },
   { jobName: "runTeleswap", bridgeName: "teleswap", handler: runTeleswap },
