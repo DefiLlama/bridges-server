@@ -46,6 +46,8 @@ async function storeBackup(key, body) {
 
 const BACKUP_PREFIX = process.env.BACKUP_PREFIX || "transactions/daily-backup";
 const DAY_BATCH_SIZE = Number(process.env.DAY_BATCH_SIZE || "100000");
+// rows serialized into a single string before being handed to gzip
+const WRITE_CHUNK_ROWS = 5000;
 
 
 async function backupSingleDay(dayStart) {
@@ -68,7 +70,28 @@ async function backupSingleDay(dayStart) {
   console.log(`[INFO] ${dateLabel}: backing up ${rowsInDay} rows (batch size ${DAY_BATCH_SIZE})`);
 
   const key = `${BACKUP_PREFIX}/${dateLabel}.ndjson.gz`;
-  const chunks = [];
+
+  // Gzip incrementally: joining every batch into one string first blows past V8's
+  // max string length (RangeError: Invalid string length) on high volume days.
+  const gzip = zlib.createGzip();
+  const gzChunks = [];
+  let gzError = null;
+  gzip.on("data", (chunk) => gzChunks.push(chunk));
+  gzip.on("error", (e) => {
+    gzError = e;
+  });
+  const gzipDone = new Promise((resolve, reject) => {
+    gzip.on("end", resolve);
+    gzip.on("error", reject);
+  });
+  // the write path may throw first, leaving this rejection unobserved
+  gzipDone.catch(() => {});
+
+  const writeChunk = (str) =>
+    new Promise((resolve, reject) => {
+      if (gzError) return reject(gzError);
+      gzip.write(str, (e) => (e ? reject(e) : resolve()));
+    });
 
   let lastId = MIN_INT_ID;
   let processed = 0;
@@ -87,15 +110,21 @@ async function backupSingleDay(dayStart) {
     lastId = rows[rows.length - 1].id;
     processed += rows.length;
 
-    chunks.push(rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
+    for (let i = 0; i < rows.length; i += WRITE_CHUNK_ROWS) {
+      const slice = rows.slice(i, i + WRITE_CHUNK_ROWS);
+      await writeChunk(slice.map((row) => JSON.stringify(row)).join("\n") + "\n");
+    }
 
     if (processed % (DAY_BATCH_SIZE * 2) === 0 || processed === rowsInDay) {
       console.log(`[INFO] ${dateLabel}: streamed ${processed}/${rowsInDay} rows`);
     }
   }
 
-  const bodyBuffer = Buffer.from(chunks.join(""));
-  const payload = zlib.gzipSync(bodyBuffer);
+  gzip.end();
+  await gzipDone;
+
+  const payload = Buffer.concat(gzChunks);
+  console.log(`[INFO] ${dateLabel}: gzipped payload is ${payload.length} bytes`);
 
   await storeBackup(key, payload);
   console.log(`[INFO] ${dateLabel}: upload complete to ${key}`);
