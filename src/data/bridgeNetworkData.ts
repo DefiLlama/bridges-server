@@ -2806,6 +2806,7 @@ export default [
       "Aptos",
       "Linea",
       "Monad",
+      "Hyperliquid",
     ],
   },
   {

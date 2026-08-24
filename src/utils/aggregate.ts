@@ -403,6 +403,7 @@ export const aggregateData = async (
           } else {
             let bnAmount = null;
             if (bridgeDbName === "mayan") {
+              // Mayan rows predating USD volume hold a human-readable amount, not base units.
               bnAmount = rawBnAmount;
             } else if (transformedDecimals) {
               bnAmount = rawBnAmount.dividedBy(10 ** Number(transformedDecimals));
