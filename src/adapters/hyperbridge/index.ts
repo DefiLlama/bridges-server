@@ -74,6 +74,20 @@ const tokenEvents = (
       isDeposit,
     }));
 
+const getReceipt = async (provider: ethers.providers.Provider, txHash: string) => {
+  let lastError: any;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const receipt = await provider.getTransactionReceipt(txHash);
+      if (receipt?.logs) return receipt;
+      lastError = new Error(`no receipt for ${txHash}`);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError;
+};
+
 type IsmpTx = { blockNumber: number; outgoing: boolean; modules: Set<string> };
 
 // Group ISMP host events by tx and collect the modules that dispatched from it.
@@ -107,12 +121,11 @@ const ismpTransfers = async (chain: string, txs: Map<string, IsmpTx>): Promise<E
   const skip = new Set([ISMP_HOST, HANDLER, INTENT_GATEWAY].map((a) => a.toLowerCase()));
   const out: EventData[] = [];
 
-  await PromisePool.withConcurrency(10)
+  const { errors } = await PromisePool.withConcurrency(10)
     .for([...txs.entries()])
     .process(async ([txHash, tx]) => {
       if (tx.outgoing && [...tx.modules].every((m) => m === INTENT_GATEWAY.toLowerCase())) return;
-      const receipt = await provider.getTransactionReceipt(txHash);
-      if (!receipt?.logs) return;
+      const receipt = await getReceipt(provider, txHash);
       if (receipt.logs.some((l) => l.address.toLowerCase() === INTENT_GATEWAY.toLowerCase())) return;
       const contracts = new Set(receipt.logs.map((l) => l.address.toLowerCase()));
 
@@ -146,6 +159,8 @@ const ismpTransfers = async (chain: string, txs: Map<string, IsmpTx>): Promise<E
       }
     });
 
+  if (errors.length)
+    throw new Error(`hyperbridge: ${errors.length} receipt lookups failed on ${chain}: ${errors[0].message}`);
   return out;
 };
 
