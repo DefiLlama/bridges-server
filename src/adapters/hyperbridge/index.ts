@@ -1,316 +1,193 @@
-import { BridgeAdapter, ContractEventParams, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
-import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { Chain } from "@defillama/sdk/build/general";
-import { EventData } from "../../utils/types";
-import { getProvider } from "../../utils/provider";
+import { getLogs } from "@defillama/sdk/build/util/logs";
+import { PromisePool } from "@supercharge/promise-pool";
 import { ethers } from "ethers";
+import { BridgeAdapter } from "../../helpers/bridgeAdapter.type";
+import { incrementGetLogsCount } from "../../utils/cache";
+import { getProvider } from "../../utils/provider";
+import { EventData } from "../../utils/types";
 
-const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+// Same addresses on every chain (CREATE2). https://docs.hyperbridge.network/developers/evm/contract-addresses/mainnet
+const ISMP_HOST = "0x620128E2B19193d6Bd244a3AC8D3bBa0541B19c3";
+const HANDLER = "0x2a18AB35DEa43474882E05A661e2F20fe89c0535";
+const INTENT_GATEWAY = "0xAe041F7B0CB581876832830baeB6a2Aa2a3C9716";
 
-const ismpHostAddresses = {
-  ethereum: "0x792A6236AF69787C40cF76b69B4c8c7B28c4cA20",
-  arbitrum: "0xE05AFD4Eb2ce6d65c40e1048381BD0Ef8b4B299e",
-  base: "0x6FFe92e4d7a9D589549644544780e6725E84b248",
-  bsc: "0x24B5d421Ec373FcA57325dd2F0C074009Af021F7",
-  polygon: "0xD8d3db17C1dF65b301D45C84405CcAC1395C559a",
-  unichain: "0x2A17C1c3616Bbc33FCe5aF5B965F166ba76cEDAf",
-  soneium: "0x7F0165140D0f3251c8f6465e94E9d12C7FD40711",
-  optimism: "0x78c8A5F27C06757EA0e30bEa682f1FD5C8d7645d",
-} as const;
+const chains = ["ethereum", "arbitrum", "optimism", "base", "bsc", "polygon"];
 
-type SupportedChains = keyof typeof ismpHostAddresses;
+const ZERO = "0x0000000000000000000000000000000000000000";
+const TRANSFER_TOPIC = ethers.utils.id("Transfer(address,address,uint256)");
+const TOKEN_INFO = "tuple(bytes32 token, uint256 amount)[]";
 
-const intentGatewayAddresses: Partial<Record<SupportedChains, string>> = {
-  ethereum: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
-  arbitrum: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
-  base: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
-  bsc: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
-  polygon: "0x1A4ee689A004B10210A1dF9f24A387Ea13359aCF",
+const ISMP_OUTGOING_ABIS = [
+  "event PostRequestEvent(string source, string dest, address indexed from, bytes to, uint256 nonce, uint256 timeoutTimestamp, bytes body, uint256 fee)",
+  "event GetRequestEvent(string source, string dest, bytes from, bytes[] keys, uint256 height, uint256 nonce, uint256 timeoutTimestamp, bytes context, uint256 fee)",
+];
+const ISMP_INCOMING_ABIS = [
+  "event PostRequestHandled(bytes32 indexed commitment, address relayer)",
+  "event GetRequestHandled(bytes32 indexed commitment, address relayer)",
+  "event PostRequestTimeoutHandled(bytes32 indexed commitment, string dest)",
+  "event GetRequestTimeoutHandled(bytes32 indexed commitment, string dest)",
+];
+
+const ORDER_PLACED_ABI = `event OrderPlaced(bytes32 user, string source, string destination, uint256 deadline, uint256 nonce, uint256 fees, address session, bytes32 beneficiary, ${TOKEN_INFO} predispatch, ${TOKEN_INFO} inputs, ${TOKEN_INFO} outputs, bytes predispatchCall, bytes outputCall, bytes32 graffiti)`;
+// Emitted by the same proxy before the 2026-08-08 implementation upgrade.
+const ORDER_PLACED_LEGACY_ABI = `event OrderPlaced(bytes32 user, string source, string destination, uint256 deadline, uint256 nonce, uint256 fees, address session, bytes32 beneficiary, ${TOKEN_INFO} predispatch, ${TOKEN_INFO} inputs, ${TOKEN_INFO} outputs)`;
+const ORDER_FILLED_ABI = `event OrderFilled(bytes32 indexed commitment, address filler, ${TOKEN_INFO} outputs, ${TOKEN_INFO} inputs)`;
+const PARTIAL_FILL_ABI = `event PartialFill(bytes32 indexed commitment, address filler, ${TOKEN_INFO} outputs, ${TOKEN_INFO} inputs)`;
+
+const iface = new ethers.utils.Interface([
+  ...ISMP_OUTGOING_ABIS,
+  ...ISMP_INCOMING_ABIS,
+  ORDER_PLACED_ABI,
+  ORDER_PLACED_LEGACY_ABI,
+  ORDER_FILLED_ABI,
+  PARTIAL_FILL_ABI,
+]);
+
+const bytes32ToAddress = (b: string): string => ethers.utils.getAddress("0x" + b.slice(-40));
+const bytesToAddress = (b: string): string | undefined => (b.length === 42 ? ethers.utils.getAddress(b) : undefined);
+
+const fetchLogs = async (chain: string, target: string, eventAbi: string, fromBlock: number, toBlock: number) => {
+  incrementGetLogsCount("hyperbridge", chain);
+  const logs = await getLogs({ target, eventAbi, fromBlock, toBlock, chain: chain as Chain, entireLog: true });
+  return Array.isArray(logs?.[0]) ? (logs as any[][]).flat() : (logs as any[]);
 };
 
-// Extract ISMP module addresses from events
-// Returns a map of txHash -> Set of ISMP module addresses
-const extractIsmpModuleAddresses = (events: EventData[]): Map<string, Set<string>> => {
-  const ismpModulesByTx = new Map<string, Set<string>>();
+const fetchAll = async (chain: string, target: string, abis: string[], fromBlock: number, toBlock: number) =>
+  (await Promise.all(abis.map((abi) => fetchLogs(chain, target, abi, fromBlock, toBlock)))).flat();
 
-  for (const event of events) {
-    if (!ismpModulesByTx.has(event.txHash)) {
-      ismpModulesByTx.set(event.txHash, new Set<string>());
-    }
-    const modules = ismpModulesByTx.get(event.txHash)!;
+const tokenEvents = (
+  log: any,
+  tokens: { token: string; amount: ethers.BigNumber }[],
+  from: string,
+  isDeposit: boolean
+): EventData[] =>
+  tokens
+    .filter(({ amount }) => !ethers.BigNumber.from(amount).isZero())
+    .map(({ token, amount }) => ({
+      blockNumber: Number(log.blockNumber),
+      txHash: log.transactionHash,
+      from,
+      to: INTENT_GATEWAY,
+      token: bytes32ToAddress(token), // address(0) = native token
+      amount: ethers.BigNumber.from(amount),
+      isDeposit,
+    }));
 
-    if (event.from) {
-      modules.add(event.from.toLowerCase());
-    }
-
-    if (event.to) {
-      modules.add(event.to.toLowerCase());
-    }
-  }
-
-  return ismpModulesByTx;
-};
-
-// For each ISMP event and IntentGateway OrderPlaced event, scan its tx for ERC20 Transfer logs and turn those into EventData.
-const extractTransfersFromIsmpEvents = async (
-  events: EventData[],
-  chain: Chain,
-  ismpModulesByTx: Map<string, Set<string>>
-): Promise<EventData[]> => {
-  const provider = getProvider(chain as string) as any;
-  const transfers: EventData[] = [];
-  const intentGateway = intentGatewayAddresses[chain as SupportedChains];
-
-  for (const event of events) {
-    const ismpModules = ismpModulesByTx.get(event.txHash);
-    // Check if this is an OrderPlaced event (has isDeposit=true but no from/to)
-    const isOrderPlacedEvent = event.isDeposit;
-
-    // Skip if this transaction has neither ISMP modules nor OrderPlaced event
-    if ((!ismpModules || ismpModules.size === 0) && !isOrderPlacedEvent) continue;
-
-    let txReceipt: any;
+const getReceipt = async (provider: ethers.providers.Provider, txHash: string) => {
+  let lastError: any;
+  for (let i = 0; i < 3; i++) {
     try {
-      txReceipt = await provider.getTransactionReceipt(event.txHash);
+      const receipt = await provider.getTransactionReceipt(txHash);
+      if (receipt?.logs) return receipt;
+      lastError = new Error(`no receipt for ${txHash}`);
     } catch (e) {
-      console.error(`Error fetching tx receipt for hyperbridge tx ${event.txHash} on ${chain}:`, e);
-      continue;
-    }
-
-    if (!txReceipt?.logs) continue;
-
-    for (const log of txReceipt.logs) {
-      if (!log.topics || log.topics.length < 3) continue;
-      if (log.topics[0] !== TRANSFER_TOPIC) continue;
-
-      const from = "0x" + log.topics[1].slice(26);
-      const to = "0x" + log.topics[2].slice(26);
-      const token = log.address;
-      const amount = ethers.BigNumber.from(log.data);
-
-      const fromLower = from.toLowerCase();
-      const toLower = to.toLowerCase();
-      const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-      // Special Case: OrderPlaced event indicates a deposit
-      // Only track transfers TO the IntentGateway address for OrderPlaced transactions
-      if (isOrderPlacedEvent) {
-        if (!intentGateway || toLower !== intentGateway.toLowerCase()) {
-          // Skip this transfer if it's an OrderPlaced tx but not to IntentGateway
-          continue;
-        }
-        // For OrderPlaced events, mark as deposit
-        transfers.push({
-          txHash: event.txHash,
-          blockNumber: event.blockNumber,
-          from,
-          to,
-          token,
-          amount,
-          isDeposit: true,
-        });
-        continue;
-      }
-
-      // Handle ISMP events
-      // Special Case for Token Gateway: If `from` is zero address → deposit, if `to` is zero address → withdrawal
-      let isDeposit: boolean;
-      if (fromLower === ZERO_ADDRESS) {
-        isDeposit = true;
-      } else if (toLower === ZERO_ADDRESS) {
-        isDeposit = false;
-      } else if (ismpModules && ismpModules.size > 0) {
-        // If transfer is TO an ISMP module → deposit, FROM an ISMP module → withdrawal
-        isDeposit = ismpModules.has(toLower);
-      } else {
-        isDeposit = false;
-      }
-
-      transfers.push({
-        txHash: event.txHash,
-        blockNumber: event.blockNumber,
-        from,
-        to,
-        token,
-        amount,
-        isDeposit,
-      });
+      lastError = e;
     }
   }
-
-  return transfers;
+  throw lastError;
 };
 
-const constructParams = (chain: SupportedChains) => {
-  const ismpHost = ismpHostAddresses[chain];
-  const intentGateway = intentGatewayAddresses[chain];
+type IsmpTx = { blockNumber: number; outgoing: boolean; modules: Set<string> };
 
-  return async (fromBlock: number, toBlock: number) => {
-    const postRequestEventParams = {
-      target: ismpHost,
-      topic: "PostRequestEvent(string,string,address,bytes,uint256,uint256,bytes,uint256)",
-      abi: [
-        "event PostRequestEvent(string source, string dest, address indexed from, bytes to, uint256 nonce, uint256 timeoutTimestamp, bytes body, uint256 fee)",
-      ],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        from: "from",
-        to: "to",
-      },
-    };
+// Group ISMP host events by tx and collect the modules that dispatched from it.
+const groupIsmpTxs = (outgoingLogs: any[], incomingLogs: any[]): Map<string, IsmpTx> => {
+  const txs = new Map<string, IsmpTx>();
+  const get = (log: any) => {
+    let tx = txs.get(log.transactionHash);
+    if (!tx) {
+      tx = { blockNumber: Number(log.blockNumber), outgoing: false, modules: new Set() };
+      txs.set(log.transactionHash, tx);
+    }
+    return tx;
+  };
+  for (const log of incomingLogs) get(log);
+  for (const log of outgoingLogs) {
+    const tx = get(log);
+    tx.outgoing = true;
+    const from = iface.parseLog(log).args.from as string;
+    const module = from.length === 42 ? from : bytesToAddress(from);
+    if (module) tx.modules.add(module.toLowerCase());
+  }
+  return txs;
+};
 
-    const postRequestHandledParams = {
-      target: ismpHost,
-      topic: "PostRequestHandled(bytes32,address)",
-      abi: ["event PostRequestHandled(bytes32 indexed commitment, address relayer)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
+// Generic ISMP rule for any module (TokenGateway-style apps, HyperFungibleTokens, third parties):
+//  outgoing tx -> transfers into a dispatching module, or burns, are deposits
+//  incoming tx -> transfers out of a contract, or mints, are withdrawals
+// IntentGateway txs are handled from its own events and skipped here, as are fee-token transfers to the host/handler.
+const ismpTransfers = async (chain: string, txs: Map<string, IsmpTx>): Promise<EventData[]> => {
+  const provider = getProvider(chain) as ethers.providers.Provider;
+  const skip = new Set([ISMP_HOST, HANDLER, INTENT_GATEWAY].map((a) => a.toLowerCase()));
+  const out: EventData[] = [];
 
-    const postResponseEventParams = {
-      target: ismpHost,
-      topic: "PostResponseEvent(string,string,address,bytes,uint256,uint256,bytes,bytes,uint256,uint256)",
-      abi: [
-        "event PostResponseEvent(string source, string dest, address indexed from, bytes to, uint256 nonce, uint256 timeoutTimestamp, bytes body, bytes response, uint256 responseTimeoutTimestamp, uint256 fee)",
-      ],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        from: "from",
-        to: "to",
-      },
-    };
+  const { errors } = await PromisePool.withConcurrency(10)
+    .for([...txs.entries()])
+    .process(async ([txHash, tx]) => {
+      if (tx.outgoing && [...tx.modules].every((m) => m === INTENT_GATEWAY.toLowerCase())) return;
+      const receipt = await getReceipt(provider, txHash);
+      if (receipt.logs.some((l) => l.address.toLowerCase() === INTENT_GATEWAY.toLowerCase())) return;
+      const contracts = new Set(receipt.logs.map((l) => l.address.toLowerCase()));
 
-    const postResponseHandledParams = {
-      target: ismpHost,
-      topic: "PostResponseHandled(bytes32,address)",
-      abi: ["event PostResponseHandled(bytes32 indexed commitment, address relayer)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
+      for (const log of receipt.logs) {
+        if (log.topics[0] !== TRANSFER_TOPIC || log.topics.length !== 3) continue;
+        const from = ethers.utils.getAddress("0x" + log.topics[1].slice(26));
+        const to = ethers.utils.getAddress("0x" + log.topics[2].slice(26));
+        const amount = ethers.BigNumber.from(log.data);
+        if (amount.isZero() || skip.has(from.toLowerCase()) || skip.has(to.toLowerCase())) continue;
 
-    // ========== ISMP Host Get Request Events ==========
+        const burn = to === ZERO;
+        const mint = from === ZERO;
+        let isDeposit: boolean;
+        if (tx.outgoing) {
+          if (!burn && !tx.modules.has(to.toLowerCase())) continue;
+          isDeposit = true;
+        } else {
+          if (!mint && !contracts.has(from.toLowerCase())) continue;
+          isDeposit = false;
+        }
 
-    const getRequestEventParams = {
-      target: ismpHost,
-      topic: "GetRequestEvent(string,string,address,bytes[],uint256,uint256,uint256,bytes,uint256)",
-      abi: [
-        "event GetRequestEvent(string source, string dest, address indexed from, bytes[] keys, uint256 height, uint256 nonce, uint256 timeoutTimestamp, bytes context, uint256 fee)",
-      ],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        from: "from",
-      },
-    };
+        out.push({
+          blockNumber: tx.blockNumber,
+          txHash,
+          from: mint ? log.address : from,
+          to: burn ? log.address : to,
+          token: log.address,
+          amount,
+          isDeposit,
+        });
+      }
+    });
 
-    const getRequestHandledParams = {
-      target: ismpHost,
-      topic: "GetRequestHandled(bytes32,address)",
-      abi: ["event GetRequestHandled(bytes32 indexed commitment, address relayer)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
+  if (errors.length)
+    throw new Error(`hyperbridge: ${errors.length} receipt lookups failed on ${chain}: ${errors[0].message}`);
+  return out;
+};
 
-    // ========== ISMP Host Timeout Events ==========
+const constructParams = (chain: string) => {
+  return async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
+    const [outgoing, incoming, placed, filled] = await Promise.all([
+      fetchAll(chain, ISMP_HOST, ISMP_OUTGOING_ABIS, fromBlock, toBlock),
+      fetchAll(chain, ISMP_HOST, ISMP_INCOMING_ABIS, fromBlock, toBlock),
+      fetchAll(chain, INTENT_GATEWAY, [ORDER_PLACED_ABI, ORDER_PLACED_LEGACY_ABI], fromBlock, toBlock),
+      fetchAll(chain, INTENT_GATEWAY, [ORDER_FILLED_ABI, PARTIAL_FILL_ABI], fromBlock, toBlock),
+    ]);
 
-    const postRequestTimeoutHandledParams = {
-      target: ismpHost,
-      topic: "PostRequestTimeoutHandled(bytes32,string)",
-      abi: ["event PostRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
+    const out = await ismpTransfers(chain, groupIsmpTxs(outgoing, incoming));
 
-    const postResponseTimeoutHandledParams = {
-      target: ismpHost,
-      topic: "PostResponseTimeoutHandled(bytes32,string)",
-      abi: ["event PostResponseTimeoutHandled(bytes32 indexed commitment, string dest)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
-
-    const getRequestTimeoutHandledParams = {
-      target: ismpHost,
-      topic: "GetRequestTimeoutHandled(bytes32,string)",
-      abi: ["event GetRequestTimeoutHandled(bytes32 indexed commitment, string dest)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-    };
-
-    const eventParams = [
-      postRequestEventParams,
-      postRequestHandledParams,
-      postResponseEventParams,
-      postResponseHandledParams,
-      getRequestEventParams,
-      getRequestHandledParams,
-      postRequestTimeoutHandledParams,
-      postResponseTimeoutHandledParams,
-      getRequestTimeoutHandledParams,
-    ];
-
-    if (intentGateway) {
-      const orderPlacedEventParams = {
-        target: intentGateway,
-        topic:
-          "OrderPlaced(bytes32,bytes,bytes,uint256,uint256,uint256,(bytes32,uint256,bytes32)[],(bytes32,uint256)[],bytes)",
-        abi: [
-          "event OrderPlaced(bytes32 user, bytes sourceChain, bytes destChain, uint256 deadline, uint256 nonce, uint256 fees, tuple(bytes32,uint256,bytes32)[] outputs, tuple(bytes32,uint256)[] inputs, bytes callData)",
-        ],
-        logKeys: {
-          blockNumber: "blockNumber",
-          txHash: "transactionHash",
-        },
-        isDeposit: true,
-      };
-      (eventParams as any[]).push(orderPlacedEventParams);
+    for (const log of placed) {
+      const { user, inputs } = iface.parseLog(log).args;
+      out.push(...tokenEvents(log, inputs, bytes32ToAddress(user), true));
+    }
+    for (const log of filled) {
+      const { filler, outputs } = iface.parseLog(log).args;
+      out.push(...tokenEvents(log, outputs, filler, false));
     }
 
-    // Fetch all events (ISMP and OrderPlaced)
-    const allEvents = await getTxDataFromEVMEventLogs(
-      "hyperbridge",
-      chain as Chain,
-      fromBlock,
-      toBlock,
-      eventParams as ContractEventParams[]
-    );
-
-    const ismpModulesByTx = extractIsmpModuleAddresses(allEvents);
-
-    const transferEvents = await extractTransfersFromIsmpEvents(allEvents, chain as Chain, ismpModulesByTx);
-    return transferEvents;
+    return out;
   };
 };
 
-const adapter: BridgeAdapter = {
-  bsc: constructParams("bsc"),
-  soneium: constructParams("soneium"),
-  optimism: constructParams("optimism"),
-  ethereum: constructParams("ethereum"),
-  arbitrum: constructParams("arbitrum"),
-  base: constructParams("base"),
-  polygon: constructParams("polygon"),
-  unichain: constructParams("unichain"),
-};
+const adapter: BridgeAdapter = Object.fromEntries(chains.map((chain) => [chain, constructParams(chain)]));
 
 export default adapter;

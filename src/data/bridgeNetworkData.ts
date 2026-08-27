@@ -2850,7 +2850,7 @@ export default [
     iconLink: "icons:hyperbridge",
     largeTxThreshold: 10000,
     url: "https://hyperbridge.network",
-    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism", "Soneium", "Unichain"],
+    chains: ["Ethereum", "Arbitrum", "Base", "BSC", "Polygon", "Optimism"],
   },
   {
     id: 104,
