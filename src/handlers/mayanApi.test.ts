@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 import {
   buildSwapsUrl,
   servicesForChain,
+  servicesToSplit,
   forEachPage,
   createRowAccumulator,
   normalizeSwap,
@@ -269,6 +270,13 @@ test("a chain is only split by services it actually runs", () => {
   assert.ok(servicesForChain("solana").includes("SWIFT_V2"));
 });
 
+test("a split covers services the walk observed beyond the static table", () => {
+  assert.deepEqual(servicesToSplit("bsc", ["WH_BRIDGE", "SWIFT_V2"]).sort(), ["SWIFT_V2", "WH_BRIDGE"]);
+  assert.ok(servicesToSplit("solana").includes("SWIFT_V2"));
+  assert.ok(!servicesToSplit("base", ["MONO_CHAIN"]).includes("MONO_CHAIN"));
+  assert.deepEqual(servicesToSplit("aptos", ["WH_BRIDGE"]), ["WH_BRIDGE"]);
+});
+
 test("buildSwapsUrl partitions by source chain within the API page limit", () => {
   const url = new URL(buildSwapsUrl({ fromChain: "solana" }, 200, EXPLORER_URL));
 
@@ -434,6 +442,15 @@ test("a first run takes the whole reachable window and reports no gap", () => {
   const now = Date.parse("2026-08-20T12:00:00.000Z");
 
   assert.deepEqual(resolveIngestWindow(null, now), { fromMs: now - 12 * HOUR_MS, unreachableGap: false });
+});
+
+test("a checkpoint ahead of the clock cannot push the window into the future", () => {
+  const now = Date.parse("2026-08-20T12:00:00.000Z");
+
+  assert.deepEqual(resolveIngestWindow(now + 5 * HOUR_MS, now), {
+    fromMs: now - 2 * HOUR_MS,
+    unreachableGap: false,
+  });
 });
 
 test("a checkpoint beyond reachable depth is clamped and flagged", () => {

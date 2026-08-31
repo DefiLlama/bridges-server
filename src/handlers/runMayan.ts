@@ -7,7 +7,7 @@ import adapter, {
   PagingResult,
   Partition,
   partitionLabel,
-  servicesForChain,
+  servicesToSplit,
   resolveIngestWindow,
   sourceChainNames,
   SwapLeg,
@@ -220,6 +220,8 @@ export const handler = async (signal?: AbortSignal) => {
 
   const isExpired = () => Date.now() - startedAt > TIME_BUDGET_MS;
 
+  const observedServices = new Map<string, Set<string>>();
+
   const ingestPartition = async (partition: Partition): Promise<PagingResult> => {
     if (isExpired()) {
       diagnostics.skippedPartitions.push(partitionLabel(partition));
@@ -230,7 +232,12 @@ export const handler = async (signal?: AbortSignal) => {
     const result = await forEachPage(
       partition,
       fromMs,
-      async (swaps) => collectRows(swaps),
+      async (swaps) => {
+        let services = observedServices.get(partition.fromChain);
+        if (!services) observedServices.set(partition.fromChain, (services = new Set()));
+        for (const swap of swaps) if (swap.service) services.add(swap.service);
+        collectRows(swaps);
+      },
       signal,
       undefined,
       isExpired
@@ -266,7 +273,7 @@ export const handler = async (signal?: AbortSignal) => {
     await writeRows(rows);
   };
 
-  let stillTruncated: string[] = [];
+  const stillTruncated: string[] = [];
   try {
     const chainResults = await ingestPartitions(sourceChainNames.map((fromChain) => ({ fromChain })));
 
@@ -277,18 +284,22 @@ export const handler = async (signal?: AbortSignal) => {
       .map(({ partition }) => partition.fromChain);
     if (truncatedChains.length > 0) {
       console.log(`Splitting ${truncatedChains.join(", ")} by service after hitting the offset cap.`);
-      // Split only by services the chain runs: querying a combination with no swaps is slow enough
-      // to exhaust its retries.
-      const serviceResults = await ingestPartitions(
-        truncatedChains.flatMap((fromChain) => servicesForChain(fromChain).map((service) => ({ fromChain, service })))
+      // Split only by services the chain was seen or is known to run: querying a combination with no
+      // swaps is slow enough to exhaust its retries.
+      const servicePartitions: Partition[] = [];
+      for (const fromChain of truncatedChains) {
+        const services = servicesToSplit(fromChain, observedServices.get(fromChain) ?? []);
+        if (services.length === 0) stillTruncated.push(fromChain);
+        else servicePartitions.push(...services.map((service) => ({ fromChain, service })));
+      }
+      const serviceResults = servicePartitions.length > 0 ? await ingestPartitions(servicePartitions) : [];
+      stillTruncated.push(
+        ...serviceResults.filter(({ truncated }) => truncated).map(({ partition }) => partitionLabel(partition))
       );
-      stillTruncated = serviceResults
-        .filter(({ truncated }) => truncated)
-        .map(({ partition }) => partitionLabel(partition));
       if (stillTruncated.length > 0) {
         console.warn(
-          `[WARN] ${stillTruncated.join(", ")} remain truncated after the service split; they cover only ` +
-            `back to the oldest page logged above.`
+          `[WARN] ${stillTruncated.join(", ")} remain truncated after the service split; this run covers ` +
+            `only back to the oldest page logged above, and the checkpoint is held back for a re-read.`
         );
       }
     }
@@ -298,9 +309,8 @@ export const handler = async (signal?: AbortSignal) => {
 
   reportDiagnostics(diagnostics);
 
-  // Only a partition stopped by the time budget holds the checkpoint back, since only that one
-  // benefits from a retry; a truncated partition would stop at the same place every time.
-  if (diagnostics.skippedPartitions.length === 0) {
+  // An incomplete pass holds the checkpoint back, whether it ran out of time or hit the offset cap.
+  if (diagnostics.skippedPartitions.length === 0 && stillTruncated.length === 0) {
     await saveCheckpoint(startedAt);
   } else {
     console.warn(`[WARN] Mayan checkpoint held back; the next run repeats from ${new Date(fromMs).toISOString()}.`);

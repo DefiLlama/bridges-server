@@ -147,6 +147,14 @@ export const sourceChainNames = CHAINS.map((chain) => chain.name);
 /** Services worth querying when a chain has to be split. */
 export const servicesForChain = (name: string): string[] => CHAINS.find((chain) => chain.name === name)?.services ?? [];
 
+/** Services to split a truncated chain by: the static table plus whatever the unsplit walk saw. */
+export const servicesToSplit = (fromChain: string, observed: Iterable<string> = []): string[] => {
+  const services = new Set(servicesForChain(fromChain));
+  for (const service of observed) services.add(service);
+  services.delete("MONO_CHAIN"); // same-chain swaps; normalization skips them all
+  return [...services];
+};
+
 const chainSlugByWormholeId: Record<string, string> = Object.fromEntries(
   CHAINS.map((chain) => [chain.wormholeId, chain.slug])
 );
@@ -395,7 +403,9 @@ export type IngestWindow = {
  */
 export const resolveIngestWindow = (checkpointMs: number | null, nowMs: number): IngestWindow => {
   const earliestReachable = nowMs - MAX_LOOKBACK_MS;
-  const requested = checkpointMs ? checkpointMs - CHECKPOINT_OVERLAP_MS : earliestReachable;
+  // A future checkpoint would collect nothing, and the monotonic save could never lower it.
+  const effectiveMs = checkpointMs === null ? null : Math.min(checkpointMs, nowMs);
+  const requested = effectiveMs ? effectiveMs - CHECKPOINT_OVERLAP_MS : earliestReachable;
   return { fromMs: Math.max(requested, earliestReachable), unreachableGap: requested < earliestReachable };
 };
 
