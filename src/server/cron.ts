@@ -34,6 +34,7 @@ import {
   summarizeCronJobs,
 } from "./cronState";
 import { publishAggregations, runBridgeAggregationPipeline } from "./dedicatedPipeline";
+import { CRON_CYCLE_CHECK, pushHeartbeat } from "./heartbeat";
 import { PromisePool } from "@supercharge/promise-pool";
 
 const scheduledJobs: ScheduledJob[] = [];
@@ -168,6 +169,7 @@ const exit = () => {
       controller.abort();
     }
     const exitCode = printJobSummary();
+    if (exitCode === 0) await pushHeartbeat(CRON_CYCLE_CHECK);
     try {
       await printGetLogsSummary();
       printExplorerSummary();
