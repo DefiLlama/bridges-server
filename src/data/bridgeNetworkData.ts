@@ -1629,7 +1629,7 @@ export default [
     slug: "allbridge-core",
     largeTxThreshold: 10000,
     url: "https://core.allbridge.io/",
-    chains: ["Arbitrum", "Avalanche", "BSC", "Base", "Ethereum", "Optimism", "Polygon", "Solana"],
+    chains: ["Ethereum", "Arbitrum", "Avalanche", "Base", "Polygon", "Optimism", "Unichain", "Tron"],
     chainMapping: {
       avalanche: "avax",
     },
