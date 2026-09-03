@@ -1,201 +1,192 @@
-import { BigNumber } from "ethers";
-import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
+import { BigNumber, ethers } from "ethers";
 import { Chain } from "@defillama/sdk/build/general";
-import { EventData } from "../../utils/types";
 import { fromHex } from "tron-format-address";
-import { getConnection, getEstimatedSolanaSlotTimestamp } from "../../helpers/solana";
+import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
 import { getTxDataFromTronEventLogs } from "./eventParsing";
-import { getEventsFromAnalyticsApi } from "./analyticsApi";
-import { getClient as getSuiClient } from "../../helpers/sui";
-import { getTimestampByLedgerNumber } from "../../helpers/stellar";
+
+/*
+Allbridge Core (https://core.allbridge.io) is a stablecoin bridge built on burn-and-mint transfer
+protocols: Circle CCTP (v1 and v2) for USDC, LayerZero OFT for USDT / USDT0 / USDe and Circle xReserve
+for USDC <-> USDCx on Stacks. Nothing is locked in Allbridge contracts.
+
+Deposits (tokens leaving a chain) are read from the TokensSent-style events of the Allbridge bridge
+contracts on the source chain. Withdrawals (tokens arriving on a chain) are only counted for CCTP v2,
+where Allbridge's own contract triggers the mint: we anchor on the bridge's ReceivedMessageId event
+and read recipient and net amount from Circle's MintAndWithdraw event in the same receipt.
+CCTP v1 transfers can be completed outside the Allbridge contract, and OFT / xReserve deliveries are
+executed by LayerZero / Circle directly to the recipient, so those routes are counted on the source
+chain only. Transfers from Solana and Sui (CCTP v1 counterparties) are therefore not counted.
+*/
 
 const adapterName = "allbridge-core";
 
-const lpAddresses = {
-  bsc: [
-    "0x8033d5b454Ee4758E4bD1D37a49009c1a81D8B10",
-    "0xf833afA46fCD100e62365a0fDb0734b7c4537811",
-    "0x731822532CbC1c7C48462c9e5Dc0c04A1Ff29953",
-  ],
-  ethereum: [
-    "0x7DBF07Ad92Ed4e26D5511b4F285508eBF174135D",
-    "0xa7062bbA94c91d565Ae33B893Ab5dFAF1Fc57C4d",
-    "0xcaB34d4D532A9c9929f4f96D239653646351Abad",
-  ],
-  polygon: [
-    "0x58Cc621c62b0aa9bABfae5651202A932279437DA",
-    "0x0394c4f17738A10096510832beaB89a9DD090791",
-    "0x4C42DfDBb8Ad654b42F66E0bD4dbdC71B52EB0A6",
-  ],
-  avax: ["0xe827352A0552fFC835c181ab5Bf1D7794038eC9f", "0x2d2f460d7a1e7a4fcC4Ddab599451480728b5784"],
-  arbitrum: [
-    "0x690e66fc0F8be8964d40e55EdE6aEBdfcB8A21Df",
-    "0x47235cB71107CC66B12aF6f8b8a9260ea38472c7",
-    "0x2B5E5E6008742Cd9D139c6ADd9CaC57679C59D6d",
-  ],
-  base: ["0xDA6bb1ec3BaBA68B26bEa0508d6f81c9ec5e96d5"],
-  optimism: ["0x3B96F88b2b9EB87964b852874D41B633e0f1f68F", "0xb24A05d54fcAcfe1FC00c59209470d4cafB0deEA"],
-  celo: ["0xfb2C7c10e731EBe96Dabdf4A96D656Bfe8e2b5Af"],
-  sonic: ["0xCA0dc31BdA6B7588590a742b2Ae6A4F67b43c71F"],
-  unichain: ["0xBA2FBA24B0dD81a67BBdD95bB7a9d0336ea094D7", "0xD0a1Ff86C2f1c3522f183400fDE355f6B3d9fCE1"],
-  tron: ["TAC21biCBL9agjuUyzd4gZr356zRgJq61b"],
-} as {
-  [chain: string]: string[];
+type ChainContracts = {
+  cctpV1?: { bridge: string; token: string };
+  cctpV2?: { bridge: string; token: string };
+  oft?: { bridge: string };
+  xReserve?: { bridge: string; token: string };
 };
 
-const suiFullTokenAddressMap: Record<string, string> = {
-  "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7":
-    "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
+// Allbridge addresses: https://api.core.allbridge.io/token-info
+const contracts: Record<string, ChainContracts> = {
+  ethereum: {
+    cctpV1: { bridge: "0xC51397b75B783E31469bFaADE79913F3f82210d6", token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
+    cctpV2: { bridge: "0x7972d6907739593C00e6284c53C83dB3ECd15c33", token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
+    oft: { bridge: "0xeC455fFC19811e573eb5700a1bDff6ee1C47AB7B" },
+    xReserve: { bridge: "0x44F9E60cB5543777492101BF424271c5F252cF15", token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
+  },
+  arbitrum: {
+    cctpV1: { bridge: "0x23e1aEC13c92158643cF2aA17E155D27A792ccdb", token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" },
+    cctpV2: { bridge: "0x7ED5343dFC95dc3eBe5B6de64F5B5423A888Ca18", token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" },
+    oft: { bridge: "0xB074e73e637E778BE6411c3732bD58D44194FDEa" },
+  },
+  avax: {
+    cctpV1: { bridge: "0x65dE05Fccce36Ce7FdDd668Ef4348D9e933B57Ff", token: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E" },
+    cctpV2: { bridge: "0x5FBf8d23fa705A0bADb6f398fDcdC28FCCB521c0", token: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E" },
+  },
+  base: {
+    cctpV1: { bridge: "0x1eFE2C85989D97fEBbD0743cdd79B9F0826314f6", token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+    cctpV2: { bridge: "0x214D972b8c869cfcE50D55B595adC7eF336D7FAd", token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" },
+  },
+  polygon: {
+    cctpV1: { bridge: "0x710282BfeB554Ed0A34dFaD061C7c343221AC82C", token: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359" },
+  },
+  optimism: {
+    cctpV1: { bridge: "0x08391edF36f41f05d27A1e0fD7a29448417C1CD0", token: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85" },
+  },
+  unichain: {
+    oft: { bridge: "0xe8A580782942e072C57bcf7db8329C7a7CC0528B" },
+  },
 };
+
+const tronOftBridge = "TWPziSAroSacAjDuL52ByQzU86s9mP2gPr";
+
+const logKeys = { blockNumber: "blockNumber", txHash: "transactionHash" };
+
+// Circle TokenMessengerV2: MintAndWithdraw(address indexed mintRecipient, uint256 amount, address indexed mintToken, uint256 feeCollected)
+const MINT_AND_WITHDRAW_V2_TOPIC = ethers.utils.id("MintAndWithdraw(address,uint256,address,uint256)");
+const mintAndWithdrawV2Iface = new ethers.utils.Interface([
+  "event MintAndWithdraw(address indexed mintRecipient, uint256 amount, address indexed mintToken, uint256 feeCollected)",
+]);
+const mintCache = new Map<string, Promise<ethers.utils.Result | undefined>>();
+const getMintAndWithdrawV2 = (provider: any, txHash: string) => {
+  if (!mintCache.has(txHash)) {
+    mintCache.set(
+      txHash,
+      provider.getTransactionReceipt(txHash).then((receipt: any) => {
+        const log = receipt?.logs?.find((l: any) => l.topics?.[0] === MINT_AND_WITHDRAW_V2_TOPIC);
+        return log ? mintAndWithdrawV2Iface.parseLog(log).args : undefined;
+      })
+    );
+  }
+  return mintCache.get(txHash)!;
+};
+
+const cctpV1SendParams = ({ bridge, token }: { bridge: string; token: string }): PartialContractEventParams => ({
+  target: bridge,
+  topic: "TokensSent(uint256,address,bytes32,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+  abi: [
+    "event TokensSent(uint256 amount, address sender, bytes32 recipient, uint256 destinationChainId, uint256 nonce, uint256 receivedRelayerFeeFromGas, uint256 receivedRelayerFeeFromTokens, uint256 relayerFee, uint256 receivedRelayerFeeTokenAmount, uint256 adminFeeTokenAmount)",
+  ],
+  logKeys,
+  argKeys: { from: "sender", amount: "amount" },
+  fixedEventData: { to: bridge, token },
+  isDeposit: true,
+});
+
+const cctpV2SendParams = ({ bridge, token }: { bridge: string; token: string }): PartialContractEventParams => ({
+  target: bridge,
+  topic: "TokensSent(address,bytes32,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+  abi: [
+    "event TokensSent(address sender, bytes32 recipient, uint256 amount, uint256 destinationChainId, uint256 receivedRelayerFeeFromGas, uint256 receivedRelayerFeeFromTokens, uint256 relayerFee, uint256 receivedRelayerFeeTokenAmount, uint256 adminFeeTokenAmount, uint256 maxFee)",
+  ],
+  logKeys,
+  argKeys: { from: "sender", amount: "amount" },
+  fixedEventData: { to: bridge, token },
+  isDeposit: true,
+});
+
+// Mint on the destination chain: `receiveTokens` on our bridge triggers Circle's mint in the same tx,
+// so recipient and net amount are read from Circle's MintAndWithdraw log of that receipt.
+const cctpV2ReceiveParams = ({ bridge, token }: { bridge: string; token: string }): PartialContractEventParams => ({
+  target: bridge,
+  topic: "ReceivedMessageId(bytes32)",
+  abi: ["event ReceivedMessageId(bytes32 messageId)"],
+  logKeys: { ...logKeys, to: "mintRecipient", amount: "mintAmount" },
+  logGetters: {
+    to: async (provider, _iface, log) => (await getMintAndWithdrawV2(provider, log.transactionHash))?.mintRecipient,
+    amount: async (provider, _iface, log) => (await getMintAndWithdrawV2(provider, log.transactionHash))?.amount,
+  },
+  fixedEventData: { from: bridge, token },
+  isDeposit: false,
+});
+
+const oftSendParams = ({ bridge }: { bridge: string }): PartialContractEventParams => ({
+  target: bridge,
+  topic: "OftTokensSent(address,bytes32,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
+  abi: [
+    "event OftTokensSent(address sender, bytes32 recipient, address tokenAddress, uint256 amount, uint256 destinationChainId, uint256 receivedRelayerFeeFromGas, uint256 receivedRelayerFeeFromTokens, uint256 relayerFeeWithExtraGas, uint256 receivedRelayerFeeTokenAmount, uint256 adminFeeTokenAmount, uint256 extraGasDestinationToken)",
+  ],
+  logKeys,
+  argKeys: { from: "sender", token: "tokenAddress", amount: "amount" },
+  fixedEventData: { to: bridge },
+  isDeposit: true,
+});
+
+const xReserveSendParams = ({ bridge, token }: { bridge: string; token: string }): PartialContractEventParams => ({
+  target: bridge,
+  topic: "XReserveTokensSent(address,bytes32,uint256,uint256,uint256,uint256)",
+  abi: [
+    "event XReserveTokensSent(address sender, bytes32 recipient, uint256 amount, uint256 destinationChainId, uint256 adminFeeTokenAmount, uint256 maxFee)",
+  ],
+  logKeys,
+  argKeys: { from: "sender", amount: "amount" },
+  fixedEventData: { to: bridge, token },
+  isDeposit: true,
+});
 
 const constructParams = (chain: string) => {
-  let eventParams = [] as PartialContractEventParams[];
-  const lps = lpAddresses[chain];
+  const { cctpV1, cctpV2, oft, xReserve } = contracts[chain];
+  const eventParams: PartialContractEventParams[] = [];
+  if (cctpV1) eventParams.push(cctpV1SendParams(cctpV1));
+  if (cctpV2) eventParams.push(cctpV2SendParams(cctpV2), cctpV2ReceiveParams(cctpV2));
+  if (oft) eventParams.push(oftSendParams(oft));
+  if (xReserve) eventParams.push(xReserveSendParams(xReserve));
 
-  for (const lpAddress of Object.values(lps)) {
-    const depositParams: PartialContractEventParams = {
-      target: lpAddress,
-      topic: "SwappedToVUsd(address,address,uint256,uint256,uint256)",
-      abi: ["event SwappedToVUsd(address sender, address token, uint amount, uint vUsdAmount, uint fee)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        from: "sender",
-        token: "token",
-        amount: "amount",
-      },
-      fixedEventData: {
-        to: lpAddress,
-      },
-      isDeposit: true,
-    };
-
-    const withdrawParams = {
-      target: lpAddress,
-      topic: "SwappedFromVUsd(address,address,uint256,uint256,uint256)",
-      abi: ["event SwappedFromVUsd(address recipient, address token, uint256 vUsdAmount, uint256 amount, uint256 fee)"],
-      logKeys: {
-        blockNumber: "blockNumber",
-        txHash: "transactionHash",
-      },
-      argKeys: {
-        amount: "amount",
-        token: "token",
-        to: "recipient",
-      },
-      fixedEventData: {
-        from: lpAddress,
-      },
-      isDeposit: false,
-    };
-    eventParams.push(depositParams, withdrawParams);
-  }
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs(adapterName, chain as Chain, fromBlock, toBlock, eventParams);
 };
 
-const getSolanaEvents = async (fromSlot: number, toSlot: number): Promise<EventData[]> => {
-  const connection = getConnection();
-  const timestampFrom = await getEstimatedSolanaSlotTimestamp(fromSlot, connection);
-  const timestampTo = await getEstimatedSolanaSlotTimestamp(toSlot, connection);
-  return await getEventsFromAnalyticsApi("SOL", fromSlot, timestampFrom * 1000, toSlot, timestampTo * 1000);
-};
-
-const getSuiEvents = async (fromCheckpointNumber: number, toCheckpointNumber: number): Promise<EventData[]> => {
-  const client = getSuiClient();
-  const fromCheckpoint = await client.getCheckpoint({ id: fromCheckpointNumber.toString() });
-  const fromTimestampMs = Number(fromCheckpoint.timestampMs);
-  const toCheckpoint = await client.getCheckpoint({ id: toCheckpointNumber.toString() });
-  const toTimestampMs = Number(toCheckpoint.timestampMs);
-
-  const eventData = await getEventsFromAnalyticsApi(
-    "SUI",
-    fromCheckpointNumber,
-    fromTimestampMs,
-    toCheckpointNumber,
-    toTimestampMs
-  );
-  return eventData.map((data) => ({ ...data, token: suiFullTokenAddressMap[data.token] ?? data.token }));
-};
-
-const getStellarEvents = async (fromBlock: number, toBlock: number): Promise<EventData[]> => {
-  const fromTimestamp = await getTimestampByLedgerNumber(fromBlock);
-  const toTimestamp = await getTimestampByLedgerNumber(toBlock);
-  return await getEventsFromAnalyticsApi("SRB", fromBlock, fromTimestamp * 1000, toBlock, toTimestamp * 1000);
-};
-
-function constructTronParams() {
-  const chain = "tron";
-  const eventParams: any[] = [];
-  const lps = lpAddresses[chain];
-  for (const lpAddress of Object.values(lps)) {
-    const depositParams = {
-      target: lpAddress,
-      eventName: "SwappedToVUsd",
-      logKeys: {
-        blockNumber: "block_number",
-        txHash: "transaction_id",
-      },
-      argKeys: {
-        from: "sender",
-        token: "token",
-        amount: "amount",
-      },
+const constructTronParams = () => {
+  const eventParams = [
+    {
+      target: tronOftBridge,
+      eventName: "OftTokensSent",
+      logKeys: { blockNumber: "block_number", txHash: "transaction_id" },
+      argKeys: { from: "sender", token: "tokenAddress", amount: "amount" },
       argGetters: {
         amount: (log: any) => BigNumber.from(log.amount),
         from: (log: any) => fromHex(log.sender),
-        token: (log: any) => fromHex(log.token),
+        token: (log: any) => fromHex(log.tokenAddress),
       },
-      fixedEventData: {
-        to: lpAddress,
-      },
+      fixedEventData: { to: tronOftBridge },
       isDeposit: true,
-    };
-    const withdrawParams = {
-      target: lpAddress,
-      eventName: "SwappedFromVUsd",
-      logKeys: {
-        blockNumber: "block_number",
-        txHash: "transaction_id",
-      },
-      argKeys: {
-        amount: "amount",
-        token: "token",
-        to: "recipient",
-      },
-      argGetters: {
-        amount: (log: any) => BigNumber.from(log.amount),
-        to: (log: any) => fromHex(log.recipient),
-        token: (log: any) => fromHex(log.token),
-      },
-      fixedEventData: {
-        from: lpAddress,
-      },
-      isDeposit: false,
-    };
-    eventParams.push(depositParams, withdrawParams);
-  }
+    },
+  ];
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromTronEventLogs(adapterName, fromBlock, toBlock, eventParams);
-}
+};
 
 const adapter: BridgeAdapter = {
   ethereum: constructParams("ethereum"),
-  polygon: constructParams("polygon"),
-  avalanche: constructParams("avax"),
-  bsc: constructParams("bsc"),
   arbitrum: constructParams("arbitrum"),
+  avalanche: constructParams("avax"),
   base: constructParams("base"),
+  polygon: constructParams("polygon"),
   optimism: constructParams("optimism"),
-  celo: constructParams("celo"),
-  sonic: constructParams("sonic"),
   unichain: constructParams("unichain"),
-  solana: getSolanaEvents,
-  sui: getSuiEvents,
-  stellar: getStellarEvents,
+  tron: constructTronParams(),
 };
 
 export default adapter;
