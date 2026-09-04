@@ -1,6 +1,7 @@
 import { Chain } from "@defillama/sdk/build/general";
 import { BridgeAdapter, PartialContractEventParams } from "../../helpers/bridgeAdapter.type";
 import { getTxDataFromEVMEventLogs } from "../../helpers/processTransactions";
+import { constructStellarParams } from "./stellar";
 
 type Address = `0x${string}`;
 
@@ -96,6 +97,11 @@ const deployments = {
   }],
 } satisfies Record<Chain, Deployment[]>;
 
+const stellarDeployment = {
+  oapp: "CBOWOLFSDM5PZXNFIVDMP5NZ7U2GSIHED6H6R446QOHF266XINKUMMF6",
+  token: "CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF",
+};
+
 const depositParams = {
   topic: "OFTSent(bytes32,uint32,address,uint256,uint256)",
   abi: [
@@ -151,6 +157,11 @@ const constructParams = (chain: keyof typeof deployments) => {
     getTxDataFromEVMEventLogs("usdt0", queryChain, fromBlock, toBlock, eventParams);
 }
 
-const adapter: BridgeAdapter = Object.fromEntries((Object.keys(deployments) as Array<keyof typeof deployments>).map(chain => [chain, constructParams(chain)]));
+const adapter: BridgeAdapter = {
+  ...Object.fromEntries(
+    (Object.keys(deployments) as Array<keyof typeof deployments>).map((chain) => [chain, constructParams(chain)])
+  ),
+  stellar: constructStellarParams(stellarDeployment),
+};
 
 export default adapter;

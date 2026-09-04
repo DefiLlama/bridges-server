@@ -1,7 +1,7 @@
 import { getLatestBlock as getLatestBlockSdk, lookupBlock as lookupBlockSdk } from "@defillama/sdk/build/util";
 import { getClient } from "../helpers/sui";
 import { tronGetLatestBlock } from "../helpers/tron";
-import { getLatestLedger } from "../helpers/stellar";
+import { getLatestLedger, getLedgerByTimestamp } from "../helpers/stellar";
 import { getConnection } from "../helpers/solana";
 import { Chain } from "@defillama/sdk/build/general";
 import fetch from "node-fetch";
@@ -219,6 +219,8 @@ export async function getBlockByTimestamp(
       }
       return { block: estimatedSlot, timestamp };
     }
+  } else if (chain === "stellar") {
+    return { block: await getLedgerByTimestamp(timestamp), timestamp };
   } else {
     return await lookupBlock(timestamp, { chain });
   }

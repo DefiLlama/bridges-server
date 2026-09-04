@@ -1,6 +1,7 @@
 import { getClient } from "../helpers/sui";
 import { getProvider as getLlamaProvider } from "@defillama/sdk";
 import { getConnection } from "../helpers/solana";
+import { getStellarProvider } from "../helpers/stellar";
 import { ethers } from "ethers";
 
 const providerRpcOverrides: Record<string, { url: string; chainId: number }> = {
@@ -14,6 +15,8 @@ export function getProvider(chain: string) {
     return getClient();
   } else if (chain === "solana") {
     return getConnection();
+  } else if (chain === "stellar") {
+    return getStellarProvider();
   }
 
   const override = getProviderRpcOverride(chain);

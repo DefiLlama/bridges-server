@@ -2498,6 +2498,7 @@ export default [
       "Rootstock",
       "Sei",
       "Stable",
+      "Stellar",
       "Tempo",
       "Unichain",
     ],
