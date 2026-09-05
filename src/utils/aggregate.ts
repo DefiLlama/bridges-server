@@ -187,7 +187,7 @@ export const runAggregateDataAllAdapters = async (timestamp: number, hourly: boo
   console.log("Finished aggregating job.");
 };
 
-const aggregationsWithDedicatedJobs = new Set(["layerzero", "hyperlane"]);
+const aggregationsWithDedicatedJobs = new Set(["layerzero", "hyperlane", "ccip"]);
 
 export const runAggregateDataHistoricalAllAdapters = async (startTimestamp: number, endTimestamp: number) => {
   const promises = Promise.all(
@@ -214,6 +214,32 @@ export const runAggregateHistoricalByName = async (
   const bridgeNetwork = bridgeNetworks.find((bridgeNetwork) => bridgeNetwork.bridgeDbName === bridgeName);
   if (!bridgeNetwork) {
     throw new Error(`Bridge network ${bridgeName} not found`);
+  }
+  if (bridgeName === "ccip") {
+    const buckets = await sql<Array<{ chain: string; ts: Date }>>`
+      SELECT c.chain, date_trunc('hour', t.ts) AS ts
+      FROM bridges.transactions t JOIN bridges.config c ON c.id = t.bridge_id
+      WHERE c.bridge_name = 'ccip' AND t.ts >= to_timestamp(${startTimestamp}) AND t.ts < to_timestamp(${endTimestamp})
+      GROUP BY c.chain, date_trunc('hour', t.ts)
+      UNION
+      SELECT c.chain, h.ts FROM bridges.hourly_aggregated h JOIN bridges.config c ON c.id = h.bridge_id
+      WHERE c.bridge_name = 'ccip' AND h.ts >= to_timestamp(${startTimestamp}) AND h.ts < to_timestamp(${endTimestamp})
+    `;
+    const { errors } = await PromisePool.withConcurrency(5)
+      .for(buckets)
+      .process(async ({ chain, ts }) => {
+        throwIfAborted(signal);
+        await aggregateData(
+          ts.getTime() / 1000 + secondsInHour,
+          bridgeName,
+          chain,
+          true,
+          bridgeNetwork.largeTxThreshold
+        );
+      });
+    throwIfAborted(signal);
+    if (errors.length) throw errors[0].raw;
+    return;
   }
   await runAggregateDataHistorical(startTimestamp, endTimestamp, bridgeNetwork.id, true, undefined, signal);
 };
@@ -275,6 +301,15 @@ export const aggregateData = async (
   const txs = await queryTransactionsTimestampRangeByBridge(startTimestamp, endTimestamp, bridgeID);
   // console.log(txs);
   if (txs.length === 0) {
+    if (hourly && bridgeDbName === "ccip") {
+      await sql`
+        UPDATE bridges.hourly_aggregated SET total_deposited_usd = 0, total_withdrawn_usd = 0,
+          total_deposit_txs = 0, total_withdrawal_txs = 0,
+          total_tokens_deposited = '{}', total_tokens_withdrawn = '{}',
+          total_address_deposited = '{}', total_address_withdrawn = '{}'
+        WHERE bridge_id = ${bridgeID} AND ts = to_timestamp(${startTimestamp})
+      `;
+    }
     // If it is daily, insert an entry into db anyway
     if (!hourly) {
       try {
@@ -359,12 +394,14 @@ export const aggregateData = async (
       const { id, chain, token, amount, ts, is_deposit, tx_to, tx_from, is_usd_volume, txs_counted_as, origin_chain } =
         tx;
       if (
-        tx_from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
-        tx_to?.toLowerCase() === "0x0000000000000000000000000000000000000000"
+        bridgeDbName !== "ccip" &&
+        (tx_from?.toLowerCase() === "0x0000000000000000000000000000000000000000" ||
+          tx_to?.toLowerCase() === "0x0000000000000000000000000000000000000000")
       )
         return;
       const rawBnAmount = BigNumber(amount);
-      if (rawBnAmount.isEqualTo(0)) {
+      // A zero USD valuation still represents a real CCIP transfer.
+      if (rawBnAmount.isEqualTo(0) && bridgeDbName !== "ccip") {
         return;
       }
       let usdValue = null;
@@ -587,6 +624,11 @@ export const aggregateData = async (
   if (hourly) {
     try {
       await sql.begin(async (sql) => {
+        if (bridgeDbName === "ccip") {
+          await sql`DELETE FROM bridges.large_transactions l USING bridges.transactions t
+            WHERE l.tx_pk = t.id AND t.bridge_id = ${bridgeID}
+              AND t.ts >= to_timestamp(${startTimestamp}) AND t.ts <= to_timestamp(${endTimestamp})`;
+        }
         await insertHourlyAggregatedRow(sql, true, {
           bridge_id: bridgeID,
           ts: startTimestamp * 1000,
@@ -609,6 +651,7 @@ export const aggregateData = async (
         error: errString,
       });
       console.error(errString, e);
+      if (bridgeDbName === "ccip") throw e;
     }
   } else {
     try {
@@ -659,6 +702,7 @@ export const aggregateData = async (
           error: errString,
         });
         console.log(errString, e);
+        if (bridgeDbName === "ccip") throw e;
       }
     })
   );

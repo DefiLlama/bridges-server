@@ -1,3 +1,5 @@
+import { CCIP_LOOKBACK_DAYS } from "../adapters/ccip";
+
 const DEFAULT_AGGREGATION_LOOKBACK_SECONDS = 36 * 60 * 60;
 
 type BridgeAggregationPipelineOptions = {
@@ -6,6 +8,7 @@ type BridgeAggregationPipelineOptions = {
   aggregate: (startTimestamp: number, endTimestamp: number, bridgeName: string, signal: AbortSignal) => Promise<void>;
   getCurrentTimestamp: () => number;
   lookbackSeconds?: number;
+  startTimestamp?: number;
 };
 
 export const runBridgeAggregationPipeline = async ({
@@ -14,9 +17,12 @@ export const runBridgeAggregationPipeline = async ({
   aggregate,
   getCurrentTimestamp,
   lookbackSeconds = DEFAULT_AGGREGATION_LOOKBACK_SECONDS,
+  startTimestamp,
 }: BridgeAggregationPipelineOptions): Promise<void> => {
-  const endTimestamp = getCurrentTimestamp();
-  await aggregate(endTimestamp - lookbackSeconds, endTimestamp, bridgeName, signal);
+  const now = getCurrentTimestamp();
+  const endTimestamp = bridgeName === "ccip" ? Math.floor(now / 86400) * 86400 : now;
+  const window = bridgeName === "ccip" ? CCIP_LOOKBACK_DAYS * 86400 : lookbackSeconds;
+  await aggregate(startTimestamp ?? endTimestamp - window, endTimestamp, bridgeName, signal);
 };
 
 export const publishAggregations = async (

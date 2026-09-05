@@ -1,5 +1,7 @@
 export const normalizedChainReplacements = {
   binance: "bsc",
+  "neo x": "neox",
+  "neo%20x": "neox",
   wanchain: "wan",
   kucoin: "kcc",
   //gnosis: "xdai",

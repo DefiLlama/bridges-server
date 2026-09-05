@@ -1,227 +1,118 @@
-/**
- * @file runCCIP.ts
- * @description
- * This script fetches Chainlink CCIP (Cross-Chain Interoperability Protocol)
- * transaction events using the ccip adapter, and ingests them into the database. 
- * It can operate in two modes:
- *
- * 1. Default Mode (Recent Data):
- * - Fetches data for the last 'N' days (default defined by `DEFAULT_DAYS_TO_PROCESS`),
- * excluding the current day. Used for regular, scheduled updates.
- * - CLI: `ts-node src/handlers/runCCIP.ts`
- * - Programmatic: `await runCCIPDefaultMode();`
- *
- * 2. Backfill Mode (Specific Date Range):
- * - Fetches data for a specified historical date range (YYYY-MM-DD format, inclusive).
- * Useful for initial population or filling data gaps.
- * - CLI: `ts-node src/handlers/runCCIP.ts --startDate YYYY-MM-DD --endDate YYYY-MM-DD`
- * - Programmatic: `await runCCIPBackfillMode("YYYY-MM-DD", "YYYY-MM-DD");`
-**/
+import { CCIP_LOOKBACK_DAYS, ccipDateRange, ccipDayStart, fetchEventsForDate } from "../adapters/ccip";
+import { sql } from "../utils/db";
+import { throwIfAborted } from "../utils/errors";
+import { insertTransactionRows } from "../utils/wrappa/postgres/write";
+import { ccipEventKey, ccipUSDTotals, diffCCIPSnapshot, groupCCIPEvents, StoredCCIPEvent } from "./ccipSnapshot";
 
-import dayjs from 'dayjs';
-import _ from 'lodash';
+export async function reconcileCCIPDay(date: string, dryRun = false, signal?: AbortSignal) {
+  ccipDateRange(date, date);
+  const expected = groupCCIPEvents(await fetchEventsForDate(date, signal));
+  const start = new Date(ccipDayStart(date));
+  const end = new Date(start.getTime() + 86400000);
+  throwIfAborted(signal);
+  // Dry runs are enforced by Postgres, including the config lookup below.
+  return sql.begin(dryRun ? "read only" : "", async (tx) => {
+    const stored = await tx<StoredCCIPEvent[]>`
+      SELECT t.* FROM bridges.transactions t JOIN bridges.config c ON c.id = t.bridge_id
+      WHERE c.bridge_name = 'ccip' AND t.ts >= ${start} AND t.ts < ${end}
+      ORDER BY t.id
+    `;
+    let diff = diffCCIPSnapshot(expected, stored);
+    const [published] = await tx`
+      SELECT COALESCE(SUM(d.total_deposited_usd), 0) AS deposit_usd,
+             COALESCE(SUM(d.total_withdrawn_usd), 0) AS withdraw_usd
+      FROM bridges.daily_volume d JOIN bridges.config c ON c.id = d.bridge_id
+      WHERE c.bridge_name = 'ccip' AND d.ts = ${start}
+    `;
+    let changed = [...diff.added, ...diff.updated];
+    const movedFromDates = new Set<string>();
+    if (changed.length) {
+      const outside = await tx<StoredCCIPEvent[]>`
+        SELECT t.* FROM bridges.transactions t JOIN bridges.config c ON c.id = t.bridge_id
+        JOIN jsonb_to_recordset(${tx.json(changed)})
+          AS e(chain text, tx_hash text, token text, tx_from text, tx_to text)
+          ON t.chain = e.chain AND t.tx_hash = e.tx_hash AND t.token = e.token
+          AND t.tx_from = e.tx_from AND t.tx_to = e.tx_to
+        WHERE c.bridge_name = 'ccip' AND (t.ts < ${start} OR t.ts >= ${end})
+      `;
+      for (const row of outside) movedFromDates.add(row.ts.toISOString().slice(0, 10));
+      // A timestamp correction is safe to move only if the provider no longer
+      // reports this key on the old day. Genuine cross-day batches still fail.
+      for (const oldDate of movedFromDates) {
+        ccipDateRange(oldDate, oldDate);
+        const oldEvents = await fetchEventsForDate(oldDate, signal);
+        if (!oldEvents.length)
+          throw new Error(`Cannot verify CCIP timestamp correction from an empty snapshot for ${oldDate}`);
+        const oldKeys = new Set(groupCCIPEvents(oldEvents).map(ccipEventKey));
+        const conflict = outside.find(
+          (row) => row.ts.toISOString().slice(0, 10) === oldDate && oldKeys.has(ccipEventKey(row))
+        );
+        if (conflict) throw new Error(`CCIP transaction key is present in both UTC days: ${conflict.tx_hash}`);
+      }
+      if (outside.length) {
+        diff = diffCCIPSnapshot(expected, [...stored, ...outside]);
+        changed = [...diff.added, ...diff.updated];
+      }
+    }
+    const summary = {
+      date,
+      dryRun,
+      added: diff.added.length,
+      updated: diff.updated.length,
+      deleted: diff.deleted.length,
+      unchanged: diff.unchanged,
+      movedFromDates: [...movedFromDates].sort(),
+      storedUSD: ccipUSDTotals(stored),
+      expectedUSD: ccipUSDTotals(expected),
+      publishedUSD: { depositUSD: published.deposit_usd, withdrawUSD: published.withdraw_usd },
+    };
+    if (dryRun) return summary;
 
-import adapter, { fetchEventsForDate, CCIPEvent } from '../adapters/ccip';
-import { sql } from '../utils/db';
-import { insertTransactionRows } from '../utils/wrappa/postgres/write';
-import { getBridgeID } from '../utils/wrappa/postgres/query';
-import { insertConfigEntriesForAdapter } from '../utils/adapter';
-
-interface TransactionRow {
-    bridge_id: string;
-    chain: string;
-    tx_hash: string | null;
-    ts: number;
-    tx_from: string | null;
-    tx_to: string | null;
-    token: string;
-    amount: string;
-    is_deposit: boolean;
-    is_usd_volume: boolean;
-    tx_block: number | null;
-    txs_counted_as: number | null;
-    origin_chain: string | null;
+    for (const chain of new Set(expected.map((event) => event.chain))) {
+      await tx`INSERT INTO bridges.config (bridge_name, chain) VALUES ('ccip', ${chain})
+        ON CONFLICT (bridge_name, chain) DO NOTHING`;
+    }
+    const configs = await tx`SELECT id, chain FROM bridges.config WHERE bridge_name = 'ccip'`;
+    const ids = new Map(configs.map((config) => [config.chain as string, config.id as string]));
+    if (diff.deleted.length) {
+      // large_transactions has an ON DELETE CASCADE foreign key to these rows.
+      await tx`DELETE FROM bridges.transactions WHERE id IN ${tx(diff.deleted.map((row) => row.id))}`;
+    }
+    for (let offset = 0; offset < changed.length; offset += 200) {
+      throwIfAborted(signal);
+      const rows = changed.slice(offset, offset + 200).map((event) => ({
+        ...event,
+        bridge_id: ids.get(event.chain)!,
+        tx_block: 0,
+        txs_counted_as: null,
+        origin_chain: null,
+      }));
+      await insertTransactionRows(tx, true, rows, "upsert", true);
+    }
+    throwIfAborted(signal);
+    return summary;
+  });
 }
 
-const ADAPTER_NAME = "ccip";
-const DEFAULT_CHAIN_FOR_BRIDGE_ID = "Ethereum"; // Chain used to identify the bridge in the DB.
-const DEFAULT_DAYS_TO_PROCESS = 10; // Number of past days to process in default mode.
-const DB_BATCH_SIZE = 200; // Number of rows to insert into the DB in a single batch.
-
-// --- Utility Functions ---
-const formatDateToYYYYMMDD = (date: dayjs.Dayjs): string => date.format('YYYY-MM-DD');
-const isValidDateFormat = (dateString: string): boolean => {
-    return /^\d{4}-\d{2}-\d{2}$/.test(dateString) && dayjs(dateString, 'YYYY-MM-DD', true).isValid();
-};
-
-interface HandlerOptions {
-    startDate?: string;
-    endDate?: string;
+export async function runCCIPBackfillMode(startDate: string, endDate: string, signal?: AbortSignal) {
+  let startTimestamp = ccipDayStart(startDate) / 1000;
+  let endTimestamp = ccipDayStart(endDate) / 1000 + 86400;
+  for (const date of ccipDateRange(startDate, endDate)) {
+    const summary = await reconcileCCIPDay(date, false, signal);
+    console.log("[CCIP]", JSON.stringify(summary));
+    for (const oldDate of summary.movedFromDates) {
+      startTimestamp = Math.min(startTimestamp, ccipDayStart(oldDate) / 1000);
+      endTimestamp = Math.max(endTimestamp, ccipDayStart(oldDate) / 1000 + 86400);
+    }
+  }
+  return { startTimestamp, endTimestamp };
 }
 
-// Core handler function to process CCIP events.
-const _handler = async (options: HandlerOptions = {}): Promise<void> => {
-
-    await insertConfigEntriesForAdapter(adapter, ADAPTER_NAME);
-
-    const bridgeIds = Object.fromEntries(
-      await Promise.all(
-        Object.keys(adapter).map(async (chain) => {
-          chain = chain.toLowerCase();
-          const bridgeId = await getBridgeID(ADAPTER_NAME, chain);
-          return [chain, bridgeId?.id];
-        })
-      )
-    );
-
- 
-    const { startDate, endDate } = options;
-    let datesToProcess: string[] = [];
-
-    // Determine dates to process: either a specified range or default recent days.
-    if (startDate && endDate) {
-        // Backfill mode: Generate date strings for the specified range.
-        console.log(`[_handler] Backfill mode: Processing date range from ${startDate} to ${endDate}.`);
-        let current = dayjs(startDate);
-        const end = dayjs(endDate);
-        while (!current.isAfter(end)) {
-            datesToProcess.push(formatDateToYYYYMMDD(current));
-            current = current.add(1, 'day');
-        }
-    } else if (startDate || endDate) {
-        // Handle invalid range input if only one date is provided.
-        console.error("[_handler] Error: For date range, both startDate and endDate must be provided. Defaulting to recent days if applicable, or stopping.");
-        // If we are in a programmatic call that intended a range, this could be an issue.
-        // For CLI, yargs handles this. For programmatic, we'll rely on specific functions.
-    }
-
-    if (datesToProcess.length === 0 && !(startDate && endDate)) { // Ensures default only if no range was ATTEMPTED
-        // Default mode: Generate date strings for the last DEFAULT_DAYS_TO_PROCESS.
-        console.log(`[_handler] Default mode: Processing the last ${DEFAULT_DAYS_TO_PROCESS} days (not including today).`);
-        for (let i = 1; i <= DEFAULT_DAYS_TO_PROCESS; i++) {
-            datesToProcess.push(formatDateToYYYYMMDD(dayjs().subtract(i, 'day')));
-        }
-    }
-
-    if (datesToProcess.length === 0) {
-        console.log("[_handler] No dates to process. Exiting handler logic.");
-        return;
-    }
-
-    console.log(`[_handler] Will process the following dates: ${datesToProcess.join(', ')}`);
-    console.log(`[_handler] Starting CCIP event processing task.`);
-
-    
-    // Process events for each determined date.
-    for (const dateString of datesToProcess) {
-        console.log(`[_handler] Starting processing for date: ${dateString}`);
-        try {
-            // Fetch raw CCIP events from the adapter for the current date.
-            const ccipEvents: CCIPEvent[] = await fetchEventsForDate(dateString);
-
-            if (!ccipEvents || ccipEvents.length === 0) {
-                console.log(`[_handler] No CCIP events found for ${dateString}.`);
-                continue; // Skip to the next date.
-            }
-            console.log(`[_handler] Fetched ${ccipEvents.length} CCIP events for ${dateString}.`);
-
-            const aggregatedEvents = new Map<string, CCIPEvent & { aggregatedAmount: number }>();
-            for (const event of ccipEvents) {
-                const key = `${event.chain}:${event.tx_hash}:${event.token}:${event.tx_from}:${event.tx_to}:${event.is_deposit}`;
-                const existing = aggregatedEvents.get(key);
-                if (existing) {
-                    existing.aggregatedAmount += parseFloat(event.amount);
-                } else {
-                    aggregatedEvents.set(key, { ...event, aggregatedAmount: parseFloat(event.amount) });
-                }
-            }
-
-            const transactionsToInsert: TransactionRow[] = Array.from(aggregatedEvents.values())
-                .map(event => ({
-                    bridge_id: bridgeIds[event.chain]!,
-                    chain: event.chain,
-                    tx_hash: event.tx_hash || null,
-                    ts: event.ts,
-                    tx_from: event.tx_from || null,
-                    tx_to: event.tx_to || null,
-                    token: event.token,
-                    amount: event.is_usd_volume ? event.aggregatedAmount.toFixed(2) : String(event.aggregatedAmount),
-                    is_deposit: event.is_deposit,
-                    is_usd_volume: event.is_usd_volume,
-                    tx_block: 0,
-                    txs_counted_as: null,
-                    origin_chain: null,
-                })).filter((tx) => !!tx.bridge_id);
-
-            if (transactionsToInsert.length > 0) {
-                console.log(`[_handler] Prepared ${transactionsToInsert.length} transaction rows for insertion for date ${dateString}.`);
-                // Insert transformed data into the database in batches.
-                await sql.begin(async (sqlClient) => {
-                    const transactionChunks = _.chunk(transactionsToInsert, DB_BATCH_SIZE);
-                    for (let j = 0; j < transactionChunks.length; j++) {
-                        const batch = transactionChunks[j];
-                        console.log(`[_handler] Inserting batch ${j + 1}/${transactionChunks.length} (${batch.length} rows) for ${dateString}...`);
-                        await insertTransactionRows(sqlClient, true, batch, "upsert");
-                    }
-                });
-                console.log(`[_handler] Successfully inserted/upserted ${transactionsToInsert.length} transaction rows for ${dateString}.`);
-            } else {
-                console.log(`[_handler] No transactions to insert for ${dateString} after processing.`);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            console.error(`[_handler] Error processing data for ${dateString}: ${errorMessage}`, error);
-        }
-        console.log(`[_handler] Finished processing for date: ${dateString}.`);
-    }
-    console.log(`[_handler] CCIP event processing task completed for all requested day(s).`);
-};
-
-
-export async function runCCIPDefaultMode(): Promise<void> {
-    console.log("[runCCIPDefaultMode] Initiating default mode processing.");
-    try {
-        await _handler({}); // Call the core handler with no specific date options
-        console.log("[runCCIPDefaultMode] Default mode processing completed.");
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[runCCIPDefaultMode] Failed: ${errorMessage}`, error);
-        throw error; // Re-throw for the caller to handle
-    }
+export async function runCCIPDefaultMode(signal?: AbortSignal) {
+  const today = Math.floor(Date.now() / 86400000) * 86400000;
+  return runCCIPBackfillMode(
+    new Date(today - CCIP_LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10),
+    new Date(today - 86400000).toISOString().slice(0, 10),
+    signal
+  );
 }
-
-
-
-/**
- * Runs the CCIP handler in backfill mode for a specified date range.
- * @param startDate The start date of the range (YYYY-MM-DD, inclusive).
- * @param endDate The end date of the range (YYYY-MM-DD, inclusive).
- */
-export async function runCCIPBackfillMode(startDate: string, endDate: string): Promise<void> {
-    console.log(`[runCCIPBackfillMode] Initiating backfill mode for ${startDate} to ${endDate}.`);
-
-    // Validate inputs for programmatic use
-    if (!isValidDateFormat(startDate) || !isValidDateFormat(endDate)) {
-        const errorMsg = "Invalid date format. Both startDate and endDate must be YYYY-MM-DD.";
-        console.error(`[runCCIPBackfillMode] ${errorMsg}`);
-        throw new Error(errorMsg);
-    }
-    if (dayjs(startDate).isAfter(dayjs(endDate))) {
-        const errorMsg = "startDate cannot be after endDate.";
-        console.error(`[runCCIPBackfillMode] ${errorMsg}`);
-        throw new Error(errorMsg);
-    }
-
-    try {
-        await _handler({ startDate, endDate }); // Call the core handler with date options
-        console.log(`[runCCIPBackfillMode] Backfill mode processing for ${startDate} to ${endDate} completed.`);
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`[runCCIPBackfillMode] Failed for range ${startDate}-${endDate}: ${errorMessage}`, error);
-        throw error; // Re-throw for the caller to handle
-    }
-}
-
-
-
-

@@ -311,12 +311,18 @@ const cron = () => {
       execution,
       `aggregateAfter${jobName[0].toUpperCase()}${jobName.slice(1)}`,
       jobCompletedSuccessfully,
-      (_, signal) =>
+      (ingestion, signal) =>
         runBridgeAggregationPipeline({
           bridgeName,
           signal,
           aggregate: runAggregateHistoricalByName,
-          getCurrentTimestamp: () => dayjs().unix(),
+          startTimestamp: bridgeName === "ccip"
+            ? (ingestion.result as Awaited<ReturnType<typeof runCCIP>>).startTimestamp
+            : undefined,
+          getCurrentTimestamp: () =>
+            bridgeName === "ccip"
+              ? (ingestion.result as Awaited<ReturnType<typeof runCCIP>>).endTimestamp
+              : dayjs().unix(),
         }),
       8
     )
