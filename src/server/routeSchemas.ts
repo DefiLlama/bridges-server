@@ -44,6 +44,9 @@ export const routeSchemas = {
   noQuery: {
     querystring: query(),
   },
+  healthcheck: {
+    querystring: query({ nonce: digits }),
+  },
   largeTransactions: {
     params: params({ chain }, ["chain"]),
     querystring: query({ starttimestamp: digits, endtimestamp: digits }),

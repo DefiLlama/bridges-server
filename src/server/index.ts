@@ -386,15 +386,18 @@ const start = async () => {
     registerCachedGet("/bridge-search", routeSchemas.bridgeSearch, searchBridges);
     registerCachedGet("/netflows/compare", routeSchemas.netflowsCompare, getNetflowsCompare);
 
-    server.get("/healthcheck", { schema: routeSchemas.noQuery as any }, async (_, reply) => {
+    server.get("/healthcheck", { schema: routeSchemas.healthcheck as any }, async (_, reply) => {
       const dependencies = getDependencyHealth();
-      return reply.code(200).send({ ...getHealthStatus(), db: dependencies.db, redis: dependencies.redis });
+      return reply
+        .code(200)
+        .header("Cache-Control", "no-store")
+        .send({ ...getHealthStatus(), db: dependencies.db, redis: dependencies.redis });
     });
 
     server.get("/ready", { schema: routeSchemas.noQuery as any }, async (_, reply) => {
       const dependencies = getDependencyHealth();
       const ready = dependencies.db.status === "OK" && dependencies.redis.status !== "ERROR";
-      return reply.code(ready ? 200 : 503).send({
+      return reply.code(ready ? 200 : 503).header("Cache-Control", "no-store").send({
         status: ready ? "OK" : "ERROR",
         timestamp: new Date().toISOString(),
         ...dependencies,
