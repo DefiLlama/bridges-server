@@ -11,7 +11,7 @@ import {
   waitWithSignal,
 } from "../../utils/errors";
 
-const PAGE_LIMIT = 50;
+const PAGE_LIMIT = 100;
 const REQUEST_RETRIES = 8;
 const REQUEST_BASE_RETRY_MS = 5_000;
 const REQUEST_MAX_RETRY_MS = 60_000;
@@ -480,6 +480,7 @@ export const slugToChainId: Record<string, number> = {
   katana: 747474,
   monad: 143,
   robinhood: 4663,
+  story: 1514,
 };
 
 export const chainIdToSlug: Record<number, string> = Object.fromEntries(

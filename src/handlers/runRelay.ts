@@ -2,7 +2,6 @@ import { wrapScheduledLambda } from "../utils/wrap";
 import adapter, {
   RelayChainCatalog,
   chainIdToSlug,
-  convertRequestToEvent,
   fetchRelayChainCatalog,
   forEachRequestsByTimePage,
   parseRelayChainsResponse,
@@ -12,11 +11,12 @@ import { sql } from "../utils/db";
 import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
-import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
+import { formatError, throwIfAborted } from "../utils/errors";
 import {
+  convertSliceToRows,
   createCompletionPrefix,
+  RelayBridgeIds,
   RelayCheckpointSource,
-  requireRelayChainId,
   resolveRelayWindowFromCheckpoint,
   validateRelayCheckpoint,
 } from "./relayProgress";
@@ -25,13 +25,11 @@ import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } fr
 const HOURS_CONCURRENCY = 4;
 const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
 const INITIAL_LOOKBACK_HOURS = 48;
-const MAX_CATCHUP_HOURS = 12;
+const MAX_CATCHUP_HOURS = 24;
 const SOFT_DEADLINE_MINUTES = 20;
 const INSERT_BATCH_PAGES = 10;
 const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
 const RELAY_CHAIN_CATALOG_CACHE_KEY = "relay:chain_catalog:last_good";
-
-type RelayBridgeIds = Record<string, string | undefined>;
 
 const runWindows = async <T>(
   items: T[],
@@ -150,81 +148,6 @@ const saveRelayCheckpoint = async (checkpoint: number) => {
   );
 };
 
-const convertSliceToRows = (
-  slice: any[],
-  bridgeIds: RelayBridgeIds,
-  chainCatalog: RelayChainCatalog,
-  label: string
-) => {
-  const sourceTransactions: any[] = [];
-  const destinationTransactions: any[] = [];
-  let depositUsd = 0;
-
-  for (const req of slice) {
-    try {
-      const event = convertRequestToEvent(req);
-      if (event.deposit) {
-        const depositChainId = requireRelayChainId("deposit", event.depositChainId);
-        const depositSlug = chainCatalog[depositChainId];
-        if (!depositSlug) {
-          throw new NonRetryableError(`Relay returned unknown deposit chain ID ${event.depositChainId}`);
-        }
-        const bId = bridgeIds[depositSlug?.toLowerCase?.()];
-        if (!bId) {
-          throw new NonRetryableError(`Relay bridge config is missing deposit chain ${depositSlug}`);
-        }
-        depositUsd += parseFloat(event.deposit.amount?.toString?.() || "0");
-        sourceTransactions.push({
-          bridge_id: bId,
-          chain: depositSlug.toLowerCase(),
-          tx_hash: event.deposit.txHash,
-          ts: event.deposit.timestamp!,
-          tx_block: null,
-          tx_from: event.deposit.from ?? "0x",
-          tx_to: event.deposit.to ?? "0x",
-          token: event.deposit.token ?? "0x0000000000000000000000000000000000000000",
-          amount: event.deposit.amount?.toString?.() || "0",
-          is_deposit: true,
-          is_usd_volume: true,
-          txs_counted_as: 1,
-          origin_chain: null,
-        });
-      }
-
-      if (event.withdraw) {
-        const withdrawChainId = requireRelayChainId("withdrawal", event.withdrawChainId);
-        const withdrawSlug = chainCatalog[withdrawChainId];
-        if (!withdrawSlug) {
-          throw new NonRetryableError(`Relay returned unknown withdrawal chain ID ${event.withdrawChainId}`);
-        }
-        const bId = bridgeIds[withdrawSlug?.toLowerCase?.()];
-        if (!bId) {
-          throw new NonRetryableError(`Relay bridge config is missing withdrawal chain ${withdrawSlug}`);
-        }
-        destinationTransactions.push({
-          bridge_id: bId,
-          chain: withdrawSlug.toLowerCase(),
-          tx_hash: event.withdraw.txHash,
-          ts: event.withdraw.timestamp!,
-          tx_block: null,
-          tx_from: event.withdraw.from ?? "0x",
-          tx_to: event.withdraw.to ?? "0x",
-          token: event.withdraw.token ?? "0x0000000000000000000000000000000000000000",
-          amount: event.withdraw.amount?.toString?.() || "0",
-          is_deposit: false,
-          is_usd_volume: true,
-          txs_counted_as: 1,
-          origin_chain: null,
-        });
-      }
-    } catch (e) {
-      throw new NonRetryableError(`${label} failed to convert request ${req?.id ?? "unknown"}: ${formatError(e)}`);
-    }
-  }
-
-  return { sourceTransactions, destinationTransactions, depositUsd };
-};
-
 export const processHourWindow = async (
   [from, to]: [number, number],
   bridgeIds: RelayBridgeIds,
@@ -236,6 +159,7 @@ export const processHourWindow = async (
   let hourDepositUsd = 0;
   let insertedDeposits = 0;
   let insertedWithdrawals = 0;
+  let skippedLegs = 0;
   let pageIndex = 0;
   let pendingDeposits: any[] = [];
   let pendingWithdrawals: any[] = [];
@@ -267,6 +191,7 @@ export const processHourWindow = async (
       hourDepositUsd += rows.depositUsd;
       insertedDeposits += rows.sourceTransactions.length;
       insertedWithdrawals += rows.destinationTransactions.length;
+      skippedLegs += rows.skippedLegs;
 
       pendingDeposits.push(...rows.sourceTransactions);
       pendingWithdrawals.push(...rows.destinationTransactions);
@@ -286,9 +211,9 @@ export const processHourWindow = async (
 
   console.log(
     `${label} complete: ${stats.pages} pages, ${stats.requests} requests, ` +
-      `${insertedDeposits} deposits, ${insertedWithdrawals} withdrawals`
+      `${insertedDeposits} deposits, ${insertedWithdrawals} withdrawals, ${skippedLegs} skipped legs`
   );
-  return { depositUsd: hourDepositUsd, pages: stats.pages, requests: stats.requests };
+  return { depositUsd: hourDepositUsd, pages: stats.pages, requests: stats.requests, skippedLegs };
 };
 
 export const handler = async (signal?: AbortSignal) => {
@@ -322,6 +247,7 @@ export const handler = async (signal?: AbortSignal) => {
     let totalDepositUsd = 0;
     let totalPages = 0;
     let totalRequests = 0;
+    let totalSkippedLegs = 0;
 
     const { firstError, expired } = await runWindows(
       windows,
@@ -331,6 +257,7 @@ export const handler = async (signal?: AbortSignal) => {
         totalDepositUsd += totals.depositUsd;
         totalPages += totals.pages;
         totalRequests += totals.requests;
+        totalSkippedLegs += totals.skippedLegs;
         prefix.complete(index);
       },
       {
@@ -346,7 +273,7 @@ export const handler = async (signal?: AbortSignal) => {
     console.log(
       `Relay processing ${savedPrefix === windows.length ? "complete" : "partial"}: ` +
         `${savedPrefix}/${windows.length} windows checkpointed, ${totalPages} pages, ` +
-        `${totalRequests} requests, total deposit USD: ${totalDepositUsd}`
+        `${totalRequests} requests, ${totalSkippedLegs} skipped legs, total deposit USD: ${totalDepositUsd}`
     );
 
     if (firstError) throw firstError;

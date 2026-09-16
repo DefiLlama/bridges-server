@@ -10,6 +10,7 @@ import {
   serializeRelayChainCatalog,
   slugToChainId,
 } from "../adapters/relay";
+import { convertSliceToRows } from "./relayProgress";
 
 test("Relay windows are filtered and sorted by updatedAt", () => {
   const url = new URL(makeRequestsUrl(100, 200, "next", 1));
@@ -24,7 +25,7 @@ test("Relay windows are filtered and sorted by updatedAt", () => {
 test("Relay requests target v3 and drop the removed referrer parameter", () => {
   const url = new URL(makeRequestsUrl(100, 200));
   assert.equal(url.pathname, "/requests/v3");
-  assert.equal(url.searchParams.get("limit"), "50");
+  assert.equal(url.searchParams.get("limit"), "100");
   assert.equal(url.searchParams.has("referrer"), false);
 });
 
@@ -171,4 +172,14 @@ test("Relay rejects malformed successful responses before checkpoint advancement
     requests: [],
     continuation: "next",
   });
+});
+
+test("Relay skips legs on chains missing from the catalog instead of failing the window", () => {
+  const bridgeIds = { ethereum: "bridge-eth" };
+  const chainCatalog = { 1: "ethereum" };
+  const rows = convertSliceToRows([v3Request()], bridgeIds, chainCatalog, "[test]");
+  assert.equal(rows.sourceTransactions.length, 1);
+  assert.equal(rows.sourceTransactions[0].chain, "ethereum");
+  assert.equal(rows.destinationTransactions.length, 0);
+  assert.equal(rows.skippedLegs, 1);
 });
