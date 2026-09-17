@@ -22,11 +22,12 @@ import {
 } from "./relayProgress";
 import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } from "../utils/cache";
 
-const HOURS_CONCURRENCY = 4;
+// TEMP relay catch-up (Sept 2026): was 4 / 24h / 20m. Revert together with the cron.ts relay schedule.
+const HOURS_CONCURRENCY = 8;
 const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
 const INITIAL_LOOKBACK_HOURS = 48;
-const MAX_CATCHUP_HOURS = 24;
-const SOFT_DEADLINE_MINUTES = 20;
+const MAX_CATCHUP_HOURS = 72;
+const SOFT_DEADLINE_MINUTES = 30;
 const INSERT_BATCH_PAGES = 10;
 const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
 const RELAY_CHAIN_CATALOG_CACHE_KEY = "relay:chain_catalog:last_good";
