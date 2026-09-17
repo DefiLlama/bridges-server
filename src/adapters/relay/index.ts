@@ -24,8 +24,9 @@ const readPositiveEnv = (name: string, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-const REQUEST_CONCURRENCY = readPositiveEnv("RELAY_REQUEST_CONCURRENCY", 4);
-const REQUESTS_PER_MINUTE = readPositiveEnv("RELAY_REQUESTS_PER_MINUTE", 180);
+// TEMP relay catch-up (Sept 2026): was 4 / 180. Probed 20 rps without 429s; revert once the checkpoint is current.
+const REQUEST_CONCURRENCY = readPositiveEnv("RELAY_REQUEST_CONCURRENCY", 8);
+const REQUESTS_PER_MINUTE = readPositiveEnv("RELAY_REQUESTS_PER_MINUTE", 600);
 
 export const createRequestGate = (concurrency: number, requestsPerMinute: number) => {
   const minIntervalMs = requestsPerMinute > 0 ? 60_000 / requestsPerMinute : 0;

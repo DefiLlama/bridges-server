@@ -218,6 +218,8 @@ type DedicatedJob = {
   jobName: string;
   bridgeName: string;
   handler: (signal: AbortSignal) => Promise<any>;
+  delayMinutes?: number;
+  timeoutMinutes?: number;
 };
 
 const dedicatedJobs: DedicatedJob[] = [
@@ -226,7 +228,9 @@ const dedicatedJobs: DedicatedJob[] = [
   { jobName: "runLayerZero", bridgeName: "layerzero", handler: runLayerZero },
   { jobName: "runHyperlane", bridgeName: "hyperlane", handler: runHyperlane },
   { jobName: "runInterSoon", bridgeName: "intersoon", handler: runInterSoon },
-  { jobName: "runRelay", bridgeName: "relay", handler: runRelay },
+  // TEMP relay catch-up (Sept 2026): start at +5 with a 38m timeout instead of +25/25m so the job still
+  // ends before +45 and does not delay the final publication. Drop both overrides after catch-up.
+  { jobName: "runRelay", bridgeName: "relay", handler: runRelay, delayMinutes: 5, timeoutMinutes: 38 },
   { jobName: "runLayerswap", bridgeName: "layerswap", handler: runLayerswap },
   { jobName: "runAcross", bridgeName: "across", handler: runAcross },
   { jobName: "runCashmere", bridgeName: "cashmere", handler: runCashmere },
@@ -304,7 +308,15 @@ const cron = () => {
 
   const dedicatedIngestionRuns = dedicatedJobs.map((job) => ({
     ...job,
-    execution: runAfterDelay(job.jobName, 25, job.handler, 25, "recoverable", undefined, "detach"),
+    execution: runAfterDelay(
+      job.jobName,
+      job.delayMinutes ?? 25,
+      job.handler,
+      job.timeoutMinutes ?? 25,
+      "recoverable",
+      undefined,
+      "detach"
+    ),
   }));
   const dedicatedAggregationRuns = dedicatedIngestionRuns.map(({ jobName, bridgeName, execution }) =>
     runDependentJob(
