@@ -25,6 +25,9 @@ import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } fr
 // TEMP relay catch-up (Sept 2026): was 4 / 24h / 20m. Revert together with the cron.ts relay schedule.
 const HOURS_CONCURRENCY = 8;
 const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
+// Relay bulk-updated ~500k old requests inside a single hour (2026-09-18 00:00 UTC). An hour-long
+// window then exceeds MAX_PAGES_PER_WINDOW and never checkpoints, so ingest in 10-minute windows.
+const WINDOW_SECONDS = 10 * 60;
 const INITIAL_LOOKBACK_HOURS = 48;
 const MAX_CATCHUP_HOURS = 72;
 const SOFT_DEADLINE_MINUTES = 30;
@@ -70,11 +73,11 @@ const runWindows = async <T>(
   return { started, firstError, expired };
 };
 
-export const splitHourWindows = (startTs: number, endTs: number): Array<[number, number]> => {
+export const splitIngestWindows = (startTs: number, endTs: number): Array<[number, number]> => {
   const windows: Array<[number, number]> = [];
-  const startHour = Math.floor(startTs / 3600) * 3600;
-  for (let t = startHour; t < endTs; t += 3600) {
-    windows.push([Math.max(t, startTs), Math.min(t + 3600, endTs)]);
+  const firstWindowStart = Math.floor(startTs / WINDOW_SECONDS) * WINDOW_SECONDS;
+  for (let t = firstWindowStart; t < endTs; t += WINDOW_SECONDS) {
+    windows.push([Math.max(t, startTs), Math.min(t + WINDOW_SECONDS, endTs)]);
   }
   return windows;
 };
@@ -234,7 +237,7 @@ export const handler = async (signal?: AbortSignal) => {
       return;
     }
 
-    const windows = splitHourWindows(startTs, endTs);
+    const windows = splitIngestWindows(startTs, endTs);
     const deadlineAt = Date.now() + SOFT_DEADLINE_MINUTES * 60 * 1000;
     console.log(
       `Running Relay adapter from ${dayjs.unix(startTs).toISOString()} to ${dayjs.unix(endTs).toISOString()} ` +
