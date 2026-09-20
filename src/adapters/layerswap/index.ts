@@ -57,6 +57,7 @@ export const networkNameToSlug: Record<string, string> = {
   SEI_MAINNET: "sei",
   ZEROG_MAINNET: "0g",
   ABSTRACT_MAINNET: "abstract",
+  ARC_MAINNET: "arc",
   BERACHAIN_MAINNET: "berachain",
   FLARE_MAINNET: "flare",
   HYPEREVM_MAINNET: "hyperliquid",
