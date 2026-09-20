@@ -452,6 +452,7 @@ export default [
       "Plume Mainnet",
       "Monad",
       "Robinhood",
+      "Arc",
     ],
     chainMapping: {
       avalanche: "avax", // this is needed temporarily, need to fix and remove
@@ -1049,6 +1050,7 @@ export default [
       "Tron",
       "Solana",
       "Plume Mainnet",
+      "Arc",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -2132,6 +2134,7 @@ export default [
       "TON",
       "Tron",
       "Fuel",
+      "Arc",
     ],
   },
   {
@@ -2210,6 +2213,7 @@ export default [
       "ZetaChain",
       "Zircuit",
       "Zora",
+      "Arc",
     ],
     chainMapping: {
       avalanche: "avax",
