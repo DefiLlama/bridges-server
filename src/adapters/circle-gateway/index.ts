@@ -31,6 +31,7 @@ const chainConfig: Record<string, ChainCfg> = {
   wc: { chain: "wc", domain: 14 },
   sei: { chain: "sei", domain: 16 },
   hyperliquid: { chain: "hyperliquid", domain: 19 },
+  arc: { chain: "arc", domain: 26 },
 };
 
 const supportedDomains = new Set(Object.values(chainConfig).map(({ domain }) => domain));
@@ -139,6 +140,7 @@ const adapter: BridgeAdapter = {
   wc: constructParams("wc"),
   sei: constructParams("sei"),
   hyperliquid: constructParams("hyperliquid"),
+  arc: constructParams("arc"),
 };
 
 export default adapter;

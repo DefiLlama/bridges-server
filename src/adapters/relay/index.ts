@@ -482,6 +482,7 @@ export const slugToChainId: Record<string, number> = {
   monad: 143,
   robinhood: 4663,
   story: 1514,
+  arc: 5042,
 };
 
 export const chainIdToSlug: Record<number, string> = Object.fromEntries(

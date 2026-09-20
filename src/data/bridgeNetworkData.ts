@@ -420,6 +420,7 @@ export default [
       "Hyperliquid",
       "Tron",
       "Robinhood",
+      "Arc",
     ],
     chainMapping: {
       "zksync era": "era",
@@ -1423,6 +1424,7 @@ export default [
       "XDC",
       "Hyperliquid",
       "Ink",
+      "Arc",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -1449,6 +1451,7 @@ export default [
       "World Chain",
       "Sei",
       "Hyperliquid",
+      "Arc",
     ],
     chainMapping: {
       avalanche: "avax",
@@ -2624,6 +2627,7 @@ export default [
       "Zero Network",
       "Zksync",
       "Robinhood",
+      "Arc",
     ],
     chainMapping: {
       "polygon zkevm": "polygon_zkevm",

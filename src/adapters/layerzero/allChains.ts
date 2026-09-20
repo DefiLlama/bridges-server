@@ -114,5 +114,6 @@ const allChains = [
   "BounceBit",
   "Monad",
   "Robinhood",
+  "arc",
 ];
 export default allChains;
