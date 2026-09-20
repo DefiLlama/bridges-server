@@ -67,6 +67,7 @@ export const maxBlocksToQueryByChain = {
   filecoin: 3000,
   kava: 3000,
   robinhood: 3000,
+  arc: 6000,
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter

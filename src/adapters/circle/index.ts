@@ -31,6 +31,7 @@ const contractsV2 = {
   xdc: { TokenMessengerV2: "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d" },
   hyperliquid: { TokenMessengerV2: "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d" },
   ink: { TokenMessengerV2: "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d" },
+  arc: { TokenMessengerV2: "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d" },
 } as const;
 type SupportedChainsV1 = keyof typeof contractsV1;
 type SupportedChainsV2 = keyof typeof contractsV2;
@@ -148,6 +149,7 @@ const adapter: BridgeAdapter = {
   xdc: constructParams("xdc"),
   hyperliquid: constructParams("hyperliquid"),
   ink: constructParams("ink"),
+  arc: constructParams("arc"),
 };
 
 export default adapter;

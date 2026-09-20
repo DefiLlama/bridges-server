@@ -48,6 +48,7 @@ export const chainIdMapping: Record<string, number> = {
   robinhood: 4663,
   megaeth: 4326,
   tron: 728126428,
+  arc: 5042,
 };
 
 // Response type from the Across Indexer API
