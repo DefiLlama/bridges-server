@@ -12,65 +12,21 @@ import { insertTransactionRows } from "../utils/wrappa/postgres/write";
 import { insertConfigEntriesForAdapter } from "../utils/adapter";
 import dayjs from "dayjs";
 import { formatError, throwIfAborted } from "../utils/errors";
-import {
-  convertSliceToRows,
-  createCompletionPrefix,
-  RelayBridgeIds,
-  RelayCheckpointSource,
-  resolveRelayWindowFromCheckpoint,
-  validateRelayCheckpoint,
-} from "./relayProgress";
+import { convertSliceToRows, RelayBridgeIds } from "./relayProgress";
 import { advanceDurableCheckpoint, getCache, getDurableCheckpoint, setCache } from "../utils/cache";
 
-const HOURS_CONCURRENCY = 4;
-const CHECKPOINT_OVERLAP_SECONDS = 5 * 60;
-// Relay bulk-updated ~500k old requests inside a single hour (2026-09-18 00:00 UTC). An hour-long
-// window then exceeds MAX_PAGES_PER_WINDOW and never checkpoints, so ingest in 10-minute windows.
+// Requests are read by createdAt, not updatedAt: Relay periodically bulk-touches old requests, which
+// inflates an updatedAt stream 20-30x and used to stall the checkpoint. A request is created once, so a
+// createdAt window is only the real traffic (~50 pages per 10 minutes). Late destination legs are picked
+// up by re-scanning the last LOOKBACK_SECONDS every run (rows are upserted); p99 settle time is ~25 s.
 const WINDOW_SECONDS = 10 * 60;
-const INITIAL_LOOKBACK_HOURS = 48;
-const MAX_CATCHUP_HOURS = 24;
-const SOFT_DEADLINE_MINUTES = 20;
+const LOOKBACK_SECONDS = 2 * 60 * 60;
+const INITIAL_LOOKBACK_SECONDS = 48 * 60 * 60;
 const INSERT_BATCH_PAGES = 10;
-const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
+const RELAY_CHECKPOINT_KEY = "adapter_progress:relay:created_at";
+// Cursor of the previous updatedAt-based ingest; used once so the switch resumes where it stopped.
+const LEGACY_CHECKPOINT_KEY = "adapter_progress:relay:updated_at";
 const RELAY_CHAIN_CATALOG_CACHE_KEY = "relay:chain_catalog:last_good";
-
-const runWindows = async <T>(
-  items: T[],
-  limit: number,
-  fn: (item: T, index: number) => Promise<void>,
-  { isExpired, onSettled }: { isExpired: () => boolean; onSettled: (index: number) => void | Promise<void> }
-): Promise<{ started: number; firstError?: unknown; expired: boolean }> => {
-  let nextIndex = 0;
-  let started = 0;
-  let stopped = false;
-  let expired = false;
-  let firstError: unknown;
-
-  const worker = async () => {
-    while (!stopped) {
-      if (isExpired()) {
-        expired = true;
-        return;
-      }
-      const index = nextIndex++;
-      if (index >= items.length) return;
-      started += 1;
-      try {
-        await fn(items[index], index);
-        await onSettled(index);
-      } catch (error) {
-        if (!stopped) {
-          stopped = true;
-          firstError = error;
-        }
-        return;
-      }
-    }
-  };
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
-  return { started, firstError, expired };
-};
 
 export const splitIngestWindows = (startTs: number, endTs: number): Array<[number, number]> => {
   const windows: Array<[number, number]> = [];
@@ -80,6 +36,9 @@ export const splitIngestWindows = (startTs: number, endTs: number): Array<[numbe
   }
   return windows;
 };
+
+export const resolveIngestStart = (checkpoint: number | null, now: number): number =>
+  checkpoint === null ? now - INITIAL_LOOKBACK_SECONDS : Math.min(checkpoint, now) - LOOKBACK_SECONDS;
 
 export const loadRelayChainCatalog = async (signal?: AbortSignal): Promise<RelayChainCatalog> => {
   try {
@@ -118,48 +77,17 @@ export const loadRelayBridgeIds = async (chainCatalog: RelayChainCatalog): Promi
   return Object.fromEntries(rows.map((row) => [row.chain, row.id]));
 };
 
-const getLatestRelayCheckpoint = async (
-  now: number
-): Promise<{
-  checkpoint: number | null;
-  source: RelayCheckpointSource;
-}> => {
-  const durableCheckpoint = await getDurableCheckpoint(RELAY_CHECKPOINT_KEY);
-  if (durableCheckpoint !== null) {
-    return { checkpoint: validateRelayCheckpoint(durableCheckpoint, now), source: "redis" };
-  }
-  return { checkpoint: null, source: "lookback" };
-};
+const loadCheckpoint = async (): Promise<number | null> =>
+  (await getDurableCheckpoint(RELAY_CHECKPOINT_KEY)) ?? (await getDurableCheckpoint(LEGACY_CHECKPOINT_KEY));
 
-const resolveWindow = async () => {
-  const now = dayjs().unix();
-  const { checkpoint, source } = await getLatestRelayCheckpoint(now);
-  return resolveRelayWindowFromCheckpoint({
-    now,
-    checkpoint,
-    source,
-    checkpointOverlapSeconds: CHECKPOINT_OVERLAP_SECONDS,
-    initialLookbackSeconds: INITIAL_LOOKBACK_HOURS * 60 * 60,
-    maxCatchupSeconds: MAX_CATCHUP_HOURS * 60 * 60,
-  });
-};
-
-const saveRelayCheckpoint = async (checkpoint: number) => {
-  const storedCheckpoint = await advanceDurableCheckpoint(RELAY_CHECKPOINT_KEY, checkpoint);
-  console.log(
-    `Relay checkpoint stored in Redis: ${dayjs.unix(storedCheckpoint).toISOString()} (${RELAY_CHECKPOINT_KEY})`
-  );
-};
-
-export const processHourWindow = async (
+export const processWindow = async (
   [from, to]: [number, number],
   bridgeIds: RelayBridgeIds,
   chainCatalog: RelayChainCatalog,
   signal?: AbortSignal
 ) => {
   const label = `[relay ${dayjs.unix(from).format("YYYY-MM-DD HH:mm")}-${dayjs.unix(to).format("HH:mm")}]`;
-  console.log(`${label} start`);
-  let hourDepositUsd = 0;
+  let depositUsd = 0;
   let insertedDeposits = 0;
   let insertedWithdrawals = 0;
   let skippedLegs = 0;
@@ -175,12 +103,8 @@ export const processHourWindow = async (
     pendingDeposits = [];
     pendingWithdrawals = [];
     await sql.begin(async (txSql) => {
-      if (deposits.length) {
-        await insertTransactionRows(txSql, true, deposits, "upsert", true);
-      }
-      if (withdrawals.length) {
-        await insertTransactionRows(txSql, true, withdrawals, "upsert", true);
-      }
+      if (deposits.length) await insertTransactionRows(txSql, true, deposits, "upsert", true);
+      if (withdrawals.length) await insertTransactionRows(txSql, true, withdrawals, "upsert", true);
     });
   };
 
@@ -191,21 +115,13 @@ export const processHourWindow = async (
       throwIfAborted(signal);
       pageIndex += 1;
       const rows = convertSliceToRows(slice, bridgeIds, chainCatalog, label);
-      hourDepositUsd += rows.depositUsd;
+      depositUsd += rows.depositUsd;
       insertedDeposits += rows.sourceTransactions.length;
       insertedWithdrawals += rows.destinationTransactions.length;
       skippedLegs += rows.skippedLegs;
-
       pendingDeposits.push(...rows.sourceTransactions);
       pendingWithdrawals.push(...rows.destinationTransactions);
       if (pageIndex % INSERT_BATCH_PAGES === 0) await flushRows();
-
-      if (pageIndex === 1 || pageIndex % 25 === 0) {
-        console.log(
-          `${label} processed through page ${pageIndex}: ` +
-            `${insertedDeposits} deposits, ${insertedWithdrawals} withdrawals`
-        );
-      }
     },
     undefined,
     signal
@@ -213,84 +129,43 @@ export const processHourWindow = async (
   await flushRows();
 
   console.log(
-    `${label} complete: ${stats.pages} pages, ${stats.requests} requests, ` +
+    `${label} ${stats.pages} pages, ${stats.requests} requests, ` +
       `${insertedDeposits} deposits, ${insertedWithdrawals} withdrawals, ${skippedLegs} skipped legs`
   );
-  return { depositUsd: hourDepositUsd, pages: stats.pages, requests: stats.requests, skippedLegs };
+  return { depositUsd, pages: stats.pages, requests: stats.requests, skippedLegs };
 };
 
 export const handler = async (signal?: AbortSignal) => {
-  const relayController = new AbortController();
-  const abortRelay = () => relayController.abort();
-  signal?.addEventListener("abort", abortRelay, { once: true });
-  if (signal?.aborted) abortRelay();
-  const relaySignal = relayController.signal;
   try {
-    throwIfAborted(relaySignal);
-    const chainCatalog = await loadRelayChainCatalog(relaySignal);
+    throwIfAborted(signal);
+    const chainCatalog = await loadRelayChainCatalog(signal);
     const bridgeIds = await loadRelayBridgeIds(chainCatalog);
-    const { checkpoint, startTs, endTs, source, overlap } = await resolveWindow();
-
-    if (startTs >= endTs) {
-      console.log(`Relay adapter skipped: resolved empty window ${startTs}-${endTs}`);
-      return;
-    }
-
-    const windows = splitIngestWindows(startTs, endTs);
-    const deadlineAt = Date.now() + SOFT_DEADLINE_MINUTES * 60 * 1000;
+    const now = dayjs().unix();
+    const checkpoint = await loadCheckpoint();
+    const windows = splitIngestWindows(resolveIngestStart(checkpoint, now), now);
     console.log(
-      `Running Relay adapter from ${dayjs.unix(startTs).toISOString()} to ${dayjs.unix(endTs).toISOString()} ` +
-        `(checkpoint=${checkpoint ? dayjs.unix(checkpoint).toISOString() : "none"}, ` +
-        `source=${source}, overlap=${overlap}s, maxCatchup=${MAX_CATCHUP_HOURS}h, ` +
-        `windows=${windows.length}, concurrency=${HOURS_CONCURRENCY}, deadline=${SOFT_DEADLINE_MINUTES}m)`
+      `Running Relay adapter over ${windows.length} windows from ${dayjs.unix(windows[0][0]).toISOString()} ` +
+        `(checkpoint=${checkpoint === null ? "none" : dayjs.unix(checkpoint).toISOString()})`
     );
 
-    const prefix = createCompletionPrefix(windows.length);
-    let savedPrefix = 0;
-    let totalDepositUsd = 0;
     let totalPages = 0;
     let totalRequests = 0;
-    let totalSkippedLegs = 0;
-
-    const { firstError, expired } = await runWindows(
-      windows,
-      HOURS_CONCURRENCY,
-      async (w, index) => {
-        const totals = await processHourWindow(w, bridgeIds, chainCatalog, relaySignal);
-        totalDepositUsd += totals.depositUsd;
-        totalPages += totals.pages;
-        totalRequests += totals.requests;
-        totalSkippedLegs += totals.skippedLegs;
-        prefix.complete(index);
-      },
-      {
-        isExpired: () => Date.now() >= deadlineAt || relaySignal.aborted,
-        onSettled: async () => {
-          if (prefix.length <= savedPrefix) return;
-          savedPrefix = prefix.length;
-          await saveRelayCheckpoint(windows[savedPrefix - 1][1]);
-        },
-      }
-    );
-
-    console.log(
-      `Relay processing ${savedPrefix === windows.length ? "complete" : "partial"}: ` +
-        `${savedPrefix}/${windows.length} windows checkpointed, ${totalPages} pages, ` +
-        `${totalRequests} requests, ${totalSkippedLegs} skipped legs, total deposit USD: ${totalDepositUsd}`
-    );
-
-    if (firstError) throw firstError;
-    if (expired) {
-      console.warn(
-        `Relay stopped at the ${SOFT_DEADLINE_MINUTES}m deadline with ` +
-          `${windows.length - savedPrefix} window(s) left; the next run resumes from the checkpoint.`
-      );
+    let totalDepositUsd = 0;
+    for (const window of windows) {
+      throwIfAborted(signal);
+      const totals = await processWindow(window, bridgeIds, chainCatalog, signal);
+      totalPages += totals.pages;
+      totalRequests += totals.requests;
+      totalDepositUsd += totals.depositUsd;
+      await advanceDurableCheckpoint(RELAY_CHECKPOINT_KEY, window[1]);
     }
+    console.log(
+      `Relay complete: ${windows.length} windows, ${totalPages} pages, ${totalRequests} requests, ` +
+        `total deposit USD: ${totalDepositUsd}, checkpoint ${dayjs.unix(now).toISOString()}`
+    );
   } catch (error) {
     console.error("Fatal error in Relay handler:", error);
     throw error;
-  } finally {
-    signal?.removeEventListener("abort", abortRelay);
   }
 };
 

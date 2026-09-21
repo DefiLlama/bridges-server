@@ -137,7 +137,7 @@ export const makeRequestsUrl = (
     startTimestamp: String(startTimestamp),
     endTimestamp: String(endTimestamp),
     limit: String(PAGE_LIMIT),
-    sortBy: "updatedAt",
+    sortBy: "createdAt",
     sortDirection: "asc",
   });
   if (continuation) params.set("continuation", continuation);
