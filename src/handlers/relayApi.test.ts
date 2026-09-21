@@ -12,11 +12,11 @@ import {
 } from "../adapters/relay";
 import { convertSliceToRows } from "./relayProgress";
 
-test("Relay windows are filtered and sorted by updatedAt", () => {
+test("Relay windows are filtered and sorted by createdAt", () => {
   const url = new URL(makeRequestsUrl(100, 200, "next", 1));
   assert.equal(url.searchParams.get("startTimestamp"), "100");
   assert.equal(url.searchParams.get("endTimestamp"), "200");
-  assert.equal(url.searchParams.get("sortBy"), "updatedAt");
+  assert.equal(url.searchParams.get("sortBy"), "createdAt");
   assert.equal(url.searchParams.get("sortDirection"), "asc");
   assert.equal(url.searchParams.get("continuation"), "next");
   assert.equal(url.searchParams.get("chainId"), "1");
