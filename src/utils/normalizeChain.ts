@@ -1167,6 +1167,13 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 143,
   },
+  Arc: {
+    geckoId: null,
+    symbol: "USDC",
+    cmcId: null,
+    categories: ["EVM"],
+    chainId: 5042,
+  },
   ICP: {
     geckoId: "internet-computer",
     symbol: "ICP",
