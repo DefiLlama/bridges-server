@@ -22,6 +22,8 @@ const chainAliases: Record<string, string> = {
   op_bnb: "opbnb",
   // The metrics API uses `new` for AB Core (36888), not AB IoT (1012).
   new: "ab chain",
+  rsk: "rootstock",
+  nexon: "henesys",
 };
 
 export function ccipDayStart(date: string): number {
@@ -70,8 +72,6 @@ export function parseCCIPSnapshot(data: unknown, date: string): CCIPEvent[] {
       "destTxHash",
       "tokenTransferFrom",
       "tokenTransferTo",
-      "tokenAddressSource",
-      "tokenAddressDest",
     ]) {
       if (typeof tx[field] !== "string" || !tx[field].trim()) throw new Error(`Missing CCIP ${field} for ${date}`);
     }
@@ -87,15 +87,18 @@ export function parseCCIPSnapshot(data: unknown, date: string): CCIPEvent[] {
     }
     for (const isDeposit of [false, true]) {
       const rawChain = isDeposit ? tx.destChain : tx.sourceChain;
+      const token = isDeposit ? tx.tokenAddressDest : tx.tokenAddressSource;
+      // Some legs (e.g. to/from Solana) come without a token address and zero USD.
+      if (typeof token !== "string" || !token.trim()) continue;
+      // New chains get a bridges.config row on insert, so unknown labels are stored as-is.
       const chain = chainAliases[rawChain] ?? rawChain;
-      if (!chains.includes(chain)) throw new Error(`Unknown CCIP chain ${rawChain} for ${date}`);
       events.push({
         chain,
         tx_hash: encodeCCIPTransactionHash(isDeposit ? tx.destTxHash : tx.sourceTxHash, tx.messageID),
         ts: tx.blockTimestamp * 1000,
         tx_from: tx.tokenTransferFrom,
         tx_to: tx.tokenTransferTo,
-        token: isDeposit ? tx.tokenAddressDest : tx.tokenAddressSource,
+        token,
         // tokenAmount mixes human units and base units across integrations. Use the
         // provider's USD valuation, including zero, without guessing its decimals.
         amount: String(tx.tokenAmountUsd),
