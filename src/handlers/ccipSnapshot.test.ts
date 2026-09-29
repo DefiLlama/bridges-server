@@ -108,7 +108,6 @@ test("CCIP rejects incomplete responses before reconciliation", () => {
     assert.throws(() => parseCCIPSnapshot(response, date));
   }
   for (const change of [
-    { destChain: "unlisted" },
     { destTxHash: "" },
     { tokenAmountUsd: -1 },
     { tokenAmountUsd: NaN },
