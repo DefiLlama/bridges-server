@@ -50,6 +50,8 @@ const tokens: Record<string, Record<string, string>> = {
     [tokenIds.USDC]: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
     [tokenIds.POL]: ZERO,
     [tokenIds.A]: "0x6631eE651DA438Db2BE611B5A44dFE2Ca04590C5",
+    // Currently receive-only on Polygon. Keep the configured addresses so
+    // historical BridgeSent events remain decodable if the routes changed.
     [tokenIds.sLGNS]: "0x99a57E6C8558BC6689f894e068733ADf83C19725",
     [tokenIds.LGNS]: "0xeB51D9A39AD5EEF215dC0Bf39a8821ff804A0F01",
   },
@@ -113,6 +115,7 @@ const getEvents =
       const { tokenId, sender, dstDomain, recipient, amount } = iface.parseLog(log).args;
       const destination = Number(dstDomain);
       // All currently supported routes have Anubis as one endpoint.
+      // Do not apply today's token-route list to historical on-chain events.
       if (chain === "anubi" ? ![1, 56, 137].includes(destination) : destination !== domainByChain.anubi) return [];
       const token = tokens[chain][tokenId.toLowerCase()];
       if (!token) {
