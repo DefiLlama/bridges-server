@@ -111,6 +111,7 @@ import citreaUsdt from "./citrea-usdt";
 import citreaWbtc from "./citrea-wbtc";
 import wavesbridge from "./wavesbridge";
 import robinhood from "./robinhood";
+import anubisBridge from "./anubis-bridge";
 
 export default {
   polygon,
@@ -225,6 +226,7 @@ export default {
   "citrea-wbtc": citreaWbtc,
   wavesbridge,
   robinhood,
+  "anubis-bridge": anubisBridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
