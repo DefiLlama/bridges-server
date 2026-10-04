@@ -17,7 +17,9 @@ interface TransactionsPage {
   nextCursor?: string;
 }
 
-const getTransactions = async (
+type QueryTransactions = typeof queryTransactionsTimestampRangeByBridgeNetwork;
+
+export const getTransactions = async (
   startTimestamp?: string,
   endTimestamp?: string,
   bridgeNetworkId?: string,
@@ -25,7 +27,8 @@ const getTransactions = async (
   sourceChain?: string,
   address?: string,
   limit: number = DEFAULT_TRANSACTIONS_LIMIT,
-  cursor?: TransactionCursor
+  cursor?: TransactionCursor,
+  queryTransactions: QueryTransactions = queryTransactionsTimestampRangeByBridgeNetwork
 ): Promise<TransactionsPage | IResponse> => {
   if (bridgeNetworkId && !(bridgeNetworkId === "all") && isNaN(parseInt(bridgeNetworkId))) {
     return errorResponse({
@@ -41,25 +44,34 @@ const getTransactions = async (
   const defaultStartTimestamp = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
   const queryStartTimestamp = startTimestamp ? parseInt(startTimestamp) : defaultStartTimestamp;
   const queryEndTimestamp = endTimestamp ? parseInt(endTimestamp) : undefined;
-  const queryChain = sourceChain ? normalizeChain(sourceChain) : chain ? normalizeChain(chain) : chain;
+  const queryChain = chain ? normalizeChain(chain) : chain;
   let queryName = undefined;
   if (bridgeNetworkId && !isNaN(parseInt(bridgeNetworkId))) {
     const bridgeNetwork = importBridgeNetwork(undefined, parseInt(bridgeNetworkId));
     const { bridgeDbName } = bridgeNetwork!;
     queryName = bridgeDbName;
   }
-  let addressChain = undefined as unknown;
-  let addressHash = undefined as unknown;
+  let addressChain: string | undefined;
+  let addressHash: string | undefined;
   if (typeof address === "string") {
-    [addressChain, addressHash] = address?.split(":");
+    const parts = address.split(":");
+    if (parts.length !== 2 || parts.some((part) => !part || part !== part.trim())) {
+      return errorResponse({ message: "Invalid address. Use the chain:address format." });
+    }
+    [addressChain, addressHash] = parts;
   }
-  const transactions = (await queryTransactionsTimestampRangeByBridgeNetwork(
+  const transactions = (await queryTransactions(
     queryStartTimestamp,
     queryEndTimestamp,
     queryName,
     queryChain,
     limit + 1,
-    cursor
+    cursor,
+    {
+      sourceChain,
+      addressChain,
+      addressHash,
+    }
   )) as any[];
 
   const hasMore = transactions.length > limit;
@@ -73,30 +85,17 @@ const getTransactions = async (
         })
       : undefined;
 
-  const response = pageTransactions
-    .map((tx) => {
-      delete tx.transaction_id;
-      delete tx.cursor_ts;
-      delete tx.bridge_id;
-      if (sourceChain) {
-        tx.sourceChain = sourceChain;
-        if ((tx.is_deposit && sourceChain === tx.chain) || (!tx.is_deposit && sourceChain === tx.destination_chain)) {
-          delete tx.is_deposit;
-        } else return null;
-      }
-      delete tx.destination_chain;
-      if (addressHash) {
-        if (
-          !(
-            (addressHash === tx.tx_to?.toLowerCase() || addressHash === tx.tx_from?.toLowerCase()) &&
-            addressChain === tx.chain
-          )
-        )
-          return null;
-      }
-      return tx;
-    })
-    .filter((tx) => tx);
+  const response = pageTransactions.map((tx) => {
+    delete tx.transaction_id;
+    delete tx.cursor_ts;
+    delete tx.bridge_id;
+    if (sourceChain) {
+      tx.sourceChain = sourceChain;
+      delete tx.is_deposit;
+    }
+    delete tx.destination_chain;
+    return tx;
+  });
 
   return { transactions: response, hasMore, nextCursor };
 };
