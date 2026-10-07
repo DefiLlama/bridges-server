@@ -33,6 +33,7 @@ import polygon_zkevm from "./polygon_zkevm";
 import symbiosis from "./symbiosis";
 import meson from "./meson";
 import base from "./base";
+import horizen from "./horizen";
 import mantle from "./mantle";
 import neuron from "./neuron";
 import axelarsatellite from "./axelar-satellite";
@@ -146,6 +147,7 @@ export default {
   symbiosis,
   meson,
   base,
+  horizen,
   mantle,
   neuron,
   axelarsatellite,
