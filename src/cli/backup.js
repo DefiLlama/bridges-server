@@ -21,14 +21,14 @@ const sql = postgres(connectionString, {
 const backupClient =
   process.env.BB_AWS_S3_ENDPOINT && process.env.BB_AWS_REGION
     ? new S3Client({
-      endpoint: process.env.BB_AWS_S3_ENDPOINT,
-      region: process.env.BB_AWS_REGION,
-      forcePathStyle: true,
-      credentials: {
-        accessKeyId: process.env.BB_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.BB_AWS_SECRET_ACCESS_KEY,
-      },
-    })
+        endpoint: process.env.BB_AWS_S3_ENDPOINT,
+        region: process.env.BB_AWS_REGION,
+        forcePathStyle: true,
+        credentials: {
+          accessKeyId: process.env.BB_AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.BB_AWS_SECRET_ACCESS_KEY,
+        },
+      })
     : null;
 
 const BACKUP_BUCKET = process.env.AWS_S3_BACKUP_BUCKET;
@@ -46,18 +46,19 @@ async function storeBackup(key, body) {
 
 const BACKUP_PREFIX = process.env.BACKUP_PREFIX || "transactions/daily-backup";
 const DAY_BATCH_SIZE = Number(process.env.DAY_BATCH_SIZE || "100000");
-// rows serialized into a single string before being handed to gzip
 const WRITE_CHUNK_ROWS = 5000;
+const MIN_INT_ID = -2147483648;
 
-
-async function backupSingleDay(dayStart) {
+async function backupSingleDay(
+  dayStart,
+  { sqlClient = sql, uploadBackup = storeBackup, backupPrefix = BACKUP_PREFIX } = {}
+) {
   const start = dayStart.startOf("day").toISOString();
   const end = dayStart.add(1, "day").startOf("day").toISOString();
   const dateLabel = dayStart.format("YYYY-MM-DD");
-  const MIN_INT_ID = -2147483648;
 
-  const [{ count: rowsInDay }] = await sql`
-    SELECT COUNT(*)::int AS count
+  const [{ count: rowsInDay, max_id: snapshotMaxId }] = await sqlClient`
+    SELECT COUNT(*)::int AS count, MAX(id)::int AS max_id
     FROM bridges.transactions
     WHERE ts >= ${start} AND ts < ${end}
   `;
@@ -69,38 +70,37 @@ async function backupSingleDay(dayStart) {
 
   console.log(`[INFO] ${dateLabel}: backing up ${rowsInDay} rows (batch size ${DAY_BATCH_SIZE})`);
 
-  const key = `${BACKUP_PREFIX}/${dateLabel}.ndjson.gz`;
+  const key = `${backupPrefix}/${dateLabel}.ndjson.gz`;
 
-  // Gzip incrementally: joining every batch into one string first blows past V8's
-  // max string length (RangeError: Invalid string length) on high volume days.
+  // gzip each batch as it is read, joining a high volume day first can exceed v8's string limit
   const gzip = zlib.createGzip();
   const gzChunks = [];
   let gzError = null;
   gzip.on("data", (chunk) => gzChunks.push(chunk));
-  gzip.on("error", (e) => {
-    gzError = e;
+  gzip.on("error", (error) => {
+    gzError = error;
   });
   const gzipDone = new Promise((resolve, reject) => {
     gzip.on("end", resolve);
     gzip.on("error", reject);
   });
-  // the write path may throw first, leaving this rejection unobserved
+  // the write path can fail first, keep this rejection handled until it gets awaited
   gzipDone.catch(() => {});
 
   const writeChunk = (str) =>
     new Promise((resolve, reject) => {
       if (gzError) return reject(gzError);
-      gzip.write(str, (e) => (e ? reject(e) : resolve()));
+      gzip.write(str, (error) => (error ? reject(error) : resolve()));
     });
 
   let lastId = MIN_INT_ID;
   let processed = 0;
 
   while (true) {
-    const rows = await sql`
+    const rows = await sqlClient`
       SELECT *
       FROM bridges.transactions
-      WHERE ts >= ${start} AND ts < ${end} AND id > ${lastId}
+      WHERE ts >= ${start} AND ts < ${end} AND id > ${lastId} AND id <= ${snapshotMaxId}
       ORDER BY id ASC
       LIMIT ${DAY_BATCH_SIZE}
     `;
@@ -120,31 +120,51 @@ async function backupSingleDay(dayStart) {
     }
   }
 
+  if (processed !== rowsInDay) {
+    gzip.destroy();
+    throw new Error(`${dateLabel}: streamed ${processed} of ${rowsInDay} rows, leaving the database unchanged`);
+  }
+
   gzip.end();
   await gzipDone;
 
   const payload = Buffer.concat(gzChunks);
   console.log(`[INFO] ${dateLabel}: gzipped payload is ${payload.length} bytes`);
 
-  await storeBackup(key, payload);
+  await uploadBackup(key, payload);
   console.log(`[INFO] ${dateLabel}: upload complete to ${key}`);
 
-  const [{ deleted_count: deletedCount }] = await sql`
-    WITH del AS (
-      DELETE FROM bridges.transactions
-      WHERE ts >= ${start} AND ts < ${end}
-      RETURNING 1
-    )
-    SELECT COUNT(*)::int AS deleted_count FROM del
-  `;
+  // only remove the rows we backed up, anything newer stays in postgres instead of being lost
+  const deletedCount = await sqlClient.begin(async (transaction) => {
+    const rowsToDelete = await transaction`
+      SELECT id
+      FROM bridges.transactions
+      WHERE ts >= ${start} AND ts < ${end} AND id <= ${snapshotMaxId}
+      ORDER BY id
+      FOR UPDATE
+    `;
 
-  if (deletedCount !== rowsInDay) {
-    console.warn(
-      `[WARN] ${dateLabel}: deleted ${deletedCount} rows, expected ${rowsInDay} (new rows may have arrived during backup)`
-    );
-  } else {
-    console.log(`[INFO] ${dateLabel}: deleted ${deletedCount} rows from DB`);
-  }
+    if (rowsToDelete.length !== rowsInDay) {
+      throw new Error(`${dateLabel}: found ${rowsToDelete.length} of ${rowsInDay} rows before cleanup`);
+    }
+
+    const [{ deleted_count: count }] = await transaction`
+      WITH del AS (
+        DELETE FROM bridges.transactions
+        WHERE ts >= ${start} AND ts < ${end} AND id <= ${snapshotMaxId}
+        RETURNING 1
+      )
+      SELECT COUNT(*)::int AS deleted_count FROM del
+    `;
+
+    if (count !== rowsInDay) {
+      throw new Error(`${dateLabel}: deleted ${count} rows after backing up ${rowsInDay}`);
+    }
+
+    return count;
+  });
+
+  console.log(`[INFO] ${dateLabel}: deleted ${deletedCount} rows from DB`);
 }
 
 async function main() {
@@ -153,16 +173,20 @@ async function main() {
   await backupSingleDay(targetDay);
 }
 
-main()
-  .catch((error) => {
-    console.error("[ERROR] backupSingleDay failed:", error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    try {
-      await sql.end();
-    } catch (e) {
-      console.error("[WARN] Failed to close SQL connection pool:", e);
-    }
-    process.exit();
-  });
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error("[ERROR] backupSingleDay failed:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      try {
+        await sql.end();
+      } catch (e) {
+        console.error("[WARN] Failed to close SQL connection pool:", e);
+      }
+      process.exit();
+    });
+}
+
+module.exports = { backupSingleDay };

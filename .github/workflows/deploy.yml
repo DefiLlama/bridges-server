@@ -16,6 +16,8 @@ jobs:
       - run: npm ci
       - name: Type Check
         run: npm run ts
+      - name: Test
+        run: npm run test:server
       - name: Deploy infrastructure stack
         run: npm run deploy:prod
         env:
