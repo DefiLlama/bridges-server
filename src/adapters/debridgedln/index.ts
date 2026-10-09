@@ -80,6 +80,18 @@ const withdrawParams: PartialContractEventParams = {
   isDeposit: false,
 };
 
+// DlnDestination was upgraded on 2026-02-13 and FulfilledOrder gained a uint256 after orderId, so the
+// 4-argument topic above stopped matching from then on. It is kept for the fills before the upgrade.
+// On every fill sampled the new field equals order.takeAmount, so the amount keys stay the same.
+const withdrawParamsV2: PartialContractEventParams = {
+  ...withdrawParams,
+  topic:
+    "FulfilledOrder((uint64,bytes,uint256,bytes,uint256,uint256,bytes,uint256,bytes,bytes,bytes,bytes,bytes,bytes),bytes32,uint256,address,address)",
+  abi: [
+    "event FulfilledOrder((uint64 makerOrderNonce, bytes makerSrc, uint256 giveChainId, bytes giveTokenAddress, uint256 giveAmount, uint256 takeChainId, bytes takeTokenAddress, uint256 takeAmount, bytes receiverDst, bytes givePatchAuthoritySrc, bytes orderAuthorityAddressDst, bytes allowedTakerDst, bytes allowedCancelBeneficiarySrc, bytes externalCall) order, bytes32 orderId, uint256 fulfilledAmount, address sender, address unlockAuthority)",
+  ],
+};
+
 const constructParams = (chain: SupportedChains, providerChain: string = chain) => {
   const eventParams: PartialContractEventParams[] = [];
 
@@ -95,7 +107,12 @@ const constructParams = (chain: SupportedChains, providerChain: string = chain) 
     mapTokens: { "0x0000000000000000000000000000000000000000": token },
   };
 
-  eventParams.push(finalDepositParams, finalWithdrawParams);
+  const finalWithdrawParamsV2 = {
+    ...withdrawParamsV2,
+    mapTokens: { "0x0000000000000000000000000000000000000000": token },
+  };
+
+  eventParams.push(finalDepositParams, finalWithdrawParams, finalWithdrawParamsV2);
 
   return async (fromBlock: number, toBlock: number) =>
     getTxDataFromEVMEventLogs("debridgedln", providerChain as any, fromBlock, toBlock, eventParams);
