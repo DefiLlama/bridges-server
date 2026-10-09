@@ -515,11 +515,30 @@ const queryTransactionsTimestampRangeByBridgeNetwork = async (
   bridgeNetworkName?: string,
   chain?: string,
   limit?: number,
-  cursor?: TransactionCursor
+  cursor?: TransactionCursor,
+  filters?: {
+    sourceChain?: string;
+    addressChain?: string;
+    addressHash?: string;
+  }
 ) => {
   let timestampLessThan = endTimestamp ? sql`AND transactions.ts <= to_timestamp(${endTimestamp})` : sql``;
   let bridgeNameCondition = bridgeNetworkName ? sql`AND config.bridge_name = ${bridgeNetworkName}` : sql``;
   let chainCondition = chain ? sql`AND (config.chain = ${chain} OR config.destination_chain = ${chain})` : sql``;
+  const sourceChainCondition = filters?.sourceChain
+    ? sql`AND (
+        (transactions.is_deposit AND transactions.chain = ${filters.sourceChain})
+        OR (NOT transactions.is_deposit AND config.destination_chain = ${filters.sourceChain})
+      )`
+    : sql``;
+  const addressCondition =
+    filters?.addressChain && filters.addressHash
+      ? sql`AND transactions.chain = ${filters.addressChain}
+          AND (
+            LOWER(transactions.tx_from) = ${filters.addressHash}
+            OR LOWER(transactions.tx_to) = ${filters.addressHash}
+          )`
+      : sql``;
   const cursorCondition = cursor
     ? sql`AND (
         transactions.ts < ${cursor.timestamp}::timestamptz
@@ -555,6 +574,8 @@ WHERE  transactions.ts >= to_timestamp(${startTimestamp})
        ${timestampLessThan}
        ${bridgeNameCondition}
        ${chainCondition}
+       ${sourceChainCondition}
+       ${addressCondition}
        ${cursorCondition}
 ORDER BY transactions.ts DESC, transactions.id DESC
 LIMIT ${queryLimit}
