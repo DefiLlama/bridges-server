@@ -3023,4 +3023,15 @@ export default [
     chains: ["Ethereum", "Robinhood Chain"],
     destinationChain: "Robinhood Chain",
   },
+  {
+    id: 116,
+    displayName: "Anubis Bridge",
+    bridgeDbName: "anubis-bridge",
+    slug: "anubis-bridge",
+    iconLink: "chain:anubis",
+    largeTxThreshold: 10000,
+    url: "https://app.anubisbridge.com/",
+    chains: ["Anubis", "Ethereum", "Polygon", "BSC"],
+    chainMapping: { anubis: "anubi" },
+  },
 ] as BridgeNetwork[];
