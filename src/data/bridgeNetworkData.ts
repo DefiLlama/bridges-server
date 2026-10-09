@@ -3023,4 +3023,15 @@ export default [
     chains: ["Ethereum", "Robinhood Chain"],
     destinationChain: "Robinhood Chain",
   },
+  {
+    id: 116,
+    displayName: "Alcor Bridge",
+    bridgeDbName: "alcor",
+    slug: "alcor-bridge",
+    iconLink: "protocols:alcor-exchange",
+    largeTxThreshold: 10000,
+    url: "https://alcor.exchange/",
+    chains: ["Ethereum", "BSC", "Polygon"],
+    destinationChain: "Telos",
+  },
 ] as BridgeNetwork[];
