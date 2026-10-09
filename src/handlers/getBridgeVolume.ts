@@ -4,6 +4,7 @@ import { getDailyBridgeVolume } from "../utils/bridgeVolume";
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain } from "../utils/normalizeChain";
 import { DEFAULT_TTL } from "../utils/cache";
+import { parseBridgeId } from "../utils/bridgeId";
 
 const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
   if (!chain) {
@@ -34,8 +35,12 @@ const getBridgeVolume = async (chain?: string, bridgeNetworkId?: string) => {
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
   const chain = event.pathParameters?.chain?.toLowerCase().replace(/%20/g, " ");
   const bridgeNetworkId = event.queryStringParameters?.id;
+  if (bridgeNetworkId !== undefined && parseBridgeId(bridgeNetworkId) === undefined) {
+    return errorResponse({ message: "Invalid bridge ID entered." });
+  }
 
   const response = await getBridgeVolume(chain, bridgeNetworkId);
+  if ("statusCode" in response) return response;
   return successResponse(response, DEFAULT_TTL);
 };
 
