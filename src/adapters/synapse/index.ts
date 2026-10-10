@@ -109,7 +109,7 @@ const contractAddresses = {
 
   const TokenDepositAndSwapDepositParams: PartialContractEventParams = {
     target: "",
-    topic:"TokenDepositAndSwap(address,uint256,contract,uint256,uint8,uint8,uint256,uint256)",
+    topic:"TokenDepositAndSwap(address,uint256,address,uint256,uint8,uint8,uint256,uint256)",
     abi: [
       "event TokenDepositAndSwap(address indexed to, uint256 chainId, address token, uint256 amount, uint8 tokenIndexFrom, uint8 tokenIndexTo, uint256 minDy, uint256 deadline)",
     ],
