@@ -68,6 +68,7 @@ export const maxBlocksToQueryByChain = {
   kava: 3000,
   robinhood: 3000,
   arc: 6000,
+  horizen: 2000, // OP Stack L3 (Caldera), ~2s blocks ≈ ~1.5-2h per chunk
 } as { [chain: string]: number };
 
 // will be handled by the bridge adapter

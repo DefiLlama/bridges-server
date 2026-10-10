@@ -96,6 +96,11 @@ export const transformTokens = {
     "0x9f3096bac87e7f03dc09b0b416eb0df837304dc4": "ethereum:0xdac17f958d2ee523a2206206994597c13d831ec7", // USDT.e → USDT
     "0xdf240dc08b0fdad1d93b74d5048871232f6bea3d": "ethereum:0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC.e → WBTC
   },
+  horizen: {
+    "0x57da2d504bf8b83ef304759d9f2648522d7a9280": "base:0xf43eb8de897fbc7f2502483b2bef7bb9ea179229", // ZEN (LayerZero OFT on L3) → Base ERC-20 ZEN (CoinGecko: horizen)
+    "0x3a1293bdb83bbbdd5ebf4fac96605ad2021bbc0f": "base:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913", // USDC (Stargate OFT on L3) → Base USDC
+    "0x68fb5bb8330c0b9d907f50f278143873276ee056": "base:0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf", // cbBTC (Stargate OFT on L3) → Base cbBTC
+  },
 } as {
   [chain: string]: {
     [token: string]: string;
@@ -233,7 +238,7 @@ export const chainMappings: Record<string, string> = {
   "function x": "functionx",
   gravity_bridge: "gravity",
   hsk: "hsk",
-  horizen: "eon",
+  horizen: "horizen",
   "immutable zkevm": "imx",
   "injective evm": "injective",
   iota: "iotaevm",
