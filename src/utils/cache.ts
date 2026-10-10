@@ -268,6 +268,30 @@ export const deleteCache = async (key: string): Promise<void> => {
 };
 
 const GETLOGS_COUNT_TTL = 60 * 60 * 24 * 7;
+const REDIS_SCAN_COUNT = 1000;
+
+type RedisKeyScanner = {
+  scan(
+    cursor: string,
+    matchToken: "MATCH",
+    pattern: string,
+    countToken: "COUNT",
+    count: number
+  ): Promise<[string, string[]]>;
+};
+
+export const scanKeys = async (client: RedisKeyScanner, pattern: string): Promise<string[]> => {
+  const keys = new Set<string>();
+  let cursor = "0";
+
+  do {
+    const [nextCursor, page] = await client.scan(cursor, "MATCH", pattern, "COUNT", REDIS_SCAN_COUNT);
+    page.forEach((key) => keys.add(key));
+    cursor = nextCursor;
+  } while (cursor !== "0");
+
+  return Array.from(keys);
+};
 
 export const incrementGetLogsCount = async (adapterName: string, chain: string): Promise<void> => {
   if (!redis) return;
@@ -283,7 +307,7 @@ export const getAllGetLogsCounts = async (): Promise<Record<string, number>> => 
   if (!redis) return {};
   try {
     const today = new Date().toISOString().split("T")[0];
-    const keys = await redis.keys(`getlogs_count:${today}:*`);
+    const keys = await scanKeys(redis, `getlogs_count:${today}:*`);
     if (keys.length === 0) return {};
 
     const counts: Record<string, number> = {};
