@@ -7,6 +7,7 @@ import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain, normlizeTokenSymbol } from "../utils/normalizeChain";
 import { getCache } from "../utils/cache";
 import { isValidPriceId } from "../utils/priceIds";
+import { parseBridgeId } from "../utils/bridgeId";
 
 type TokenRecord = {
   [token: string]: {
@@ -147,12 +148,16 @@ const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => 
   const timestamp = event.pathParameters?.timestamp;
   const chain = event.pathParameters?.chain?.toLowerCase() ?? "";
   const bridgeNetworkId = event.queryStringParameters?.id;
+  if (bridgeNetworkId !== undefined && parseBridgeId(bridgeNetworkId) === undefined) {
+    return errorResponse({ message: "Invalid bridge ID entered." });
+  }
   const rollingHoursParam = event.queryStringParameters?.rollingHours;
   const rollingHours =
     rollingHoursParam && Number.isInteger(Number(rollingHoursParam))
       ? Math.min(Math.max(Number(rollingHoursParam), 1), 168)
       : undefined;
   const response = await getBridgeStatsOnDay(timestamp, chain, bridgeNetworkId, rollingHours);
+  if ("statusCode" in response) return response;
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
