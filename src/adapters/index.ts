@@ -111,6 +111,11 @@ import citreaUsdt from "./citrea-usdt";
 import citreaWbtc from "./citrea-wbtc";
 import wavesbridge from "./wavesbridge";
 import robinhood from "./robinhood";
+import worldchainBridge from "./worldchain-bridge";
+import inkBridge from "./ink-bridge";
+import liskBridge from "./lisk-bridge";
+import unichainBridge from "./unichain-bridge";
+import soneiumBridge from "./soneium-bridge";
 
 export default {
   polygon,
@@ -225,6 +230,11 @@ export default {
   "citrea-wbtc": citreaWbtc,
   wavesbridge,
   robinhood,
+  "worldchain-bridge": worldchainBridge,
+  "ink-bridge": inkBridge,
+  "lisk-bridge": liskBridge,
+  "unichain-bridge": unichainBridge,
+  "soneium-bridge": soneiumBridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
