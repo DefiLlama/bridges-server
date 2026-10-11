@@ -17,6 +17,21 @@ export const bridgesAddress = {
 
 type SupportedBridgeChains = keyof typeof bridgesAddress;
 
+// ERC-7683 destination settlers, from params.payoutExecutor(networkCode).
+export const payoutExecutorAddress = {
+  ethereum: "0xb56De9d9Fb52f7Ef86407DC669868D24b61714A0",
+  optimism: "0x3ADf0Ae154c6FAd0aEf6bCdf8a7198Ebea37AD60",
+  arbitrum: "0xD0d9df958bB728B0C90E7c94Aa398C26D2e4a3C5",
+  scroll: "0xd24E559A023729e95863d0Afc4B99Ff01969d8E3",
+  base: "0x25cf6B24eC351d1695490B2046310cA3e8AdBE7B",
+  linea: "0x4393Cd250B2EC2cF7d3391c79de902207b246539",
+  taiko: "0xaae93A258792cFa4734e3fE897910fB0A90fE01d",
+  morph: "0x52bC80E50FE8C8C4Fa131E7169eF9B64dA905685",
+  era: "0x7120a850cD4FAd691147164D2eD8F2DEDb77Cc60",
+  unichain: "0x5c2E7369f044Ae87e40B19582056ede717953337",
+  megaeth: "0x89E31B12e5fD6961474F7d814F90a5a0fDD7d55A",
+} as const;
+
 export const cctpBridgeAddress = {
   ethereum: {
     bridge: "0x2dC80114D923dA07327b7096226359D785F32e3F",
@@ -78,8 +93,6 @@ export const swapsAddress = {
 
 type SupportedSwapChains = keyof typeof swapsAddress;
 
-const RELAYER_ADDRESS = '0x1650683e50e075EFC778Be4D1A6bE929F3831719';
-
 const bridgeNewTradeDepositParams = (chain: SupportedBridgeChains) => {
   const bridgeAddress = bridgesAddress[chain];
 
@@ -104,65 +117,13 @@ const bridgeNewTradeDepositParams = (chain: SupportedBridgeChains) => {
   };
 };
 
-const bridgeWithdrawParams = (chain: SupportedBridgeChains): PartialContractEventParams => {
-  const bridgeAddress = bridgesAddress[chain];
-
-  // from bridge to relayer
+const bridgeFilledWithdrawParams = (chain: SupportedBridgeChains): PartialContractEventParams => {
+  // Filled records the destination payout after fees. Source Withdraw only reimburses the relayer.
   return {
-    target: bridgeAddress,
-    topic: "Withdraw(address,bytes32,uint256,address,uint256,address)",
-    abi: ["event Withdraw(address indexed userAddress,bytes32 indexed txHash,uint256 index,address to,uint256 amount,address token)"],
-    isDeposit: false,
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      token: "token",
-      amount: "amount",
-    },
-    fixedEventData: {
-      from: bridgeAddress,
-      to: RELAYER_ADDRESS,
-    },
-  };
-};
-
-const bridgeAcceptDepositParams = (chain: SupportedBridgeChains): PartialContractEventParams => {
-  const bridgeAddress = bridgesAddress[chain];
-
-  // from relayer to bridge
-  return {
-    target: bridgeAddress,
-    topic: "Accept(address,uint256,address,uint256,address)",
+    target: payoutExecutorAddress[chain],
+    topic: "Filled(bytes32,bytes32,address,address,uint256,address)",
     abi: [
-      "event Accept(address indexed userAddress, bytes32 indexed txHash, uint256 index,address to,uint256 amount,address token)",
-    ],
-    isDeposit: true,
-    logKeys: {
-      blockNumber: "blockNumber",
-      txHash: "transactionHash",
-    },
-    argKeys: {
-      token: "token",
-      amount: "amount",
-    },
-    fixedEventData: {
-      to: bridgeAddress,
-      from: RELAYER_ADDRESS,
-    },
-  };
-};
-
-const bridgeAcceptWithdrawParams = (chain: SupportedBridgeChains): PartialContractEventParams => {
-  const bridgeAddress = bridgesAddress[chain];
-
-  // from bridge to to user
-  return {
-    target: bridgeAddress,
-    topic: "Accept(address,uint256,address,uint256,address)",
-    abi: [
-      "event Accept(address indexed userAddress, bytes32 indexed txHash, uint256 index,address to,uint256 amount,address token)",
+      "event Filled(bytes32 indexed orderId, bytes32 indexed orderTermsHash, address indexed recipient, address token, uint256 amount, address filler)",
     ],
     isDeposit: false,
     logKeys: {
@@ -171,11 +132,9 @@ const bridgeAcceptWithdrawParams = (chain: SupportedBridgeChains): PartialContra
     },
     argKeys: {
       token: "token",
-      to: "to",
+      from: "filler",
+      to: "recipient",
       amount: "amount",
-    },
-    fixedEventData: {
-      from: bridgeAddress,
     },
   };
 };
@@ -283,17 +242,12 @@ const swapWithdrawParams = (chain: SupportedSwapChains): PartialContractEventPar
 };
 
 const constructParams = (chain: string) => {
-  //   const eventParams = [bridgeDepositParams(chain), bridgeWithdrawParams(chain)];
   const eventParams: PartialContractEventParams[] = [];
 
   if (chain in bridgesAddress) {
     eventParams.push(
-      // L2<->L2 / L2->L1
       bridgeNewTradeDepositParams(chain as SupportedBridgeChains),
-      bridgeWithdrawParams(chain as SupportedBridgeChains),
-      // L1->L2
-      bridgeAcceptDepositParams(chain as SupportedBridgeChains),
-      bridgeAcceptWithdrawParams(chain as SupportedBridgeChains)
+      bridgeFilledWithdrawParams(chain as SupportedBridgeChains)
     );
   }
 
