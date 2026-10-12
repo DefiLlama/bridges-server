@@ -35,7 +35,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
       const currentTimestamp = getCurrentUnixTimestamp();
       const dailyStartTimestamp = currentTimestamp - 30 * secondsInDay;
       const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, currentTimestamp, queryChain, id);
-      let last24hVolume = await getLast24HVolume(bridgeDbName);
+      let last24hVolume = await getLast24HVolume(bridgeDbName, "both", queryChain);
 
       let lastDailyTs = 0;
       if (lastMonthDailyVolume?.length) {
