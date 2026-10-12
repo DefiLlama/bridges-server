@@ -2579,8 +2579,10 @@ export default [
   },
   {
     id: 95,
+    defillamaId: "8916",
     displayName: "Relay",
     bridgeDbName: "relay",
+    slug: "relay",
     iconLink: "icons:relay",
     largeTxThreshold: 10000,
     url: "https://docs.relay.link/",
