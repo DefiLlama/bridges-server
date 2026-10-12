@@ -25,7 +25,7 @@ const depositEventParams: PartialContractEventParams = {
 
 const withdrawalEventParams: PartialContractEventParams = {
   target: "0x2B08D7cF7EafF0f5f6623d9fB09b080726D4be11",
-  topic: "WithdrawClaimed(address,bytes32,bytes32,WithdrawMessage)",
+  topic: "WithdrawClaimed(address,bytes32,bytes32,(bytes32,address,uint256,uint64,address,uint256))",
   abi: [
     "event WithdrawClaimed(address indexed receiver, bytes32 indexed remoteSender, bytes32 indexed messageHash, tuple(bytes32 from, address destination, uint256 amountWei, uint64 withdrawId, address feeReceiver, uint256 feeWei) message)",
   ],
