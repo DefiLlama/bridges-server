@@ -7,9 +7,15 @@ import { getProvider } from "../../utils/provider";
 import { EventData } from "../../utils/types";
 
 const BRIDGE = "0x8932fe7726C1EE743F662f485C3e5a5D1D595F71";
-const BRIDGE_SENT =
-  "event BridgeSent(bytes32 indexed tokenId, address indexed sender, uint32 indexed dstDomain, bytes32 recipient, uint256 amount)";
-const iface = new ethers.utils.Interface([BRIDGE_SENT]);
+// handle() on the destination emits exactly one of BridgeReceived or PendingClaimRecorded per message,
+// so together they mirror BridgeSent 1:1. PendingClaimPaid later settles an already counted claim.
+const eventAbis = [
+  "event BridgeSent(bytes32 indexed tokenId, address indexed sender, uint32 indexed dstDomain, bytes32 recipient, uint256 amount)",
+  "event BridgeReceived(bytes32 indexed tokenId, address indexed recipient, uint32 indexed origin, uint256 amount)",
+  "event PendingClaimRecorded(bytes32 indexed tokenId, address indexed account, uint32 indexed origin, uint256 amount)",
+];
+const iface = new ethers.utils.Interface(eventAbis);
+const topics = ["BridgeSent", "BridgeReceived", "PendingClaimRecorded"].map((name) => iface.getEventTopic(name));
 
 // Token IDs and source-chain addresses from https://app.anubisbridge.com/apiv1/bridge/networks
 // (checked 2026-10-02). A zero address denotes that chain's native token.
@@ -66,10 +72,7 @@ const tokens: Record<string, Record<string, string>> = {
 const domainByChain: Record<string, number> = { anubi: 6714, ethereum: 1, polygon: 137, bsc: 56 };
 
 const getDirectLogs = async (chain: string, fromBlock: number, toBlock: number): Promise<ethers.providers.Log[]> => {
-  const provider =
-    chain === "bsc"
-      ? new ethers.providers.StaticJsonRpcProvider("https://bsc-rpc.publicnode.com", { chainId: 56, name: "bsc" })
-      : (getProvider(chain) as ethers.providers.Provider);
+  const provider = getProvider(chain) as ethers.providers.Provider;
   const step = chain === "anubi" ? 50 : chain === "bsc" || chain === "polygon" ? 300 : toBlock - fromBlock + 1;
   const logs: ethers.providers.Log[] = [];
   for (let start = fromBlock; start <= toBlock; start += step) {
@@ -77,7 +80,7 @@ const getDirectLogs = async (chain: string, fromBlock: number, toBlock: number):
     logs.push(
       ...(await provider.getLogs({
         address: BRIDGE,
-        topics: [iface.getEventTopic("BridgeSent")],
+        topics: [topics],
         fromBlock: start,
         toBlock: Math.min(start + step - 1, toBlock),
       }))
@@ -98,46 +101,57 @@ const getEvents =
     } catch (error) {
       if (chain !== "bsc" && chain !== "polygon") throw error;
       // Public BSC RPCs do not serve older archive logs; the SDK indexer can.
-      incrementGetLogsCount("anubis-bridge", chain);
       logs = (
-        await getLogs({
-          target: BRIDGE,
-          eventAbi: BRIDGE_SENT,
-          fromBlock,
-          toBlock,
-          chain: chain as Chain,
-          entireLog: true,
-        })
-      ).flat() as ethers.providers.Log[];
+        await Promise.all(
+          eventAbis.map((eventAbi) => {
+            incrementGetLogsCount("anubis-bridge", chain);
+            return getLogs({
+              target: BRIDGE,
+              eventAbi,
+              fromBlock,
+              toBlock,
+              chain: chain as Chain,
+              entireLog: true,
+            });
+          })
+        )
+      ).flat(2) as ethers.providers.Log[];
     }
 
     return logs.flatMap((log) => {
-      const { tokenId, sender, dstDomain, recipient, amount } = iface.parseLog(log).args;
-      const destination = Number(dstDomain);
+      const { name, args } = iface.parseLog(log);
+      const isDeposit = name === "BridgeSent";
+      const counterpartyDomain = Number(isDeposit ? args.dstDomain : args.origin);
       // All currently supported routes have Anubis as one endpoint.
       // Do not apply today's token-route list to historical on-chain events.
-      if (chain === "anubi" ? ![1, 56, 137].includes(destination) : destination !== domainByChain.anubi) return [];
-      const token = tokens[chain][tokenId.toLowerCase()];
+      if (chain === "anubi" ? ![1, 56, 137].includes(counterpartyDomain) : counterpartyDomain !== domainByChain.anubi)
+        return [];
+      const token = tokens[chain][args.tokenId.toLowerCase()];
       if (!token) {
-        throw new Error(`[anubis-bridge] Unknown token ID ${tokenId} on ${chain} in ${log.transactionHash}`);
+        console.error(
+          `[anubis-bridge] Unknown token ID ${args.tokenId} on ${chain} in ${log.transactionHash}, skipping`
+        );
+        return [];
       }
 
       return [
         {
           blockNumber: Number(log.blockNumber),
           txHash: log.transactionHash,
-          from: sender,
-          to: ethers.utils.getAddress(ethers.utils.hexDataSlice(recipient, 12)),
+          from: isDeposit ? args.sender : BRIDGE,
+          to: isDeposit
+            ? ethers.utils.getAddress(ethers.utils.hexDataSlice(args.recipient, 12))
+            : name === "BridgeReceived"
+            ? args.recipient
+            : args.account,
           token,
-          amount: ethers.BigNumber.from(amount),
-          isDeposit: chain !== "anubi",
+          amount: ethers.BigNumber.from(args.amount),
+          isDeposit,
         },
       ];
     });
   };
 
-// Source-side BridgeSent alone counts each transfer once; BridgeReceived on the
-// destination would double-count it and can also lag behind pending claims.
 const adapter: BridgeAdapter = {
   anubis: getEvents("anubi"),
   ethereum: getEvents("ethereum"),
