@@ -1,7 +1,8 @@
 import { IResponse, successResponse } from "../utils/lambda-response";
 import wrap from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
-import { queryAggregatedDailyTimestampRange } from "../utils/wrappa/postgres/query";
+import { buildStaleBridgeActivity } from "../utils/staleBridgeActivity";
+import { queryBridgeDailyActivity } from "../utils/wrappa/postgres/query";
 
 const STALE_THRESHOLD_DAYS = 3;
 
@@ -10,40 +11,21 @@ const getStaleBridges = async () => {
   const endTs = Math.floor(Date.now() / 1000);
   const currentDate = new Date();
 
-  const queries = bridgeNetworks.flatMap((bridge) =>
-    bridge.chains
-      .filter((chain) => bridge.destinationChain !== chain)
-      .map(async (chain) => {
-        try {
-          const volume = await queryAggregatedDailyTimestampRange(
-            startTs,
-            endTs,
-            chain.toLowerCase(),
-            bridge.bridgeDbName
-          );
-
-          let staleDays = 7;
-          if (volume.length > 0) {
-            let lastActiveDay = new Date(0);
-            for (const day of volume) {
-              if (day.total_deposit_txs > 0 || day.total_withdrawal_txs > 0) {
-                lastActiveDay = new Date(day.ts);
-              }
-            }
-            staleDays =
-              lastActiveDay.getTime() === 0
-                ? 7
-                : Math.floor((currentDate.getTime() - lastActiveDay.getTime()) / (1000 * 3600 * 24));
-          }
-
-          return { bridge: bridge.bridgeDbName, chain, staleDays };
-        } catch {
-          return { bridge: bridge.bridgeDbName, chain, staleDays: -1 };
-        }
-      })
-  );
-
-  const results = await Promise.all(queries);
+  let results;
+  try {
+    const activity = await queryBridgeDailyActivity(startTs, endTs);
+    results = buildStaleBridgeActivity(
+      bridgeNetworks,
+      activity.map(({ bridge_name, chain, last_active_day }) => ({
+        bridgeName: bridge_name,
+        chain,
+        lastActiveDay: last_active_day,
+      })),
+      currentDate
+    );
+  } catch {
+    results = buildStaleBridgeActivity(bridgeNetworks, [], currentDate).map((entry) => ({ ...entry, staleDays: -1 }));
+  }
 
   const stale = results.filter((r) => r.staleDays >= STALE_THRESHOLD_DAYS);
 

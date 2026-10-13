@@ -1,7 +1,8 @@
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { sendDiscordText } from "../utils/discord";
 import { wrapScheduledLambda } from "../utils/wrap";
-import { queryAggregatedDailyTimestampRange } from "../utils/wrappa/postgres/query";
+import { buildStaleBridgeActivity } from "../utils/staleBridgeActivity";
+import { queryBridgeDailyActivity } from "../utils/wrappa/postgres/query";
 
 const checkStaleBridges = async () => {
   const result: Record<string, Record<string, number>> = {};
@@ -9,50 +10,31 @@ const checkStaleBridges = async () => {
   const endTs = Math.floor(Date.now() / 1000);
   const currentDate = new Date();
 
-  const queryPromises: Promise<void>[] = [];
-
   for (const bridge of bridgeNetworks) {
     result[bridge.bridgeDbName] = {};
-
-    for (const chain of bridge.chains) {
-      const queryPromise = (async () => {
-        if (bridge.destinationChain === chain) return;
-        try {
-          const volume = await queryAggregatedDailyTimestampRange(
-            startTs,
-            endTs,
-            chain?.toLowerCase(),
-            bridge.bridgeDbName
-          );
-          if (volume.length === 0) {
-            result[bridge.bridgeDbName][chain] = 7;
-          } else {
-            let lastActiveDay = new Date(0);
-
-            for (const day of volume) {
-              if (day.total_deposit_txs > 0 || day.total_withdrawal_txs > 0) {
-                lastActiveDay = new Date(day.ts);
-              }
-            }
-
-            if (lastActiveDay.getTime() === 0) {
-              result[bridge.bridgeDbName][chain] = 7;
-            } else {
-              const staleDays = Math.floor((currentDate.getTime() - lastActiveDay.getTime()) / (1000 * 3600 * 24));
-              result[bridge.bridgeDbName][chain] = staleDays;
-            }
-          }
-        } catch (error) {
-          console.error(`Error querying ${bridge.bridgeDbName} on ${chain}:`, error);
-          result[bridge.bridgeDbName][chain] = -1;
-        }
-      })();
-
-      queryPromises.push(queryPromise);
-    }
   }
 
-  await Promise.all(queryPromises);
+  try {
+    const activity = await queryBridgeDailyActivity(startTs, endTs);
+    const entries = buildStaleBridgeActivity(
+      bridgeNetworks,
+      activity.map(({ bridge_name, chain, last_active_day }) => ({
+        bridgeName: bridge_name,
+        chain,
+        lastActiveDay: last_active_day,
+      })),
+      currentDate
+    );
+
+    for (const { bridge, chain, staleDays } of entries) {
+      result[bridge][chain] = staleDays;
+    }
+  } catch (error) {
+    console.error("Error querying stale bridge activity:", error);
+    for (const { bridge, chain } of buildStaleBridgeActivity(bridgeNetworks, [], currentDate)) {
+      result[bridge][chain] = -1;
+    }
+  }
 
   console.log("Stale bridges report (3+ days stale):");
   let hasStaleEntries = false;

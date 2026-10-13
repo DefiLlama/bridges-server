@@ -84,6 +84,12 @@ interface IDailyBridgeVolumeByChain extends IDailyBridgeVolumeTotal {
   chain: string;
 }
 
+interface IBridgeDailyActivity {
+  bridge_name: string;
+  chain: string;
+  last_active_day: Date | null;
+}
+
 interface IAggregatedStatsRow {
   kind: "dt" | "wt" | "da" | "wa";
   key: string;
@@ -233,6 +239,23 @@ const queryAggregatedDailyTimestampRange = async (
     ORDER BY ts;
   `;
   return result;
+};
+
+const queryBridgeDailyActivity = async (startTimestamp: number, endTimestamp: number) => {
+  return await sql<IBridgeDailyActivity[]>`
+    SELECT
+      c.bridge_name,
+      dv.chain,
+      MAX(dv.ts) FILTER (
+        WHERE dv.total_deposit_txs > 0 OR dv.total_withdrawal_txs > 0
+      ) AS last_active_day
+    FROM bridges.daily_volume dv
+    JOIN bridges.config c ON dv.bridge_id = c.id
+    WHERE dv.ts = (date_trunc('day', dv.ts AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND dv.ts >= (date_trunc('day', to_timestamp(${startTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND dv.ts <= (date_trunc('day', to_timestamp(${endTimestamp}) AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+    GROUP BY c.bridge_name, dv.chain
+  `;
 };
 
 const queryDailyBridgeVolumeTotals = async (
@@ -1002,6 +1025,7 @@ export {
   queryAggregatedHourlyDataAtTimestamp,
   queryAggregatedDailyDataAtTimestamp,
   queryAggregatedDailyTimestampRange,
+  queryBridgeDailyActivity,
   queryDailyBridgeVolumeTotals,
   queryDailyBridgeVolumesByBridge,
   queryDailyBridgeVolumesByChain,
