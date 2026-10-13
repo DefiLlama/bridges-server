@@ -1,3 +1,6 @@
+# Note: this repo will be archived, the adapter code has been migrated to https://github.com/DefiLlama/dimension-adapters/tree/master/bridges
+
+
 # Bridges adapters
 
 ## Installation 
