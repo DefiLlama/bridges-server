@@ -5,6 +5,7 @@ import { isDeadChain } from "@defillama/sdk/build/util/chainUtils";
 // Sei have both EVM networks and Cosmos zone IDs, so using the shared mapping for
 // normal adapters sends EVM block lookups to kava_2222-10 and pacific-1.
 export const providerChainAliases: Record<string, string> = {
+  anubis: "anubi",
   avalanche: "avax",
   bittensor: "bittensor_evm",
   gnosis: "xdai",

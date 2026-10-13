@@ -3085,4 +3085,15 @@ export default [
     chains: ["Ethereum", "Soneium"],
     destinationChain: "Soneium",
   },
+  {
+    id: 121,
+    displayName: "Anubis Bridge",
+    bridgeDbName: "anubis-bridge",
+    slug: "anubis-bridge",
+    iconLink: "chain:anubis",
+    largeTxThreshold: 10000,
+    url: "https://app.anubisbridge.com/",
+    chains: ["Anubis", "Ethereum", "Polygon", "BSC"],
+    chainMapping: { anubis: "anubi" },
+  },
 ] as BridgeNetwork[];

@@ -116,6 +116,7 @@ import inkBridge from "./ink-bridge";
 import liskBridge from "./lisk-bridge";
 import unichainBridge from "./unichain-bridge";
 import soneiumBridge from "./soneium-bridge";
+import anubisBridge from "./anubis-bridge";
 
 export default {
   polygon,
@@ -235,6 +236,7 @@ export default {
   "lisk-bridge": liskBridge,
   "unichain-bridge": unichainBridge,
   "soneium-bridge": soneiumBridge,
+  "anubis-bridge": anubisBridge,
 } as {
   [bridge: string]: BridgeAdapter | AsyncBridgeAdapter;
 };
