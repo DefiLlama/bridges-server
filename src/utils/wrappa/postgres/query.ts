@@ -575,7 +575,11 @@ const getLargeTransaction = async (txPK: number, timestamp: number) => {
 
 type VolumeType = "deposit" | "withdrawal" | "both";
 
-const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "both"): Promise<number> => {
+const getLast24HVolume = async (
+  bridgeName: string,
+  volumeType: VolumeType = "both",
+  chain?: string
+): Promise<number> => {
   const bridgeData = bridgeNetworkData.find((bridge) => bridge.bridgeDbName === bridgeName);
   if (!bridgeData) {
     throw new Error(`Bridge with name ${bridgeName} not found`);
@@ -594,6 +598,9 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
       break;
   }
   const hours = bridgeName === "wormhole" ? 28 : 24; // wormhole has 3h delay
+  const chainCondition = chain
+    ? sql`AND (LOWER(c.chain) = LOWER(${chain}) OR LOWER(c.destination_chain) = LOWER(${chain}))`
+    : sql``;
   const result = await sql<{ volume: string; ts: Date; chain: string }[]>`
     WITH LatestTs AS (
       SELECT MAX(ha.ts) as max_ts
@@ -609,6 +616,7 @@ const getLast24HVolume = async (bridgeName: string, volumeType: VolumeType = "bo
     JOIN bridges.config c ON ha.bridge_id = c.id
     CROSS JOIN LatestTs lt
     WHERE c.bridge_name = ${bridgeName}
+    ${chainCondition}
     AND ha.ts > lt.max_ts - INTERVAL '${sql.unsafe(String(hours))} hours'
     ORDER BY ha.ts DESC
   `;

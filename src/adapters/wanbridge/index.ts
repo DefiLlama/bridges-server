@@ -193,7 +193,7 @@ const userLockPortalEventParams: ContractEventParams = {
 
 const userBurnPortalEventParams: ContractEventParams = {
   target: "",
-  topic: "UserBurnLogger(bytes32,uint256,address,uint256,uint256,uint,bytes)",
+  topic: "UserBurnLogger(bytes32,uint256,address,uint256,uint256,uint256,bytes)",
   abi: [
     "event UserBurnLogger(bytes32 indexed smgID, uint indexed tokenPairID, address indexed tokenAccount, uint value, uint contractFee, uint fee, bytes userAccount)",
   ],

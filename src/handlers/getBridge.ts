@@ -6,6 +6,7 @@ import getAggregatedDataClosestToTimestamp from "../utils/getRecordClosestToTime
 import { importBridgeNetwork } from "../data/importBridgeNetwork";
 import { normalizeChain, getChainDisplayName } from "../utils/normalizeChain";
 import { getLast24HVolume } from "../utils/wrappa/postgres/query";
+import { parseBridgeId } from "../utils/bridgeId";
 
 const getBridge = async (bridgeNetworkId?: number) => {
   const bridgeNetwork = importBridgeNetwork(undefined, bridgeNetworkId);
@@ -34,7 +35,7 @@ const getBridge = async (bridgeNetworkId?: number) => {
       const currentTimestamp = getCurrentUnixTimestamp();
       const dailyStartTimestamp = currentTimestamp - 30 * secondsInDay;
       const lastMonthDailyVolume = await getDailyBridgeVolume(dailyStartTimestamp, currentTimestamp, queryChain, id);
-      let last24hVolume = await getLast24HVolume(bridgeDbName);
+      let last24hVolume = await getLast24HVolume(bridgeDbName, "both", queryChain);
 
       let lastDailyTs = 0;
       if (lastMonthDailyVolume?.length) {
@@ -168,8 +169,12 @@ const getBridge = async (bridgeNetworkId?: number) => {
 };
 
 const handler = async (event: AWSLambda.APIGatewayEvent): Promise<IResponse> => {
-  const bridgeNetworkId = parseInt(event.pathParameters?.id ?? "0");
+  const bridgeNetworkId = parseBridgeId(event.pathParameters?.id);
+  if (bridgeNetworkId === undefined) {
+    return errorResponse({ message: "Invalid bridge ID entered." });
+  }
   const response = await getBridge(bridgeNetworkId);
+  if ("statusCode" in response) return response;
   return successResponse(response, 10 * 60); // 10 mins cache
 };
 
