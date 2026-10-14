@@ -2642,8 +2642,8 @@ export default [
   },
   {
     id: 96,
-    defillamaId: "3675",
-    displayName: "Chainlink CCIP",
+    defillamaId: "7973",
+    displayName: "CCIP",
     bridgeDbName: "ccip",
     iconLink: "icons:chainlink",
     largeTxThreshold: 10000,
