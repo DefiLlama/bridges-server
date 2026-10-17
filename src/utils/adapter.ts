@@ -20,6 +20,7 @@ import { getCache, setCache } from "./cache";
 import { normalizeChain } from "./normalizeChain";
 import { formatError, isAbortError, isNonRetryableError, throwIfAborted } from "./errors";
 import { isRetiredProviderChain, resolveProviderChain } from "./chainResolver";
+import { estimateBlockTimestamp, getSampleBlocks } from "./blockTimestamps";
 import { bridgesToSkip, shouldSkipBridge } from "./bridgePolicy";
 const retry = require("async-retry");
 
@@ -560,8 +561,8 @@ export const runAdapterHistorical = async (
                   minBlock = Math.min(...txBlocks) ?? 0;
                   maxBlock = Math.max(...txBlocks) ?? 0;
                 }
-                const blockRange = maxBlock - minBlock || 1;
-                let blockTimestamps = {} as { [bucket: number]: number };
+                const sampleBlocks = getSampleBlocks(minBlock, maxBlock);
+                let blockTimestamps = {} as { [blockNumber: number]: number };
                 let block = {} as { timestamp: number; number: number };
 
                 let solanaTimestampsMap = {} as { [blockNumber: number]: number };
@@ -570,33 +571,32 @@ export const runAdapterHistorical = async (
                   solanaTimestampsMap = await resolveSolanaEventTimestamps(eventLogs, getConnection(), signal);
                 }
 
-                for (let i = 0; i < 10; i++) {
-                  const blockNumber = Math.floor(minBlock + i * (blockRange / 10));
+                for (const sampleBlock of sampleBlocks) {
                   for (let j = 0; j < 4; j++) {
                     try {
                       if (useChainBlocks && chain !== "solana") {
                         await wait(100);
-                        block = await retry(async () => provider.getBlock(blockNumber), { retries: 3 });
+                        block = await retry(async () => provider.getBlock(sampleBlock), { retries: 3 });
                         if (block.timestamp) {
-                          blockTimestamps[i] = block.timestamp;
+                          blockTimestamps[sampleBlock] = block.timestamp;
                           break;
                         }
                       } else if (chain === "solana") {
-                        blockTimestamps[i] = 0;
+                        blockTimestamps[sampleBlock] = 0;
                         break;
                       } else {
-                        blockTimestamps[i] = currentTimestamp;
+                        blockTimestamps[sampleBlock] = currentTimestamp;
                         break;
                       }
                     } catch (e: any) {
                       if (j >= 3) {
                         console.error(
-                          `[ERROR] Failed to get block for block number ${blockNumber} on chain ${chainContractsAreOn}. Error: ${JSON.stringify(
+                          `[ERROR] Failed to get block for block number ${sampleBlock} on chain ${chainContractsAreOn}. Error: ${JSON.stringify(
                             e
                           )}`
                         );
                         throw new Error(
-                          `Failed to get block timestamps at block number ${blockNumber} on chain ${chainContractsAreOn}`
+                          `Failed to get block timestamps at block number ${sampleBlock} on chain ${chainContractsAreOn}`
                         );
                       }
                     }
@@ -625,8 +625,7 @@ export const runAdapterHistorical = async (
                     originChain,
                     timestamp: realBlockTimestamp,
                   } = log;
-                  const bucket = Math.floor(((blockNumber - minBlock) * 9) / blockRange);
-                  const timestamp = (blockTimestamps[bucket] ?? 0) * 1000;
+                  const timestamp = estimateBlockTimestamp(blockNumber, sampleBlocks, blockTimestamps) * 1000;
 
                   let amountString = amount ? amount.toString() : "0";
 
