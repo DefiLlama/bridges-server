@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS bridges.transactions (
 
 CREATE INDEX IF NOT EXISTS transactions_ts ON bridges.transactions (ts);
 
+CREATE INDEX IF NOT EXISTS transactions_bridge_id_tx_block ON bridges.transactions (bridge_id, tx_block)
+    WHERE origin_chain IS NULL AND tx_block IS NOT NULL;
+
 CREATE TYPE token_total AS (
     token           VARCHAR,
     amount          VARCHAR,

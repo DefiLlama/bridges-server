@@ -3,17 +3,10 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { runAdapterToCurrentBlock } from "../utils/adapter";
 import { sql } from "../utils/db";
 import { successResponse } from "../utils/lambda-response";
+import { getLastRecordedBlocks } from "../utils/wrappa/postgres/query";
 
 const handler = async () => {
-  const lastRecordedBlocks = (
-    await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
-  FROM (
-      SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
-      FROM bridges.transactions
-      GROUP BY bridge_id
-  ) subquery;
-  `
-  )[0].result;
+  const lastRecordedBlocks = await getLastRecordedBlocks();
 
   const bridgeConfig = await sql`SELECT * FROM bridges.config`;
 

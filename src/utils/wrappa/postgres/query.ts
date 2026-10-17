@@ -2,6 +2,7 @@ import bridgeNetworkData from "../../../data/bridgeNetworkData";
 import { querySql as sql } from "../../db";
 import { MAX_TRANSACTIONS_LIMIT, TransactionCursor } from "../../transactionCursor";
 import { CCIP_HASH_SEPARATOR } from "../../ccipTransactionHash";
+import type { RecordedBlocks } from "../../types";
 
 interface IConfig {
   id: string;
@@ -147,6 +148,29 @@ const getConfigsWithDestChain = async () => {
     WHERE
       destination_chain IS NOT NULL
   `;
+};
+
+const getLastRecordedBlocks = async (bridgeNetworkName?: string) => {
+  const bridgeNameEqual = bridgeNetworkName ? sql`AND c.bridge_name = ${bridgeNetworkName}` : sql``;
+  const result = await sql<{ result: { [bridgeID: string]: RecordedBlocks } | null }[]>`
+    SELECT jsonb_object_agg(id::text, blocks) AS result
+    FROM (
+      SELECT c.id, jsonb_build_object('startBlock', b.start_block, 'endBlock', b.end_block) AS blocks
+      FROM bridges.config c
+      CROSS JOIN LATERAL (
+        SELECT
+          (SELECT tx_block FROM bridges.transactions
+            WHERE bridge_id = c.id AND origin_chain IS NULL AND tx_block IS NOT NULL
+            ORDER BY tx_block ASC LIMIT 1) AS start_block,
+          (SELECT tx_block FROM bridges.transactions
+            WHERE bridge_id = c.id AND origin_chain IS NULL AND tx_block IS NOT NULL
+            ORDER BY tx_block DESC LIMIT 1) AS end_block
+      ) b
+      WHERE b.end_block IS NOT NULL
+      ${bridgeNameEqual}
+    ) recorded;
+  `;
+  return result[0]?.result ?? {};
 };
 
 const queryConfig = async (bridgeNetworkName?: string, chain?: string, destinationChain?: string) => {
@@ -993,6 +1017,7 @@ const queryAggregatedStatsTop30Rolling = async (
 export {
   getBridgeID,
   getConfigsWithDestChain,
+  getLastRecordedBlocks,
   getLargeTransaction,
   queryLargeTransactionsTimestampRange,
   countLargeTransactionsTimestampRange,

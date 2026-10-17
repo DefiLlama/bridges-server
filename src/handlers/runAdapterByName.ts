@@ -1,8 +1,8 @@
 import { wrapScheduledLambda } from "../utils/wrap";
 import bridgeNetworks from "../data/bridgeNetworkData";
 import { runAdapterToCurrentBlock } from "../utils/adapter";
-import { sql } from "../utils/db";
 import { BridgeNetwork } from "../data/types";
+import { getLastRecordedBlocks } from "../utils/wrappa/postgres/query";
 
 const handler = async (event: { bridgeName: string }) => {
   try {
@@ -18,16 +18,10 @@ const handler = async (event: { bridgeName: string }) => {
       throw new Error(`Bridge ${bridgeName} not found`);
     }
 
-    const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
-    FROM (
-        SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
-        FROM bridges.transactions
-        GROUP BY bridge_id
-    ) subquery;
-    `;
+    const lastRecordedBlocks = await getLastRecordedBlocks(bridgeName);
 
     console.log(`Running adapter for ${bridgeName}`);
-    await runAdapterToCurrentBlock(bridge, true, "ignore", lastRecordedBlocks[0].result);
+    await runAdapterToCurrentBlock(bridge, true, "ignore", lastRecordedBlocks);
     console.log(`Adapter for ${bridgeName} ran successfully`);
   } catch (e) {
     console.error(`Adapter ${event.bridgeName} failed: ${JSON.stringify(e)}`);
