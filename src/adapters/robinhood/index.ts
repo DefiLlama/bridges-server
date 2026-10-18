@@ -35,7 +35,6 @@ const ethDepositParams: PartialContractEventParams = {
   // Only direct ETH deposits. Other retryable tickets can carry fee value and
   // would otherwise be double-counted alongside ERC20 gateway transfers.
   functionSignatureFilter: {
-    // processTransactions currently compares the first eight characters.
     includeSignatures: ["0x439370", "0x0f4d14"],
   },
   isDeposit: true,

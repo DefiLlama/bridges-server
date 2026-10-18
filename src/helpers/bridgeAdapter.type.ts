@@ -31,7 +31,7 @@ export type EventLogFilter = {
 };
 
 export type FunctionSignatureFilter = {
-  includeSignatures?: string[]; // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
+  includeSignatures?: string[]; // each entry is matched against the start of the input data, so a full 4 byte selector matches exactly and a shorter prefix matches every selector under it
   excludeSignatures?: string[];
 };
 

@@ -9,6 +9,7 @@ import { getProvider } from "../utils/provider";
 import { incrementGetLogsCount } from "../utils/cache";
 import { formatError, NonRetryableError, throwIfAborted } from "../utils/errors";
 import { resolveProviderChain } from "../utils/chainResolver";
+import { matchesFunctionSignature } from "./functionSignature";
 
 const EventKeyTypes = {
   blockNumber: "number",
@@ -360,12 +361,6 @@ export const getTxDataFromEVMEventLogs = async (
               }
             }
           }
-          /*
-          type FunctionSignatureFilter = {
-            includeFunctionSignature?: string[]  // require initial 8 characters of input data be one of those supplied in array (this is incorrect, should be changed to be 10 characters)
-            excludeFunctionSignature?: string[]
-            }
-          */
           if (functionSignatureFilter) {
             const tx = await provider.getTransaction(txLog.transactionHash);
             if (!tx) {
@@ -373,17 +368,16 @@ export const getTxDataFromEVMEventLogs = async (
               dataKeysToFilter.push(i);
               return;
             } else {
-              const signature = tx.data.slice(0, 8);
               if (
                 functionSignatureFilter.includeSignatures &&
-                !functionSignatureFilter.includeSignatures.includes(signature)
+                !matchesFunctionSignature(tx.data, functionSignatureFilter.includeSignatures)
               ) {
                 dataKeysToFilter.push(i);
                 return;
               }
               if (
                 functionSignatureFilter.excludeSignatures &&
-                functionSignatureFilter.excludeSignatures.includes(signature)
+                matchesFunctionSignature(tx.data, functionSignatureFilter.excludeSignatures)
               ) {
                 dataKeysToFilter.push(i);
                 return;
