@@ -1,10 +1,10 @@
 import bridgeNetworks from "../../data/bridgeNetworkData";
-import { sql } from "../../utils/db";
 import { runAdapterToCurrentBlock } from "../../utils/adapter";
 import { shouldSkipScheduledBridge } from "../../utils/bridgePolicy";
 import { PromisePool } from "@supercharge/promise-pool";
 import { isAbortError, throwIfAborted } from "../../utils/errors";
 import { classifyAdapterFailure, evaluateAdapterQuality } from "./adapterQuality";
+import { getLastRecordedBlocks } from "../../utils/wrappa/postgres/query";
 import { formatDiscordErrorDigest, sendDiscordText } from "../../utils/discord";
 
 type RunAllAdaptersSnapshot = {
@@ -62,15 +62,7 @@ export const getRunAllAdaptersDiagnostics = () => {
 
 export const runAllAdapters = async (signal?: AbortSignal) => {
   throwIfAborted(signal);
-  const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
-  FROM (
-      SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
-      FROM bridges.transactions
-      WHERE origin_chain IS NULL
-      GROUP BY bridge_id
-  ) subquery;
-  `;
-  const storedBlocks = lastRecordedBlocks[0]?.result ?? {};
+  const storedBlocks = await getLastRecordedBlocks();
   console.log(`[ADAPTERS] Loaded progress for ${Object.keys(storedBlocks).length} bridge IDs`);
   if (!process.env.ONESEC_API_BASE_URL) {
     console.warn(

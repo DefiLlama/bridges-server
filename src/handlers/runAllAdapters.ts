@@ -3,6 +3,7 @@ import bridgeNetworks from "../data/bridgeNetworkData";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { sql } from "../utils/db";
 import { store } from "../utils/s3";
+import { getLastRecordedBlocks } from "../utils/wrappa/postgres/query";
 import { shouldSkipBridge } from "../utils/adapter";
 
 const lambdaClient = new LambdaClient({});
@@ -25,14 +26,7 @@ async function invokeLambda(functionName: string, event: any) {
 }
 
 export default wrapScheduledLambda(async (event) => {
-  const lastRecordedBlocks = await sql`SELECT jsonb_object_agg(bridge_id::text, subresult) as result
-  FROM (
-      SELECT bridge_id, jsonb_build_object('startBlock', MIN(tx_block), 'endBlock', MAX(tx_block)) as subresult
-      FROM bridges.transactions
-      WHERE origin_chain IS NULL
-      GROUP BY bridge_id
-  ) subquery;
-  `;
+  const lastRecordedBlocks = await getLastRecordedBlocks();
   try {
     const bridgeConfig = await sql`SELECT * FROM bridges.config`;
 
@@ -41,9 +35,9 @@ export default wrapScheduledLambda(async (event) => {
       return acc;
     }, {});
 
-    const lastBlocksByName = Object.keys(lastRecordedBlocks[0].result).reduce((acc: any, bridgeId: any) => {
+    const lastBlocksByName = Object.keys(lastRecordedBlocks).reduce((acc: any, bridgeId: any) => {
       acc[`${bridgeConfigById[bridgeId].bridge_name}-${bridgeConfigById[bridgeId].chain}`] =
-        lastRecordedBlocks[0].result[bridgeId];
+        lastRecordedBlocks[bridgeId];
       return acc;
     }, {});
     await store("lastRecordedBlocks.json", JSON.stringify(lastBlocksByName));
@@ -60,7 +54,7 @@ export default wrapScheduledLambda(async (event) => {
     }
     await invokeLambda("llama-bridges-prod-runAdapter", {
       bridgeIndices: [bridge],
-      lastRecordedBlocks: lastRecordedBlocks[0].result,
+      lastRecordedBlocks: lastRecordedBlocks,
     });
     return;
   }
@@ -79,7 +73,7 @@ export default wrapScheduledLambda(async (event) => {
   for (const group of groupedIndices) {
     await invokeLambda("llama-bridges-prod-runAdapter", {
       bridgeIndices: group,
-      lastRecordedBlocks: lastRecordedBlocks[0].result,
+      lastRecordedBlocks: lastRecordedBlocks,
     });
   }
 });
