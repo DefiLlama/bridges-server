@@ -1174,6 +1174,14 @@ export const chainCoingeckoIds = {
     categories: ["EVM"],
     chainId: 5042,
   },
+  Horizen: {
+    geckoId: null,
+    symbol: "ETH",
+    cmcId: null,
+    categories: ["EVM", "Rollup"],
+    parent: "Base",
+    chainId: 26514,
+  },
   ICP: {
     geckoId: "internet-computer",
     symbol: "ICP",

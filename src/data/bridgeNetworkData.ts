@@ -883,6 +883,17 @@ export default [
     destinationChain: "Base",
   },
   {
+    id: 116,
+    displayName: "Horizen Bridge",
+    bridgeDbName: "horizen",
+    iconLink: "chain:horizen",
+    largeTxThreshold: 10000,
+    url: "https://docs.horizen.io/horizen-chain/bridging/how-bridging-works",
+    chains: ["Base", "Horizen"],
+    slug: "horizen-bridge",
+    destinationChain: "Horizen",
+  },
+  {
     id: 30,
     defillamaId: "3782",
     displayName: "Mantle Bridge",
